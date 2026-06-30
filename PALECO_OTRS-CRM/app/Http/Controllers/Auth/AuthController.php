@@ -38,6 +38,7 @@ class AuthController extends Controller
 
             $landingRoute = match($userRole) {
                 UserRoles::ADMIN => route('admin.dashboard'),
+                UserRoles::CWD => route('cwd.dashboard'),
                 default => abort(403)
             };
 

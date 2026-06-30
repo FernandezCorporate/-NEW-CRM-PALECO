@@ -22,5 +22,16 @@ class UserSeeder extends Seeder
             'role' => 'admin',
             'password' => 'password',
         ]);
+        
+        User::create([
+            'username' => 'adrian',
+            'first_name' => 'adrian',
+            'middle_name' => 'flojemon',
+            'last_name' => 'fernandez',
+            'email' => 'adrianfernandez04@gmail.com',
+            'contact' => '09694547493',
+            'role' => 'cwd_officer',
+            'password' => 'password',
+        ]);
     }
 }
