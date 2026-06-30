@@ -20,8 +20,10 @@ class AuthController extends Controller
 
         if (Auth::attempt($credentials)){
 
-            $accountStatus = Auth::user()->is_active;
-            $userRole = Auth::user()->role;
+            $loggedUser = Auth::user();
+
+            $accountStatus = $loggedUser->is_active;
+            $userRole = $loggedUser->role;
 
             if(!$accountStatus){
                 Auth::logout();
