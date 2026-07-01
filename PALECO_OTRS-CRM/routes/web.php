@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\AdminDashboardController;
 use Illuminate\Support\Facades\Auth;
 use App\Enums\UserRoles;
 use App\Http\Controllers\Cwd\CwdDashboardController;
+use App\Http\Controllers\Admin\DepartmentController;
 
 Route::middleware('guest')->group(function() {
     Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
@@ -24,6 +25,13 @@ Route::middleware('auth')->group(function() {
 
     Route::prefix('admin')->middleware('can:access-admin')->group(function() {
         Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('admin.dashboard');
+
+        Route::prefix('departments')->group(function() {
+            Route::get('/', [DepartmentController::class, 'index'])->name('admin.departments');
+            
+            Route::get('/create', [DepartmentController::class, 'createForm'])->name('admin.departments.create');
+            Route::post('/store', [DepartmentController::class, 'store'])->name('admin.departments.store');
+        });
     });
 
     Route::prefix('cwd')->middleware('can:access-cwd_officer')->group(function() {

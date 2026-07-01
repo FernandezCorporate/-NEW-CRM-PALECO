@@ -1,6 +1,9 @@
 @import 'tailwindcss';
 
-@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+/* 1. Stop scanning the vendor folder and scan your project views instead */
+@source '../views/**/*.blade.php';
+
+/* 2. (Optional) Keep scanning compiled storage files */
 @source '../../storage/framework/views/*.php';
 
 @theme {
