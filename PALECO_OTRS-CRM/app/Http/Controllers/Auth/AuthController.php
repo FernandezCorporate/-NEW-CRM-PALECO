@@ -8,7 +8,11 @@ use App\Http\Requests\Auth\LoginRequest;
 use App\Enums\UserRoles;
 use Illuminate\Http\Request; 
 use App\Enums\NonModelActions;
-use Spatie\Activitylog\Contracts\Activity;
+use Illuminate\Support\Facades\RateLimiter;
+use App\Models\User;
+use App\Events\LoginEvents;
+use Illuminate\Auth\Events\Login;
+use Illuminate\Support\Facades\Log;
 
 class AuthController extends Controller
 {
@@ -19,9 +23,49 @@ class AuthController extends Controller
 
     public function login(LoginRequest $request)
     {
+        $username = strtolower((string)request()->input('username'));
+        $user = User::query()->where('username', $username)->first();
+
+        if ($user && $user->locked_until) {
+            if ($user->locked_until > now()) {
+
+                $minutesLeft = max(1, ceil(now()->diffInMinutes($user->locked_until)));
+
+                return back()
+                    ->withErrors(['error' => "This account is temporarily locked due to multiple failed attempts. 
+                                Please wait {$minutesLeft} minute(s) or contact system administrator."])
+                    ->onlyInput('username');
+            }
+
+            $user->updateQuietly(['locked_until' => null]);
+        }
+
+        $rateLimitKey = 'login:' . sha1($username . '|' . request()->ip());
+        if (RateLimiter::tooManyAttempts($rateLimitKey, 4)){            
+            if ($user) {
+                if (!$user->locked_until) {
+                $user->updateQuietly([
+                    'locked_until' => now()->addMinutes(15)
+                ]);
+
+                $minutesLeft = max(1, ceil(now()->diffInMinutes($user->locked_until)));
+
+                return back()
+                    ->withErrors(['error' => "This account is temporarily locked due to multiple failed attempts. 
+                                Please wait {$minutesLeft} minute(s) or contact system administrator."])
+                    ->onlyInput('username');
+                }
+            }
+            $availableAgain = RateLimiter::availableIn($rateLimitKey);
+            return back()
+                ->withErrors(['error' => "Too many attempts. Try again after {$availableAgain} seconds."])
+                ->onlyInput('username');
+        }
+
         $credentials = $request->validated();
 
         if (Auth::attempt($credentials)){
+            RateLimiter::clear($rateLimitKey);
 
             $loggedUser = Auth::user();
 
@@ -29,7 +73,7 @@ class AuthController extends Controller
             $userRole = $loggedUser->role;
 
             if(!$accountStatus){
-                $this->auditAction(NonModelActions::LOGIN_ACCOUNT_DEACTIVATED);
+                LoginEvents::dispatch(NonModelActions::LOGIN_ACCOUNT_DEACTIVATED, $loggedUser);
 
                 Auth::logout();
 
@@ -43,8 +87,7 @@ class AuthController extends Controller
 
             $request->session()->regenerate();
 
-            $this->auditAction(NonModelActions::LOGIN_SUCCESS);
-
+            LoginEvents::dispatch(NonModelActions::LOGIN_SUCCESS, $loggedUser);
             $landingRoute = match($userRole) {
                 UserRoles::ADMIN => route('admin.dashboard'),
                 UserRoles::CWD => route('cwd.dashboard'),
@@ -53,8 +96,9 @@ class AuthController extends Controller
 
             return redirect()->intended($landingRoute);
         }
+        RateLimiter::hit($rateLimitKey, 60);
 
-        $this->auditAction(NonModelActions::LOGIN_FAILED);
+        LoginEvents::dispatch(NonModelActions::LOGIN_FAILED, null);
 
         return back()->withErrors([
             'error' => 'The provided credentials do not match our records.',
@@ -69,23 +113,5 @@ class AuthController extends Controller
         $request->session()->regenerateToken();
 
         return redirect('/login');
-    }
-
-public function auditAction(NonModelActions $action_category)
-    {        
-        activity()
-            ->useLog($action_category->value)
-            ->event($action_category->event())
-            ->causedBy(Auth::user())
-            ->withProperties([
-                "ip_address" => request()->ip(),
-                "user_agent" => request()->userAgent(),
-                "username"   => Auth::user() ? Auth::user()->username : request()->username, 
-                "full_name"  => Auth::user() ? ucwords(trim(Auth::user()->first_name . ' ' . Auth::user()->last_name)) : null,
-                "role"       => Auth::user()?->role?->value,
-                "email"      => Auth::user()?->email,
-                "contact"    => Auth::user()?->contact
-            ])
-            ->log($action_category->description());
     }
 }

@@ -12,7 +12,7 @@ use Illuminate\Notifications\Notifiable;
 use App\Enums\UserRoles;
 
 #[Fillable(['username', 'first_name', 'middle_name', 'last_name', 'name_ext', 
-'email', 'contact', 'role', 'password', 'last_login'])]
+'email', 'contact', 'role', 'password', 'last_login', 'locked_until'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
@@ -31,7 +31,8 @@ class User extends Authenticatable
             'password' => 'hashed',
             'is_active' => 'boolean',
             'role' => UserRoles::class,
-            'last_login' => 'datetime'
+            'last_login' => 'datetime',
+            'locked_until' => 'datetime'
         ];
     }
 }

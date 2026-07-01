@@ -6,9 +6,7 @@ use Illuminate\Support\ServiceProvider;
 use App\Models\User;
 use App\Enums\UserRoles;
 use Illuminate\Auth\Access\Response;
-use App\Listeners\UpdateLastLoginTimestamp;
 use Illuminate\Support\Facades\Event;
-use Illuminate\Auth\Events\Login;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -36,7 +34,5 @@ class AppServiceProvider extends ServiceProvider
                 ? Response::allow()
                 : Response::denyAsNotFound();
         });
-
-        Event::listen(Login::class, UpdateLastLoginTimestamp::class);
     }
 }
