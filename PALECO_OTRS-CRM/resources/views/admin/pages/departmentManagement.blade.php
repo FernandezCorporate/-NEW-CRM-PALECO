@@ -3,9 +3,20 @@
 @section('title', 'Department Management')
 
 @section('content')
-    <div class="mb-8">
-        <h1 class="text-2xl font-bold text-slate-800">Department Management</h1>
-        <p class="text-sm text-slate-500 mt-1">Monitor and manage department information</p>
+    @include('admin.prompts.alert')
+
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+        <div>
+            <h1 class="text-2xl font-bold text-slate-800">Department Management</h1>
+            <p class="text-sm text-slate-500 mt-1">Monitor and manage department information</p>
+        </div>
+        
+        <a href="{{ route('admin.departments.createForm') }}" class="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 rounded-lg text-sm font-medium shadow-sm shadow-emerald-700/20 transition-all active:scale-[0.98]">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+            </svg>
+            New Department
+        </a>
     </div>
 
     <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
@@ -56,7 +67,11 @@
                 @forelse ($departments as $department)
                     <tr class="hover:bg-slate-50 transition-colors">
                         <td class="px-6 py-4 font-medium text-slate-800">{{ $department->dept_name }}</td>
-                        <td class="px-6 py-4 text-slate-500 text-sm">{{ $department->dept_desc }}</td>
+                        <td class="px-6 py-4 text-slate-500 text-sm">
+                            <div class="truncate max-w-md" title="{{ $department->dept_desc }}">
+                                {{ $department->dept_desc }}
+                            </div>
+                        </td>
                     </tr>
                 @empty
                     <tr>
@@ -71,7 +86,9 @@
         @forelse ($departments as $department)
             <div class="bg-white border border-slate-200 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow relative">                
                 <h3 class="text-lg font-bold text-slate-800 pr-16">{{ $department->dept_name }}</h3>
-                <p class="text-sm text-slate-500 mt-3 leading-relaxed">{{ $department->dept_desc }}</p>
+                <p class="text-sm text-slate-500 mt-3 leading-relaxed line-clamp-3" title="{{ $department->dept_desc }}">
+                    {{ $department->dept_desc }}
+                </p>
             </div>
         @empty
             <div class="col-span-full py-12 text-center text-slate-400 border-2 border-dashed border-slate-200 rounded-xl">

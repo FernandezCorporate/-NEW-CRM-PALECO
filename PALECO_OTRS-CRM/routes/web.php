@@ -29,7 +29,7 @@ Route::middleware('auth')->group(function() {
         Route::prefix('departments')->group(function() {
             Route::get('/', [DepartmentController::class, 'index'])->name('admin.departments');
             
-            Route::get('/create', [DepartmentController::class, 'createForm'])->name('admin.departments.create');
+            Route::get('/create', [DepartmentController::class, 'createForm'])->name('admin.departments.createForm');
             Route::post('/store', [DepartmentController::class, 'store'])->name('admin.departments.store');
         });
     });
