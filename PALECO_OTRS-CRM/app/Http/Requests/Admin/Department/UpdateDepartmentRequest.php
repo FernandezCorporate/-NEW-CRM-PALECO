@@ -4,6 +4,7 @@ namespace App\Http\Requests\Admin\Department;
 
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class UpdateDepartmentRequest extends FormRequest
 {
@@ -15,17 +16,12 @@ class UpdateDepartmentRequest extends FormRequest
         return true;
     }
 
-    /**
-     * Get the validation rules that apply to the request.
-     *
-     * @return array<string, ValidationRule|array<mixed>|string>
-     */
     public function rules(): array
     {
         $deptId = $this->route('dept');
 
         return [
-            'dept_name' => ['required', 'string', 'max:255', 'unique:departments,dept_name,' . $deptId],
+            'dept_name' => ['required', 'string', Rule::unique('departments', 'dept_name')->ignore($deptId)],
             'dept_desc' => ['nullable', 'string'],
         ];
     }

@@ -13,12 +13,17 @@ class DepartmentPolicy
         return $user->role === UserRoles::ADMIN;
     }
 
-    public function createForm(User $user): bool
+    public function departmentForm(User $user): bool
     {
         return $user->role === UserRoles::ADMIN;
     }
 
     public function create(User $user): bool
+    {
+        return $user->role === UserRoles::ADMIN;
+    }
+
+    public function update(User $user): bool
     {
         return $user->role === UserRoles::ADMIN;
     }

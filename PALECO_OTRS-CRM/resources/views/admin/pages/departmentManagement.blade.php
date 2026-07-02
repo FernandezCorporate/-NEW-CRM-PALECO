@@ -61,6 +61,7 @@
                 <tr class="bg-slate-50 border-b border-slate-200 text-xs font-semibold text-slate-500 uppercase tracking-wider">
                     <th class="px-6 py-4">Department Name</th>
                     <th class="px-6 py-4">Department Description</th>
+                    <th class="px-6 py-4">Actions</th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-slate-100">
@@ -72,10 +73,22 @@
                                 {{ $department->dept_desc }}
                             </div>
                         </td>
+                        <td class="px-6 py-4">
+                            <div class="flex items-center gap-2">
+                                <!-- Icon-only Edit Button with hover backdrop -->
+                                <a href="{{ route('admin.departments.editForm', $department) }}" 
+                                class="p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors" 
+                                title="Edit Department">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                    </svg>
+                                </a>
+                            </div>
+                        </td>
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="2" class="px-6 py-8 text-center text-slate-400 text-sm">No departments found.</td>
+                        <td colspan="3" class="px-6 py-8 text-center text-slate-400 text-sm">No departments found.</td>
                     </tr>
                 @endforelse
             </tbody>
@@ -84,7 +97,17 @@
 
     <div id="card-view-container" class="hidden grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-4">
         @forelse ($departments as $department)
-            <div class="bg-white border border-slate-200 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow relative">                
+            <div class="bg-white border border-slate-200 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow relative"> 
+                <!-- Icon-only Edit Button (Absolute positioned) -->
+                <div class="absolute top-4 right-4 flex items-center gap-1">
+                    <a href="{{ route('admin.departments.editForm', $department) }}" 
+                    class="p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors" 
+                    title="Edit Department">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                        </svg>
+                    </a>
+                </div>               
                 <h3 class="text-lg font-bold text-slate-800 pr-16">{{ $department->dept_name }}</h3>
                 <p class="text-sm text-slate-500 mt-3 leading-relaxed line-clamp-3" title="{{ $department->dept_desc }}">
                     {{ $department->dept_desc }}
