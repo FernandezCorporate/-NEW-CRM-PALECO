@@ -2,14 +2,11 @@
 
 namespace App\Http\Requests\Admin\Department;
 
-use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule; // Add this import
 
 class StoreDepartmentRequest extends FormRequest
 {
-    /**
-     * Determine if the user is authorized to make this request.
-     */
     public function authorize(): bool
     {
         return true;
@@ -18,7 +15,13 @@ class StoreDepartmentRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'dept_name' => ['required', 'string', 'max:255', 'unique:departments,dept_name'],
+            'dept_name' => [
+                'required', 
+                'string', 
+                'max:255', 
+                // Only check uniqueness against active (non-deleted) records
+                Rule::unique('departments', 'dept_name')->whereNull('deleted_at')
+            ],
             'dept_desc' => ['nullable', 'string', 'max:255'],
         ];
     }

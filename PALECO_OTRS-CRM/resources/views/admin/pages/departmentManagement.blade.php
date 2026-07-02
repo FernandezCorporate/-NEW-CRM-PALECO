@@ -184,7 +184,7 @@
                         </form>
 
                         <!-- UNTOUCHED DELETE BUTTON -->
-                        <a href="#"
+                        <a href="{{ route('admin.departments.forceDeleteConfirm', $department) }}"
                             class="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors" 
                             title="Permanently Delete Department">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

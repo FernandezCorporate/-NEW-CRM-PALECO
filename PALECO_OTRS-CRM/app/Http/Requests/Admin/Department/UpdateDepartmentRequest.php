@@ -2,15 +2,11 @@
 
 namespace App\Http\Requests\Admin\Department;
 
-use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
 class UpdateDepartmentRequest extends FormRequest
 {
-    /**
-     * Determine if the user is authorized to make this request.
-     */
     public function authorize(): bool
     {
         return true;
@@ -18,10 +14,17 @@ class UpdateDepartmentRequest extends FormRequest
 
     public function rules(): array
     {
-        $deptId = $this->route('dept');
+        // Extract the ID from the bound model
+        $deptId = $this->route('dept')->id;
 
         return [
-            'dept_name' => ['required', 'string', Rule::unique('departments', 'dept_name')->ignore($deptId)],
+            'dept_name' => [
+                'required', 
+                'string', 
+                Rule::unique('departments', 'dept_name')
+                    ->ignore($deptId)
+                    ->whereNull('deleted_at') // Ignore archived records
+            ],
             'dept_desc' => ['nullable', 'string'],
         ];
     }

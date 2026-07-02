@@ -75,13 +75,12 @@ class Department extends Model
             ->logOnly(['dept_name', 'dept_desc'])
             ->setDescriptionForEvent(function(string $eventName) {
                 $action = match ($eventName) {
-                    'deleted'      => 'archived',
+                    'deleted'      => $this->isForceDeleting() ? 'permanently deleted' : 'archived',
                     'restored'     => 'restored',
-                    'forceDeleted' => 'permanently deleted',
                     default        => $eventName, // Fallback for 'created' and 'updated'
                 };
 
-                return "Department has been {$action}";
+                return "{$this->dept_name} has been {$action}";
             });
     }
 }

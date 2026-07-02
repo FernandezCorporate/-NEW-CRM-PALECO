@@ -83,11 +83,19 @@ class DepartmentController extends Controller
         return redirect($redirectRoute)->with('success', 'Department updated successfully.');
     }
 
-    public function deleteConfirm(Department $dept)
+    public function deleteConfirm(Request $request, Department $dept)
     {
         Gate::authorize('deleteConfirm', $dept);
 
-        return view('admin.pages.departmentDeleteConfirm', compact('dept'));
+        $isForceDelete = $request->routeIs('admin.departments.forceDeleteConfirm');
+
+        $dept = $isForceDelete ? 
+            Department::onlyTrashed()->findOrFail($dept->id) : $dept;
+
+        $title = $isForceDelete ? 'Permanently Delete Department' : 'Archive Department';
+        
+        // Fixed: Injected $title and $isForceDelete into the view
+        return view('admin.pages.departmentDeleteConfirm', compact('dept', 'title', 'isForceDelete'));
     }
 
     public function archive(Department $dept)
@@ -106,14 +114,24 @@ class DepartmentController extends Controller
 
         $dept = Department::onlyTrashed()->findOrFail($dept->id);
 
-        $nameExists = Department::where('dept_name', $dept->name)->exists();
+        // Fixed: Swapped $dept->name for $dept->dept_name
+        $nameExists = Department::where('dept_name', $dept->dept_name)->exists();
 
         if ($nameExists) {
-            return redirect()->route('admin.departments')->with('error', 'Cannot restore department. A department with the same name already exists.');
+            return redirect()->route('admin.departments')->with('error', 'Cannot restore department. An active department with the same name already exists.');
         }
 
         $dept->restore();
 
         return redirect()->route('admin.departments')->with('success', 'Department restored successfully.');
+    }
+
+    public function destroy(Department $dept)
+    {
+        Gate::authorize('forceDelete', $dept);
+
+        $dept->forceDelete();
+
+        return redirect()->route('admin.departments')->with('success', 'Department permanently deleted.');
     }
 }
