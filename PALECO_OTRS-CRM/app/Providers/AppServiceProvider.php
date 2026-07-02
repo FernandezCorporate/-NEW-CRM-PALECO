@@ -7,6 +7,8 @@ use App\Models\User;
 use App\Enums\UserRoles;
 use Illuminate\Auth\Access\Response;
 use Illuminate\Support\Facades\Event;
+use Spatie\Activitylog\Facades\Activity;
+use Spatie\Activitylog\Contracts\Activity as ActivityContract;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -33,6 +35,14 @@ class AppServiceProvider extends ServiceProvider
             return $user->role === UserRoles::CWD
                 ? Response::allow()
                 : Response::denyAsNotFound();
+        });
+
+        Activity::beforeLogging(function (ActivityContract $activity) {
+            if (!app()->runningInConsole()){
+                $activity->properties = $activity->properties
+                    ->put('ip_address', request()->ip())
+                    ->put('user_agent', request()->userAgent());
+            }
         });
     }
 }
