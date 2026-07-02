@@ -27,4 +27,19 @@ class DepartmentPolicy
     {
         return $user->role === UserRoles::ADMIN;
     }
+
+    public function deleteConfirm(User $user): bool
+    {
+        return $user->role === UserRoles::ADMIN;
+    }
+
+    public function archive(User $user): bool
+    {
+        return $user->role === UserRoles::ADMIN;
+    }
+
+    public function delete(User $user): bool
+    {
+        return $user->role === UserRoles::ADMIN;
+    }
 }

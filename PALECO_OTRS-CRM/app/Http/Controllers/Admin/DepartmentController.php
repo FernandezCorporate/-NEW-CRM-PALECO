@@ -39,14 +39,11 @@ class DepartmentController extends Controller
         return view('admin.pages.departmentDetails', compact('dept'));
     }
 
-
     public function departmentForm(?Department $dept = null)
     {
         Gate::authorize('departmentForm', Department::class);
 
-        $backTo = request('back_to', route('admin.departments'));
-
-        return view('admin.forms.departmentForm', compact('dept', 'backTo'));
+        return view('admin.forms.departmentForm', compact('dept'));
     }
 
     public function store(StoreDepartmentRequest $request)
@@ -66,12 +63,34 @@ class DepartmentController extends Controller
 
         $dept->fill($request->validated());
 
+        // Determine where to send them based on the clean URL flag
+        $redirectRoute = $request->query('source') === 'details' 
+            ? route('admin.departments.show', $dept) 
+            : route('admin.departments');
+
         if ($dept->isClean()) {
-            return redirect()->route('admin.departments')->with('info', 'No changes were made to the department.');
+            return redirect($redirectRoute)->with('info', 'No changes were made to the department.');
         }
 
         $dept->save();
 
-        return redirect()->route('admin.departments')->with('success', 'Department updated successfully.');
+        return redirect($redirectRoute)->with('success', 'Department updated successfully.');
+    }
+
+    public function deleteConfirm(Department $dept)
+    {
+        Gate::authorize('deleteConfirm', $dept);
+
+        return view('admin.pages.departmentDeleteConfirm', compact('dept'));
+    }
+
+    public function archive(Department $dept)
+    {
+        Gate::authorize('archive', $dept);
+
+        $dept->delete();
+
+        // Always return to the index page because the detail page is now inaccessible
+        return redirect()->route('admin.departments')->with('success', 'Department archived successfully.');
     }
 }

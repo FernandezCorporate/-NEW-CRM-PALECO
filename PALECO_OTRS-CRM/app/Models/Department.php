@@ -10,11 +10,12 @@ use Illuminate\Database\Eloquent\Builder;
 use Spatie\Activitylog\Models\Activity;
 use Spatie\Activitylog\Models\Concerns\LogsActivity;
 use Spatie\Activitylog\Support\LogOptions;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 #[Fillable(['dept_name', 'dept_desc'])]
 class Department extends Model
 {
-    use HasFactory, LogsActivity;
+    use HasFactory, LogsActivity, SoftDeletes;
 
     protected function casts(): array
     {
@@ -72,6 +73,15 @@ class Department extends Model
         return LogOptions::defaults()
             ->useLogName('Department')
             ->logOnly(['dept_name', 'dept_desc'])
-            ->setDescriptionForEvent(fn(string $eventName) => "Department has been {$eventName}");
+            ->setDescriptionForEvent(function(string $eventName) {
+                $action = match ($eventName) {
+                    'deleted'      => 'archived',
+                    'restored'     => 'restored',
+                    'forceDeleted' => 'permanently deleted',
+                    default        => $eventName, // Fallback for 'created' and 'updated'
+                };
+
+                return "Department has been {$action}";
+            });
     }
 }

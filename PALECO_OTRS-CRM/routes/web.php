@@ -35,6 +35,9 @@ Route::middleware('auth')->group(function() {
 
             Route::get('/{dept}/edit', [DepartmentController::class, 'departmentForm'])->name('admin.departments.editForm')->whereNumber('dept');
             Route::put('/{dept}', [DepartmentController::class, 'update'])->name('admin.departments.update')->whereNumber('dept');
+
+            Route::get('/{dept}/archive', [DepartmentController::class, 'deleteConfirm'])->name('admin.departments.deleteConfirm')->whereNumber('dept');
+            Route::delete('/{dept}', [DepartmentController::class, 'archive'])->name('admin.departments.archive')->whereNumber('dept');
         });
     });
 
