@@ -32,12 +32,21 @@ class DepartmentController extends Controller
         return view('admin.pages.departmentManagement', compact('departments'));
     }
 
+    public function show(Department $dept)
+    {
+        Gate::authorize('viewAny', $dept);
+
+        return view('admin.pages.departmentDetails', compact('dept'));
+    }
+
 
     public function departmentForm(?Department $dept = null)
     {
         Gate::authorize('departmentForm', Department::class);
 
-        return view('admin.pages.departmentForm', compact('dept'));
+        $backTo = request('back_to', route('admin.departments'));
+
+        return view('admin.forms.departmentForm', compact('dept', 'backTo'));
     }
 
     public function store(StoreDepartmentRequest $request)

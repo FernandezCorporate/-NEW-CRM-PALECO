@@ -75,8 +75,15 @@
                         </td>
                         <td class="px-6 py-4">
                             <div class="flex items-center gap-2">
-                                <!-- Icon-only Edit Button with hover backdrop -->
-                                <a href="{{ route('admin.departments.editForm', $department) }}" 
+                                <a href="{{ route('admin.departments.show', $department) }}" 
+                                class="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" 
+                                title="View Department Details">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                    </svg>
+                                </a>
+                                <a href="{{ route('admin.departments.editForm', [$department, 'back_to' => request()->fullUrl()]) }}" 
                                 class="p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors" 
                                 title="Edit Department">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -97,9 +104,18 @@
 
     <div id="card-view-container" class="hidden grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-4">
         @forelse ($departments as $department)
-            <div class="bg-white border border-slate-200 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow relative"> 
-                <!-- Icon-only Edit Button (Absolute positioned) -->
+            <div class="bg-white border border-slate-200 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow relative">
+                
+                <!-- Icons properly grouped in the absolute top-right container -->
                 <div class="absolute top-4 right-4 flex items-center gap-1">
+                    <a href="{{ route('admin.departments.show', $department) }}" 
+                    class="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" 
+                    title="View Department Details">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                        </svg>
+                    </a> 
                     <a href="{{ route('admin.departments.editForm', $department) }}" 
                     class="p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors" 
                     title="Edit Department">
@@ -107,8 +123,9 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
                         </svg>
                     </a>
-                </div>               
-                <h3 class="text-lg font-bold text-slate-800 pr-16">{{ $department->dept_name }}</h3>
+                </div>
+                               
+                <h3 class="text-lg font-bold text-slate-800 pr-24">{{ $department->dept_name }}</h3>
                 <p class="text-sm text-slate-500 mt-3 leading-relaxed line-clamp-3" title="{{ $department->dept_desc }}">
                     {{ $department->dept_desc }}
                 </p>
