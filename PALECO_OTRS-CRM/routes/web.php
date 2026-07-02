@@ -28,7 +28,7 @@ Route::middleware('auth')->group(function() {
 
         Route::prefix('departments')->group(function() {
             Route::get('/', [DepartmentController::class, 'index'])->name('admin.departments');
-            Route::get('/{dept}', [DepartmentController::class, 'show'])->name('admin.departments.show')->whereNumber('dept');
+            Route::get('/{dept}', [DepartmentController::class, 'show'])->name('admin.departments.show')->whereNumber('dept')->withTrashed();
             
             Route::get('/create', [DepartmentController::class, 'departmentForm'])->name('admin.departments.createForm');
             Route::post('/', [DepartmentController::class, 'store'])->name('admin.departments.store');

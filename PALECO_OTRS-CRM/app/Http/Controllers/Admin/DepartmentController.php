@@ -27,6 +27,12 @@ class DepartmentController extends Controller
             $departments = $departments->latest();
         }
 
+        if ($request->input('filter') === 'archived') {
+            $departments = $departments->onlyTrashed();
+        }
+
+        session()->put('department_list_url', $request->fullUrl());
+
         $departments = $departments->paginate(9)->withQueryString();
 
         return view('admin.pages.departmentManagement', compact('departments'));
