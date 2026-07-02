@@ -42,4 +42,14 @@ class DepartmentPolicy
     {
         return $user->role === UserRoles::ADMIN;
     }
+
+    public function restore(User $user): bool
+    {
+        return $user->role === UserRoles::ADMIN;
+    }
+
+    public function forceDelete(User $user): bool
+    {
+        return $user->role === UserRoles::ADMIN;
+    }   
 }

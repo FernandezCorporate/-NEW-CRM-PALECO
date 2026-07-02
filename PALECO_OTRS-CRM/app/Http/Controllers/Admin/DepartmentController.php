@@ -99,4 +99,21 @@ class DepartmentController extends Controller
         // Always return to the index page because the detail page is now inaccessible
         return redirect()->route('admin.departments')->with('success', 'Department archived successfully.');
     }
+
+    public function restore(Department $dept)
+    {
+        Gate::authorize('restore', $dept);
+
+        $dept = Department::onlyTrashed()->findOrFail($dept->id);
+
+        $nameExists = Department::where('dept_name', $dept->name)->exists();
+
+        if ($nameExists) {
+            return redirect()->route('admin.departments')->with('error', 'Cannot restore department. A department with the same name already exists.');
+        }
+
+        $dept->restore();
+
+        return redirect()->route('admin.departments')->with('success', 'Department restored successfully.');
+    }
 }
