@@ -7,7 +7,7 @@
         
         <!-- Breadcrumb / Back Link -->
         <div class="mb-6">
-            <a href="{{ request('source') === 'details' ? route('admin.departments.show', $dept) : session('department_list_url', route('admin.departments')) }}" class="inline-flex items-center text-sm font-medium text-slate-500 hover:text-slate-800 transition-colors">
+            <a href="{{ request('source') === 'details' ? route('admin.departments.show', $dept) : session('department_list_url', route('admin.departments')) }}" class="action-link inline-flex items-center text-sm font-medium text-slate-500 hover:text-slate-800 transition-colors" data-loading-text="Returning...">
                 <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
                 </svg>
@@ -54,16 +54,15 @@
                 </div>
 
                 <!-- Form & Actions -->
-                <!-- Set the route to destroy for force delete, archive for soft delete -->
                 <form action="{{ $isForceDelete ? route('admin.departments.destroy', $dept) : route('admin.departments.archive', $dept) }}" method="POST" class="flex flex-col-reverse sm:flex-row justify-center gap-3">
                     @csrf
                     @method('DELETE')
                     
-                    <a href="{{ request('source') === 'details' ? route('admin.departments.show', $dept) : session('department_list_url', route('admin.departments')) }}" class="inline-flex justify-center items-center px-5 py-2.5 bg-white border border-slate-300 text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-50 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-500 w-full sm:w-auto">
+                    <a href="{{ request('source') === 'details' ? route('admin.departments.show', $dept) : session('department_list_url', route('admin.departments')) }}" class="action-link inline-flex justify-center items-center px-5 py-2.5 bg-white border border-slate-300 text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-50 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-500 w-full sm:w-auto" data-loading-text="Canceling...">
                         Cancel
                     </a>
                     
-                    <button type="submit" class="inline-flex justify-center items-center px-5 py-2.5 {{ $isForceDelete ? 'bg-red-600 hover:bg-red-700 shadow-red-700/20 focus:ring-red-500' : 'bg-rose-600 hover:bg-rose-700 shadow-rose-700/20 focus:ring-rose-500' }} text-white rounded-lg text-sm font-medium shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 w-full sm:w-auto">
+                    <button type="submit" class="inline-flex justify-center items-center px-5 py-2.5 {{ $isForceDelete ? 'bg-red-600 hover:bg-red-700 shadow-red-700/20 focus:ring-red-500' : 'bg-rose-600 hover:bg-rose-700 shadow-rose-700/20 focus:ring-rose-500' }} text-white rounded-lg text-sm font-medium shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 w-full sm:w-auto" data-loading-text="{{ $isForceDelete ? 'Deleting...' : 'Archiving...' }}">
                         @if($isForceDelete)
                             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
