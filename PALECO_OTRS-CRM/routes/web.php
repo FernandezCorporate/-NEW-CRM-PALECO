@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Auth;
 use App\Enums\UserRoles;
 use App\Http\Controllers\Cwd\CwdDashboardController;
 use App\Http\Controllers\Admin\DepartmentController;
+use App\Http\Controllers\Admin\UserController;
 
 Route::middleware('guest')->group(function() {
     Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
@@ -25,6 +26,10 @@ Route::middleware('auth')->group(function() {
 
     Route::prefix('admin')->middleware('can:access-admin')->group(function() {
         Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('admin.dashboard');
+
+        Route::prefix('users')->group(function() {
+            Route::get('/', [UserController::class, 'index'])->name('admin.users');
+        });
 
         Route::prefix('departments')->group(function() {
             Route::get('/', [DepartmentController::class, 'index'])->name('admin.departments');

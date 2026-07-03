@@ -4,17 +4,38 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Enums\UserRoles;
 use App\Http\Requests\Admin\User\StoreUserRequest;
 use App\Http\Requests\Admin\User\UpdateUserRequest;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\DB;
 
 class UserController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
+    public function index(Request $request)
     {
-        //
+        Gate::authorize('viewAny', User::class);
+
+        $roles = UserRoles::cases();
+
+        // 1. Fetch active counts grouped by role
+        $rawCounts = User::query()->where('is_active', true)
+            ->pluck('role')
+            ->countBy();
+
+        $activeCounts = (object) [
+            'admin' => $rawCounts->get(UserRoles::ADMIN->value, 0),
+            'cwd'   => $rawCounts->get(UserRoles::CWD->value, 0),
+            'foreman' => $rawCounts->get(UserRoles::FOREMAN->value, 0),
+            'field_personnel' => $rawCounts->get(UserRoles::FIELD_PERSONNEL->value, 0),
+        ];
+
+        $users = User::query();
+
+        $users = $users->paginate(10)->withQueryString();
+
+        return view('admin.pages.userManagement', compact('users', 'roles', 'activeCounts'));
     }
 
     /**
