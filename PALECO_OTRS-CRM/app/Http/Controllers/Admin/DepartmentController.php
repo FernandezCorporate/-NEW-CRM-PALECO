@@ -22,7 +22,7 @@ class DepartmentController extends Controller
         }
 
         if ($request->filled('sort')) {
-            $departments = $departments->sort($request->input('sort'));
+            $departments = $departments->sort($request->sort);
         } else {
             $departments = $departments->latest();
         }

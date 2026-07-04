@@ -19,7 +19,6 @@ class UserController extends Controller
 
         $roles = UserRoles::cases();
 
-        // 1. Fetch active counts grouped by role
         $rawCounts = User::query()->where('is_active', true)
             ->pluck('role')
             ->countBy();
@@ -32,6 +31,20 @@ class UserController extends Controller
         ];
 
         $users = User::query();
+
+        if ($request->filled('search')) {
+            $users = $users->search($request->search);
+        }
+
+        if ($request->filled('filter') && $request->filter !== 'all') {
+            $users = $users->filter($request->filter);
+        }
+
+        if ($request->filled('sort')) {
+            $users = $users->sort($request->sort);
+        } else {
+            $users = $users->latest();
+        }
 
         $users = $users->paginate(10)->withQueryString();
 

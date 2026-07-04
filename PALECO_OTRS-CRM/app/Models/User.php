@@ -12,6 +12,7 @@ use Illuminate\Notifications\Notifiable;
 use App\Enums\UserRoles;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Support\Str;
+use Illuminate\Database\Eloquent\Builder;
 
 #[Fillable(['username', 'first_name', 'middle_name', 'last_name', 'name_ext', 
 'email', 'contact', 'role', 'password', 'last_login', 'locked_until'])]
@@ -75,5 +76,63 @@ class User extends Authenticatable
                 return $statusLabel;
             }
         );
+    }
+
+    public function scopeSearch(Builder $query, ?string $term): Builder
+    {
+        if (empty($term)) {
+            return $query;
+        }
+
+        $words = array_filter(explode(' ', $term));
+
+        return $query->where(function ($query) use ($words) {
+
+            foreach ($words as $word) {
+                $searchWord = "%{$word}%";
+                
+                $query->where(function ($subQuery) use ($searchWord) {
+                    $subQuery->where('first_name', 'like', $searchWord)
+                          ->orWhere('middle_name', 'like', $searchWord)
+                          ->orWhere('last_name', 'like', $searchWord)
+                          ->orWhere('name_ext', 'like', $searchWord)
+                          ->orWhere('email', 'like', $searchWord)
+                          ->orWhere('username', 'like', $searchWord);
+                });
+            }
+        });
+    }
+
+    public function scopeFilter(Builder $query, ?string $filter): Builder
+    {
+        if ($filter === 'all') {
+            return $query;
+        }
+
+        return $query->where('role', $filter);
+    }
+
+    public function scopeSort(Builder $query, ?string $sort): Builder
+    {
+        if (empty($sort)) {
+            return $query;
+        }
+
+        switch ($sort) {
+            case 'newest':
+                return $query->orderBy('created_at', 'desc');
+            case 'oldest':
+                return $query->orderBy('created_at', 'asc');
+            case 'first_nameASC':
+                return $query->orderBy('first_name', 'asc');
+            case 'first_nameDESC':
+                return $query->orderBy('first_name', 'desc');
+            case 'last_nameASC':
+                return $query->orderBy('last_name', 'asc');
+            case 'last_nameDESC':
+                return $query->orderBy('last_name', 'desc');
+            default:
+                return $query;
+        }
     }
 }

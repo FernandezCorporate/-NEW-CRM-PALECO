@@ -90,7 +90,7 @@
 
     </div>
 
-    <!-- Controls Row (Reverted exactly to your original sent file) -->
+    <!-- Controls Row -->
     <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-6">
         <!-- Unified Form for all GET parameters -->
         <form action="{{ route('admin.users') }}" method="GET" class="flex flex-col md:flex-row flex-wrap gap-4 w-full lg:w-auto">
@@ -113,7 +113,7 @@
                 <select name="filter" onchange="this.form.submit()" class="border border-slate-200 p-2.5 rounded-lg text-sm bg-white cursor-pointer focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500">
                     <option value="all" {{ request('filter') === 'all' ? 'selected' : '' }}>All Roles</option>
                     @foreach($roles as $role)
-                        <option value="{{ $role->value }}" {{ request('filter') === $role->value ? 'selected' : '' }}>{{ $role->value }}</option>
+                        <option value="{{ $role->value }}" {{ request('filter') === $role->value ? 'selected' : '' }}>{{ $role->label() }}</option>
                     @endforeach
                 </select>
 
@@ -121,6 +121,8 @@
                     <option value="newest" {{ request('sort') === 'newest' ? 'selected' : '' }}>Sort by Newest</option>
                     <option value="oldest" {{ request('sort') === 'oldest' ? 'selected' : '' }}>Sort by Oldest</option>
                     <option value="first_nameASC" {{ request('sort') === 'first_nameASC' ? 'selected' : '' }}>First Name (A-Z)</option>
+                    <option value="first_nameDESC" {{ request('sort') === 'first_nameDESC' ? 'selected' : '' }}>First Name (Z-A)</option>
+                    <option value="last_nameASC" {{ request('sort') === 'last_nameASC' ? 'selected' : '' }}>Last Name (A-Z)</option>
                     <option value="last_nameDESC" {{ request('sort') === 'last_nameDESC' ? 'selected' : '' }}>Last Name (Z-A)</option>
                 </select>
                 <noscript><button type="submit" class="bg-slate-500 text-white px-4 py-2 rounded">Apply</button></noscript>
@@ -185,14 +187,26 @@
                         </td>
                         
                         <td class="px-6 py-4 text-right">
-                            <div class="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <!-- Removed opacity-0 and group-hover classes, buttons always visible -->
+                            <div class="flex items-center justify-end gap-2">
+                                
+                                <!-- View Icon -->
+                                <a href="#" class="action-link p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" data-loading-text="" title="View User">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                    </svg>
+                                </a>
+
+                                <!-- Edit Icon -->
                                 <a href="#" class="action-link p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors" data-loading-text="" title="Edit User">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path>
                                     </svg>
                                 </a>
                                 
-                                <form action="#" method="POST" class="inline-block">
+                                <!-- Deactivate Icon -->
+                                <form action="#" class="inline-block">
                                     @csrf
                                     <button type="submit" class="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors" data-loading-text="" title="Deactivate User">
                                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
