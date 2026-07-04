@@ -21,4 +21,9 @@ class UserPolicy
     {
         return $user->role === UserRoles::ADMIN;
     }
+
+    public function update(User $user): bool
+    {
+        return $user->role === UserRoles::ADMIN;
+    }
 }

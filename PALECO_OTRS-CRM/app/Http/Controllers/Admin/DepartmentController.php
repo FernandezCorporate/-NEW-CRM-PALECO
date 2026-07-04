@@ -40,14 +40,14 @@ class DepartmentController extends Controller
 
     public function show(Department $dept)
     {
-        Gate::authorize('viewAny', $dept);
+        Gate::authorize('view', $dept);
 
         return view('admin.pages.departmentDetails', compact('dept'));
     }
 
     public function departmentForm(?Department $dept = null)
     {
-        Gate::authorize('departmentForm', Department::class);
+        Gate::authorize('departmentForm', $dept ?? Department::class);
 
         return view('admin.forms.departmentForm', compact('dept'));
     }
@@ -69,7 +69,6 @@ class DepartmentController extends Controller
 
         $dept->fill($request->validated());
 
-        // Determine where to send them based on the clean URL flag
         $redirectRoute = $request->query('source') === 'details' 
             ? route('admin.departments.show', $dept) 
             : route('admin.departments');
@@ -85,16 +84,20 @@ class DepartmentController extends Controller
 
     public function deleteConfirm(Request $request, Department $dept)
     {
-        Gate::authorize('deleteConfirm', $dept);
-
         $isForceDelete = $request->routeIs('admin.departments.forceDeleteConfirm');
 
-        $dept = $isForceDelete ? 
-            Department::onlyTrashed()->findOrFail($dept->id) : $dept;
+        // Fetch the trashed instance FIRST if it's a force delete
+        $dept = $isForceDelete ? Department::onlyTrashed()->findOrFail($dept->id) : $dept;
+
+        // Route to the specific policy method based on the action
+        if ($isForceDelete) {
+            Gate::authorize('forceDelete', $dept);
+        } else {
+            Gate::authorize('deleteConfirm', $dept);
+        }
 
         $title = $isForceDelete ? 'Permanently Delete Department' : 'Archive Department';
         
-        // Fixed: Injected $title and $isForceDelete into the view
         return view('admin.pages.departmentDeleteConfirm', compact('dept', 'title', 'isForceDelete'));
     }
 
@@ -104,17 +107,15 @@ class DepartmentController extends Controller
 
         $dept->delete();
 
-        // Always return to the index page because the detail page is now inaccessible
         return redirect()->route('admin.departments')->with('success', 'Department archived successfully.');
     }
 
-    public function restore(Department $dept)
+    public function restore($id) 
     {
+        $dept = Department::onlyTrashed()->findOrFail($id);
+
         Gate::authorize('restore', $dept);
 
-        $dept = Department::onlyTrashed()->findOrFail($dept->id);
-
-        // Fixed: Swapped $dept->name for $dept->dept_name
         $nameExists = Department::where('dept_name', $dept->dept_name)->exists();
 
         if ($nameExists) {
@@ -126,8 +127,10 @@ class DepartmentController extends Controller
         return redirect()->route('admin.departments')->with('success', 'Department restored successfully.');
     }
 
-    public function destroy(Department $dept)
+    public function destroy($id)
     {
+        $dept = Department::onlyTrashed()->findOrFail($id);
+
         Gate::authorize('forceDelete', $dept);
 
         $dept->forceDelete();

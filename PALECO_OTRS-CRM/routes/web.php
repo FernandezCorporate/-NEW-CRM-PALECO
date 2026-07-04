@@ -33,6 +33,9 @@ Route::middleware('auth')->group(function() {
 
             Route::get('/create', [UserController::class, 'userForm'])->name('admin.users.createForm');
             Route::post('/', [UserController::class, 'store'])->name('admin.users.store');
+
+            Route::get('/{user}/edit', [UserController::class, 'userForm'])->name('admin.users.editForm');
+            Route::put('/{user}', [UserController::class, 'update'])->name('admin.users.update')->whereUlid('user');
         });
 
         Route::prefix('departments')->group(function() {

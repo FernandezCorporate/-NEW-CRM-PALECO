@@ -84,22 +84,21 @@ class UserController extends Controller
         //
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(User $user)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
     public function update(UpdateUserRequest $request, User $user)
     {
-        //
-    }
+        Gate::authorize('update', $user);
 
+        $user->fill($request->validated());
+
+        if ($user->isClean()) {
+            return redirect()->route('admin.users')->with('info', 'No changes were made to the user.');
+        }
+
+        $user->save();
+
+        return redirect()->route('admin.users')->with('success', 'Users updated successfully.');
+    }
+    
     /**
      * Remove the specified resource from storage.
      */
