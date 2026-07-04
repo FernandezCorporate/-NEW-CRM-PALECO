@@ -13,14 +13,18 @@ use App\Enums\UserRoles;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Spatie\Activitylog\Models\Concerns\LogsActivity;
+use Spatie\Activitylog\Support\LogOptions;
+use App\Models\Department;
 
 #[Fillable(['username', 'first_name', 'middle_name', 'last_name', 'name_ext', 
-'email', 'contact', 'role', 'password', 'last_login', 'locked_until'])]
+'email', 'contact', 'role', 'password', 'department_id', 'last_login', 'locked_until'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, Notifiable, HasUlids;
+    use HasFactory, Notifiable, HasUlids, LogsActivity;
 
     /**
      * Get the attributes that should be cast.
@@ -37,6 +41,11 @@ class User extends Authenticatable
             'last_login' => 'datetime',
             'locked_until' => 'datetime'
         ];
+    }
+
+    public function department(): BelongsTo
+    {
+        return $this->belongsTo(Department::class);
     }
 
     protected function fullName(): Attribute
@@ -134,5 +143,16 @@ class User extends Authenticatable
             default:
                 return $query;
         }
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->useLogName('Users')
+            ->logOnly(['username', 'first_name', 'middle_name', 'last_name', 'name_ext', 
+                        'email', 'contact', 'role', 'password', 'department_id'])
+            ->setDescriptionForEvent(function(string $eventName) {
+                return "{$this->username} account has been {$eventName}";
+            });
     }
 }

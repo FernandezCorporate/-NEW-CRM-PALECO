@@ -18,4 +18,22 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // --- NEW ADDITION BELOW ---
+
+    // Confirm Password Toggle
+    const confirmToggleBtn = document.getElementById('toggle-confirm-password-btn');
+    const confirmPasswordInput = document.getElementById('confirm-password');
+    const confirmEyeOpen = document.getElementById('confirm-eye-open');
+    const confirmEyeClosed = document.getElementById('confirm-eye-closed');
+
+    if (confirmToggleBtn && confirmPasswordInput) {
+        confirmToggleBtn.addEventListener('click', () => {
+            const isPassword = confirmPasswordInput.getAttribute('type') === 'password';
+            
+            confirmPasswordInput.setAttribute('type', isPassword ? 'text' : 'password');
+            confirmEyeOpen.classList.toggle('hidden');
+            confirmEyeClosed.classList.toggle('hidden');
+        });
+    }
+
 });

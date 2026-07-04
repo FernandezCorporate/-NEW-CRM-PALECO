@@ -10,5 +10,15 @@ class UserPolicy
     public function viewAny(User $user): bool
     {
         return $user->role === UserRoles::ADMIN;
-    } 
+    }
+
+    public function userForm(User $user):bool
+    {
+        return $user->role === UserRoles::ADMIN;
+    }
+
+    public function create(User $user): bool
+    {
+        return $user->role === UserRoles::ADMIN;
+    }
 }

@@ -10,6 +10,7 @@ use App\Http\Requests\Admin\User\UpdateUserRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\DB;
+use App\Models\Department;
 
 class UserController extends Controller
 {
@@ -51,20 +52,28 @@ class UserController extends Controller
         return view('admin.pages.userManagement', compact('users', 'roles', 'activeCounts'));
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
+    public function userForm(?User $user = null)
     {
-        //
-    }
+        Gate::authorize('userForm', User::class);
+
+        $depts = Department::query()->whereNull('deleted_at')->get();
+        $roles = UserRoles::cases();
+
+        return view('admin.forms.userForm', compact('user', 'depts', 'roles'));
+    } 
 
     /**
      * Store a newly created resource in storage.
      */
     public function store(StoreUserRequest $request)
     {
-        //
+        Gate::authorize('create', User::class);
+
+        $validatedData = $request->validated();
+
+        User::create($validatedData);
+
+        return redirect()->route('admin.users')->with('success', 'User created successfully.');
     }
 
     /**

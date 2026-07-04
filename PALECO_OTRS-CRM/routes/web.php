@@ -9,6 +9,7 @@ use App\Enums\UserRoles;
 use App\Http\Controllers\Cwd\CwdDashboardController;
 use App\Http\Controllers\Admin\DepartmentController;
 use App\Http\Controllers\Admin\UserController;
+use App\Models\User;
 
 Route::middleware('guest')->group(function() {
     Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
@@ -29,6 +30,9 @@ Route::middleware('auth')->group(function() {
 
         Route::prefix('users')->group(function() {
             Route::get('/', [UserController::class, 'index'])->name('admin.users');
+
+            Route::get('/create', [UserController::class, 'userForm'])->name('admin.users.createForm');
+            Route::post('/', [UserController::class, 'store'])->name('admin.users.store');
         });
 
         Route::prefix('departments')->group(function() {
