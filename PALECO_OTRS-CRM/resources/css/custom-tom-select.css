@@ -1,0 +1,47 @@
+/* Resetting the default Tom Select styling to match Tailwind */
+.ts-control {
+    background-color: #ffffff !important;
+    background-image: none !important; /* Kills the default grey gradient */
+    border: 1px solid #e2e8f0 !important; /* border-slate-200 */
+    border-radius: 0.5rem !important; /* rounded-lg */
+    padding: 0.625rem 0.75rem !important; /* Perfectly matches tailwind p-2.5 */
+    min-height: 42px !important;
+    box-shadow: none !important;
+    font-size: 0.875rem !important; /* text-sm */
+    color: #334155 !important; /* text-slate-700 */
+    display: flex;
+    align-items: center;
+}
+
+/* The Focus Ring (Matches focus:ring-emerald-500) */
+.ts-control.focus {
+    border-color: #10b981 !important; 
+    box-shadow: 0 0 0 1px #10b981 !important; 
+}
+
+/* Adjust the placeholder text color */
+.ts-control input::placeholder {
+    color: #94a3b8 !important; /* text-slate-400 */
+}
+
+/* The Dropdown Menu */
+.ts-dropdown {
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 0.5rem !important;
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1) !important; /* shadow-md */
+    font-size: 0.875rem !important;
+    margin-top: 4px !important;
+    overflow: hidden; /* Keeps the rounded corners sharp */
+}
+
+/* Dropdown Options */
+.ts-dropdown .option {
+    padding: 0.5rem 0.75rem !important;
+}
+
+/* Hover & Selected State inside the Dropdown */
+.ts-dropdown .option.active, 
+.ts-dropdown .option:hover {
+    background-color: #ecfdf5 !important; /* hover:bg-emerald-50 */
+    color: #047857 !important; /* text-emerald-700 */
+}

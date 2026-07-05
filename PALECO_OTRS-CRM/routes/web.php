@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Auth;
 use App\Enums\UserRoles;
 use App\Http\Controllers\Cwd\CwdDashboardController;
 use App\Http\Controllers\Admin\DepartmentController;
+use App\Http\Controllers\Admin\TeamController;
 use App\Http\Controllers\Admin\UserController;
 use App\Models\User;
 
@@ -64,7 +65,7 @@ Route::middleware('auth')->group(function() {
         });
 
         Route::prefix('teams')->group(function() {
-            
+            Route::get('/', [TeamController::class, 'index'])->name('admin.teams');
         });
     });
 

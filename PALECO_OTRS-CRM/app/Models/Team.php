@@ -65,7 +65,8 @@ class Team extends Model
 
     public function scopeFilter(Builder $query, ?string $filter): Builder
     {
-        if ($filter === 'all') {
+        // Check if the filter is completely empty OR set to 'all'
+        if (empty($filter) || $filter === 'all') {
             return $query;
         }
 
