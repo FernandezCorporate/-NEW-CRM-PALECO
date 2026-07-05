@@ -1,3 +1,4 @@
+@use('App\Enums\UserRoles')
 @extends('admin.base.base')
 
 @section('title', 'User Management')
@@ -182,12 +183,11 @@
                             @if($user->is_active)
                                 <span class="bg-emerald-50 border border-emerald-200 text-emerald-600 text-xs font-semibold px-2.5 py-1 rounded-full">Active</span>
                             @else
-                                <span class="bg-rose-50 border border-rose-200 text-rose-600 text-xs font-semibold px-2.5 py-1 rounded-full">Deactivated</span>
+                                <span class="bg-amber-50 border border-amber-200 text-amber-700 text-xs font-semibold px-2.5 py-1 rounded-full">Deactivated</span>
                             @endif
                         </td>
                         
                         <td class="px-6 py-4 text-right">
-                            <!-- Removed opacity-0 and group-hover classes, buttons always visible -->
                             <div class="flex items-center justify-end gap-2">
                                 
                                 <!-- View Icon -->
@@ -205,15 +205,32 @@
                                     </svg>
                                 </a>
                                 
-                                <!-- Deactivate Icon -->
-                                <form action="#" class="inline-block">
-                                    @csrf
-                                    <button type="submit" class="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors" data-loading-text="" title="Deactivate User">
+                                <!-- Status Toggle (Deactivate/Reactivate) -->
+                                @if(auth()->id() === $user->id || $user->role === UserRoles::ADMIN)
+                                    <!-- Disabled State for Current Authenticated User -->
+                                    <button type="button" disabled class="p-2 text-slate-300 cursor-not-allowed rounded-lg" title="{{ auth()->id() === $user->id ? 'Cannot modify your own account status' : 'Cannot modify account status of other admin' }}">
                                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7a4 4 0 11-8 0 4 4 0 018 0zM9 14a6 6 0 00-6 6v1h12v-1a6 6 0 00-6-6zM21 12l-6 6M21 18l-6-6"></path>
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"></path>
                                         </svg>
                                     </button>
-                                </form>
+                                @else
+                                    @if($user->is_active)
+                                        <!-- Render Deactivate Link (Routes to Confirmation Prompt) -->
+                                        <a href="{{ route('admin.users.deactivateConfirm', ['user' => $user]) }}" class="action-link p-2 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors" data-loading-text="" title="Deactivate User">
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"></path>
+                                            </svg>
+                                        </a>
+                                    @else
+                                        <!-- Render Reactivate Form (Direct Action) -->
+                                        <a href="{{ route('admin.users.reactivateConfirm', ['user' => $user]) }}" class="action-link p-2 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors" data-loading-text="" title="Reactivate User">
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"></path>
+                                            </svg>
+                                        </a>
+                                    @endif
+                                @endif
+
                             </div>
                         </td>
                     </tr>

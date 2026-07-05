@@ -26,4 +26,24 @@ class UserPolicy
     {
         return $user->role === UserRoles::ADMIN;
     }
+
+    public function deactivateConfirm(User $user, User $targetUser): bool
+    {
+        return $user->role === UserRoles::ADMIN && $targetUser->role !== UserRoles::ADMIN;
+    }
+
+    public function deactivate(User $user, User $targetUser): bool
+    {
+        return $user->role === UserRoles::ADMIN && $targetUser->role !== UserRoles::ADMIN;
+    }
+
+    public function reactivateConfirm(User $user, User $targetUser): bool
+    {
+        return $user->role === UserRoles::ADMIN && $targetUser->role !== UserRoles::ADMIN;
+    }
+
+    public function reactivate(User $user, User $targetUser): bool
+    {
+        return $user->role === UserRoles::ADMIN && $targetUser->role !== UserRoles::ADMIN;
+    }
 }

@@ -98,7 +98,7 @@ class DepartmentController extends Controller
 
         $title = $isForceDelete ? 'Permanently Delete Department' : 'Archive Department';
         
-        return view('admin.pages.departmentDeleteConfirm', compact('dept', 'title', 'isForceDelete'));
+        return view('admin.prompts.departmentDeleteConfirm', compact('dept', 'title', 'isForceDelete'));
     }
 
     public function archive(Department $dept)

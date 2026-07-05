@@ -19,7 +19,7 @@ use Spatie\Activitylog\Support\LogOptions;
 use App\Models\Department;
 
 #[Fillable(['username', 'first_name', 'middle_name', 'last_name', 'name_ext', 
-'email', 'contact', 'role', 'password', 'department_id', 'last_login', 'locked_until'])]
+'email', 'contact', 'role', 'password', 'department_id', 'last_login', 'locked_until', 'is_active'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
@@ -146,13 +146,27 @@ class User extends Authenticatable
     }
 
     public function getActivitylogOptions(): LogOptions
-    {
-        return LogOptions::defaults()
-            ->useLogName('Users')
-            ->logOnly(['username', 'first_name', 'middle_name', 'last_name', 'name_ext', 
-                        'email', 'contact', 'role', 'password', 'department_id'])
-            ->setDescriptionForEvent(function(string $eventName) {
-                return "{$this->username} account has been {$eventName}";
-            });
-    }
+        {
+            return LogOptions::defaults()
+                ->useLogName('Users')
+                ->logOnly([
+                    'username', 'first_name', 'middle_name', 'last_name', 'name_ext', 
+                    'email', 'contact', 'role', 'password', 'department_id', 
+                    'is_active' // 1. Added back to the array so Spatie watches it
+                ])
+                ->logOnlyDirty()
+                ->setDescriptionForEvent(function(string $eventName) {
+                    
+                    // 2. Intercept the 'updated' event specifically
+                    if ($eventName === 'updated' && $this->wasChanged('is_active')) {
+                        // 3. Check the current (new) state of the boolean
+                        return $this->is_active 
+                            ? "{$this->username} account has been reactivated" 
+                            : "{$this->username} account has been deactivated";
+                    }
+
+                    // 4. Default description for creates, deletes, or standard profile edits
+                    return "{$this->username} account has been {$eventName}";
+                });
+        }
 }

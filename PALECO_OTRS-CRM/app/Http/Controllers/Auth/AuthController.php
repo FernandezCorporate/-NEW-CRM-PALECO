@@ -26,8 +26,12 @@ class AuthController extends Controller
         $username = strtolower((string)request()->input('username'));
         $user = User::query()->where('username', $username)->first();
 
+        // Check if the account is already locked from a previous session
         if ($user && $user->locked_until) {
             if ($user->locked_until > now()) {
+                
+                // Log attempts made while the account is already in a lockout state
+                LoginEvents::dispatch(NonModelActions::LOGIN_FAILED, $user);
 
                 $minutesLeft = max(1, ceil(now()->diffInMinutes($user->locked_until)));
 
@@ -37,25 +41,35 @@ class AuthController extends Controller
                     ->onlyInput('username');
             }
 
+            // Lockout expired, remove the lock
             $user->updateQuietly(['locked_until' => null]);
         }
 
         $rateLimitKey = 'login:' . sha1($username . '|' . request()->ip());
+        
+        // Handle 5th failed attempt and apply rate limiting
         if (RateLimiter::tooManyAttempts($rateLimitKey, 4)){            
             if ($user) {
                 if (!$user->locked_until) {
-                $user->updateQuietly([
-                    'locked_until' => now()->addMinutes(15)
-                ]);
+                    $user->updateQuietly([
+                        'locked_until' => now()->addMinutes(15)
+                    ]);
 
-                $minutesLeft = max(1, ceil(now()->diffInMinutes($user->locked_until)));
+                    // Log the exact attempt that triggered the 15-minute lockout
+                    LoginEvents::dispatch(NonModelActions::LOGIN_FAILED, $user);
 
-                return back()
-                    ->withErrors(['error' => "This account is temporarily locked due to multiple failed attempts. 
-                                Please wait {$minutesLeft} minute(s) or contact system administrator."])
-                    ->onlyInput('username');
+                    $minutesLeft = max(1, ceil(now()->diffInMinutes($user->locked_until)));
+
+                    return back()
+                        ->withErrors(['error' => "This account is temporarily locked due to multiple failed attempts. 
+                                    Please wait {$minutesLeft} minute(s) or contact system administrator."])
+                        ->onlyInput('username');
                 }
             }
+            
+            // Log rate-limited attempts (e.g., from same IP but non-existent user)
+            LoginEvents::dispatch(NonModelActions::LOGIN_FAILED, $user);
+            
             $availableAgain = RateLimiter::availableIn($rateLimitKey);
             return back()
                 ->withErrors(['error' => "Too many attempts. Try again after {$availableAgain} seconds."])
@@ -96,6 +110,8 @@ class AuthController extends Controller
 
             return redirect()->intended($landingRoute);
         }
+        
+        // Handle attempts 1 through 4
         RateLimiter::hit($rateLimitKey, 60);
 
         LoginEvents::dispatch(NonModelActions::LOGIN_FAILED, null);

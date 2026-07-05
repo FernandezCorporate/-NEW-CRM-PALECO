@@ -98,12 +98,38 @@ class UserController extends Controller
 
         return redirect()->route('admin.users')->with('success', 'Users updated successfully.');
     }
-    
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(User $user)
+
+    public function deactivateConfirm(User $user)
     {
-        //
+        Gate::authorize('deactivateConfirm', $user);
+
+        return view('admin.prompts.userDeactivateConfirm', ['userAccount' => $user]);
+    }
+
+    public function deactivate(User $user)
+    {
+        Gate::authorize('deactivate', $user);
+
+        $user->is_active = false;
+        $user->save();
+
+        return redirect()->route('admin.users')->with('success', 'Account deactivated successfully.');
+    }
+
+    public function reactivateConfirm(User $user)
+    {
+        Gate::authorize('reactivateConfirm', $user);
+
+        return view('admin.prompts.userReactivateConfirm', ['userAccount' => $user]);
+    }
+
+    public function reactivate(User $user)
+    {
+        Gate::authorize('reactivate', $user);
+
+        $user->is_active = true;
+        $user->save();
+
+        return redirect()->route('admin.users')->with('success', 'Account reactivated successfully.');
     }
 }

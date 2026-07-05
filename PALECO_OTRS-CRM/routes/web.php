@@ -34,8 +34,14 @@ Route::middleware('auth')->group(function() {
             Route::get('/create', [UserController::class, 'userForm'])->name('admin.users.createForm');
             Route::post('/', [UserController::class, 'store'])->name('admin.users.store');
 
-            Route::get('/{user}/edit', [UserController::class, 'userForm'])->name('admin.users.editForm');
+            Route::get('/{user}/edit', [UserController::class, 'userForm'])->name('admin.users.editForm')->whereUlid('user');
             Route::put('/{user}', [UserController::class, 'update'])->name('admin.users.update')->whereUlid('user');
+
+            Route::get('/{user}/deactivate', [UserController::class, 'deactivateConfirm'])->name('admin.users.deactivateConfirm')->whereUlid('user');
+            Route::patch('/{user}/deactivate', [UserController::class, 'deactivate'])->name('admin.users.deactivate')->whereUlid('user');
+
+            Route::get('/{user}/reactivate', [UserController::class, 'reactivateConfirm'])->name('admin.users.reactivateConfirm')->whereUlid('user');
+            Route::patch('/{user}/reactivate', [UserController::class, 'reactivate'])->name('admin.users.reactivate')->whereUlid('user');          
         });
 
         Route::prefix('departments')->group(function() {
@@ -51,7 +57,7 @@ Route::middleware('auth')->group(function() {
             Route::get('/{dept}/archive', [DepartmentController::class, 'deleteConfirm'])->name('admin.departments.deleteConfirm')->whereNumber('dept');
             Route::delete('/{dept}', [DepartmentController::class, 'archive'])->name('admin.departments.archive')->whereNumber('dept');
 
-            Route::patch('{dept}/restore', [DepartmentController::class, 'restore'])->name('admin.departments.restore')->whereNumber('dept')->withTrashed();
+            Route::patch('/{dept}/restore', [DepartmentController::class, 'restore'])->name('admin.departments.restore')->whereNumber('dept')->withTrashed();
 
             Route::get('/{dept}/delete', [DepartmentController::class, 'deleteConfirm'])->name('admin.departments.forceDeleteConfirm')->whereNumber('dept')->withTrashed();
             Route::delete('/{dept}/force-delete', [DepartmentController::class, 'destroy'])->name('admin.departments.destroy')->whereNumber('dept')->withTrashed();
