@@ -10,6 +10,8 @@ use Illuminate\Database\Eloquent\Builder;
 use Spatie\Activitylog\Models\Concerns\LogsActivity;
 use Spatie\Activitylog\Support\LogOptions;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Models\Team;
+use App\Models\User;
 
 #[Fillable(['dept_name', 'dept_desc'])]
 class Department extends Model
@@ -27,6 +29,11 @@ class Department extends Model
     public function users(): HasMany
     {
         return $this->hasMany(User::class, 'department_id');
+    }
+
+    public function teams(): HasMany
+    {
+        return $this->hasMany(Team::class, 'department_id');
     }
 
     public function scopeSearch(Builder $query, ?string $term): Builder

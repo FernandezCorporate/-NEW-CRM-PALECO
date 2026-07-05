@@ -17,6 +17,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Spatie\Activitylog\Models\Concerns\LogsActivity;
 use Spatie\Activitylog\Support\LogOptions;
 use App\Models\Department;
+use App\Models\Team;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 #[Fillable(['username', 'first_name', 'middle_name', 'last_name', 'name_ext', 
 'email', 'contact', 'role', 'password', 'department_id', 'last_login', 'locked_until', 'is_active'])]
@@ -46,6 +48,13 @@ class User extends Authenticatable
     public function department(): BelongsTo
     {
         return $this->belongsTo(Department::class);
+    }
+
+    public function teams(): BelongsToMany
+    {
+        return $this->belongsToMany(Team::class, 'team_members')
+            ->withPivot('team_role')
+            ->withTimestamps();
     }
 
     protected function fullName(): Attribute

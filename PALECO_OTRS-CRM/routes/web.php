@@ -62,6 +62,10 @@ Route::middleware('auth')->group(function() {
             Route::get('/{dept}/delete', [DepartmentController::class, 'deleteConfirm'])->name('admin.departments.forceDeleteConfirm')->whereNumber('dept')->withTrashed();
             Route::delete('/{dept}/force-delete', [DepartmentController::class, 'destroy'])->name('admin.departments.destroy')->whereNumber('dept')->withTrashed();
         });
+
+        Route::prefix('teams')->group(function() {
+            
+        });
     });
 
     Route::prefix('cwd')->middleware('can:access-cwd_officer')->group(function() {
