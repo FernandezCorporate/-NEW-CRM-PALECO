@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Enums\UserRoles;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Department;
 use App\Http\Requests\Admin\Department\StoreDepartmentRequest;
 use App\Http\Requests\Admin\Department\UpdateDepartmentRequest;
+use App\Models\User;
 use Illuminate\Support\Facades\Gate;
 
 class DepartmentController extends Controller
@@ -15,7 +17,15 @@ class DepartmentController extends Controller
     {
         Gate::authorize('viewAny', Department::class);
 
-        $departments = Department::query();
+        $departments = Department::query()->withCount([
+            'users as active_users_count' => function ($query) {
+                $query->where('is_active', true)->where('role', UserRoles::FIELD_PERSONNEL);
+            },
+            'users as active_foremen_count' => function ($query) {
+                $query->where('is_active', true)->where('role', UserRoles::FOREMAN);
+            },
+            'teams as active_team_count'
+        ]);
 
         if ($request->filled('search')) {
             $departments = $departments->search($request->search);
@@ -42,7 +52,10 @@ class DepartmentController extends Controller
     {
         Gate::authorize('view', $dept);
 
-        return view('admin.pages.departmentDetails', compact('dept'));
+        $assignedTeams = $dept->teams()->withCount('members')->paginate(5);
+        $personnelCount = $dept->users()->where('is_active', true)->where('role', UserRoles::FIELD_PERSONNEL)->count();
+
+        return view('admin.pages.departmentDetails', compact('assignedTeams', 'dept', 'personnelCount'));
     }
 
     public function departmentForm(?Department $dept = null)
