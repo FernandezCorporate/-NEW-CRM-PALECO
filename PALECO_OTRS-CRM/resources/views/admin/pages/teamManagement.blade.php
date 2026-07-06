@@ -67,7 +67,7 @@
                 
                 @if(request()->filled('filter') && request('filter') !== 'all')
                     <a href="{{ route('admin.teams', request()->except('filter')) }}" class="action-link bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 px-4 py-2.5 rounded-lg text-sm font-medium shadow-sm transition-colors" data-loading-text="Clearing...">
-                        Reset Dept
+                        Reset Filters
                     </a>
                 @endif
             </div>
@@ -104,9 +104,6 @@
                             <tr class="hover:bg-slate-50 transition-colors">
                                 <td class="p-4">
                                     <div class="font-bold text-slate-900">{{ $team->team_name }}</div>
-                                    @if($team->trashed())
-                                        <span class="inline-block mt-1 text-[10px] font-bold bg-slate-100 text-slate-500 px-2 py-0.5 rounded uppercase tracking-wide">Archived</span>
-                                    @endif
                                 </td>
                                 <td class="p-4 text-sm text-slate-700">
                                     {{ $team->department->dept_name ?? 'Unassigned' }}
@@ -122,20 +119,36 @@
                                         {{ $team->members_count }}
                                     </span>
                                 </td>
-                                <td class="p-4 text-right">
-                                    <div class="flex justify-end gap-3">
+                                <td class="p-4">
+                                    <div class="flex items-center justify-end gap-2">
                                         <!-- View -->
-                                        <a href="#" class="text-slate-400 hover:text-blue-600 transition-colors" title="View">
+                                        <a href="#" class="action-link p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="View Team Details">
                                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
                                         </a>
-                                        <!-- Edit -->
-                                        <a href="{{ route('admin.teams.editForm', ['team' => $team]) }}" class="text-slate-400 hover:text-emerald-600 transition-colors" title="Edit">
-                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
-                                        </a>
-                                        <!-- Delete (Soft Delete) -->
-                                        <a href="#" class="text-slate-400 hover:text-red-500 transition-colors" title="Delete">
-                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                                        </a>
+
+                                        @if($team->trashed())
+                                            <!-- Restore -->
+                                            <form action="#" method="POST" class="inline-block">
+                                                @csrf
+                                                @method('PATCH')
+                                                <button type="submit" class="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors" title="Restore Team">
+                                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"></path></svg>
+                                                </button>
+                                            </form>
+                                            <!-- Force Delete -->
+                                            <a href="#" class="action-link p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors" title="Permanently Delete Team">
+                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                            </a>
+                                        @else
+                                            <!-- Edit -->
+                                            <a href="{{ route('admin.teams.editForm', ['team' => $team, 'source' => 'list']) }}" class="action-link p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors" title="Edit Team">
+                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                                            </a>
+                                            <!-- Archive -->
+                                            <a href="{{ route('admin.teams.deleteConfirm', ['team' => $team, 'source' => 'list']) }}" class="action-link p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors" title="Archive Team">
+                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path></svg>
+                                            </a>
+                                        @endif
                                     </div>
                                 </td>
                             </tr>
@@ -149,19 +162,45 @@
         <div id="card-view-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6 hidden">
             @foreach($teams as $team)
                 <div class="bg-white border border-slate-200 rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow flex flex-col h-full relative">
-                    
-                    @if($team->trashed())
-                        <div class="absolute top-4 right-4">
-                            <span class="inline-block text-[10px] font-bold bg-slate-100 text-slate-500 px-2 py-0.5 rounded uppercase tracking-wide">Archived</span>
-                        </div>
-                    @endif
 
-                    <div class="flex justify-between items-start mb-4">
-                        <div class="pr-16">
-                            <h3 class="text-lg font-bold text-slate-900">{{ $team->team_name }}</h3>
+                    <!-- Header & Actions -->
+                    <div class="flex justify-between items-start mb-4 gap-4">
+                        <div class="pr-2">
+                            <h3 class="text-lg font-bold text-slate-900 leading-tight">{{ $team->team_name }}</h3>
                             <span class="inline-block mt-1 text-xs font-medium bg-slate-100 text-slate-600 px-2 py-0.5 rounded border border-slate-200">
                                 {{ $team->department->dept_name ?? 'Unassigned' }}
                             </span>
+                        </div>
+                        
+                        <div class="flex items-center gap-1 shrink-0 bg-slate-50 p-1 rounded-lg border border-slate-100">
+                            <!-- View -->
+                            <a href="#" class="action-link p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-100 rounded-md transition-colors" title="View Team Details">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                            </a>
+                            
+                            @if($team->trashed())
+                                <!-- Restore -->
+                                <form action="#" method="POST" class="inline-block">
+                                    @csrf
+                                    @method('PATCH')
+                                    <button type="submit" class="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-100 rounded-md transition-colors" title="Restore Team">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"></path></svg>
+                                    </button>
+                                </form>
+                                <!-- Force Delete -->
+                                <a href="#" class="action-link p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-100 rounded-md transition-colors" title="Permanently Delete Team">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                </a>
+                            @else
+                                <!-- Edit -->
+                                <a href="{{ route('admin.teams.editForm', ['team' => $team, 'source' => 'card']) }}" class="action-link p-1.5 text-slate-400 hover:text-emerald-600 hover:bg-emerald-100 rounded-md transition-colors" title="Edit Team">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                                </a>
+                                <!-- Archive -->
+                                <a href="{{ route('admin.teams.deleteConfirm', ['team' => $team, 'source' => 'card']) }}" class="action-link p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-100 rounded-md transition-colors" title="Archive Team">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path></svg>
+                                </a>
+                            @endif
                         </div>
                     </div>
                     
@@ -171,7 +210,7 @@
                         <p class="text-sm text-slate-400 italic mb-6 flex-grow">No description provided.</p>
                     @endif
 
-                    <div class="pt-4 border-t border-slate-100 flex justify-between items-center text-sm text-slate-600 mb-4">
+                    <div class="pt-4 border-t border-slate-100 flex justify-between items-center text-sm text-slate-600">
                         <div class="flex items-center gap-1.5">
                             <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                             {{ $team->shift_start->format('h:i A') }} - {{ $team->shift_end->format('h:i A') }}
@@ -182,17 +221,6 @@
                         </div>
                     </div>
 
-                    <div class="pt-4 border-t border-slate-100 flex items-center justify-end gap-2">
-                        <a href="#" class="text-slate-400 hover:text-blue-600 transition-colors p-1" title="View">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
-                        </a>
-                        <a href="{{ route('admin.teams.editForm', ['team' => $team]) }}" class="text-slate-400 hover:text-emerald-600 transition-colors p-1" title="Edit">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
-                        </a>
-                        <a href="#" class="text-slate-400 hover:text-red-500 transition-colors p-1" title="Delete">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                        </a>
-                    </div>
                 </div>
             @endforeach
         </div>

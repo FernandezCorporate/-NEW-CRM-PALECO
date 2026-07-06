@@ -71,8 +71,11 @@ Route::middleware('auth')->group(function() {
             Route::get('/create', [TeamController::class, 'teamForm'])->name('admin.teams.createForm');
             Route::post('/', [TeamController::class, 'store'])->name('admin.teams.store');
 
-            Route::get('/teams/form/{team}', [TeamController::class, 'teamForm'])->name('admin.teams.editForm'); 
-            Route::put('/teams/{team}', [TeamController::class, 'update'])->name('admin.teams.update');
+            Route::get('/teams/form/{team}', [TeamController::class, 'teamForm'])->name('admin.teams.editForm')->whereUlid('team'); 
+            Route::put('/teams/{team}', [TeamController::class, 'update'])->name('admin.teams.update')->whereUlid('team');
+
+            Route::get('/{team}/delete', [TeamController::class, 'deleteConfirm'])->name('admin.teams.deleteConfirm')->whereUlid('team');
+            Route::delete('/{team}', [TeamController::class, 'archive'])->name('admin.teams.archive')->whereUlid('team');
         });
     });
 

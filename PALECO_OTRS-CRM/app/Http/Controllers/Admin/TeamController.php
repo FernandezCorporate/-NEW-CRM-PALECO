@@ -125,4 +125,20 @@ class TeamController extends Controller
 
         return redirect()->route('admin.teams')->with('success', 'Team updated successfully.');
     }
+
+    public function deleteConfirm(Request $request, Team $team)
+    {
+        Gate::authorize('deleteConfirm', $team);
+
+        return view('admin.prompts.teamDeleteConfirm', compact('team'));
+    }
+
+    public function archive(Team $team)
+    {
+        Gate::authorize('archive', $team);
+
+        $team->delete();
+
+        return redirect()->route('admin.teams')->with('success', 'Team archived successfully.');
+    }
 }

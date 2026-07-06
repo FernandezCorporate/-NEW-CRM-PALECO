@@ -111,7 +111,13 @@ class Team extends Model
                 ])
                 ->logOnlyDirty()
                 ->setDescriptionForEvent(function(string $eventName) {
-                    return "{$this->team_name} (team) has been {$eventName}";
+                    $action = match($eventName) {
+                        'deleted'      => $this->isForceDeleting() ? 'permanently deleted' : 'archived',
+                        'restored'     => 'restored',
+                        default        => $eventName,
+                    };
+
+                    return "{$this->team_name} has been {$action}";
                 });
         }
 }

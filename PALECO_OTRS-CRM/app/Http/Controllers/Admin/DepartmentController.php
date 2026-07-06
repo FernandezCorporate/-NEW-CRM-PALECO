@@ -103,11 +103,7 @@ class DepartmentController extends Controller
         $dept = $isForceDelete ? Department::onlyTrashed()->findOrFail($dept->id) : $dept;
 
         // Route to the specific policy method based on the action
-        if ($isForceDelete) {
-            Gate::authorize('forceDelete', $dept);
-        } else {
-            Gate::authorize('deleteConfirm', $dept);
-        }
+        Gate::authorize('deleteConfirm', $dept);
 
         $title = $isForceDelete ? 'Permanently Delete Department' : 'Archive Department';
         
