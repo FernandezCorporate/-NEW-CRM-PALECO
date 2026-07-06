@@ -6,6 +6,7 @@ use App\Enums\TeamMemberRoles;
 use App\Enums\UserRoles;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\Team\StoreTeamRequest;
+use App\Http\Requests\Admin\Team\UpdateTeamRequest;
 use App\Models\Department;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -19,38 +20,37 @@ class TeamController extends Controller
     {
         Gate::authorize('viewAny', Team::class);
 
-        // Fetch departments for the filter dropdown
         $departments = Department::whereNull('deleted_at')->orderBy('dept_name')->pluck('dept_name', 'id');
 
-        // Start the base query with relationships
         $teams = Team::query()
             ->with('department')
             ->withCount('members');
 
-        // Apply Search
         if ($request->filled('search')) {
             $teams = $teams->search($request->search);
         }
 
-        // Apply Filter
         if ($request->filled('filter')) {
             $teams = $teams->filter($request->filter);
         }
 
-        // Apply Sort OR Default to Newest
+        // Handle Active vs Archived filtering
+        if ($request->input('status') === 'archived') {
+            $teams = $teams->onlyTrashed();
+        }
+
         if ($request->filled('sort')) {
             $teams = $teams->sort($request->sort);
         } else {
-            $teams = $teams->latest(); // Default sorting when the page first loads
+            $teams = $teams->latest(); 
         }
 
-        // Paginate
         $teams = $teams->paginate(9)->withQueryString();
 
         return view('admin.pages.teamManagement', compact('teams', 'departments'));
     }
 
-    public function teamForm(?Team $team)
+    public function teamForm(?Team $team = null)
     {
         if ($team && $team->exists) {
             Gate::authorize('teamForm', [Team::class, $team]);
@@ -74,29 +74,55 @@ class TeamController extends Controller
     {
         Gate::authorize('create', Team::class);
 
-        // 1. Separate the base Team details from the dynamic members array
         $teamDetails = $request->safe()->except('members');
         $assignedMembers = $request->validated('members', []);
 
-        // 2. Wrap the multi-table insertions in an ACID-compliant transaction
         DB::transaction(function () use ($teamDetails, $assignedMembers) {
-            
-            // Create the parent Team record
             $team = Team::create($teamDetails);
 
-            // Format and sync the pivot data if members were added
             if (!empty($assignedMembers)) {
                 $formattedMembers = collect($assignedMembers)->mapWithKeys(function ($member) {
                     return [
                         $member['user_id'] => ['team_role' => $member['team_role']]
                     ];
                 });
-
-                // sync() prevents duplicates and strictly mirrors the provided array
                 $team->members()->sync($formattedMembers);
             }
         });
 
         return redirect()->route('admin.teams')->with('success', 'Team and members created successfully.');
+    }
+
+    public function update(UpdateTeamRequest $request, Team $team)
+    {
+        Gate::authorize('update', $team);
+
+        $teamDetails = $request->safe()->except('members');
+        $assignedMembers = $request->validated('members', []);
+
+        DB::transaction(function () use ($team, $teamDetails, $assignedMembers) {
+            $team->update($teamDetails);
+
+            $formattedMembers = collect($assignedMembers)->mapWithKeys(function ($member) {
+                return [
+                    $member['user_id'] => ['team_role' => $member['team_role']]
+                ];
+            });
+
+            $changes = $team->members()->sync($formattedMembers);
+
+            $pivotChanged = count($changes['attached']) > 0 || count($changes['detached']) > 0 || count($changes['updated']) > 0;
+
+            // 5. If the roster changed, manually write an activity log
+            if ($pivotChanged) {
+                activity()
+                    ->useLog('Users') // Matches your Model's log name
+                    ->performedOn($team)
+                    ->event('updated')
+                    ->log("{$team->team_name} (team) roster has been modified");
+            }
+        });
+
+        return redirect()->route('admin.teams')->with('success', 'Team updated successfully.');
     }
 }

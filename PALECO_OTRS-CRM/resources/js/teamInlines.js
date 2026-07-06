@@ -41,6 +41,29 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // --- INITIALIZE PRE-RENDERED ROWS ---
+    const existingSelects = container.querySelectorAll('.tom-select-dynamic');
+    existingSelects.forEach((selectElement) => {
+        const ts = new TomSelect(selectElement, {
+            create: false,
+            maxOptions: null,
+            // REMOVED: dropdownParent: 'body'
+            onChange: function() {
+                syncDisabledOptions();
+            }
+        });
+        tsInstances.push(ts);
+    });
+
+    const existingRows = container.querySelectorAll('.member-row');
+    if (existingRows.length > 0) {
+        memberIndex = existingRows.length;
+    }
+    
+    toggleEmptyState();
+    syncDisabledOptions();
+    // -------------------------------------------------------------
+
     addBtn.addEventListener('click', () => {
         const clone = template.content.cloneNode(true);
         
@@ -49,18 +72,17 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         const selectElement = clone.querySelector('.tom-select-dynamic');
-        
         container.appendChild(clone);
 
         if (selectElement) {
             const ts = new TomSelect(selectElement, {
                 create: false,
                 maxOptions: null,
+                // REMOVED: dropdownParent: 'body'
                 onChange: function() {
                     syncDisabledOptions();
                 }
             });
-            
             tsInstances.push(ts);
         }
 

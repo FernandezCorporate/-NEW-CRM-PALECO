@@ -70,6 +70,9 @@ Route::middleware('auth')->group(function() {
 
             Route::get('/create', [TeamController::class, 'teamForm'])->name('admin.teams.createForm');
             Route::post('/', [TeamController::class, 'store'])->name('admin.teams.store');
+
+            Route::get('/teams/form/{team}', [TeamController::class, 'teamForm'])->name('admin.teams.editForm'); 
+            Route::put('/teams/{team}', [TeamController::class, 'update'])->name('admin.teams.update');
         });
     });
 
