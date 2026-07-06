@@ -128,7 +128,7 @@
 
                                         @if($team->trashed())
                                             <!-- Restore -->
-                                            <form action="#" method="POST" class="inline-block">
+                                            <form action="{{ route('admin.teams.restore', ['team' => $team]) }}" method="POST" class="inline-block">
                                                 @csrf
                                                 @method('PATCH')
                                                 <button type="submit" class="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors" title="Restore Team">
@@ -180,7 +180,7 @@
                             
                             @if($team->trashed())
                                 <!-- Restore -->
-                                <form action="#" method="POST" class="inline-block">
+                                <form action="{{ route('admin.teams.restore', ['team' => $team]) }}" method="POST" class="inline-block">
                                     @csrf
                                     @method('PATCH')
                                     <button type="submit" class="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-100 rounded-md transition-colors" title="Restore Team">

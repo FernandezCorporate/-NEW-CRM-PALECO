@@ -20,7 +20,7 @@ class UpdateTeamRequest extends FormRequest
         $team = $this->route('team')->id;
 
         return [
-            'team_name' => ['required', 'string', 'max:255', Rule::unique('teams', 'team_name')->ignore($team)],
+            'team_name' => ['required', 'string', 'max:255', Rule::unique('teams', 'team_name')->whereNull('deleted_at')->ignore($team)],
             'team_desc' => ['nullable', 'string', 'max:255'],
             'shift_start' => ['required', 'date_format:H:i'],
             'shift_end' => ['required', 'date_format:H:i'],

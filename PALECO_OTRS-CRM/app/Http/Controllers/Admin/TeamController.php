@@ -141,4 +141,21 @@ class TeamController extends Controller
 
         return redirect()->route('admin.teams')->with('success', 'Team archived successfully.');
     }
+
+    public function restore($id)
+    {
+        $team = Team::onlyTrashed()->findOrFail($id);
+
+        Gate::authorize('restore', $team);
+
+        $nameExists = Team::where('team_name', $team->team_name)->exists();
+
+        if ($nameExists) {
+            return redirect()->route('admin.teams')->with('error', 'Cannot restore team. An active team with the same name already exists.');
+        }
+
+        $team->restore();
+
+        return redirect()->route('admin.teams')->with('success', 'Team restored successfully.');
+    }
 }

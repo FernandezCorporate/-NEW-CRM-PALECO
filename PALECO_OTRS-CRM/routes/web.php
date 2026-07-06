@@ -76,6 +76,8 @@ Route::middleware('auth')->group(function() {
 
             Route::get('/{team}/delete', [TeamController::class, 'deleteConfirm'])->name('admin.teams.deleteConfirm')->whereUlid('team');
             Route::delete('/{team}', [TeamController::class, 'archive'])->name('admin.teams.archive')->whereUlid('team');
+
+            Route::patch('/{team}/restore', [TeamController::class, 'restore'])->name('admin.teams.restore')->whereUlid('team');
         });
     });
 
