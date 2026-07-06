@@ -198,37 +198,52 @@
                                     </svg>
                                 </a>
 
-                                <!-- Edit Icon -->
-                                <a href="{{ route('admin.users.editForm', ['user' => $user]) }}" class="action-link p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors" data-loading-text="" title="Edit User">
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path>
-                                    </svg>
-                                </a>
-                                
-                                <!-- Status Toggle (Deactivate/Reactivate) -->
-                                @if(auth()->id() === $user->id || $user->role === UserRoles::ADMIN)
-                                    <!-- Disabled State for Current Authenticated User -->
-                                    <button type="button" disabled class="p-2 text-slate-300 cursor-not-allowed rounded-lg" title="{{ auth()->id() === $user->id ? 'Cannot modify your own account status' : 'Cannot modify account status of other admin' }}">
+                                <!-- Edit Icon (Policy Protected) -->
+                                @can('update', $user)
+                                    <a href="{{ route('admin.users.editForm', ['user' => $user]) }}" class="action-link p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors" data-loading-text="" title="Edit User">
                                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"></path>
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path>
+                                        </svg>
+                                    </a>
+                                @else
+                                    <button type="button" disabled class="p-2 text-slate-300 cursor-not-allowed rounded-lg" title="Cannot edit an admin account">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path>
                                         </svg>
                                     </button>
-                                @else
-                                    @if($user->is_active)
-                                        <!-- Render Deactivate Link (Routes to Confirmation Prompt) -->
+                                @endcan
+                                
+                                <!-- Status Toggle (Deactivate/Reactivate) (Policy Protected) -->
+                                @if($user->is_active)
+                                    @can('deactivateConfirm', $user)
                                         <a href="{{ route('admin.users.deactivateConfirm', ['user' => $user]) }}" class="action-link p-2 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors" data-loading-text="" title="Deactivate User">
                                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"></path>
                                             </svg>
                                         </a>
                                     @else
-                                        <!-- Render Reactivate Form (Direct Action) -->
+                                        <!-- Disabled State for Admin Accounts -->
+                                        <button type="button" disabled class="p-2 text-slate-300 cursor-not-allowed rounded-lg" title="Cannot modify an admin account status">
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"></path>
+                                            </svg>
+                                        </button>
+                                    @endcan
+                                @else
+                                    @can('reactivateConfirm', $user)
                                         <a href="{{ route('admin.users.reactivateConfirm', ['user' => $user]) }}" class="action-link p-2 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors" data-loading-text="" title="Reactivate User">
                                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"></path>
                                             </svg>
                                         </a>
-                                    @endif
+                                    @else
+                                        <!-- Disabled State for Admin Accounts -->
+                                        <button type="button" disabled class="p-2 text-slate-300 cursor-not-allowed rounded-lg" title="Cannot modify an admin account status">
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"></path>
+                                            </svg>
+                                        </button>
+                                    @endcan
                                 @endif
 
                             </div>

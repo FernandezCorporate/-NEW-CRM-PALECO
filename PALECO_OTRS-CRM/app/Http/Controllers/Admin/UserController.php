@@ -54,7 +54,13 @@ class UserController extends Controller
 
     public function userForm(?User $user = null)
     {
-        Gate::authorize('userForm', User::class);
+        // Pass the target user to the policy if it exists (Edit Form), 
+        // otherwise authorize the base class (Create Form)
+        if ($user && $user->exists) {
+            Gate::authorize('userForm', [User::class, $user]);
+        } else {
+            Gate::authorize('userForm', User::class);
+        }
 
         $depts = Department::whereNull('deleted_at')->orderBy('dept_name')->pluck('dept_name', 'id');
         $roles = UserRoles::cases();

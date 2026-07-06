@@ -12,9 +12,19 @@ class UserPolicy
         return $user->role === UserRoles::ADMIN;
     }
 
-    public function userForm(User $user):bool
+    public function userForm(User $user, ?User $targetUser = null): bool
     {
-        return $user->role === UserRoles::ADMIN;
+        if ($user->role !== UserRoles::ADMIN) {
+            return false;
+        }
+
+        // If a target user is passed (Editing), ensure they are not an Admin
+        if ($targetUser && $targetUser->exists) {
+            return $targetUser->role !== UserRoles::ADMIN;
+        }
+
+        // If no target user is passed (Creating), allow access
+        return true;
     }
 
     public function create(User $user): bool
@@ -22,9 +32,9 @@ class UserPolicy
         return $user->role === UserRoles::ADMIN;
     }
 
-    public function update(User $user): bool
+    public function update(User $user, User $targetUser): bool
     {
-        return $user->role === UserRoles::ADMIN;
+        return $user->role === UserRoles::ADMIN && $targetUser->role !== UserRoles::ADMIN;
     }
 
     public function deactivateConfirm(User $user, User $targetUser): bool
