@@ -56,7 +56,7 @@ class UserController extends Controller
     {
         Gate::authorize('userForm', User::class);
 
-        $depts = Department::query()->whereNull('deleted_at')->get();
+        $depts = Department::whereNull('deleted_at')->orderBy('dept_name')->pluck('dept_name', 'id');
         $roles = UserRoles::cases();
 
         return view('admin.forms.userForm', compact('user', 'depts', 'roles'));

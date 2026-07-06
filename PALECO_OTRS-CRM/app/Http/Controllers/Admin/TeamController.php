@@ -15,7 +15,7 @@ class TeamController extends Controller
         Gate::authorize('viewAny', Team::class);
 
         // Fetch departments for the filter dropdown
-        $departments = Department::orderBy('dept_name')->pluck('dept_name', 'id');
+        $departments = Department::whereNull('deleted_at')->orderBy('dept_name')->pluck('dept_name', 'id');
 
         // Fetch teams with relationships, scopes, and pagination
         $teams = Team::query()

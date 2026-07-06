@@ -32,7 +32,8 @@
                 <button type="submit" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 rounded-lg text-sm font-medium shadow-sm transition-colors" data-loading-text="Searching...">Search</button>
                 
                 @if(request()->filled('search'))
-                    <a href="{{ route('admin.teams') }}" class="action-link bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 px-4 py-2.5 rounded-lg text-sm font-medium shadow-sm transition-colors" data-loading-text="Clearing...">
+                    <!-- UPDATED: Preserves 'filter' and 'sort' parameters, but removes 'search' -->
+                    <a href="{{ route('admin.teams', request()->except('search')) }}" class="action-link bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 px-4 py-2.5 rounded-lg text-sm font-medium shadow-sm transition-colors" data-loading-text="Clearing...">
                         Clear
                     </a>
                 @endif
@@ -46,9 +47,7 @@
                     <select name="filter" class="tom-select-sync hidden" data-autosubmit="true" autocomplete="off">
                         
                         <!-- Explicit "All" option. It gets marked 'selected' if the URL filter is 'all' OR completely empty -->
-                        <option value="all" {{ request('filter') === 'all' || empty(request('filter')) ? 'selected' : '' }}>
-                            All Departments
-                        </option>
+                        <option value="all" {{ request('filter') === 'all' || empty(request('filter')) ? 'selected' : '' }}></option>
                         
                         @foreach($departments as $id => $name)
                             <option value="{{ $id }}" {{ request('filter') == $id ? 'selected' : '' }}>
@@ -56,7 +55,14 @@
                             </option>
                         @endforeach
                     </select>
-                </div>
+                </div> 
+
+                @if(request()->filled('filter') && request('filter') !== 'all')
+                    <!-- UPDATED: Preserves 'search' and 'sort' parameters, but removes 'filter' -->
+                    <a href="{{ route('admin.teams', request()->except('filter')) }}" class="action-link bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 px-4 py-2.5 rounded-lg text-sm font-medium shadow-sm transition-colors" data-loading-text="Clearing...">
+                        Reset
+                    </a>
+                @endif
 
                 <!-- Sort Dropdown -->
                 <select name="sort" onchange="this.form.submit()" class="border border-slate-200 p-2.5 rounded-lg text-sm bg-white cursor-pointer focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500">
@@ -70,6 +76,18 @@
                 <noscript><button type="submit" class="bg-slate-500 text-white px-4 py-2 rounded">Apply</button></noscript>
             </div>
         </form>
+
+        <!-- View Toggle -->
+        <div class="flex items-center border border-slate-200 rounded-lg overflow-hidden bg-white shadow-sm shrink-0">
+            <button id="list-view-btn" class="px-3 py-2 text-slate-400 hover:text-slate-600 transition-colors focus:outline-none" title="List View">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path></svg>
+            </button>
+            <div class="w-px h-5 bg-slate-200"></div>
+            <button id="card-view-btn" class="px-3 py-2 text-slate-400 hover:text-slate-600 transition-colors focus:outline-none" title="Card View">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
+            </button>
+        </div>
+    </div>
 
         <!-- View Toggle -->
         <div class="flex items-center border border-slate-200 rounded-lg overflow-hidden bg-white shadow-sm shrink-0">

@@ -45,3 +45,27 @@
     background-color: #ecfdf5 !important; /* hover:bg-emerald-50 */
     color: #047857 !important; /* text-emerald-700 */
 }
+
+/* -----------------------------------------
+   Single Select Cursor & Layout Fixes
+----------------------------------------- */
+/* 1. Prevent the typing cursor from wrapping to a new line */
+.ts-wrapper.single .ts-control {
+    flex-wrap: nowrap !important;
+}
+
+/* 2. Ensure long department names truncate gracefully (e.g., "Very Long Depar...") */
+.ts-wrapper.single .ts-control .item {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+    pointer-events: none; /* Prevents text cursor when hovering the item */
+}
+
+/* 3. Override Tailwind's default input widths so the cursor stays tight */
+.ts-wrapper.single .ts-control > input {
+    min-width: 2px !important;
+    flex-shrink: 0;
+    margin: 0 !important;
+}
