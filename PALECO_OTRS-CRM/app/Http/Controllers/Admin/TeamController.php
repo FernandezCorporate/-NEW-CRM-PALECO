@@ -34,7 +34,6 @@ class TeamController extends Controller
             $teams = $teams->filter($request->filter);
         }
 
-        // Handle Active vs Archived filtering
         if ($request->input('status') === 'archived') {
             $teams = $teams->onlyTrashed();
         }
@@ -101,6 +100,8 @@ class TeamController extends Controller
         $assignedMembers = $request->validated('members', []);
 
         DB::transaction(function () use ($team, $teamDetails, $assignedMembers) {
+            $oldMemberIds = $team->members()->pluck('users.id')->toArray();
+
             $team->update($teamDetails);
 
             $formattedMembers = collect($assignedMembers)->mapWithKeys(function ($member) {
@@ -110,16 +111,18 @@ class TeamController extends Controller
             });
 
             $changes = $team->members()->sync($formattedMembers);
+            $newMemberIds = array_keys($formattedMembers->toArray());
 
-            $pivotChanged = count($changes['attached']) > 0 || count($changes['detached']) > 0 || count($changes['updated']) > 0;
-
-            // 5. If the roster changed, manually write an activity log
-            if ($pivotChanged) {
+            if (!empty($changes['attached']) || !empty($changes['detached']) || !empty($changes['updated'])) {
                 activity()
-                    ->useLog('Users') // Matches your Model's log name
+                    ->useLog('Users')
                     ->performedOn($team)
-                    ->event('updated')
-                    ->log("{$team->team_name} (team) roster has been modified");
+                    ->event('roster_updated')
+                    ->withProperties([
+                        'old' => ['member_ids' => $oldMemberIds],
+                        'attributes' => ['member_ids' => $newMemberIds]
+                    ])
+                    ->log("{$team->team_name} roster has been modified");
             }
         });
 
@@ -128,9 +131,12 @@ class TeamController extends Controller
 
     public function deleteConfirm(Request $request, Team $team)
     {
-        Gate::authorize('deleteConfirm', $team);
+        Gate::authorize('deleteConfirm', clone $team);
 
-        return view('admin.prompts.teamDeleteConfirm', compact('team'));
+        $isForceDelete = $request->routeIs('admin.teams.forceDeleteConfirm');
+        $title = $isForceDelete ? 'Permanently Delete Team' : 'Archive Team';
+
+        return view('admin.prompts.teamDeleteConfirm', compact('team', 'title', 'isForceDelete'));
     }
 
     public function archive(Team $team)
@@ -144,9 +150,10 @@ class TeamController extends Controller
 
     public function restore($id)
     {
-        $team = Team::onlyTrashed()->findOrFail($id);
+        // Using manual fetch because the current patch route in web.php doesn't use withTrashed()
+        $team = Team::onlyTrashed()->findOrFail($id); 
 
-        Gate::authorize('restore', $team);
+        Gate::authorize('restore', clone $team);
 
         $nameExists = Team::where('team_name', $team->team_name)->exists();
 
@@ -157,5 +164,17 @@ class TeamController extends Controller
         $team->restore();
 
         return redirect()->route('admin.teams')->with('success', 'Team restored successfully.');
+    }
+
+    public function destroy($id)
+    {
+        // Using manual fetch because the current destroy route might need explicit binding validation
+        $team = Team::onlyTrashed()->findOrFail($id);
+
+        Gate::authorize('forceDelete', clone $team);
+        
+        $team->forceDelete();
+
+        return redirect()->route('admin.teams')->with('success', 'Team permanently deleted.');
     }
 }

@@ -74,10 +74,13 @@ Route::middleware('auth')->group(function() {
             Route::get('/teams/form/{team}', [TeamController::class, 'teamForm'])->name('admin.teams.editForm')->whereUlid('team'); 
             Route::put('/teams/{team}', [TeamController::class, 'update'])->name('admin.teams.update')->whereUlid('team');
 
-            Route::get('/{team}/delete', [TeamController::class, 'deleteConfirm'])->name('admin.teams.deleteConfirm')->whereUlid('team');
+            Route::get('/{team}/archive', [TeamController::class, 'deleteConfirm'])->name('admin.teams.deleteConfirm')->whereUlid('team');
             Route::delete('/{team}', [TeamController::class, 'archive'])->name('admin.teams.archive')->whereUlid('team');
 
             Route::patch('/{team}/restore', [TeamController::class, 'restore'])->name('admin.teams.restore')->whereUlid('team');
+
+            Route::get('/{team}/delete', [TeamController::class, 'deleteConfirm'])->name('admin.teams.forceDeleteConfirm')->whereUlid('team')->withTrashed();
+            Route::delete('/{team}/force-delete', [TeamController::class, 'destroy'])->name('admin.teams.destroy')->whereUlid('team')->withTrashed();
         });
     });
 
