@@ -10,6 +10,7 @@ use App\Http\Controllers\Cwd\CwdDashboardController;
 use App\Http\Controllers\Admin\DepartmentController;
 use App\Http\Controllers\Admin\TeamController;
 use App\Http\Controllers\Admin\UserController;
+use App\Models\Team;
 use App\Models\User;
 
 Route::middleware('guest')->group(function() {
@@ -66,6 +67,9 @@ Route::middleware('auth')->group(function() {
 
         Route::prefix('teams')->group(function() {
             Route::get('/', [TeamController::class, 'index'])->name('admin.teams');
+
+            Route::get('/create', [TeamController::class, 'teamForm'])->name('admin.teams.createForm');
+            Route::post('/', [TeamController::class, 'store'])->name('admin.teams.store');
         });
     });
 

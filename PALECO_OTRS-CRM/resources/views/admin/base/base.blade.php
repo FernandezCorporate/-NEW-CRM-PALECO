@@ -7,11 +7,11 @@
     
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
-<body class="flex m-0 font-sans bg-slate-50 min-h-screen">
+<body class="flex m-0 font-sans bg-slate-50 h-screen overflow-hidden">
 
-    <aside class="w-64 bg-[#063321] border-r border-[#0a4d32] h-screen flex flex-col justify-between box-border sticky top-0 text-slate-300">
+    <aside class="w-64 bg-[#063321] border-r border-[#0a4d32] h-full flex flex-col justify-between shrink-0 box-border text-slate-300">
         
-        <div class="flex flex-col h-full overflow-y-auto overflow-x-hidden">
+        <div class="flex flex-col flex-1 overflow-y-auto overflow-x-hidden">
             
             <div class="px-6 py-6 border-b border-white/10 mb-6">
                 <div class="flex items-center gap-3">
@@ -33,9 +33,7 @@
                         <li>
                             <a href="{{ route('admin.dashboard') }}" 
                                class="flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors {{ request()->routeIs('dashboard') ? 'bg-[#00a86b] text-white shadow-md' : 'text-slate-300 hover:bg-white/5 hover:text-white' }}">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path>
-                                </svg>
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
                                 Dashboard
                             </a>
                         </li>
@@ -45,14 +43,11 @@
                 @if(auth()->check() && auth()->user()->role->value === 'admin')
                     <div>
                         <h3 class="px-2 text-[10px] font-bold text-white/40 uppercase tracking-widest mb-2">Administration</h3>
-                        <!-- Added mb-3 for extra spacing below the Users item block -->
                         <ul class="list-none p-0 m-0 space-y-1 mb-3">
                             <li>
                                 <a href="{{ route('admin.users') }}" 
                                 class="flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors {{ request()->routeIs('admin.users') ? 'bg-[#00a86b] text-white shadow-md' : 'text-slate-300 hover:bg-white/5 hover:text-white' }}">
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"></path>
-                                    </svg>
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"></path></svg>
                                     Users
                                 </a>
                             </li>
@@ -62,10 +57,7 @@
                             <li>
                                 <a href="{{ route('admin.departments') }}" 
                                 class="flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors {{ request()->routeIs('admin.departments') ? 'bg-[#00a86b] text-white shadow-md' : 'text-slate-300 hover:bg-white/5 hover:text-white' }}">
-                                    <!-- New clean SVG representing an organizational hierarchy/department -->
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://w3.org">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-                                    </svg>
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://w3.org"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
                                     Departments
                                 </a>
                             </li>
@@ -75,10 +67,7 @@
                             <li>
                                 <a href="{{ route('admin.teams') }}" 
                                 class="flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors {{ request()->routeIs('admin.teams') ? 'bg-[#00a86b] text-white shadow-md' : 'text-slate-300 hover:bg-white/5 hover:text-white' }}">
-                                    <!-- New clean SVG representing an organizational hierarchy/department -->
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://w3.org">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-                                    </svg>
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://w3.org"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
                                     Teams
                                 </a>
                             </li>
@@ -88,14 +77,11 @@
             </nav>
         </div>
 
-        <div class="border-t border-white/10 px-4 py-4 space-y-2">
-            
+        <div class="border-t border-white/10 px-4 py-4 space-y-2 shrink-0">
             <form action="{{ route('logout') }}" method="POST" class="m-0">
                 @csrf
                 <button type="submit" class="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-slate-300 hover:bg-rose-500/10 hover:text-rose-400 rounded-lg transition-colors cursor-pointer border-none bg-transparent text-left">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9"></path>
-                    </svg>
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9"></path></svg>
                     Logout
                 </button>
             </form>
@@ -113,11 +99,10 @@
                     </p>
                 </div>
             </div>
-
         </div>
     </aside>
 
-    <main class="flex-1 p-8 overflow-y-auto bg-slate-50">
+    <main class="flex-1 h-full overflow-y-auto p-8 bg-slate-50">
         @yield('content')
     </main>
 

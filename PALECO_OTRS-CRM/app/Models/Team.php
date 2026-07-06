@@ -100,4 +100,18 @@ class Team extends Model
                 return $query;
         }
     }
+
+    public function getActivitylogOptions(): LogOptions
+        {
+            return LogOptions::defaults()
+                ->useLogName('Users')
+                ->logOnly([
+                    'team_name', 'team_desc', 'shift_start',
+                    'shift_end', 'department_id'
+                ])
+                ->logOnlyDirty()
+                ->setDescriptionForEvent(function(string $eventName) {
+                    return "{$this->team_name} (team) has been {$eventName}";
+                });
+        }
 }
