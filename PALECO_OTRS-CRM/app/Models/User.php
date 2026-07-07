@@ -51,19 +51,6 @@ class User extends Authenticatable
             ->withTimestamps();
     }
 
-    // NEW: Smart Accessor for Department
-    protected function effectiveDepartment(): Attribute
-    {
-        return Attribute::make(
-            get: function () {
-                if ($this->role === UserRoles::FIELD_PERSONNEL) {
-                    return $this->teams->first()?->department;
-                }
-                return $this->department;
-            }
-        );
-    }
-
     protected function fullName(): Attribute
     {
         return Attribute::make(

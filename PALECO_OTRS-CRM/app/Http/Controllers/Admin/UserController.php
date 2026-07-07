@@ -31,8 +31,7 @@ class UserController extends Controller
             'field_personnel' => $rawCounts->get(UserRoles::FIELD_PERSONNEL->value, 0),
         ];
 
-        // NEW: Eager loaded the relations for the Smart Accessor
-        $users = User::query()->with(['department', 'teams.department']);
+        $users = User::query();
 
         if ($request->filled('search')) {
             $users = $users->search($request->search);
