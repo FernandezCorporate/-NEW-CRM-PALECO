@@ -53,7 +53,9 @@ class TeamController extends Controller
     {
         Gate::authorize('view', $team);
 
-        
+        $members = $team->members()->withPivot('team_role', 'created_at')->paginate(5);
+
+        return view('admin.pages.teamDetails', compact('team', 'members'));
     }
 
     public function teamForm(?Team $team = null)

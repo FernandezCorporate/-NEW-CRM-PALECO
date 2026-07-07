@@ -122,7 +122,7 @@
             <thead>
                 <tr class="bg-slate-50 border-b border-slate-200 text-xs font-semibold text-slate-500 uppercase tracking-wider">
                     <th class="px-6 py-4">User</th>
-                    <th class="px-6 py-4">Role & Dept</th>
+                    <th class="px-6 py-4">Role</th>
                     <th class="px-6 py-4">Contact</th>
                     <th class="px-6 py-4">Last Login</th>
                     <th class="px-6 py-4">Status</th>

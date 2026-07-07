@@ -67,6 +67,7 @@ Route::middleware('auth')->group(function() {
 
         Route::prefix('teams')->group(function() {
             Route::get('/', [TeamController::class, 'index'])->name('admin.teams');
+            Route::get('/{team}', [TeamController::class, 'show'])->name('admin.teams.show')->whereUlid('team');
 
             Route::get('/create', [TeamController::class, 'teamForm'])->name('admin.teams.createForm');
             Route::post('/', [TeamController::class, 'store'])->name('admin.teams.store');
