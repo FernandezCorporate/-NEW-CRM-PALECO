@@ -12,6 +12,11 @@ class TeamPolicy
         return $user->role === UserRoles::ADMIN;
     }
 
+    public function view(User $user): bool
+    {
+        return $user->role === UserRoles::ADMIN;
+    }
+
     public function teamForm(User $user):bool
     {
         return $user->role === UserRoles::ADMIN;

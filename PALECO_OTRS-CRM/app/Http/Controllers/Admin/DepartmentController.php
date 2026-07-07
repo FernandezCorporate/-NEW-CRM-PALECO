@@ -48,14 +48,26 @@ class DepartmentController extends Controller
         return view('admin.pages.departmentManagement', compact('departments'));
     }
 
-    public function show(Department $dept)
+    public function show(Request $request, Department $dept)
     {
         Gate::authorize('view', $dept);
 
-        $assignedTeams = $dept->teams()->withCount('members')->paginate(5);
-        $personnelCount = $dept->users()->where('is_active', true)->where('role', UserRoles::FIELD_PERSONNEL)->count();
+        // Paginate Teams (using default 'page' query string)
+        $assignedTeams = $dept->teams()->withCount('members')->paginate(5, ['*'], 'page');
 
-        return view('admin.pages.departmentDetails', compact('assignedTeams', 'dept', 'personnelCount'));
+        // Get total field personnel attached to teams in this department
+        $personnelCount = User::query()->where('is_active', true)
+            ->where('role', UserRoles::FIELD_PERSONNEL)
+            ->whereHas('teams', function ($query) use ($dept) {
+                $query->where('department_id', $dept->id);
+            })->count();
+
+        // Paginate Foremen (using a custom 'page_foreman' query string to avoid conflicts)
+        $foremanQuery = $dept->users()->where('is_active', true)->where('role', UserRoles::FOREMAN);
+        $foremanCount = $foremanQuery->count();
+        $foremanCollection = $foremanQuery->paginate(5, ['*'], 'page_foreman');
+
+        return view('admin.pages.departmentDetails', compact('assignedTeams', 'dept', 'foremanCount', 'foremanCollection', 'personnelCount'));
     }
 
     public function departmentForm(?Department $dept = null)
@@ -99,10 +111,8 @@ class DepartmentController extends Controller
     {
         $isForceDelete = $request->routeIs('admin.departments.forceDeleteConfirm');
 
-        // Fetch the trashed instance FIRST if it's a force delete
         $dept = $isForceDelete ? Department::onlyTrashed()->findOrFail($dept->id) : $dept;
 
-        // Route to the specific policy method based on the action
         Gate::authorize('deleteConfirm', $dept);
 
         $title = $isForceDelete ? 'Permanently Delete Department' : 'Archive Department';

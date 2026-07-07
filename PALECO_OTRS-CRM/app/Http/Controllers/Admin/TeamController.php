@@ -49,6 +49,13 @@ class TeamController extends Controller
         return view('admin.pages.teamManagement', compact('teams', 'departments'));
     }
 
+    public function show(Team $team)
+    {
+        Gate::authorize('view', $team);
+
+        
+    }
+
     public function teamForm(?Team $team = null)
     {
         if ($team && $team->exists) {
