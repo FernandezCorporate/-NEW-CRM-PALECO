@@ -93,7 +93,6 @@ class UserController extends Controller
 
         $validatedData = $request->validated();
 
-        // NEW: Safety catch
         if ($validatedData['role'] === UserRoles::FIELD_PERSONNEL->value) {
             $validatedData['department_id'] = null;
         }
@@ -104,10 +103,14 @@ class UserController extends Controller
             return redirect()->route('admin.users')->with('info', 'No changes were made to the user.');
         }
 
-        $user->save();
+        // ENFORCE ACID COMPLIANCE: Wrap operations in a transaction
+        DB::transaction(function () use ($user) {
+            $user->save(); // This triggers the observer's updating event synchronously
+        });
 
         return redirect()->route('admin.users')->with('success', 'Users updated successfully.');
     }
+
 
     public function deactivateConfirm(User $user)
     {

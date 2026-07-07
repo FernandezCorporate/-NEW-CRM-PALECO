@@ -9,6 +9,7 @@ use Illuminate\Auth\Access\Response;
 use Illuminate\Support\Facades\Event;
 use Spatie\Activitylog\Facades\Activity;
 use Spatie\Activitylog\Contracts\Activity as ActivityContract;
+use App\Observers\UserObserver;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -44,5 +45,7 @@ class AppServiceProvider extends ServiceProvider
                     ->put('user_agent', request()->userAgent());
             }
         });
+
+        User::observe(UserObserver::class);
     }
 }

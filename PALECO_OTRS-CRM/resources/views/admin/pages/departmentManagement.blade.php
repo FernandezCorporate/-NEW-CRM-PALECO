@@ -77,7 +77,6 @@
                 <tr class="bg-slate-50 border-b border-slate-200 text-xs font-semibold text-slate-500 uppercase tracking-wider">
                     <th class="px-6 py-4">Department Name</th>
                     <th class="px-6 py-4">Active Foremen</th>
-                    <th class="px-6 py-4">Active Field Personnel</th>
                     <th class="px-6 py-4">Active Teams</th>
                     <th class="px-6 py-4">Date Created</th>
                     <th class="px-6 py-4">Actions</th>
@@ -90,11 +89,6 @@
                         <td class="px-6 py-4 text-slate-500 text-sm">
                             <div class="truncate max-w-md" title="{{ $department->active_foremen_count }}">
                                 {{ $department->active_foremen_count ?? 0 }}
-                            </div>
-                        </td>
-                        <td class="px-6 py-4 text-slate-500 text-sm">
-                            <div class="truncate max-w-md" title="{{ $department->active_users_count }}">
-                                {{ $department->active_users_count ?? 0 }}
                             </div>
                         </td>
                         <td class="px-6 py-4 text-slate-500 text-sm">
@@ -237,11 +231,6 @@
                     <div class="bg-slate-50 border border-slate-100 rounded-lg p-3 text-center flex flex-col justify-center">
                         <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Foremen</span>
                         <span class="text-lg font-bold text-slate-700">{{ $department->active_foremen_count ?? 0 }}</span>
-                    </div>
-                    <!-- Personnel -->
-                    <div class="bg-slate-50 border border-slate-100 rounded-lg p-3 text-center flex flex-col justify-center">
-                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Personnel</span>
-                        <span class="text-lg font-bold text-slate-700">{{ $department->active_users_count ?? 0 }}</span>
                     </div>
                     <!-- Teams -->
                     <div class="bg-slate-50 border border-slate-100 rounded-lg p-3 text-center flex flex-col justify-center">
