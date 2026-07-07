@@ -72,7 +72,6 @@ class UserController extends Controller
 
         $validatedData = $request->validated();
 
-        // NEW: Safety catch
         if ($validatedData['role'] === UserRoles::FIELD_PERSONNEL->value) {
             $validatedData['department_id'] = null;
         }
@@ -84,7 +83,15 @@ class UserController extends Controller
 
     public function show(User $user)
     {
-        //
+        Gate::authorize('view', $user);
+
+        // Load only the direct department for the user profile header
+        $user->load('department');
+
+        // Extract the teams into a separate paginated query, eagerly loading the teams' departments
+        $assignedTeams = $user->teams()->with('department')->paginate(5);
+
+        return view('admin.pages.userDetails', compact('user', 'assignedTeams'));
     }
 
     public function update(UpdateUserRequest $request, User $user)
@@ -103,9 +110,8 @@ class UserController extends Controller
             return redirect()->route('admin.users')->with('info', 'No changes were made to the user.');
         }
 
-        // ENFORCE ACID COMPLIANCE: Wrap operations in a transaction
         DB::transaction(function () use ($user) {
-            $user->save(); // This triggers the observer's updating event synchronously
+            $user->save(); 
         });
 
         return redirect()->route('admin.users')->with('success', 'Users updated successfully.');

@@ -27,6 +27,10 @@ class UserPolicy
         return true;
     }
 
+    public function view(User $user): bool{
+        return $user->role === UserRoles::ADMIN;
+    }
+
     public function create(User $user): bool
     {
         return $user->role === UserRoles::ADMIN;

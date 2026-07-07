@@ -32,6 +32,7 @@ Route::middleware('auth')->group(function() {
 
         Route::prefix('users')->group(function() {
             Route::get('/', [UserController::class, 'index'])->name('admin.users');
+            Route::get('/{user}', [UserController::class, 'show'])->name('admin.users.show')->whereUlid('user')->withTrashed();
 
             Route::get('/create', [UserController::class, 'userForm'])->name('admin.users.createForm');
             Route::post('/', [UserController::class, 'store'])->name('admin.users.store');
@@ -67,7 +68,7 @@ Route::middleware('auth')->group(function() {
 
         Route::prefix('teams')->group(function() {
             Route::get('/', [TeamController::class, 'index'])->name('admin.teams');
-            Route::get('/{team}', [TeamController::class, 'show'])->name('admin.teams.show')->whereUlid('team');
+            Route::get('/{team}', [TeamController::class, 'show'])->name('admin.teams.show')->whereUlid('team')->withTrashed();
 
             Route::get('/create', [TeamController::class, 'teamForm'])->name('admin.teams.createForm');
             Route::post('/', [TeamController::class, 'store'])->name('admin.teams.store');
