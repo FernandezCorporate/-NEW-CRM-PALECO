@@ -29,9 +29,7 @@
         <div class="bg-white border border-slate-200 rounded-xl p-5 shadow-sm flex flex-col justify-between">
             <div class="flex justify-between items-start mb-4">
                 <div class="text-emerald-600">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
-                    </svg>
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
                 </div>
                 <span class="bg-purple-100 text-purple-700 text-xs font-semibold px-2.5 py-1 rounded-full">Admin</span>
             </div>
@@ -45,9 +43,7 @@
         <div class="bg-white border border-slate-200 rounded-xl p-5 shadow-sm flex flex-col justify-between">
             <div class="flex justify-between items-start mb-4">
                 <div class="text-emerald-600">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 18v-6a9 9 0 0 1 18 0v6M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"></path>
-                    </svg>
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 18v-6a9 9 0 0 1 18 0v6M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"></path></svg>
                 </div>
                 <span class="bg-blue-100 text-blue-700 text-xs font-semibold px-2.5 py-1 rounded-full">CWD Officer</span>
             </div>
@@ -61,9 +57,7 @@
         <div class="bg-white border border-slate-200 rounded-xl p-5 shadow-sm flex flex-col justify-between">
             <div class="flex justify-between items-start mb-4">
                 <div class="text-emerald-600">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2 18h20M12 4a8 8 0 0 0-8 8v6h16v-6a8 8 0 0 0-8-8ZM12 4v4"></path>
-                    </svg>
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2 18h20M12 4a8 8 0 0 0-8 8v6h16v-6a8 8 0 0 0-8-8ZM12 4v4"></path></svg>
                 </div>
                 <span class="bg-amber-100 text-amber-700 text-xs font-semibold px-2.5 py-1 rounded-full">Foreman</span>
             </div>
@@ -77,9 +71,7 @@
         <div class="bg-white border border-slate-200 rounded-xl p-5 shadow-sm flex flex-col justify-between">
             <div class="flex justify-between items-start mb-4">
                 <div class="text-emerald-600">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path>
-                    </svg>
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path></svg>
                 </div>
                 <span class="bg-emerald-100 text-emerald-700 text-xs font-semibold px-2.5 py-1 rounded-full">Field Personnel</span>
             </div>
@@ -93,23 +85,16 @@
 
     <!-- Controls Row -->
     <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-6">
-        <!-- Unified Form for all GET parameters -->
         <form action="{{ route('admin.users') }}" method="GET" class="flex flex-col md:flex-row flex-wrap gap-4 w-full lg:w-auto">
             
-            <!-- Search -->
             <div class="flex items-center gap-2">
                 <input type="text" name="search" placeholder="Search users..." value="{{ request('search') }}" class="border border-slate-200 p-2.5 rounded-lg text-sm focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 w-full md:w-64">
                 <button type="submit" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 rounded-lg text-sm font-medium shadow-sm transition-colors" data-loading-text="Searching...">Search</button>
-                
                 @if(request()->filled('search'))
-                    <!-- Styled Clear Button -->
-                    <a href="{{ route('admin.users', request()->except('search')) }}" class="action-link bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 px-4 py-2.5 rounded-lg text-sm font-medium shadow-sm transition-colors" data-loading-text="Clearing...">
-                        Clear
-                    </a>
+                    <a href="{{ route('admin.users', request()->except('search')) }}" class="action-link bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 px-4 py-2.5 rounded-lg text-sm font-medium shadow-sm transition-colors" data-loading-text="Clearing...">Clear</a>
                 @endif
             </div>
 
-            <!-- Filter and Sort Group -->
             <div class="flex items-center gap-2">
                 <select name="filter" onchange="this.form.submit()" class="border border-slate-200 p-2.5 rounded-lg text-sm bg-white cursor-pointer focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500">
                     <option value="all" {{ request('filter') === 'all' ? 'selected' : '' }}>All Roles</option>
@@ -137,7 +122,7 @@
             <thead>
                 <tr class="bg-slate-50 border-b border-slate-200 text-xs font-semibold text-slate-500 uppercase tracking-wider">
                     <th class="px-6 py-4">User</th>
-                    <th class="px-6 py-4">Role</th>
+                    <th class="px-6 py-4">Role & Dept</th>
                     <th class="px-6 py-4">Contact</th>
                     <th class="px-6 py-4">Last Login</th>
                     <th class="px-6 py-4">Status</th>
@@ -164,11 +149,16 @@
                             </div>
                         </td>
                         
+                        <!-- NEW: Department appended below the Role -->
                         <td class="px-6 py-4">
-                            <!-- Neutral Role Pill -->
-                            <span class="bg-slate-100 text-slate-600 text-xs font-semibold px-2.5 py-1 rounded-full">
-                                {{ $user->role->label() }}
-                            </span>
+                            <div class="flex flex-col items-start gap-1.5">
+                                <span class="bg-slate-100 text-slate-600 text-[11px] font-semibold px-2.5 py-1 rounded-full">
+                                    {{ $user->role->label() }}
+                                </span>
+                                <span class="text-[10px] text-slate-400 font-bold tracking-wider uppercase">
+                                    {{ $user->effective_department->dept_name ?? 'No Department' }}
+                                </span>
+                            </div>
                         </td>
                         
                         <td class="px-6 py-4 text-slate-600 text-sm">
@@ -190,58 +180,38 @@
                         <td class="px-6 py-4 text-right">
                             <div class="flex items-center justify-end gap-2">
                                 
-                                <!-- View Icon -->
                                 <a href="#" class="action-link p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" data-loading-text="" title="View User">
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
-                                    </svg>
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
                                 </a>
 
-                                <!-- Edit Icon (Policy Protected) -->
                                 @can('update', $user)
                                     <a href="{{ route('admin.users.editForm', ['user' => $user]) }}" class="action-link p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors" data-loading-text="" title="Edit User">
-                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path>
-                                        </svg>
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
                                     </a>
                                 @else
                                     <button type="button" disabled class="p-2 text-slate-300 cursor-not-allowed rounded-lg" title="Cannot edit an admin account">
-                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path>
-                                        </svg>
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
                                     </button>
                                 @endcan
                                 
-                                <!-- Status Toggle (Deactivate/Reactivate) (Policy Protected) -->
                                 @if($user->is_active)
                                     @can('deactivateConfirm', $user)
                                         <a href="{{ route('admin.users.deactivateConfirm', ['user' => $user]) }}" class="action-link p-2 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors" data-loading-text="" title="Deactivate User">
-                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"></path>
-                                            </svg>
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"></path></svg>
                                         </a>
                                     @else
-                                        <!-- Disabled State for Admin Accounts -->
                                         <button type="button" disabled class="p-2 text-slate-300 cursor-not-allowed rounded-lg" title="Cannot modify an admin account status">
-                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"></path>
-                                            </svg>
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"></path></svg>
                                         </button>
                                     @endcan
                                 @else
                                     @can('reactivateConfirm', $user)
                                         <a href="{{ route('admin.users.reactivateConfirm', ['user' => $user]) }}" class="action-link p-2 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors" data-loading-text="" title="Reactivate User">
-                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"></path>
-                                            </svg>
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"></path></svg>
                                         </a>
                                     @else
-                                        <!-- Disabled State for Admin Accounts -->
                                         <button type="button" disabled class="p-2 text-slate-300 cursor-not-allowed rounded-lg" title="Cannot modify an admin account status">
-                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"></path>
-                                            </svg>
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"></path></svg>
                                         </button>
                                     @endcan
                                 @endif

@@ -42,7 +42,12 @@ class UpdateUserRequest extends FormRequest
             'email' => ['nullable', 'string', 'email:rfc,dns', 'max:255', Rule::unique('users', 'email')->ignore($user)],
             'contact' => ['required', 'string', 'regex:/^(09|\+639)\d{9}$/'],
             'role' => ['required', 'string', Rule::enum(UserRoles::class)],
-            'department_id' => ['nullable', 'integer', Rule::exists('departments', 'id')->whereNull('deleted_at')],
+            'department_id' => [
+                Rule::requiredIf(fn () => $this->input('role') !== UserRoles::FIELD_PERSONNEL->value),
+                'nullable', 
+                'integer', 
+                Rule::exists('departments', 'id')->whereNull('deleted_at')
+            ],
         ];
     }
 

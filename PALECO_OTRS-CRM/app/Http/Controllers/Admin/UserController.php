@@ -31,7 +31,8 @@ class UserController extends Controller
             'field_personnel' => $rawCounts->get(UserRoles::FIELD_PERSONNEL->value, 0),
         ];
 
-        $users = User::query();
+        // NEW: Eager loaded the relations for the Smart Accessor
+        $users = User::query()->with(['department', 'teams.department']);
 
         if ($request->filled('search')) {
             $users = $users->search($request->search);
@@ -54,8 +55,6 @@ class UserController extends Controller
 
     public function userForm(?User $user = null)
     {
-        // Pass the target user to the policy if it exists (Edit Form), 
-        // otherwise authorize the base class (Create Form)
         if ($user && $user->exists) {
             Gate::authorize('userForm', [User::class, $user]);
         } else {
@@ -68,23 +67,22 @@ class UserController extends Controller
         return view('admin.forms.userForm', compact('user', 'depts', 'roles'));
     } 
 
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(StoreUserRequest $request)
     {
         Gate::authorize('create', User::class);
 
         $validatedData = $request->validated();
 
+        // NEW: Safety catch
+        if ($validatedData['role'] === UserRoles::FIELD_PERSONNEL->value) {
+            $validatedData['department_id'] = null;
+        }
+
         User::create($validatedData);
 
         return redirect()->route('admin.users')->with('success', 'User created successfully.');
     }
 
-    /**
-     * Display the specified resource.
-     */
     public function show(User $user)
     {
         //
@@ -94,7 +92,14 @@ class UserController extends Controller
     {
         Gate::authorize('update', $user);
 
-        $user->fill($request->validated());
+        $validatedData = $request->validated();
+
+        // NEW: Safety catch
+        if ($validatedData['role'] === UserRoles::FIELD_PERSONNEL->value) {
+            $validatedData['department_id'] = null;
+        }
+
+        $user->fill($validatedData);
 
         if ($user->isClean()) {
             return redirect()->route('admin.users')->with('info', 'No changes were made to the user.');
@@ -108,34 +113,28 @@ class UserController extends Controller
     public function deactivateConfirm(User $user)
     {
         Gate::authorize('deactivateConfirm', $user);
-
         return view('admin.prompts.userDeactivateConfirm', ['userAccount' => $user]);
     }
 
     public function deactivate(User $user)
     {
         Gate::authorize('deactivate', $user);
-
         $user->is_active = false;
         $user->save();
-
         return redirect()->route('admin.users')->with('success', 'Account deactivated successfully.');
     }
 
     public function reactivateConfirm(User $user)
     {
         Gate::authorize('reactivateConfirm', $user);
-
         return view('admin.prompts.userReactivateConfirm', ['userAccount' => $user]);
     }
 
     public function reactivate(User $user)
     {
         Gate::authorize('reactivate', $user);
-
         $user->is_active = true;
         $user->save();
-
         return redirect()->route('admin.users')->with('success', 'Account reactivated successfully.');
     }
 }

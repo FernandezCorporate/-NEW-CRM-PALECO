@@ -25,14 +25,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
-    /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable, HasUlids, LogsActivity;
 
-    /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
     protected function casts(): array
     {
         return [
@@ -55,6 +49,19 @@ class User extends Authenticatable
         return $this->belongsToMany(Team::class, 'team_members')
             ->withPivot('team_role')
             ->withTimestamps();
+    }
+
+    // NEW: Smart Accessor for Department
+    protected function effectiveDepartment(): Attribute
+    {
+        return Attribute::make(
+            get: function () {
+                if ($this->role === UserRoles::FIELD_PERSONNEL) {
+                    return $this->teams->first()?->department;
+                }
+                return $this->department;
+            }
+        );
     }
 
     protected function fullName(): Attribute
@@ -89,9 +96,7 @@ class User extends Authenticatable
     {
         return Attribute::make(
             get: function () {
-                $statusLabel = $this->is_active ? 'Active' : 'Deactivated';
-
-                return $statusLabel;
+                return $this->is_active ? 'Active' : 'Deactivated';
             }
         );
     }
@@ -105,10 +110,8 @@ class User extends Authenticatable
         $words = array_filter(explode(' ', $term));
 
         return $query->where(function ($query) use ($words) {
-
             foreach ($words as $word) {
                 $searchWord = "%{$word}%";
-                
                 $query->where(function ($subQuery) use ($searchWord) {
                     $subQuery->where('first_name', 'like', $searchWord)
                           ->orWhere('middle_name', 'like', $searchWord)
@@ -137,45 +140,33 @@ class User extends Authenticatable
         }
 
         switch ($sort) {
-            case 'newest':
-                return $query->orderBy('created_at', 'desc');
-            case 'oldest':
-                return $query->orderBy('created_at', 'asc');
-            case 'first_nameASC':
-                return $query->orderBy('first_name', 'asc');
-            case 'first_nameDESC':
-                return $query->orderBy('first_name', 'desc');
-            case 'last_nameASC':
-                return $query->orderBy('last_name', 'asc');
-            case 'last_nameDESC':
-                return $query->orderBy('last_name', 'desc');
-            default:
-                return $query;
+            case 'newest': return $query->orderBy('created_at', 'desc');
+            case 'oldest': return $query->orderBy('created_at', 'asc');
+            case 'first_nameASC': return $query->orderBy('first_name', 'asc');
+            case 'first_nameDESC': return $query->orderBy('first_name', 'desc');
+            case 'last_nameASC': return $query->orderBy('last_name', 'asc');
+            case 'last_nameDESC': return $query->orderBy('last_name', 'desc');
+            default: return $query;
         }
     }
 
     public function getActivitylogOptions(): LogOptions
-        {
-            return LogOptions::defaults()
-                ->useLogName('Users')
-                ->logOnly([
-                    'username', 'first_name', 'middle_name', 'last_name', 'name_ext', 
-                    'email', 'contact', 'role', 'password', 'department_id', 
-                    'is_active' // 1. Added back to the array so Spatie watches it
-                ])
-                ->logOnlyDirty()
-                ->setDescriptionForEvent(function(string $eventName) {
-                    
-                    // 2. Intercept the 'updated' event specifically
-                    if ($eventName === 'updated' && $this->wasChanged('is_active')) {
-                        // 3. Check the current (new) state of the boolean
-                        return $this->is_active 
-                            ? "{$this->username} account has been reactivated" 
-                            : "{$this->username} account has been deactivated";
-                    }
-
-                    // 4. Default description for creates, deletes, or standard profile edits
-                    return "{$this->username} account has been {$eventName}";
-                });
-        }
+    {
+        return LogOptions::defaults()
+            ->useLogName('Users')
+            ->logOnly([
+                'username', 'first_name', 'middle_name', 'last_name', 'name_ext', 
+                'email', 'contact', 'role', 'password', 'department_id', 
+                'is_active'
+            ])
+            ->logOnlyDirty()
+            ->setDescriptionForEvent(function(string $eventName) {
+                if ($eventName === 'updated' && $this->wasChanged('is_active')) {
+                    return $this->is_active 
+                        ? "{$this->username} account has been reactivated" 
+                        : "{$this->username} account has been deactivated";
+                }
+                return "{$this->username} account has been {$eventName}";
+            });
+    }
 }
