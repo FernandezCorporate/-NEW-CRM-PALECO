@@ -14,6 +14,8 @@ class Role extends Model
 {
     use SoftDeletes, HasFactory;
 
+    protected $table = 'account_roles';
+
     public function users(): HasMany
     {
         return $this->hasMany(User::class, 'role_id');
