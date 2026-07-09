@@ -20,9 +20,9 @@ Route::middleware('guest')->group(function() {
 
 Route::middleware('auth')->group(function() {
     Route::get('/', function () {
-        return match (Auth::user()->role) {
-            UserRoles::ADMIN => redirect()->route('admin.dashboard'),
-            UserRoles::CWD => redirect()->route('cwd.dashboard'),
+        return match (Auth::user()->assignedRole->slug_identifier) {
+            'admin' => redirect()->route('admin.dashboard'),
+            'cwd_officer' => redirect()->route('cwd.dashboard'),
             default => abort(403),
         };
     })->name('dashboard');

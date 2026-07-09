@@ -27,13 +27,13 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Gate::define('access-admin', function (User $user) {
-            return $user->role === UserRoles::ADMIN
+            return $user->assignedRole->slug_identifier === 'admin'
                 ? Response::allow()
                 : Response::denyAsNotFound();
         });
 
         Gate::define('access-cwd_officer', function (User $user) {
-            return $user->role === UserRoles::CWD
+            return $user->assignedRole->slug_identifier === 'cwd_officer'
                 ? Response::allow()
                 : Response::denyAsNotFound();
         });
