@@ -4,7 +4,7 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
-use App\Models\Role;
+use App\Models\AccountRole;
 
 class RoleSeeder extends Seeder
 {
@@ -14,25 +14,25 @@ class RoleSeeder extends Seeder
      */
     public function run(): void
     {
-        Role::create([
+        AccountRole::create([
             'role_name' => 'admin',
             'role_desc' => 'System management.',
             'slug_identifier' => 'admin'
         ]);
 
-        Role::create([
+        AccountRole::create([
             'role_name' => 'cwd_officer',
             'role_desc' => 'Ticket creation',
             'slug_identifier' => 'cwd_officer'
         ]);
 
-        Role::create([
+        AccountRole::create([
             'role_name' => 'foreman',
             'role_desc' => 'Ticket dispatch',
             'slug_identifier' => 'foreman'
         ]);
 
-        Role::create([
+        AccountRole::create([
             'role_name' => 'field_personnel',
             'role_desc' => 'Ticket progress',
             'slug_identifier' => 'field_personnel'

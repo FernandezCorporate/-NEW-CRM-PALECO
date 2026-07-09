@@ -5,7 +5,7 @@ namespace App\Http\Requests\Admin\User;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
-use App\Models\Role;
+use App\Models\AccountRole;
 
 class StoreUserRequest extends FormRequest
 {
@@ -39,7 +39,7 @@ class StoreUserRequest extends FormRequest
             'role_id' => ['required', 'integer', Rule::exists('account_roles', 'id')->whereNull('deleted_at')],
             'department_id' => [
                 Rule::requiredIf(function () {
-                    $role = Role::find($this->input('role_id'));
+                    $role = AccountRole::find($this->input('role_id'));
                     return $role && $role->slug_identifier !== 'field_personnel';
                 }),
                 'nullable', 

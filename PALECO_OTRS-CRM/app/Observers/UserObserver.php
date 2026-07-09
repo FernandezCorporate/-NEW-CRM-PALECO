@@ -2,7 +2,7 @@
 namespace App\Observers;
 
 use App\Models\User;
-use App\Models\Role;
+use App\Models\AccountRole;
 use Illuminate\Support\Facades\DB;
 
 class UserObserver
@@ -19,7 +19,7 @@ class UserObserver
             $oldRoleId = $user->getOriginal('role_id');
 
             if ($oldRoleId) {
-                $oldRole = Role::find($oldRoleId);
+                $oldRole = AccountRole::find($oldRoleId);
                 
                 if ($oldRole && $oldRole->slug_identifier === 'field_personnel') {
                     // Execute immediately after the controller transaction successfully commits

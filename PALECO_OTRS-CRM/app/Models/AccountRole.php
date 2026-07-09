@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Models\User;
 
 #[Fillable(['role_name', 'role_desc', 'slug_identifier'])]
-class Role extends Model
+class AccountRole extends Model
 {
     use SoftDeletes, HasFactory;
 

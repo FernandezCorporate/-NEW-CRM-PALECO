@@ -17,7 +17,7 @@ use Spatie\Activitylog\Models\Concerns\LogsActivity;
 use Spatie\Activitylog\Support\LogOptions;
 use App\Models\Department;
 use App\Models\Team;
-use App\Models\Role;
+use App\Models\AccountRole;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 #[Fillable(['username', 'first_name', 'middle_name', 'last_name', 'name_ext', 
@@ -40,7 +40,7 @@ class User extends Authenticatable
 
     public function role(): BelongsTo
     {
-        return $this->belongsTo(Role::class, 'role_id');
+        return $this->belongsTo(AccountRole::class, 'role_id');
     }
 
     public function department(): BelongsTo

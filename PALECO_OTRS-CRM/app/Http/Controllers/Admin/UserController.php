@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
-use App\Models\Role;
+use App\Models\AccountRole;
 use App\Http\Requests\Admin\User\StoreUserRequest;
 use App\Http\Requests\Admin\User\UpdateUserRequest;
 use Illuminate\Http\Request;
@@ -18,7 +18,7 @@ class UserController extends Controller
     {
         Gate::authorize('viewAny', User::class);
 
-        $roles = Role::orderBy('role_name')->get();
+        $roles = AccountRole::orderBy('role_name')->get();
 
         $rawCounts = User::query()
             ->where('is_active', true)
@@ -77,7 +77,7 @@ class UserController extends Controller
         }
 
         $depts = Department::orderBy('dept_name')->pluck('dept_name', 'id');
-        $roles = Role::orderBy('role_name')->get();
+        $roles = AccountRole::orderBy('role_name')->get();
 
         return view('admin.forms.userForm', compact('user', 'depts', 'roles'));
     }
@@ -88,7 +88,7 @@ class UserController extends Controller
 
         $validatedData = $request->validated();
 
-        $role = Role::find($validatedData['role_id']);
+        $role = AccountRole::find($validatedData['role_id']);
         if ($role) {            
             if ($role->slug_identifier === 'field_personnel') {
                 $validatedData['department_id'] = null;
@@ -106,7 +106,7 @@ class UserController extends Controller
 
         $validatedData = $request->validated();
 
-        $role = Role::find($validatedData['role_id']);
+        $role = AccountRole::find($validatedData['role_id']);
         if ($role) {
             if ($role->slug_identifier === 'field_personnel') {
                 $validatedData['department_id'] = null;
