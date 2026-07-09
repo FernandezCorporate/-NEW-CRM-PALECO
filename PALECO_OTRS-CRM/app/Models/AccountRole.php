@@ -6,13 +6,12 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Models\User;
 
-#[Fillable(['role_name', 'role_desc', 'slug_identifier'])]
+#[Fillable(['role_name', 'slug_identifier'])]
 class AccountRole extends Model
 {
-    use SoftDeletes, HasFactory;
+    use HasFactory;
 
     protected $table = 'account_roles';
 
