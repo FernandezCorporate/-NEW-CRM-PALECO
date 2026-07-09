@@ -18,10 +18,11 @@ use Spatie\Activitylog\Models\Concerns\LogsActivity;
 use Spatie\Activitylog\Support\LogOptions;
 use App\Models\Department;
 use App\Models\Team;
+use App\Models\Role;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 #[Fillable(['username', 'first_name', 'middle_name', 'last_name', 'name_ext', 
-'email', 'contact', 'role', 'password', 'department_id', 'last_login', 'locked_until', 'is_active'])]
+'email', 'contact', 'role', 'role_id', 'password', 'department_id', 'last_login', 'locked_until', 'is_active'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
@@ -37,6 +38,11 @@ class User extends Authenticatable
             'last_login' => 'datetime',
             'locked_until' => 'datetime'
         ];
+    }
+
+    public function role(): BelongsTo
+    {
+        return $this->belongsTo(Role::class);
     }
 
     public function department(): BelongsTo
