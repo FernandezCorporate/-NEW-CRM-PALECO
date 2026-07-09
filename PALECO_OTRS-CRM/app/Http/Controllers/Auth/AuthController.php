@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Requests\Auth\LoginRequest;
-use App\Enums\UserRoles;
 use Illuminate\Http\Request; 
 use App\Enums\NonModelActions;
 use Illuminate\Support\Facades\RateLimiter;
@@ -82,9 +81,8 @@ class AuthController extends Controller
             RateLimiter::clear($rateLimitKey);
 
             $loggedUser = Auth::user();
-
             $accountStatus = $loggedUser->is_active;
-            $userRole = $loggedUser->role;
+            $userRoleSlug = $loggedUser->assignedRole->slug_identifier;
 
             if(!$accountStatus){
                 LoginEvents::dispatch(NonModelActions::LOGIN_ACCOUNT_DEACTIVATED, $loggedUser);
@@ -101,10 +99,15 @@ class AuthController extends Controller
 
             $request->session()->regenerate();
 
+            // Synchronously update the last login time instantly
+            $loggedUser->updateQuietly(['last_login' => now()]);
+
+            // Dispatch background logging event
             LoginEvents::dispatch(NonModelActions::LOGIN_SUCCESS, $loggedUser);
-            $landingRoute = match($userRole) {
-                UserRoles::ADMIN => route('admin.dashboard'),
-                UserRoles::CWD => route('cwd.dashboard'),
+            
+            $landingRoute = match($userRoleSlug) {
+                'admin' => route('admin.dashboard'),
+                'cwd_officer' => route('cwd.dashboard'),
                 default => abort(403)
             };
 
