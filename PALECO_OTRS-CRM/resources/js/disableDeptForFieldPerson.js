@@ -6,16 +6,16 @@ document.addEventListener('DOMContentLoaded', () => {
     if (roleSelect && deptSelect) {
         
         const toggleDepartmentInput = () => {
-            // Access the specific Tom Select instance attached to the DOM element
             const tsInstance = deptSelect.tomselect;
             
-            // Assuming 'field_personnel' is the enum value output in your HTML
-            if (roleSelect.value === 'field_personnel') {
+            const selectedOption = roleSelect.options[roleSelect.selectedIndex];
+            const roleSlug = selectedOption ? selectedOption.getAttribute('data-slug') : '';
+            
+            if (roleSlug === 'field_personnel') {
                 if (tsInstance) {
                     tsInstance.clear();
                     tsInstance.disable();
                 } else {
-                    // Fallback for standard HTML select behavior
                     deptSelect.value = "";
                     deptSelect.disabled = true;
                 }
@@ -30,10 +30,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         };
 
-        // Listen for user changes
         roleSelect.addEventListener('change', toggleDepartmentInput);
-        
-        // Run immediately on page load (Wrapped in a tiny timeout to ensure Tom Select has finished booting first)
         setTimeout(toggleDepartmentInput, 100); 
     }
 });

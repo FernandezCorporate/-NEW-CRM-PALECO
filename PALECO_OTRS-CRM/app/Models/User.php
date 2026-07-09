@@ -123,7 +123,9 @@ class User extends Authenticatable
             return $query;
         }
 
-        return $query->where('role', $filter);
+        return $query->whereHas('assignedRole', function ($q) use ($filter) {
+            $q->where('slug_identifier', $filter);
+        });
     }
 
     public function scopeSort(Builder $query, ?string $sort): Builder
@@ -149,7 +151,7 @@ class User extends Authenticatable
             ->useLogName('Users')
             ->logOnly([
                 'username', 'first_name', 'middle_name', 'last_name', 'name_ext', 
-                'email', 'contact', 'role', 'password', 'department_id', 
+                'email', 'contact', 'role_id', 'password', 'department_id', 
                 'is_active'
             ])
             ->logOnlyDirty()

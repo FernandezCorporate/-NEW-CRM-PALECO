@@ -2,7 +2,7 @@
 namespace App\Observers;
 
 use App\Models\User;
-use App\Enums\UserRoles;
+use App\Models\Role;
 use Illuminate\Support\Facades\DB;
 
 class UserObserver
@@ -14,18 +14,19 @@ class UserObserver
     public function saved(User $user): void
     {
         // Check if the role attribute was modified during this cycle
-        if ($user->wasChanged('role')) {
+        if ($user->wasChanged('role_id')) {
             // Get what the role used to be before the update
-            $oldRole = $user->getOriginal('role');
+            $oldRoleId = $user->getOriginal('role_id');
 
-            // Handle both string and Enum backed value matching safely
-            $oldRoleValue = $oldRole instanceof UserRoles ? $oldRole->value : $oldRole;
-
-            if ($oldRoleValue === UserRoles::FIELD_PERSONNEL->value) {
-                // Execute immediately after the controller transaction successfully commits
-                DB::afterCommit(function () use ($user) {
-                    $user->teams()->detach();
-                });
+            if ($oldRoleId) {
+                $oldRole = Role::find($oldRoleId);
+                
+                if ($oldRole && $oldRole->slug_identifier === 'field_personnel') {
+                    // Execute immediately after the controller transaction successfully commits
+                    DB::afterCommit(function () use ($user) {
+                        $user->teams()->detach();
+                    });
+                }
             }
         }
     }

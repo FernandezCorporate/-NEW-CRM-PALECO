@@ -5,7 +5,7 @@ namespace App\Http\Requests\Admin\User;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
-use App\Enums\UserRoles;
+use App\Models\Role;
 
 class UpdateUserRequest extends FormRequest
 {
@@ -20,13 +20,13 @@ class UpdateUserRequest extends FormRequest
     protected function prepareForValidation(): void
     {
         $this->merge([
-                    'username'    => $this->filled('username') ? $this->string('username')->lower()->toString() : null,
-                    'first_name'  => $this->filled('first_name') ? $this->string('first_name')->lower()->toString() : null,
-                    'middle_name' => $this->filled('middle_name') ? $this->string('middle_name')->lower()->toString() : null,
-                    'last_name'   => $this->filled('last_name') ? $this->string('last_name')->lower()->toString() : null,
-                    'name_ext'    => $this->filled('name_ext') ? $this->string('name_ext')->lower()->toString() : null,
-                    'email'       => $this->filled('email') ? $this->string('email')->lower()->toString() : null,
-                ]);
+            'username'    => $this->filled('username') ? $this->string('username')->lower()->toString() : null,
+            'first_name'  => $this->filled('first_name') ? $this->string('first_name')->lower()->toString() : null,
+            'middle_name' => $this->filled('middle_name') ? $this->string('middle_name')->lower()->toString() : null,
+            'last_name'   => $this->filled('last_name') ? $this->string('last_name')->lower()->toString() : null,
+            'name_ext'    => $this->filled('name_ext') ? $this->string('name_ext')->lower()->toString() : null,
+            'email'       => $this->filled('email') ? $this->string('email')->lower()->toString() : null,
+        ]);
     }
 
     public function rules(): array
@@ -41,9 +41,12 @@ class UpdateUserRequest extends FormRequest
             'name_ext' => ['nullable', 'string', 'max:10'],
             'email' => ['nullable', 'string', 'email:rfc,dns', 'max:255', Rule::unique('users', 'email')->ignore($user)],
             'contact' => ['required', 'string', 'regex:/^(09|\+639)\d{9}$/'],
-            'role' => ['required', 'string', Rule::enum(UserRoles::class)],
+            'role_id' => ['required', 'integer', Rule::exists('roles', 'id')->whereNull('deleted_at')],
             'department_id' => [
-                Rule::requiredIf(fn () => $this->input('role') !== UserRoles::FIELD_PERSONNEL->value),
+                Rule::requiredIf(function () {
+                    $role = Role::find($this->input('role_id'));
+                    return $role && $role->slug_identifier !== 'field_personnel';
+                }),
                 'nullable', 
                 'integer', 
                 Rule::exists('departments', 'id')->whereNull('deleted_at')

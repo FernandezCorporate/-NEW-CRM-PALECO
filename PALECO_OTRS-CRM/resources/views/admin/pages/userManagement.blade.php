@@ -1,4 +1,3 @@
-@use('App\Enums\UserRoles')
 @extends('admin.base.base')
 
 @section('title', 'User Management')
@@ -99,7 +98,9 @@
                 <select name="filter" onchange="this.form.submit()" class="border border-slate-200 p-2.5 rounded-lg text-sm bg-white cursor-pointer focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500">
                     <option value="all" {{ request('filter') === 'all' ? 'selected' : '' }}>All Roles</option>
                     @foreach($roles as $role)
-                        <option value="{{ $role->value }}" {{ request('filter') === $role->value ? 'selected' : '' }}>{{ $role->label() }}</option>
+                        <option value="{{ $role->slug_identifier }}" {{ request('filter') === $role->slug_identifier ? 'selected' : '' }}>
+                            {{ Str::headline($role->role_name) }}
+                        </option>
                     @endforeach
                 </select>
 
@@ -152,7 +153,7 @@
                         <td class="px-6 py-4">
                             <div class="flex flex-col items-start gap-1.5">
                                 <span class="bg-slate-100 text-slate-600 text-[11px] font-semibold px-2.5 py-1 rounded-full">
-                                    {{ $user->role->label() }}
+                                    {{ Str::headline($user->assignedRole->role_name) }}
                                 </span>
                             </div>
                         </td>

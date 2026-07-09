@@ -27,7 +27,6 @@
 
             <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
 
-                <!-- ... (Keep Name and Contact rows exactly the same) ... -->
                 <div class="md:col-span-4">
                     <label class="block text-sm font-semibold text-slate-700 mb-1.5">First Name <span class="text-rose-500">*</span></label>
                     <input type="text" name="first_name" required maxlength="255" value="{{ old('first_name', $user->first_name ?? '') }}"
@@ -80,17 +79,17 @@
                 <!-- Organization Row (MODIFIED) -->
                 <div class="md:col-span-6">
                     <label class="block text-sm font-semibold text-slate-700 mb-1.5">System Role <span class="text-rose-500">*</span></label>
-                    <select id="user-role-select" name="role" required class="w-full px-3.5 py-2.5 border rounded-lg shadow-sm text-sm focus:outline-none transition-colors bg-white cursor-pointer
-                        {{ $errors->has('role') ? 'border-rose-300 focus:border-rose-500 focus:ring-1 focus:ring-rose-500' : 'border-slate-300 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500' }}">
+                    <select id="user-role-select" name="role_id" required class="w-full px-3.5 py-2.5 border rounded-lg shadow-sm text-sm focus:outline-none transition-colors bg-white cursor-pointer
+                        {{ $errors->has('role_id') ? 'border-rose-300 focus:border-rose-500 focus:ring-1 focus:ring-rose-500' : 'border-slate-300 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500' }}">
                         
-                        <option value="" disabled {{ old('role', optional($user)->role?->value) ? '' : 'selected' }}>Assign a role...</option>
+                        <option value="" disabled {{ old('role_id', optional($user)->role_id) ? '' : 'selected' }}>Assign a role...</option>
                         @foreach ($roles as $role)
-                            <option value="{{ $role->value }}" {{ old('role', optional($user)->role?->value) == $role->value ? 'selected' : '' }}>
-                                {{ $role->label() }}
+                            <option value="{{ $role->id }}" data-slug="{{ $role->slug_identifier }}" {{ old('role_id', optional($user)->role_id) == $role->id ? 'selected' : '' }}>
+                                {{ Str::headline($role->role_name) }}
                             </option>
                         @endforeach
                     </select>
-                    @error('role') <p class="mt-1 text-xs text-rose-500">{{ $message }}</p> @enderror
+                    @error('role_id') <p class="mt-1 text-xs text-rose-500">{{ $message }}</p> @enderror
                 </div>
 
                 <div class="md:col-span-6" id="department-wrapper">
@@ -111,7 +110,6 @@
 
                 <!-- Row 5: Security (Only visible during creation) -->
                 @if(!isset($user))
-                    <!-- ... (Keep Password logic exactly the same) ... -->
                     <div class="md:col-span-6">
                         <label class="block text-sm font-semibold text-slate-700 mb-1.5">Password <span class="text-rose-500">*</span></label>
                         <div class="relative">

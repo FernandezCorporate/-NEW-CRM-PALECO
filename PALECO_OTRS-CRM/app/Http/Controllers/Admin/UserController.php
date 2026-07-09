@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
-use App\Enums\UserRoles;
+use App\Models\Role;
 use App\Http\Requests\Admin\User\StoreUserRequest;
 use App\Http\Requests\Admin\User\UpdateUserRequest;
 use Illuminate\Http\Request;
@@ -18,20 +18,23 @@ class UserController extends Controller
     {
         Gate::authorize('viewAny', User::class);
 
-        $roles = UserRoles::cases();
+        $roles = Role::orderBy('role_name')->get();
 
-        $rawCounts = User::query()->where('is_active', true)
-            ->pluck('role')
-            ->countBy();
+        $rawCounts = User::query()
+            ->where('is_active', true)
+            ->select('role_id', DB::raw('count(*) as total'))
+            ->groupBy('role_id')
+            ->get()
+            ->keyBy('role_id');
 
         $activeCounts = (object) [
-            'admin' => $rawCounts->get(UserRoles::ADMIN->value, 0),
-            'cwd'   => $rawCounts->get(UserRoles::CWD->value, 0),
-            'foreman' => $rawCounts->get(UserRoles::FOREMAN->value, 0),
-            'field_personnel' => $rawCounts->get(UserRoles::FIELD_PERSONNEL->value, 0),
+            'admin' => $rawCounts->get($roles->where('slug_identifier', 'admin')->first()?->id)?->total ?? 0,
+            'cwd'   => $rawCounts->get($roles->where('slug_identifier', 'cwd_officer')->first()?->id)?->total ?? 0,
+            'foreman' => $rawCounts->get($roles->where('slug_identifier', 'foreman')->first()?->id)?->total ?? 0,
+            'field_personnel' => $rawCounts->get($roles->where('slug_identifier', 'field_personnel')->first()?->id)?->total ?? 0,
         ];
 
-        $users = User::query();
+        $users = User::query()->with('assignedRole');
 
         if ($request->filled('search')) {
             $users = $users->search($request->search);
@@ -61,10 +64,10 @@ class UserController extends Controller
         }
 
         $depts = Department::orderBy('dept_name')->pluck('dept_name', 'id');
-        $roles = UserRoles::cases();
+        $roles = Role::orderBy('role_name')->get();
 
         return view('admin.forms.userForm', compact('user', 'depts', 'roles'));
-    } 
+    }
 
     public function store(StoreUserRequest $request)
     {
@@ -72,26 +75,19 @@ class UserController extends Controller
 
         $validatedData = $request->validated();
 
-        if ($validatedData['role'] === UserRoles::FIELD_PERSONNEL->value) {
-            $validatedData['department_id'] = null;
+        $role = Role::find($validatedData['role_id']);
+        if ($role) {
+            // THE FIX: Temporarily satisfy the old database column requirements
+            $validatedData['role'] = $role->slug_identifier;
+            
+            if ($role->slug_identifier === 'field_personnel') {
+                $validatedData['department_id'] = null;
+            }
         }
 
         User::create($validatedData);
 
         return redirect()->route('admin.users')->with('success', 'User created successfully.');
-    }
-
-    public function show(User $user)
-    {
-        Gate::authorize('view', $user);
-
-        // Load only the direct department for the user profile header
-        $user->load('department');
-
-        // Extract the teams into a separate paginated query, eagerly loading the teams' departments
-        $assignedTeams = $user->teams()->with('department')->paginate(5);
-
-        return view('admin.pages.userDetails', compact('user', 'assignedTeams'));
     }
 
     public function update(UpdateUserRequest $request, User $user)
@@ -100,8 +96,14 @@ class UserController extends Controller
 
         $validatedData = $request->validated();
 
-        if ($validatedData['role'] === UserRoles::FIELD_PERSONNEL->value) {
-            $validatedData['department_id'] = null;
+        $role = Role::find($validatedData['role_id']);
+        if ($role) {
+            // THE FIX: Temporarily satisfy the old database column requirements
+            $validatedData['role'] = $role->slug_identifier;
+
+            if ($role->slug_identifier === 'field_personnel') {
+                $validatedData['department_id'] = null;
+            }
         }
 
         $user->fill($validatedData);
@@ -114,10 +116,9 @@ class UserController extends Controller
             $user->save(); 
         });
 
-        return redirect()->route('admin.users')->with('success', 'Users updated successfully.');
+        return redirect()->route('admin.users')->with('success', 'User updated successfully.');
     }
-
-
+    
     public function deactivateConfirm(User $user)
     {
         Gate::authorize('deactivateConfirm', $user);
