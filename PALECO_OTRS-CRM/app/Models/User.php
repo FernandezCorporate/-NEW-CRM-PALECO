@@ -9,7 +9,6 @@ use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use App\Enums\UserRoles;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\Builder;
@@ -22,7 +21,7 @@ use App\Models\Role;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 #[Fillable(['username', 'first_name', 'middle_name', 'last_name', 'name_ext', 
-'email', 'contact', 'role', 'role_id', 'password', 'department_id', 'last_login', 'locked_until', 'is_active'])]
+'email', 'contact', 'role_id', 'password', 'department_id', 'last_login', 'locked_until', 'is_active'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
@@ -34,13 +33,12 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'is_active' => 'boolean',
-            'role' => UserRoles::class,
             'last_login' => 'datetime',
             'locked_until' => 'datetime'
         ];
     }
 
-    public function assignedRole(): BelongsTo
+    public function role(): BelongsTo
     {
         return $this->belongsTo(Role::class, 'role_id');
     }
@@ -123,7 +121,7 @@ class User extends Authenticatable
             return $query;
         }
 
-        return $query->whereHas('assignedRole', function ($q) use ($filter) {
+        return $query->whereHas('role', function ($q) use ($filter) {
             $q->where('slug_identifier', $filter);
         });
     }

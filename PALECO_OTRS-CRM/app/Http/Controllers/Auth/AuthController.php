@@ -82,7 +82,7 @@ class AuthController extends Controller
 
             $loggedUser = Auth::user();
             $accountStatus = $loggedUser->is_active;
-            $userRoleSlug = $loggedUser->assignedRole->slug_identifier;
+            $userRoleSlug = $loggedUser->role->slug_identifier;
 
             if(!$accountStatus){
                 LoginEvents::dispatch(NonModelActions::LOGIN_ACCOUNT_DEACTIVATED, $loggedUser);

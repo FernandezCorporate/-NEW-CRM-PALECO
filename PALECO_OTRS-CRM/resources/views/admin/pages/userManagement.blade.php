@@ -153,7 +153,7 @@
                         <td class="px-6 py-4">
                             <div class="flex flex-col items-start gap-1.5">
                                 <span class="bg-slate-100 text-slate-600 text-[11px] font-semibold px-2.5 py-1 rounded-full">
-                                    {{ Str::headline($user->assignedRole->role_name) }}
+                                    {{ Str::headline($user->role->role_name) }}
                                 </span>
                             </div>
                         </td>

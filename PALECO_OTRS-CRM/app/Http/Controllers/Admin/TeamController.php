@@ -68,7 +68,7 @@ class TeamController extends Controller
         $depts = Department::orderBy('dept_name')->pluck('dept_name', 'id');
         
         $personnel = User::query()
-            ->whereHas('assignedRole', function ($q) {
+            ->whereHas('role', function ($q) {
                 $q->where('slug_identifier', 'field_personnel');
             })
             ->where('is_active', true)

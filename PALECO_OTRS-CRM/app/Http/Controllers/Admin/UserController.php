@@ -34,7 +34,7 @@ class UserController extends Controller
             'field_personnel' => $rawCounts->get($roles->where('slug_identifier', 'field_personnel')->first()?->id)?->total ?? 0,
         ];
 
-        $users = User::query()->with('assignedRole');
+        $users = User::query()->with('role');
 
         if ($request->filled('search')) {
             $users = $users->search($request->search);
@@ -53,6 +53,19 @@ class UserController extends Controller
         $users = $users->paginate(10)->withQueryString();
 
         return view('admin.pages.userManagement', compact('users', 'roles', 'activeCounts'));
+    }
+
+    public function show(User $user)
+    {
+        Gate::authorize('view', $user);
+
+        // Load only the direct department for the user profile header
+        $user->load('department');
+
+        // Extract the teams into a separate paginated query, eagerly loading the teams' departments
+        $assignedTeams = $user->teams()->with('department')->paginate(5);
+
+        return view('admin.pages.userDetails', compact('user', 'assignedTeams'));
     }
 
     public function userForm(?User $user = null)
@@ -76,10 +89,7 @@ class UserController extends Controller
         $validatedData = $request->validated();
 
         $role = Role::find($validatedData['role_id']);
-        if ($role) {
-            // THE FIX: Temporarily satisfy the old database column requirements
-            $validatedData['role'] = $role->slug_identifier;
-            
+        if ($role) {            
             if ($role->slug_identifier === 'field_personnel') {
                 $validatedData['department_id'] = null;
             }
@@ -98,9 +108,6 @@ class UserController extends Controller
 
         $role = Role::find($validatedData['role_id']);
         if ($role) {
-            // THE FIX: Temporarily satisfy the old database column requirements
-            $validatedData['role'] = $role->slug_identifier;
-
             if ($role->slug_identifier === 'field_personnel') {
                 $validatedData['department_id'] = null;
             }

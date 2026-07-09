@@ -18,7 +18,7 @@ class LogUserAuthActivity implements ShouldQueue
                 "user_agent" => $event->user_agent,
                 "username"   => $event->user ? $event->user->username : $event->usernameInput,
                 "full_name"  => $event->user ? ucwords(trim($event->user->first_name . ' ' . $event->user->last_name)) : null,
-                "role"       => $event->user?->assignedRole?->slug_identifier,
+                "role"       => $event->user?->role?->slug_identifier,
                 "email"      => $event->user?->email,
                 "contact"    => $event->user?->contact
             ])

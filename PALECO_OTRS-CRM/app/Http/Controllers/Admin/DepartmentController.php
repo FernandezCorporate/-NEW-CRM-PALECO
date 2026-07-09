@@ -18,7 +18,7 @@ class DepartmentController extends Controller
 
         $departments = Department::query()->withCount([
             'users as active_foremen_count' => function ($query) {
-                $query->where('is_active', true)->whereHas('assignedRole', function ($q) {
+                $query->where('is_active', true)->whereHas('role', function ($q) {
                     $q->where('slug_identifier', 'foreman');
                 });
             },
@@ -55,7 +55,7 @@ class DepartmentController extends Controller
 
         // Get total field personnel attached to teams in this department
         $personnelCount = User::query()->where('is_active', true)
-            ->whereHas('assignedRole', function ($q) {
+            ->whereHas('role', function ($q) {
                 $q->where('slug_identifier', 'field_personnel');
             })
             ->whereHas('teams', function ($query) use ($dept) {
@@ -63,7 +63,7 @@ class DepartmentController extends Controller
             })->count();
 
         // Paginate Foremen (using a custom 'page_foreman' query string to avoid conflicts)
-        $foremanQuery = $dept->users()->where('is_active', true)->whereHas('assignedRole', function ($q) {
+        $foremanQuery = $dept->users()->where('is_active', true)->whereHas('role', function ($q) {
             $q->where('slug_identifier', 'foreman');
         });
         

@@ -112,7 +112,7 @@
                     <div class="flex justify-between items-center py-2 border-b border-slate-100">
                         <span class="text-slate-500 font-medium">System Role</span>
                         <span class="bg-slate-100 text-slate-700 text-xs font-bold px-2.5 py-1 rounded-full uppercase tracking-wide">
-                            {{ Str::headline($user->assignedRole->role_name) }}
+                            {{ Str::headline($user->role->role_name) }}
                         </span>
                     </div>
 

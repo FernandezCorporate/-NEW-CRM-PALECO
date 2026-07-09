@@ -19,7 +19,7 @@
                     <div>
                         <h2 class="text-sm font-bold text-white tracking-wider leading-tight">PALECO CWD</h2>
                         <p class="text-[10px] text-emerald-400 font-light mt-0.5 uppercase tracking-wide">
-                            {{ auth()->user() ? Str::headline(auth()->user()->assignedRole->role_name) : 'Portal' }} Console
+                            {{ auth()->user() ? Str::headline(auth()->user()->role->role_name) : 'Portal' }} Console
                         </p>
                     </div>
                 </div>
@@ -41,7 +41,7 @@
                 </div>
 
                 <!-- Update: Evaluating relational slug instead of enum value -->
-                @if(auth()->check() && auth()->user()->assignedRole->slug_identifier === 'admin')
+                @if(auth()->check() && auth()->user()->role->slug_identifier === 'admin')
                     <div>
                         <h3 class="px-2 text-[10px] font-bold text-white/40 uppercase tracking-widest mb-2">Administration</h3>
                         <ul class="list-none p-0 m-0 space-y-1 mb-3">
@@ -96,7 +96,7 @@
                         {{ auth()->check() && auth()->user()->first_name ? auth()->user()->first_name . ' ' . auth()->user()->last_name : (auth()->check() ? auth()->user()->username : 'Guest') }}
                     </p>
                     <p class="text-[10px] text-slate-400 truncate uppercase tracking-wider mt-0.5">
-                        {{ auth()->check() ? Str::headline(auth()->user()->assignedRole->role_name) : 'No Role' }}
+                        {{ auth()->check() ? Str::headline(auth()->user()->role->role_name) : 'No Role' }}
                     </p>
                 </div>
             </div>
