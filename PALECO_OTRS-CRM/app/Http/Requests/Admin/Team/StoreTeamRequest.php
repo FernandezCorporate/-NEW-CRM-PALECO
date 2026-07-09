@@ -5,7 +5,6 @@ namespace App\Http\Requests\Admin\Team;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
-use App\Enums\UserRoles;
 use App\Enums\TeamMemberRoles;
 
 class StoreTeamRequest extends FormRequest
@@ -27,7 +26,10 @@ class StoreTeamRequest extends FormRequest
             'members' => ['nullable', 'array'],
 
             'members.*.user_id' => ['required', Rule::exists('users', 'id')->where(function ($query) {
-                    $query->where('role', UserRoles::FIELD_PERSONNEL);  
+                // Dynamically fetch users who possess the field_personnel role_id
+                $query->whereIn('role_id', function ($subQuery) {
+                    $subQuery->select('id')->from('roles')->where('slug_identifier', 'field_personnel');
+                });
             })],
             'members.*.team_role' => ['required', Rule::enum(TeamMemberRoles::class)]
         ];

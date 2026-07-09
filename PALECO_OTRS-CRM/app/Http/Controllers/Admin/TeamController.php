@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Enums\TeamMemberRoles;
-use App\Enums\UserRoles;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\Team\StoreTeamRequest;
 use App\Http\Requests\Admin\Team\UpdateTeamRequest;
@@ -67,12 +66,16 @@ class TeamController extends Controller
         }
 
         $depts = Department::orderBy('dept_name')->pluck('dept_name', 'id');
+        
         $personnel = User::query()
-            ->where('role', UserRoles::FIELD_PERSONNEL)
+            ->whereHas('assignedRole', function ($q) {
+                $q->where('slug_identifier', 'field_personnel');
+            })
             ->where('is_active', true)
             ->orderBy('first_name', 'asc')
             ->select(['id', 'first_name', 'middle_name', 'last_name', 'name_ext'])
             ->get();
+            
         $memberRoles = TeamMemberRoles::cases();
 
         return view('admin.forms.teamForm', compact('team', 'depts', 'personnel', 'memberRoles'));
@@ -159,7 +162,6 @@ class TeamController extends Controller
 
     public function restore($id)
     {
-        // Using manual fetch because the current patch route in web.php doesn't use withTrashed()
         $team = Team::onlyTrashed()->findOrFail($id); 
 
         Gate::authorize('restore', clone $team);
@@ -177,7 +179,6 @@ class TeamController extends Controller
 
     public function destroy($id)
     {
-        // Using manual fetch because the current destroy route might need explicit binding validation
         $team = Team::onlyTrashed()->findOrFail($id);
 
         Gate::authorize('forceDelete', clone $team);

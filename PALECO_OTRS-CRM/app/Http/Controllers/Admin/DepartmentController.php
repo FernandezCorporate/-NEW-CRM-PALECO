@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Enums\UserRoles;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Department;
@@ -18,11 +17,10 @@ class DepartmentController extends Controller
         Gate::authorize('viewAny', Department::class);
 
         $departments = Department::query()->withCount([
-            'users as active_users_count' => function ($query) {
-                $query->where('is_active', true)->where('role', UserRoles::FIELD_PERSONNEL);
-            },
             'users as active_foremen_count' => function ($query) {
-                $query->where('is_active', true)->where('role', UserRoles::FOREMAN);
+                $query->where('is_active', true)->whereHas('assignedRole', function ($q) {
+                    $q->where('slug_identifier', 'foreman');
+                });
             },
             'teams as active_team_count'
         ]);
@@ -57,13 +55,18 @@ class DepartmentController extends Controller
 
         // Get total field personnel attached to teams in this department
         $personnelCount = User::query()->where('is_active', true)
-            ->where('role', UserRoles::FIELD_PERSONNEL)
+            ->whereHas('assignedRole', function ($q) {
+                $q->where('slug_identifier', 'field_personnel');
+            })
             ->whereHas('teams', function ($query) use ($dept) {
                 $query->where('department_id', $dept->id);
             })->count();
 
         // Paginate Foremen (using a custom 'page_foreman' query string to avoid conflicts)
-        $foremanQuery = $dept->users()->where('is_active', true)->where('role', UserRoles::FOREMAN);
+        $foremanQuery = $dept->users()->where('is_active', true)->whereHas('assignedRole', function ($q) {
+            $q->where('slug_identifier', 'foreman');
+        });
+        
         $foremanCount = $foremanQuery->count();
         $foremanCollection = $foremanQuery->paginate(5, ['*'], 'page_foreman');
 
