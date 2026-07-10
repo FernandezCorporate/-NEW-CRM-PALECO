@@ -97,11 +97,23 @@ Route::middleware('auth')->group(function() {
             Route::delete('/{team}/force-delete', [TeamController::class, 'destroy'])->name('admin.teams.destroy')->whereUlid('team')->withTrashed();
         });
 
-        Route::prefix('ticket-categories')->group(function() {
+    Route::prefix('ticket-categories')->group(function() {
             Route::get('/', [TicketCategoryController::class, 'viewAny'])->name('admin.ticketCategories');
+            Route::get('/{category}', [TicketCategoryController::class, 'show'])->name('admin.ticketCategories.show')->whereNumber('category')->withTrashed();
             
             Route::get('/create', [TicketCategoryController::class, 'ticketCategoryForm'])->name('admin.ticketCategories.createForm');
             Route::post('/', [TicketCategoryController::class, 'store'])->name('admin.ticketCategories.store');
+
+            Route::get('/{category}/edit', [TicketCategoryController::class, 'ticketCategoryForm'])->name('admin.ticketCategories.editForm')->whereNumber('category');
+            Route::put('/{category}', [TicketCategoryController::class, 'update'])->name('admin.ticketCategories.update')->whereNumber('category');
+
+            Route::get('/{category}/archive', [TicketCategoryController::class, 'deleteConfirm'])->name('admin.ticketCategories.deleteConfirm')->whereNumber('category');
+            Route::delete('/{category}', [TicketCategoryController::class, 'archive'])->name('admin.ticketCategories.archive')->whereNumber('category');
+
+            Route::patch('/{category}/restore', [TicketCategoryController::class, 'restore'])->name('admin.ticketCategories.restore')->whereNumber('category')->withTrashed();
+
+            Route::get('/{category}/delete', [TicketCategoryController::class, 'deleteConfirm'])->name('admin.ticketCategories.forceDeleteConfirm')->whereNumber('category')->withTrashed();
+            Route::delete('/{category}/force-delete', [TicketCategoryController::class, 'destroy'])->name('admin.ticketCategories.destroy')->whereNumber('category')->withTrashed();
         });
     });
 

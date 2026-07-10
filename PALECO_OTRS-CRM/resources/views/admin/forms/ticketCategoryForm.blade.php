@@ -11,7 +11,8 @@
     @include('admin.prompts.alert')
 
     <div class="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden max-w-2xl">
-        <form action="{{ route('admin.ticketCategories.store') }}" method="POST">
+        <!-- Dynamically switch between Update and Store routes -->
+        <form action="{{ isset($category) ? route('admin.ticketCategories.update', ['category' => $category, 'source' => request('source')]) : route('admin.ticketCategories.store') }}" method="POST">
             @csrf
 
             @isset($category)
@@ -43,7 +44,8 @@
             </div>
 
             <div class="bg-slate-50 px-6 py-4 border-t border-slate-200 flex items-center justify-end gap-3">
-                <a href="" class="action-link px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-800 hover:bg-slate-200 rounded-lg transition-colors" data-loading-text="Canceling...">
+                <!-- Smart Cancel Button -->
+                <a href="{{ request('source') === 'details' && isset($category) ? route('admin.ticketCategories.show', $category) : session('category_list_url', route('admin.ticketCategories')) }}" class="action-link px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-800 hover:bg-slate-200 rounded-lg transition-colors" data-loading-text="Canceling...">
                     Cancel
                 </a>
                 <button type="submit" class="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2 rounded-lg text-sm font-medium shadow-sm shadow-emerald-700/20 transition-all active:scale-[0.98]" data-loading-text="Saving...">

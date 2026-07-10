@@ -21,6 +21,24 @@ class TicketCategory extends Model
         ];
     }
 
+    public function scopeSearch($query, $search)
+    {
+        return $query->where(function ($q) use ($search) {
+            $q->where('category_name', 'like', "%{$search}%")
+              ->orWhere('category_desc', 'like', "%{$search}%");
+        });
+    }
+
+    public function scopeSort($query, $sort)
+    {
+        return match ($sort) {
+            'oldest' => $query->oldest(),
+            'category_nameASC' => $query->orderBy('category_name', 'asc'),
+            'category_nameDESC' => $query->orderBy('category_name', 'desc'),
+            default => $query->latest(), // 'newest'
+        };
+    }
+
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
