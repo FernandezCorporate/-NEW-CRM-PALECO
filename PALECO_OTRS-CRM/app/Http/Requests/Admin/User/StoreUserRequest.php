@@ -36,7 +36,7 @@ class StoreUserRequest extends FormRequest
             'name_ext' => ['nullable', 'string', 'max:10'],
             'email' => ['nullable', 'string', 'email:rfc,dns', 'max:255', Rule::unique('users', 'email')],
             'contact' => ['required', 'string', 'regex:/^(09|\+639)\d{9}$/'],
-            'role_id' => ['required', 'integer', Rule::exists('account_roles', 'id')->whereNull('deleted_at')],
+            'role_id' => ['required', 'integer', Rule::exists('account_roles', 'id')],
             'department_id' => [
                 Rule::requiredIf(function () {
                     $role = AccountRole::find($this->input('role_id'));

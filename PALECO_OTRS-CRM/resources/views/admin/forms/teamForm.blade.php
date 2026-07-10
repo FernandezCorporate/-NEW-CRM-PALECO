@@ -95,7 +95,7 @@
                 @php
                     // Pre-load either old validation inputs OR the database pivot data if editing
                     $currentMembers = old('members', isset($team) ? $team->members->map(function($m) {
-                        return ['user_id' => $m->id, 'team_role' => $m->pivot->team_role];
+                        return ['user_id' => $m->id, 'team_role_id' => $m->pivot->team_role_id];
                     })->toArray() : []);
                 @endphp
 
@@ -117,10 +117,10 @@
 
                             <!-- Role Selection -->
                             <div class="w-full md:w-48 shrink-0">
-                                <select name="members[{{ $index }}][team_role]" required class="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm bg-slate-50 hover:bg-white focus:bg-white transition-colors focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500">
+                                <select name="members[{{ $index }}][team_role_id]" required class="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm bg-slate-50 hover:bg-white focus:bg-white transition-colors focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500">
                                     <option value="" disabled>Select Role...</option>
                                     @foreach ($memberRoles as $role)
-                                        <option value="{{ $role->value }}" {{ $member['team_role'] == $role->value ? 'selected' : '' }}>{{ $role->label() }}</option>
+                                        <option value="{{ $role->id }}" ...>{{ Str::headline($role->role_name) }}</option>
                                     @endforeach
                                 </select>
                             </div>
@@ -151,10 +151,10 @@
                         </select>
                     </div>
                     <div class="w-full md:w-48 shrink-0">
-                        <select name="members[__INDEX__][team_role]" required class="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm bg-slate-50 hover:bg-white focus:bg-white transition-colors focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500">
+                        <select name="members[__INDEX__][team_role_id]" required class="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm bg-slate-50 hover:bg-white focus:bg-white transition-colors focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500">
                             <option value="" disabled selected>Select Role...</option>
                             @foreach ($memberRoles as $role)
-                                <option value="{{ $role->value }}">{{ $role->label() }}</option>
+                                <option value="{{ $role->id }}">{{ $role->role_name }}</option>
                             @endforeach
                         </select>
                     </div>

@@ -5,7 +5,6 @@ namespace App\Http\Requests\Admin\Team;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
-use App\Enums\TeamMemberRoles;
 
 class UpdateTeamRequest extends FormRequest
 {
@@ -28,12 +27,11 @@ class UpdateTeamRequest extends FormRequest
             'members' => ['nullable', 'array'],
 
             'members.*.user_id' => ['required', Rule::exists('users', 'id')->where(function ($query) {
-                // Dynamically fetch users who possess the field_personnel role_id
                 $query->whereIn('role_id', function ($subQuery) {
                     $subQuery->select('id')->from('account_roles')->where('slug_identifier', 'field_personnel');
                 });
             })],
-            'members.*.team_role' => ['required', Rule::enum(TeamMemberRoles::class)]
+            'members.*.team_role_id' => ['required', Rule::exists('team_roles', 'id')]
         ];
     }
 
@@ -41,6 +39,7 @@ class UpdateTeamRequest extends FormRequest
     {
         return [
             'members.*.user_id.exists' => 'One or more of the selected members are not valid Field Personnel.',
+            'members.*.team_role_id.exists' => 'The selected team role is invalid.',
         ];
     }
 }

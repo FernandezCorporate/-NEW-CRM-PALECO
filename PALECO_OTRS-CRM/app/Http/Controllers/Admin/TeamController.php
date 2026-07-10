@@ -2,12 +2,12 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Enums\TeamMemberRoles;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\Team\StoreTeamRequest;
 use App\Http\Requests\Admin\Team\UpdateTeamRequest;
 use App\Models\Department;
 use App\Models\User;
+use App\Models\TeamRole;
 use Illuminate\Http\Request;
 use App\Models\Team;
 use Illuminate\Support\Facades\Gate;
@@ -52,9 +52,13 @@ class TeamController extends Controller
     {
         Gate::authorize('view', $team);
 
-        $members = $team->members()->withPivot('team_role', 'created_at')->paginate(5);
+        // Fetch team_role_id on pivot
+        $members = $team->members()->withPivot('team_role_id', 'created_at')->paginate(5);
+        
+        // Pass a dictionary of roles to avoid N+1 queries in the blade loop
+        $teamRoles = TeamRole::pluck('role_name', 'id');
 
-        return view('admin.pages.teamDetails', compact('team', 'members'));
+        return view('admin.pages.teamDetails', compact('team', 'members', 'teamRoles'));
     }
 
     public function teamForm(?Team $team = null)
@@ -76,7 +80,8 @@ class TeamController extends Controller
             ->select(['id', 'first_name', 'middle_name', 'last_name', 'name_ext'])
             ->get();
             
-        $memberRoles = TeamMemberRoles::cases();
+        // Fetch real database roles instead of Enum
+        $memberRoles = TeamRole::orderBy('role_name')->get();
 
         return view('admin.forms.teamForm', compact('team', 'depts', 'personnel', 'memberRoles'));
     }
@@ -94,7 +99,7 @@ class TeamController extends Controller
             if (!empty($assignedMembers)) {
                 $formattedMembers = collect($assignedMembers)->mapWithKeys(function ($member) {
                     return [
-                        $member['user_id'] => ['team_role' => $member['team_role']]
+                        $member['user_id'] => ['team_role_id' => $member['team_role_id']]
                     ];
                 });
                 $team->members()->sync($formattedMembers);
@@ -118,7 +123,7 @@ class TeamController extends Controller
 
             $formattedMembers = collect($assignedMembers)->mapWithKeys(function ($member) {
                 return [
-                    $member['user_id'] => ['team_role' => $member['team_role']]
+                    $member['user_id'] => ['team_role_id' => $member['team_role_id']]
                 ];
             });
 

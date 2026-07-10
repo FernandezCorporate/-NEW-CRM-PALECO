@@ -36,7 +36,7 @@ class Team extends Model
     public function members(): BelongsToMany
     {
         return $this->belongsToMany(User::class, 'team_members')
-            ->withPivot('team_role')
+            ->withPivot('team_role_id')
             ->withTimestamps();
     }
 
@@ -65,7 +65,6 @@ class Team extends Model
 
     public function scopeFilter(Builder $query, ?string $filter): Builder
     {
-        // Check if the filter is completely empty OR set to 'all'
         if (empty($filter) || $filter === 'all') {
             return $query;
         }
@@ -102,22 +101,22 @@ class Team extends Model
     }
 
     public function getActivitylogOptions(): LogOptions
-        {
-            return LogOptions::defaults()
-                ->useLogName('Users')
-                ->logOnly([
-                    'team_name', 'team_desc', 'shift_start',
-                    'shift_end', 'department_id'
-                ])
-                ->logOnlyDirty()
-                ->setDescriptionForEvent(function(string $eventName) {
-                    $action = match($eventName) {
-                        'deleted'      => $this->isForceDeleting() ? 'permanently deleted' : 'archived',
-                        'restored'     => 'restored',
-                        default        => $eventName,
-                    };
+    {
+        return LogOptions::defaults()
+            ->useLogName('Teams')
+            ->logOnly([
+                'team_name', 'team_desc', 'shift_start',
+                'shift_end', 'department_id'
+            ])
+            ->logOnlyDirty()
+            ->setDescriptionForEvent(function(string $eventName) {
+                $action = match($eventName) {
+                    'deleted'      => $this->isForceDeleting() ? 'permanently deleted' : 'archived',
+                    'restored'     => 'restored',
+                    default        => $eventName,
+                };
 
-                    return "{$this->team_name} has been {$action}";
-                });
-        }
+                return "{$this->team_name} has been {$action}";
+            });
+    }
 }

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\AccountRole;
+use App\Models\TeamRole; 
 use App\Http\Requests\Admin\User\StoreUserRequest;
 use App\Http\Requests\Admin\User\UpdateUserRequest;
 use Illuminate\Http\Request;
@@ -21,11 +22,12 @@ class UserController extends Controller
         $roles = AccountRole::orderBy('role_name')->get();
 
         $rawCounts = User::query()
-            ->where('is_active', true)
-            ->select('role_id', DB::raw('count(*) as total'))
-            ->groupBy('role_id')
-            ->get()
-            ->keyBy('role_id');
+                    ->where('is_active', true)
+                    ->select('role_id')
+                    ->selectRaw('count(*) as total') 
+                    ->groupBy('role_id')
+                    ->get()
+                    ->keyBy('role_id');
 
         $activeCounts = (object) [
             'admin' => $rawCounts->get($roles->where('slug_identifier', 'admin')->first()?->id)?->total ?? 0,
@@ -62,9 +64,22 @@ class UserController extends Controller
         // Load only the direct department for the user profile header
         $user->load('department');
 
-        // Extract the teams into a separate paginated query, eagerly loading the teams' departments
-        $assignedTeams = $user->teams()->with('department')->paginate(5);
+        // Extract the teams into a separate paginated query
+        $assignedTeams = $user->teams()
+            ->with('department')
+            ->withPivot('team_role_id', 'created_at')
+            ->paginate(5);
+            
+        // Fetch the role dictionary
+        $teamRoles = TeamRole::pluck('role_name', 'id');
 
+        // Transform the paginated items to inject the string name directly onto each team
+        $assignedTeams->getCollection()->transform(function ($team) use ($teamRoles) {
+            $team->assigned_role_name = $teamRoles[$team->pivot->team_role_id] ?? 'Unknown Role';
+            return $team;
+        });
+
+        // We no longer need to pass $teamRoles to the view!
         return view('admin.pages.userDetails', compact('user', 'assignedTeams'));
     }
 

@@ -197,7 +197,7 @@
                                 
                                 <td class="px-6 py-4">
                                     <span class="bg-blue-50 text-blue-700 border border-blue-200 text-[11px] font-bold px-2.5 py-1 rounded-full tracking-wide uppercase">
-                                        {{ Str::headline($team->pivot->team_role) }}
+                                        {{ Str::headline($team->assigned_role_name) }}
                                     </span>
                                 </td>
 
