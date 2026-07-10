@@ -132,7 +132,7 @@ class TeamController extends Controller
 
             if (!empty($changes['attached']) || !empty($changes['detached']) || !empty($changes['updated'])) {
                 activity()
-                    ->useLog('Users')
+                    ->useLog('Teams')
                     ->performedOn($team)
                     ->event('roster_updated')
                     ->withProperties([

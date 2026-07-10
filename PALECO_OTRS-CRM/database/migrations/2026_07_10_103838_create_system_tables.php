@@ -6,11 +6,22 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
+        // Cache[cite: 15]
+        Schema::create('cache', function (Blueprint $table) {
+            $table->string('key')->primary();
+            $table->mediumText('value');
+            $table->bigInteger('expiration')->index();
+        });
+
+        Schema::create('cache_locks', function (Blueprint $table) {
+            $table->string('key')->primary();
+            $table->string('owner');
+            $table->bigInteger('expiration')->index();
+        });
+
+        // Jobs[cite: 16]
         Schema::create('jobs', function (Blueprint $table) {
             $table->id();
             $table->string('queue')->index();
@@ -42,18 +53,30 @@ return new class extends Migration
             $table->longText('payload');
             $table->longText('exception');
             $table->timestamp('failed_at')->useCurrent();
-
             $table->index(['connection', 'queue', 'failed_at']);
+        });
+
+        // Spatie Activity Log[cite: 17]
+        Schema::create('activity_log', function (Blueprint $table) {
+            $table->id();
+            $table->string('log_name')->nullable()->index();
+            $table->text('description');
+            $table->nullableUlidMorphs('subject', 'subject');
+            $table->string('event')->nullable();
+            $table->nullableUlidMorphs('causer', 'causer');
+            $table->json('attribute_changes')->nullable(); 
+            $table->json('properties')->nullable();
+            $table->timestamps();
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
-        Schema::dropIfExists('jobs');
-        Schema::dropIfExists('job_batches');
+        Schema::dropIfExists('activity_log');
         Schema::dropIfExists('failed_jobs');
+        Schema::dropIfExists('job_batches');
+        Schema::dropIfExists('jobs');
+        Schema::dropIfExists('cache_locks');
+        Schema::dropIfExists('cache');
     }
 };

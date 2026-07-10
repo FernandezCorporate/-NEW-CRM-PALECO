@@ -154,7 +154,7 @@
                         <select name="members[__INDEX__][team_role_id]" required class="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm bg-slate-50 hover:bg-white focus:bg-white transition-colors focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500">
                             <option value="" disabled selected>Select Role...</option>
                             @foreach ($memberRoles as $role)
-                                <option value="{{ $role->id }}">{{ $role->role_name }}</option>
+                                <option value="{{ $role->id }}">{{ Str::headline($role->role_name) }}</option>
                             @endforeach
                         </select>
                     </div>
