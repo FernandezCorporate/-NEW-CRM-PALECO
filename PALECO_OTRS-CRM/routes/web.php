@@ -8,8 +8,8 @@ use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\Cwd\CwdDashboardController;
 use App\Http\Controllers\Admin\DepartmentController;
 use App\Http\Controllers\Admin\TeamController;
+use App\Http\Controllers\Admin\TicketCategoryController;
 use App\Http\Controllers\Admin\UserController;
-use App\Http\Controllers\TicketCategoryController;
 
 Route::middleware('guest')->group(function() {
     Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
@@ -99,6 +99,9 @@ Route::middleware('auth')->group(function() {
 
         Route::prefix('ticket-categories')->group(function() {
             Route::get('/', [TicketCategoryController::class, 'viewAny'])->name('admin.ticketCategories');
+            
+            Route::get('/create', [TicketCategoryController::class, 'ticketCategoryForm'])->name('admin.ticketCategories.createForm');
+            Route::post('/', [TicketCategoryController::class, 'store'])->name('admin.ticketCategories.store');
         });
     });
 
