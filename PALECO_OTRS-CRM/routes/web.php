@@ -9,6 +9,7 @@ use App\Http\Controllers\Cwd\CwdDashboardController;
 use App\Http\Controllers\Admin\DepartmentController;
 use App\Http\Controllers\Admin\TeamController;
 use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\TicketCategoryController;
 
 Route::middleware('guest')->group(function() {
     Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
@@ -94,6 +95,10 @@ Route::middleware('auth')->group(function() {
 
             Route::get('/{team}/delete', [TeamController::class, 'deleteConfirm'])->name('admin.teams.forceDeleteConfirm')->whereUlid('team')->withTrashed();
             Route::delete('/{team}/force-delete', [TeamController::class, 'destroy'])->name('admin.teams.destroy')->whereUlid('team')->withTrashed();
+        });
+
+        Route::prefix('ticket-categories')->group(function() {
+            Route::get('/', [TicketCategoryController::class, 'viewAny'])->name('admin.ticketCategories');
         });
     });
 

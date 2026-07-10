@@ -75,6 +75,20 @@
                                 </a> 
                             </li> 
                         </ul>
+
+
+                        <ul class="list-none p-0 m-0 space-y-1 mb-3">
+                            <li>
+                                <a href="{{ route('admin.ticketCategories') }}" class="flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors {{ request()->routeIs('admin.ticket-categories') ? 'bg-[#00a86b] text-white shadow-md' : 'text-slate-300 hover:bg-white/5 hover:text-white' }}">
+                                    <!-- Ticket / Tag Icon -->
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://w3.org">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581a1.5 1.5 0 002.122 0l4.318-4.318a1.5 1.5 0 000-2.122L11.16 3.659A2.25 2.25 0 009.568 3z" />
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M6 7.5h.008v.008H6V7.5z" />
+                                    </svg>
+                                    Ticket Categories
+                                </a>
+                            </li>
+                        </ul>
                     </div>
                 @endif
             </nav>
