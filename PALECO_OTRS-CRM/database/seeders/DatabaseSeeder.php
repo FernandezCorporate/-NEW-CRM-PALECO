@@ -7,6 +7,7 @@ use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Database\Seeders\UserSeeder;
 use Database\Seeders\RoleSeeder;
+use Database\Seeders\TeamRoleSeeder;
 
 class DatabaseSeeder extends Seeder
 {
@@ -18,8 +19,9 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $this->call([
+            TeamRoleSeeder::class,
+            RoleSeeder::class,
             UserSeeder::class,
-            RoleSeeder::class
         ]);
     }
 }

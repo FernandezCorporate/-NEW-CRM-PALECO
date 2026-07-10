@@ -19,7 +19,7 @@ class UserSeeder extends Seeder
             'last_name' => 'fernandez',
             'email' => 'allenglennfernandez04@gmail.com',
             'contact' => '09694547493',
-            'role' => 'admin',
+            'role_id' => 1,
             'password' => 'password',
         ]);
         
@@ -30,7 +30,7 @@ class UserSeeder extends Seeder
             'last_name' => 'fernandez',
             'email' => 'adrianfernandez04@gmail.com',
             'contact' => '09694547493',
-            'role' => 'cwd_officer',
+            'role_id' => 2,
             'password' => 'password',
         ]);
     }
