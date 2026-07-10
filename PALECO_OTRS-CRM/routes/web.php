@@ -1,17 +1,14 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-
+use Illuminate\Http\Request;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Admin\AdminDashboardController;
 use Illuminate\Support\Facades\Auth;
-use App\Enums\UserRoles;
 use App\Http\Controllers\Cwd\CwdDashboardController;
 use App\Http\Controllers\Admin\DepartmentController;
 use App\Http\Controllers\Admin\TeamController;
 use App\Http\Controllers\Admin\UserController;
-use App\Models\Team;
-use App\Models\User;
 
 Route::middleware('guest')->group(function() {
     Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
@@ -19,13 +16,27 @@ Route::middleware('guest')->group(function() {
 });
 
 Route::middleware('auth')->group(function() {
-    Route::get('/', function () {
-        return match (Auth::user()->role->slug_identifier) {
-            'admin' => redirect()->route('admin.dashboard'),
-            'cwd_officer' => redirect()->route('cwd.dashboard'),
-            default => abort(403),
+    
+    // Root routing gatekeeper
+    Route::get('/', function (Request $request) {
+        $dashboardRoute = match (Auth::user()->role->slug_identifier) {
+            'admin' => 'admin.dashboard',
+            'cwd_officer' => 'cwd.dashboard',
+            default => null,
         };
+
+        // If a logged-in user hits root without a valid dashboard, kill the session safely
+        if (!$dashboardRoute) {
+            Auth::logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+            
+            return redirect()->route('login')->withErrors(['error' => 'Access Denied: Your account role does not have web portal privileges.']);
+        }
+
+        return redirect()->route($dashboardRoute);
     })->name('dashboard');
+
 
     Route::prefix('admin')->middleware('can:access-admin')->group(function() {
         Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('admin.dashboard');

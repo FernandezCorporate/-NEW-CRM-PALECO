@@ -10,8 +10,6 @@ use App\Enums\NonModelActions;
 use Illuminate\Support\Facades\RateLimiter;
 use App\Models\User;
 use App\Events\LoginEvents;
-use Illuminate\Auth\Events\Login;
-use Illuminate\Support\Facades\Log;
 
 class AuthController extends Controller
 {
@@ -22,7 +20,7 @@ class AuthController extends Controller
 
     public function login(LoginRequest $request)
     {
-        $username = strtolower((string)request()->input('username'));
+        $username = strtolower((string)$request->input('username'));
         $user = User::query()->where('username', $username)->first();
 
         // Check if the account is already locked from a previous session
@@ -108,8 +106,19 @@ class AuthController extends Controller
             $landingRoute = match($userRoleSlug) {
                 'admin' => route('admin.dashboard'),
                 'cwd_officer' => route('cwd.dashboard'),
-                default => abort(403)
+                default => null // Catch roles without web access
             };
+
+            // Safely reject roles that are not meant to use the web dashboard
+            if (!$landingRoute) {
+                Auth::logout();
+                $request->session()->invalidate();
+                $request->session()->regenerateToken();
+
+                return back()
+                    ->withErrors(['error' => 'Access Denied: Your account role does not have web portal privileges.'])
+                    ->onlyInput('username');
+            }
 
             return redirect()->intended($landingRoute);
         }
