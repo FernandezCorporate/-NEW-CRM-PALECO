@@ -1,4 +1,4 @@
-@extends('admin.base.base')
+@extends('cwd.base.base')
 
 @section('title', 'CWD Dashboard')
 

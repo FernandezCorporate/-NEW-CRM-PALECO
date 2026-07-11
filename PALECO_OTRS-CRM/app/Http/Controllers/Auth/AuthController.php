@@ -120,7 +120,15 @@ class AuthController extends Controller
                     ->onlyInput('username');
             }
 
-            return redirect()->intended($landingRoute);
+            $intendedUrl = session()->pull('url.intended', $landingRoute);
+
+            if ($userRoleSlug === 'admin' && !str_contains($intendedUrl, '/admin')) {
+                $intendedUrl = $landingRoute;
+            } elseif ($userRoleSlug === 'cwd_officer' && !str_contains($intendedUrl, '/cwd')) {
+                $intendedUrl = $landingRoute;
+            }
+
+            return redirect($intendedUrl);
         }
         
         RateLimiter::hit($rateLimitKey, 60);
