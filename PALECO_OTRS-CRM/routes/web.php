@@ -10,6 +10,7 @@ use App\Http\Controllers\Admin\DepartmentController;
 use App\Http\Controllers\Admin\TeamController;
 use App\Http\Controllers\Admin\TicketCategoryController;
 use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\Cwd\TicketController;
 
 Route::middleware('guest')->group(function() {
     Route::get('/portal', [AuthController::class, 'showRoleSelection'])->name('portal');
@@ -123,6 +124,10 @@ Route::middleware('auth')->group(function() {
 
     Route::prefix('cwd')->middleware('can:access-cwd_officer')->group(function() {
         Route::get('/dashboard', [CwdDashboardController::class, 'index'])->name('cwd.dashboard');
+
+        Route::prefix('tickets')->group(function() {
+            Route::get('/', [TicketController::class, 'index'])->name('cwd.ticketManagement');
+        });
     });
 
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
