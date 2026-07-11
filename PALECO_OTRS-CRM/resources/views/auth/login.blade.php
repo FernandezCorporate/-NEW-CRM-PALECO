@@ -38,7 +38,14 @@
         <div class="w-full md:w-[55%] p-8 md:p-12 flex flex-col justify-center">
             
             <header class="mb-6">
-                <h3 class="text-2xl font-bold text-slate-800">Sign in</h3>
+                <a href="{{ route('portal') }}" class="inline-flex items-center text-xs font-medium text-slate-500 hover:text-emerald-600 transition-colors mb-4">
+                    <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+                    Back to Portal Selection
+                </a>
+                
+                <h3 class="text-2xl font-bold text-slate-800">
+                    {{ $role === 'admin' ? 'Administrator' : 'CWD Officer' }} Sign in
+                </h3>
                 <p class="text-sm text-slate-500 mt-1">Provide your credentials to continue</p>
             </header>
 
@@ -53,7 +60,7 @@
                 </div>
             @endif
 
-            <form action="{{ route('attemptLogin') }}" method="POST" class="space-y-5" autocomplete="off">
+            <form action="{{ route('attemptLogin', ['role' => $role]) }}" method="POST" class="space-y-5" autocomplete="off">
                 @csrf
 
                 <div class="space-y-1.5">
@@ -76,7 +83,6 @@
                         <div class="relative">
                             <input type="password" id="login-password" name="password" placeholder="••••••••" required minlength="8" autocomplete="new-password" class="w-full pl-3.5 pr-10 py-2.5 border border-slate-200 rounded-lg text-sm text-slate-800 focus:outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 placeholder-slate-300 transition-all">
                             
-                            <!-- Excluded from loading logic since it's a toggle -->
                             <button type="button" id="toggle-password-btn" class="absolute inset-y-0 right-0 px-3 flex items-center text-slate-400 hover:text-emerald-600 transition-colors focus:outline-none" title="Toggle Password Visibility">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path id="eye-icon-open" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>

@@ -13,60 +13,55 @@ use App\Events\LoginEvents;
 
 class AuthController extends Controller
 {
-    public function showLoginForm()
+    public function showRoleSelection()
     {
-        return view('auth.login');
+        return view('auth.roleSelection');
     }
 
-    public function login(LoginRequest $request)
+    public function showLoginForm($role)
+    {
+        $allowedPortals = ['admin', 'cwd_officer'];
+
+        if (!in_array($role, $allowedPortals)) {
+            return redirect()->route('portal')->withErrors(['error' => 'Invalid portal selection.']);
+        }
+
+        return view('auth.login', compact('role'));
+    }
+
+    public function login(LoginRequest $request, $role)
     {
         $username = strtolower((string)$request->input('username'));
         $user = User::query()->where('username', $username)->first();
 
-        // Check if the account is already locked from a previous session
         if ($user && $user->locked_until) {
             if ($user->locked_until > now()) {
-                
-                // Log attempts made while the account is already in a lockout state
                 LoginEvents::dispatch(NonModelActions::LOGIN_FAILED, $user);
-
                 $minutesLeft = max(1, ceil(now()->diffInMinutes($user->locked_until)));
 
                 return back()
-                    ->withErrors(['error' => "This account is temporarily locked due to multiple failed attempts. 
-                                Please wait {$minutesLeft} minute(s) or contact system administrator."])
+                    ->withErrors(['error' => "This account is temporarily locked due to multiple failed attempts. Please wait {$minutesLeft} minute(s)."])
                     ->onlyInput('username');
             }
-
-            // Lockout expired, remove the lock
             $user->updateQuietly(['locked_until' => null]);
         }
 
         $rateLimitKey = 'login:' . sha1($username . '|' . request()->ip());
         
-        // Handle 5th failed attempt and apply rate limiting
         if (RateLimiter::tooManyAttempts($rateLimitKey, 4)){            
             if ($user) {
                 if (!$user->locked_until) {
-                    $user->updateQuietly([
-                        'locked_until' => now()->addMinutes(15)
-                    ]);
-
-                    // Log the exact attempt that triggered the 15-minute lockout
+                    $user->updateQuietly(['locked_until' => now()->addMinutes(15)]);
                     LoginEvents::dispatch(NonModelActions::LOGIN_FAILED, $user);
-
                     $minutesLeft = max(1, ceil(now()->diffInMinutes($user->locked_until)));
 
                     return back()
-                        ->withErrors(['error' => "This account is temporarily locked due to multiple failed attempts. 
-                                    Please wait {$minutesLeft} minute(s) or contact system administrator."])
+                        ->withErrors(['error' => "This account is temporarily locked due to multiple failed attempts. Please wait {$minutesLeft} minute(s)."])
                         ->onlyInput('username');
                 }
             }
             
-            // Log rate-limited attempts (e.g., from same IP but non-existent user)
             LoginEvents::dispatch(NonModelActions::LOGIN_FAILED, $user);
-            
             $availableAgain = RateLimiter::availableIn($rateLimitKey);
             return back()
                 ->withErrors(['error' => "Too many attempts. Try again after {$availableAgain} seconds."])
@@ -82,11 +77,21 @@ class AuthController extends Controller
             $accountStatus = $loggedUser->is_active;
             $userRoleSlug = $loggedUser->role->slug_identifier;
 
+            if ($userRoleSlug !== $role) {
+                Auth::logout();
+                $request->session()->invalidate();
+                $request->session()->regenerateToken();
+
+                LoginEvents::dispatch(NonModelActions::LOGIN_FAILED, $loggedUser);
+
+                return back()
+                    ->withErrors(['error' => 'Access Denied: Your account credentials are valid, but you do not have permission to access this specific portal.'])
+                    ->onlyInput('username');
+            }
+
             if(!$accountStatus){
                 LoginEvents::dispatch(NonModelActions::LOGIN_ACCOUNT_DEACTIVATED, $loggedUser);
-
                 Auth::logout();
-
                 $request->session()->invalidate();
                 $request->session()->regenerateToken();
 
@@ -96,20 +101,15 @@ class AuthController extends Controller
             }
 
             $request->session()->regenerate();
-
-            // Synchronously update the last login time instantly
             $loggedUser->updateQuietly(['last_login' => now()]);
-
-            // Dispatch background logging event
             LoginEvents::dispatch(NonModelActions::LOGIN_SUCCESS, $loggedUser);
             
             $landingRoute = match($userRoleSlug) {
                 'admin' => route('admin.dashboard'),
                 'cwd_officer' => route('cwd.dashboard'),
-                default => null // Catch roles without web access
+                default => null 
             };
 
-            // Safely reject roles that are not meant to use the web dashboard
             if (!$landingRoute) {
                 Auth::logout();
                 $request->session()->invalidate();
@@ -123,9 +123,7 @@ class AuthController extends Controller
             return redirect()->intended($landingRoute);
         }
         
-        // Handle attempts 1 through 4
         RateLimiter::hit($rateLimitKey, 60);
-
         LoginEvents::dispatch(NonModelActions::LOGIN_FAILED, null);
 
         return back()->withErrors([
@@ -136,10 +134,8 @@ class AuthController extends Controller
     public function logout(Request $request)
     {
         Auth::logout();
-
         $request->session()->invalidate();
         $request->session()->regenerateToken();
-
-        return redirect('/login');
+        return redirect('/portal');
     }
 }

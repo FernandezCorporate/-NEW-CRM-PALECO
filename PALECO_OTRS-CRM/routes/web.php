@@ -12,8 +12,14 @@ use App\Http\Controllers\Admin\TicketCategoryController;
 use App\Http\Controllers\Admin\UserController;
 
 Route::middleware('guest')->group(function() {
-    Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
-    Route::post('/login', [AuthController::class, 'login'])->name('attemptLogin');
+    Route::get('/portal', [AuthController::class, 'showRoleSelection'])->name('portal');
+    
+    Route::get('/login/{role}', [AuthController::class, 'showLoginForm'])->name('portal.login');
+    Route::post('/login/{role}', [AuthController::class, 'login'])->name('attemptLogin');
+
+    Route::get('/login', function() {
+        return redirect()->route('portal');
+    })->name('login');
 });
 
 Route::middleware('auth')->group(function() {
@@ -26,18 +32,16 @@ Route::middleware('auth')->group(function() {
             default => null,
         };
 
-        // If a logged-in user hits root without a valid dashboard, kill the session safely
         if (!$dashboardRoute) {
             Auth::logout();
             $request->session()->invalidate();
             $request->session()->regenerateToken();
             
-            return redirect()->route('login')->withErrors(['error' => 'Access Denied: Your account role does not have web portal privileges.']);
+            return redirect()->route('portal')->withErrors(['error' => 'Access Denied: Your account role does not have web portal privileges.']);
         }
 
         return redirect()->route($dashboardRoute);
     })->name('dashboard');
-
 
     Route::prefix('admin')->middleware('can:access-admin')->group(function() {
         Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('admin.dashboard');
@@ -97,7 +101,7 @@ Route::middleware('auth')->group(function() {
             Route::delete('/{team}/force-delete', [TeamController::class, 'destroy'])->name('admin.teams.destroy')->whereUlid('team')->withTrashed();
         });
 
-    Route::prefix('ticket-categories')->group(function() {
+        Route::prefix('ticket-categories')->group(function() {
             Route::get('/', [TicketCategoryController::class, 'viewAny'])->name('admin.ticketCategories');
             Route::get('/{category}', [TicketCategoryController::class, 'show'])->name('admin.ticketCategories.show')->whereNumber('category')->withTrashed();
             
