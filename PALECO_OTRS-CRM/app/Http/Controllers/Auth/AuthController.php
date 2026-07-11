@@ -3,13 +3,9 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Support\Facades\Auth;
 use App\Http\Requests\Auth\LoginRequest;
 use Illuminate\Http\Request; 
-use App\Enums\NonModelActions;
-use Illuminate\Support\Facades\RateLimiter;
-use App\Models\User;
-use App\Events\LoginEvents;
+use App\Services\AuthService;
 
 class AuthController extends Controller
 {
@@ -29,121 +25,29 @@ class AuthController extends Controller
         return view('auth.login', compact('role'));
     }
 
-    public function login(LoginRequest $request, $role)
+    // Notice we inject the new AuthService here!
+    public function login(LoginRequest $request, $role, AuthService $authService)
     {
-        $username = strtolower((string)$request->input('username'));
-        $user = User::query()->where('username', $username)->first();
+        // 1. Hand the HTTP request data over to the Service layer
+        $result = $authService->processLogin(
+            $request->validated(), 
+            $request->ip(), 
+            $role, 
+            $request
+        );
 
-        if ($user && $user->locked_until) {
-            if ($user->locked_until > now()) {
-                LoginEvents::dispatch(NonModelActions::LOGIN_FAILED, $user);
-                $minutesLeft = max(1, ceil(now()->diffInMinutes($user->locked_until)));
-
-                return back()
-                    ->withErrors(['error' => "This account is temporarily locked due to multiple failed attempts. Please wait {$minutesLeft} minute(s)."])
-                    ->onlyInput('username');
-            }
-            $user->updateQuietly(['locked_until' => null]);
+        // 2. HTTP Layer Response: If login failed, send them back with the error
+        if (!$result['success']) {
+            return back()->withErrors(['error' => $result['message']])->onlyInput('username');
         }
 
-        $rateLimitKey = 'login:' . sha1($username . '|' . request()->ip());
-        
-        if (RateLimiter::tooManyAttempts($rateLimitKey, 4)){            
-            if ($user) {
-                if (!$user->locked_until) {
-                    $user->updateQuietly(['locked_until' => now()->addMinutes(15)]);
-                    LoginEvents::dispatch(NonModelActions::LOGIN_FAILED, $user);
-                    $minutesLeft = max(1, ceil(now()->diffInMinutes($user->locked_until)));
-
-                    return back()
-                        ->withErrors(['error' => "This account is temporarily locked due to multiple failed attempts. Please wait {$minutesLeft} minute(s)."])
-                        ->onlyInput('username');
-                }
-            }
-            
-            LoginEvents::dispatch(NonModelActions::LOGIN_FAILED, $user);
-            $availableAgain = RateLimiter::availableIn($rateLimitKey);
-            return back()
-                ->withErrors(['error' => "Too many attempts. Try again after {$availableAgain} seconds."])
-                ->onlyInput('username');
-        }
-
-        $credentials = $request->validated();
-
-        if (Auth::attempt($credentials)){
-            RateLimiter::clear($rateLimitKey);
-
-            $loggedUser = Auth::user();
-            $accountStatus = $loggedUser->is_active;
-            $userRoleSlug = $loggedUser->role->slug_identifier;
-
-            if ($userRoleSlug !== $role) {
-                Auth::logout();
-                $request->session()->invalidate();
-                $request->session()->regenerateToken();
-
-                LoginEvents::dispatch(NonModelActions::LOGIN_FAILED, $loggedUser);
-
-                return back()
-                    ->withErrors(['error' => 'Access Denied: Your account credentials are valid, but you do not have permission to access this specific portal.'])
-                    ->onlyInput('username');
-            }
-
-            if(!$accountStatus){
-                LoginEvents::dispatch(NonModelActions::LOGIN_ACCOUNT_DEACTIVATED, $loggedUser);
-                Auth::logout();
-                $request->session()->invalidate();
-                $request->session()->regenerateToken();
-
-                return back()
-                    ->withErrors(['error' => 'User account is deactivated. Please contact system administrator.'])
-                    ->onlyInput('username');
-            }
-
-            $request->session()->regenerate();
-            $loggedUser->updateQuietly(['last_login' => now()]);
-            LoginEvents::dispatch(NonModelActions::LOGIN_SUCCESS, $loggedUser);
-            
-            $landingRoute = match($userRoleSlug) {
-                'admin' => route('admin.dashboard'),
-                'cwd_officer' => route('cwd.dashboard'),
-                default => null 
-            };
-
-            if (!$landingRoute) {
-                Auth::logout();
-                $request->session()->invalidate();
-                $request->session()->regenerateToken();
-
-                return back()
-                    ->withErrors(['error' => 'Access Denied: Your account role does not have web portal privileges.'])
-                    ->onlyInput('username');
-            }
-
-            $intendedUrl = session()->pull('url.intended', $landingRoute);
-
-            if ($userRoleSlug === 'admin' && !str_contains($intendedUrl, '/admin')) {
-                $intendedUrl = $landingRoute;
-            } elseif ($userRoleSlug === 'cwd_officer' && !str_contains($intendedUrl, '/cwd')) {
-                $intendedUrl = $landingRoute;
-            }
-
-            return redirect($intendedUrl);
-        }
-        
-        RateLimiter::hit($rateLimitKey, 60);
-        LoginEvents::dispatch(NonModelActions::LOGIN_FAILED, null);
-
-        return back()->withErrors([
-            'error' => 'The provided credentials do not match our records.',
-        ])->onlyInput('username');
+        // 3. HTTP Layer Response: If successful, redirect them to the safe URL
+        return redirect($result['redirect_url']);
     }
 
-    public function logout(Request $request)
+    public function logout(Request $request, AuthService $authService)
     {
-        Auth::logout();
-        $request->session()->invalidate();
-        $request->session()->regenerateToken();
+        $authService->terminateSession($request);
         return redirect('/portal');
     }
 }
