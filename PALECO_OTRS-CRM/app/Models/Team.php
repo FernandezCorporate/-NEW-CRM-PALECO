@@ -14,6 +14,8 @@ use App\Models\Department;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use App\Models\Ticket;
 
 #[Fillable(['team_name', 'team_desc', 'shift_start', 'shift_end', 'department_id'])]
 class Team extends Model
@@ -38,6 +40,11 @@ class Team extends Model
         return $this->belongsToMany(User::class, 'team_members')
             ->withPivot('team_role_id')
             ->withTimestamps();
+    }
+
+    public function ticket(): HasMany
+    {
+        return $this->hasMany(Ticket::class);
     }
 
     public function scopeSearch(Builder $query, ?string $term): Builder

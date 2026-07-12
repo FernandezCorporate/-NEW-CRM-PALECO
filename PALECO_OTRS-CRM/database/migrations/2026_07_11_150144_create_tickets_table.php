@@ -11,38 +11,41 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // 1. Create the Main Tickets Table[cite: 8]
+        // 1. Create the Main Tickets Table
         Schema::create('tickets', function (Blueprint $table) {
             $table->ulid('system_id')->primary();
             $table->string('ticket_number')->unique(); 
             
-            $table->string('consumer_id')->nullable()->comment('Future reference for external Consumer API');
+            // Self-referencing link: local 'parent_ticket_id' -> tickets.system_id
+            $table->foreignUlid('parent_ticket_id')
+                ->nullable()
+                ->constrained('tickets', 'system_id') 
+                ->nullOnDelete();
+            
+            $table->string('consumer_id')->nullable();
+
+            $table->string('complaint_source');
+            $table->text('complaint_description')->nullable();
+            
+            $table->foreignId('category_id')->nullable()->constrained('ticket_categories');
+
+            $table->boolean('other_category')->default(false);
+            $table->string('other_category_name')->nullable();
 
             $table->string('purok')->nullable();
             $table->string('street')->nullable();
             $table->string('barangay');
             $table->string('landmark')->nullable();
 
-            $table->string('complaint_source');
-            $table->text('complaint_description')->nullable();
-
-            $table->foreignId('category_id')->nullable()->constrained('ticket_categories');
-            $table->boolean('other_category')->default(false);
-            $table->string('other_category_name')->nullable();
-
-            $table->foreignId('department_id')->nullable()->constrained();
-            $table->foreignUlid('created_by')->constrained('users');
+            $table->foreignId('department_id')->nullable()->constrained('departments');
+            $table->foreignUlid('team_id')->nullable()->constrained('teams');
+            
+            // FIXED: Point to the 'id' column on the 'users' table
+            $table->foreignUlid('created_by')->constrained('users', 'id');
             
             $table->string('status')->default('open');
-
-            $table->foreignUlid('parent_ticket_id')
-                ->nullable()
-                ->constrained('tickets', 'system_id')
-                ->nullOnDelete();
-            
-            $table->timestamp('reported_at')->nullable()->comment('Exact time the complaint was received');
-            $table->timestamp('resolved_at')->nullable()->comment('Exact time the ticket was fully closed');
-
+            $table->timestamp('reported_at')->nullable();
+            $table->timestamp('resolved_at')->nullable();
             $table->softDeletes();
             $table->timestamps();
         });
@@ -51,22 +54,20 @@ return new class extends Migration
         Schema::create('ticket_status_logs', function (Blueprint $table) {
             $table->id();
             
-            // Link to the main ticket table
+            // Local column 'ticket_id' links to tickets.system_id
             $table->foreignUlid('ticket_id')
                   ->constrained('tickets', 'system_id')
                   ->cascadeOnDelete();
 
-            // Who performed the action
+            // FIXED: Point to the 'id' column on the 'users' table
             $table->foreignUlid('changed_by')
                   ->nullable()
-                  ->constrained('users')
+                  ->constrained('users', 'id')
                   ->nullOnDelete();
 
             $table->string('old_status')->nullable(); 
             $table->string('new_status');
             
-            $table->string('remarks')->nullable();
-
             $table->timestamps();
         });
     }
@@ -76,7 +77,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        // Must drop the child table (logs) before the parent table (tickets)
         Schema::dropIfExists('ticket_status_logs');
         Schema::dropIfExists('tickets');
     }

@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Spatie\Activitylog\Models\Concerns\LogsActivity;
 use Spatie\Activitylog\Support\LogOptions;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Models\Ticket;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 #[Fillable('category_name', 'category_desc')]
 class TicketCategory extends Model
@@ -19,6 +21,11 @@ class TicketCategory extends Model
             'category_name' => 'string',
             'category_desc' => 'string',
         ];
+    }
+
+    public function ticket(): HasMany
+    {
+        return $this->hasMany(Ticket::class);
     }
 
     public function scopeSearch($query, $search)

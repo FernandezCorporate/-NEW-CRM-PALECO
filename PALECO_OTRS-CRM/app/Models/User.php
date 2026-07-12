@@ -18,7 +18,10 @@ use Spatie\Activitylog\Support\LogOptions;
 use App\Models\Department;
 use App\Models\Team;
 use App\Models\AccountRole;
+use App\Models\Ticket;
+use App\Models\TicketStatusLog;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 #[Fillable(['username', 'first_name', 'middle_name', 'last_name', 'name_ext', 
 'email', 'contact', 'role_id', 'password', 'department_id', 'last_login', 'locked_until', 'is_active'])]
@@ -54,6 +57,17 @@ class User extends Authenticatable
             ->withPivot('team_role_id')
             ->withTimestamps();
     }
+
+    public function ticket(): HasMany
+    {
+        return $this->hasMany(Ticket::class);
+    }
+
+    public function ticketStatus(): HasMany
+    {
+        return $this->hasMany(TicketStatusLog::class);
+    }
+
 
     protected function fullName(): Attribute
     {
