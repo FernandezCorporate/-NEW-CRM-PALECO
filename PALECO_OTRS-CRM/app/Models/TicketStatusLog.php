@@ -5,11 +5,16 @@ namespace App\Models;
 use App\Enums\TicketStatus;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use App\Models\Ticket;
-use App\Models\User;
 
 class TicketStatusLog extends Model
 {
+    protected $fillable = [
+        'ticket_id',
+        'changed_by',
+        'old_status',
+        'new_status'
+    ];
+
     protected function casts(): array
     {
         return [
@@ -20,11 +25,11 @@ class TicketStatusLog extends Model
 
     public function ticket(): BelongsTo
     {
-        return $this->belongsTo(Ticket::class, 'ticket_id');
+        return $this->belongsTo(Ticket::class, 'ticket_id', 'system_id');
     }
 
     public function updater(): BelongsTo
     {
-        return $this->belongs(User::class, 'changed_by');
+        return $this->belongsTo(User::class, 'changed_by', 'id');
     }
 }

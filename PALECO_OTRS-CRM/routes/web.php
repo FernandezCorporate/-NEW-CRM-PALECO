@@ -122,11 +122,18 @@ Route::middleware('auth')->group(function() {
         });
     });
 
-    Route::prefix('cwd')->middleware('can:access-cwd_officer')->group(function() {
-        Route::get('/dashboard', [CwdDashboardController::class, 'index'])->name('cwd.dashboard');
 
-        Route::prefix('tickets')->group(function() {
-            Route::get('/', [TicketController::class, 'index'])->name('cwd.ticketManagement');
+    Route::middleware('auth')->group(function() {
+        Route::prefix('cwd')->middleware('can:access-cwd_officer')->group(function() {
+            Route::get('/dashboard', [CwdDashboardController::class, 'index'])->name('cwd.dashboard');
+
+            Route::prefix('tickets')->group(function() {
+                Route::get('/', [TicketController::class, 'index'])->name('cwd.tickets');
+                Route::get('/create', [TicketController::class, 'ticketForm'])->name('cwd.tickets.createForm');
+                
+                // Added creation storage processing route
+                Route::post('/', [TicketController::class, 'store'])->name('cwd.tickets.store');
+            });
         });
     });
 

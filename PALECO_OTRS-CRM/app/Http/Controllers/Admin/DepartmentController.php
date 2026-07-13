@@ -68,7 +68,7 @@ class DepartmentController extends Controller
         });
         
         $foremanCount = $foremanQuery->count();
-        $foremanCollection = $foremanQuery->paginate(5, ['*'], 'page_foreman');
+        $foremanCollection = $foremanQuery->paginate(5);
 
         return view('admin.pages.departmentDetails', compact('assignedTeams', 'dept', 'foremanCount', 'foremanCollection', 'personnelCount'));
     }
