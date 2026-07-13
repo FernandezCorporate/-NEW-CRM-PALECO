@@ -52,10 +52,8 @@ class TeamController extends Controller
     {
         Gate::authorize('view', $team);
 
-        // Fetch team_role_id on pivot
         $members = $team->members()->withPivot('team_role_id', 'created_at')->paginate(5);
         
-        // Pass a dictionary of roles to avoid N+1 queries in the blade loop
         $teamRoles = TeamRole::pluck('role_name', 'id');
 
         return view('admin.pages.teamDetails', compact('team', 'members', 'teamRoles'));
@@ -63,12 +61,7 @@ class TeamController extends Controller
 
     public function teamForm(?Team $team = null)
     {
-        if ($team && $team->exists) {
-            Gate::authorize('teamForm', [Team::class, $team]);
-        } else {
-            Gate::authorize('teamForm', Team::class);
-        }
-
+        Gate::authorize('teamForm', $team ?? Team::class);
         $depts = Department::orderBy('dept_name')->pluck('dept_name', 'id');
         
         $personnel = User::query()

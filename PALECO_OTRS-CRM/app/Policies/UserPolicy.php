@@ -19,7 +19,7 @@ class UserPolicy
 
         // If a target user is passed (Editing), ensure they are not an Admin
         if ($targetUser && $targetUser->exists) {
-            return $targetUser->role->slug_identifier !== 'admin';
+            return $targetUser->role->slug_identifier !== 'admin' || $user->is($targetUser);
         }
 
         return true;
@@ -36,7 +36,8 @@ class UserPolicy
 
     public function update(User $user, User $targetUser): bool
     {
-        return $user->role->slug_identifier === 'admin' && $targetUser->role->slug_identifier !== 'admin';
+        return $user->role->slug_identifier === 'admin' && 
+               ($targetUser->role->slug_identifier !== 'admin' || $user->is($targetUser));
     }
 
     public function deactivateConfirm(User $user, User $targetUser): bool

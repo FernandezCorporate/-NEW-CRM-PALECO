@@ -85,11 +85,7 @@ class UserController extends Controller
 
     public function userForm(?User $user = null)
     {
-        if ($user && $user->exists) {
-            Gate::authorize('userForm', [User::class, $user]);
-        } else {
-            Gate::authorize('userForm', User::class);
-        }
+        Gate::authorize('userForm', $user ?? User::class);
 
         $depts = Department::orderBy('dept_name')->pluck('dept_name', 'id');
         $roles = AccountRole::orderBy('role_name')->get();

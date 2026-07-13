@@ -48,7 +48,8 @@ class TicketCategoryController extends Controller
 
     public function ticketCategoryForm(?TicketCategory $category = null)
     {
-        Gate::authorize('ticketCategoryForm', TicketCategory::class);
+        Gate::authorize('ticketCategoryForm', $category ?? TicketCategory::class);
+        
         return view('admin.forms.ticketCategoryForm', compact('category'));
     }
 

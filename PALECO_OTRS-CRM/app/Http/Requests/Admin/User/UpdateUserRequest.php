@@ -45,7 +45,7 @@ class UpdateUserRequest extends FormRequest
             'department_id' => [
                 Rule::requiredIf(function () {
                     $role = AccountRole::find($this->input('role_id'));
-                    return $role && $role->slug_identifier !== 'field_personnel';
+                    return $role && $role->slug_identifier === 'foreman';
                 }),
                 'nullable', 
                 'integer', 
