@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services;
+namespace App\Services\Cwd;
 
 use App\Models\Ticket;
 use App\Enums\TicketStatus;

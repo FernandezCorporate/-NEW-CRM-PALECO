@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Cwd;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Cwd\StoreTicketRequest;
-use App\Services\TicketService;
+use App\Services\Cwd\TicketService;
 use App\Models\Ticket;
 use App\Models\TicketCategory;
 use App\Models\Department;
