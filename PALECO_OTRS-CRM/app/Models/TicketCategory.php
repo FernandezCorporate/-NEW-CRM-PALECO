@@ -4,17 +4,18 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Activitylog\Models\Concerns\LogsActivity;
 use Spatie\Activitylog\Support\LogOptions;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Models\Ticket;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 
-#[Fillable('category_name', 'category_desc')]
+#[Fillable(['category_name', 'category_desc'])]
 class TicketCategory extends Model
 {
     use LogsActivity, SoftDeletes;
 
+    // --- CASTS ---
     protected function casts(): array
     {
         return [
@@ -23,13 +24,17 @@ class TicketCategory extends Model
         ];
     }
 
+    // --- RELATIONSHIPS ---
     public function ticket(): HasMany
     {
-        return $this->hasMany(Ticket::class);
+        return $this->hasMany(Ticket::class, 'category_id');
     }
 
+    // --- SCOPE FUNCTIONS ---
     public function scopeSearch($query, $search)
     {
+        if (empty($search)) return $query;
+
         return $query->where(function ($q) use ($search) {
             $q->where('category_name', 'like', "%{$search}%")
               ->orWhere('category_desc', 'like', "%{$search}%");
@@ -42,10 +47,11 @@ class TicketCategory extends Model
             'oldest' => $query->oldest(),
             'category_nameASC' => $query->orderBy('category_name', 'asc'),
             'category_nameDESC' => $query->orderBy('category_name', 'desc'),
-            default => $query->latest(), // 'newest'
+            default => $query->latest(),
         };
     }
 
+    // --- ACTIVITY LOG ---
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
@@ -53,11 +59,10 @@ class TicketCategory extends Model
             ->logOnly(['category_name', 'category_desc'])
             ->setDescriptionForEvent(function(string $eventName) {
                 $action = match ($eventName) {
-                    'deleted'      => $this->isForceDeleting() ? 'permanently deleted' : 'archived',
-                    'restored'     => 'restored',
-                    default        => $eventName, // Fallback for 'created' and 'updated'
+                    'deleted'  => $this->isForceDeleting() ? 'permanently deleted' : 'archived',
+                    'restored' => 'restored',
+                    default    => $eventName,
                 };
-
                 return "{$this->category_name} has been {$action}";
             });
     }

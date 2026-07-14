@@ -77,7 +77,7 @@
                     <tr class="hover:bg-slate-50 transition-colors">
                         <td class="px-6 py-4 font-medium text-slate-800">{{ $category->category_name }}</td>
                         <td class="px-6 py-4 text-slate-500 text-sm max-w-xs truncate" title="{{ $category->category_desc }}">{{ $category->category_desc ?? '—' }}</td>
-                        <td class="px-6 py-4 text-slate-500 text-sm">{{ $category->created_at->format('M d, Y') }}</td>
+                        <td class="px-6 py-4 text-slate-500 text-sm">{{ $category->created_at?->format('M d, Y') ?? 'N/A' }}</td>
                         <td class="px-6 py-4">
                             <div class="flex items-center gap-2">
                                 <a href="{{ route('admin.ticketCategories.show', $category) }}" class="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg" title="View Details">
@@ -137,7 +137,7 @@
                 </div>
                 <p class="text-sm text-slate-500 mb-6 flex-grow line-clamp-3">{{ $category->category_desc ?? 'No description provided.' }}</p>
                 <div class="pt-4 border-t border-slate-100 flex justify-between items-center text-xs text-slate-400">
-                    <div class="flex items-center gap-1.5 font-medium">Added {{ $category->created_at->format('M d, Y') }}</div>
+                    <div class="flex items-center gap-1.5 font-medium">Added {{ $category->created_at?->format('M d, Y') ?? 'N/A' }}</div>
                     @if($category->trashed()) <span class="bg-slate-100 text-slate-500 font-bold px-2 py-0.5 rounded text-[10px] uppercase">Archived</span> @endif
                 </div>
             </div>

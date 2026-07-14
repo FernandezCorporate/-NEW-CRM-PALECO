@@ -7,9 +7,9 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Activitylog\Models\Concerns\LogsActivity;
 use Spatie\Activitylog\Support\LogOptions;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Models\Team;
 use App\Models\User;
 
@@ -18,6 +18,7 @@ class Department extends Model
 {
     use HasFactory, LogsActivity, SoftDeletes;
 
+    // --- CASTS ---
     protected function casts(): array
     {
         return [
@@ -26,6 +27,7 @@ class Department extends Model
         ];
     }
 
+    // --- RELATIONSHIPS ---
     public function users(): HasMany
     {
         return $this->hasMany(User::class, 'department_id');
@@ -36,14 +38,12 @@ class Department extends Model
         return $this->hasMany(Team::class, 'department_id');
     }
 
+    // --- SCOPE FUNCTIONS ---
     public function scopeSearch(Builder $query, ?string $term): Builder
     {
-        if (empty($term)) {
-            return $query;
-        }
+        if (empty($term)) return $query;
 
         $term = "%$term%";
-    
         return $query->where(function ($query) use ($term) {
             $query->where('dept_name', 'like', $term)
                   ->orWhere('dept_desc', 'like', $term);
@@ -52,28 +52,18 @@ class Department extends Model
 
     public function scopeSort(Builder $query, ?string $sort): Builder
     {
-        if (empty($sort)) {
-            return $query;
-        }
-
-        switch ($sort) {
-            case 'newest':
-                return $query->orderBy('created_at', 'desc');
-            case 'oldest':
-                return $query->orderBy('created_at', 'asc');   
-            case 'dept_nameASC':
-                return $query->orderBy('dept_name', 'asc');
-            case 'dept_nameDESC':
-                return $query->orderBy('dept_name', 'desc');
-            case 'dept_descASC':
-                return $query->orderBy('dept_desc', 'asc');
-            case 'dept_descDESC':
-                return $query->orderBy('dept_desc', 'desc');
-            default:
-                return $query;
-        }
+        return match ($sort) {
+            'newest' => $query->latest(),
+            'oldest' => $query->oldest(),   
+            'dept_nameASC' => $query->orderBy('dept_name', 'asc'),
+            'dept_nameDESC' => $query->orderBy('dept_name', 'desc'),
+            'dept_descASC' => $query->orderBy('dept_desc', 'asc'),
+            'dept_descDESC' => $query->orderBy('dept_desc', 'desc'),
+            default => $query->latest(),
+        };
     }
 
+    // --- ACTIVITY LOG ---
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
@@ -81,11 +71,10 @@ class Department extends Model
             ->logOnly(['dept_name', 'dept_desc'])
             ->setDescriptionForEvent(function(string $eventName) {
                 $action = match ($eventName) {
-                    'deleted'      => $this->isForceDeleting() ? 'permanently deleted' : 'archived',
-                    'restored'     => 'restored',
-                    default        => $eventName, // Fallback for 'created' and 'updated'
+                    'deleted'  => $this->isForceDeleting() ? 'permanently deleted' : 'archived',
+                    'restored' => 'restored',
+                    default    => $eventName,
                 };
-
                 return "{$this->dept_name} has been {$action}";
             });
     }

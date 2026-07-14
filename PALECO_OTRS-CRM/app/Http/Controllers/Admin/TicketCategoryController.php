@@ -5,35 +5,22 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\TicketCategory\StoreTicketCategoryRequest;
 use App\Http\Requests\Admin\TicketCategory\UpdateTicketCategoryRequest;
+use App\Services\Admin\TicketCategoryService;
 use App\Models\TicketCategory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 
 class TicketCategoryController extends Controller
 {
+    public function __construct(protected TicketCategoryService $categoryService) {}
+
     public function viewAny(Request $request)
     {
         Gate::authorize('viewAny', TicketCategory::class);
 
-        $categories = TicketCategory::query();
-
-        if ($request->filled('search')) {
-            $categories = $categories->search($request->search);
-        }
-
-        if ($request->filled('sort')) {
-            $categories = $categories->sort($request->sort);
-        } else {
-            $categories = $categories->latest();
-        }
-
-        if ($request->input('filter') === 'archived') {
-            $categories = $categories->onlyTrashed();
-        }
+        $categories = $this->categoryService->getDashboardCategories($request->all());
 
         session()->put('category_list_url', $request->fullUrl());
-
-        $categories = $categories->paginate(10)->withQueryString();
 
         return view('admin.pages.ticketCategoryManagement', compact('categories'));
     }
@@ -42,7 +29,6 @@ class TicketCategoryController extends Controller
     {
         Gate::authorize('view', clone $category);
         
-        // This is a placeholder for when tickets are built later
         return view('admin.pages.ticketCategoryDetails', compact('category'));
     }
 
@@ -56,7 +42,9 @@ class TicketCategoryController extends Controller
     public function store(StoreTicketCategoryRequest $request)
     {
         Gate::authorize('create', TicketCategory::class);
+        
         TicketCategory::create($request->validated());
+        
         return redirect()->route('admin.ticketCategories')->with('success', 'Ticket category created successfully.');
     }
 
@@ -64,17 +52,16 @@ class TicketCategoryController extends Controller
     {
         Gate::authorize('update', $category);
 
-        $category->fill($request->validated());
+        $wasUpdated = $this->categoryService->updateCategory($category, $request->validated());
 
         $redirectRoute = $request->query('source') === 'details' 
             ? route('admin.ticketCategories.show', $category) 
             : session('category_list_url', route('admin.ticketCategories'));
 
-        if ($category->isClean()) {
+        if (!$wasUpdated) {
             return redirect($redirectRoute)->with('info', 'No changes were made to the category.');
         }
 
-        $category->save();
         return redirect($redirectRoute)->with('success', 'Ticket category updated successfully.');
     }
 
@@ -99,30 +86,23 @@ class TicketCategoryController extends Controller
 
     public function restore($id) 
     {
-        $category = TicketCategory::onlyTrashed()->findOrFail($id);
-        Gate::authorize('restore', clone $category);
+        Gate::authorize('restore', TicketCategory::class);
 
-        $nameExists = TicketCategory::where('category_name', $category->category_name)->exists();
+        $result = $this->categoryService->restoreCategory($id);
 
-        if ($nameExists) {
-            return redirect()->route('admin.ticketCategories')->with('error', 'Cannot restore category. An active category with the same name already exists.');
+        if (!$result['success']) {
+            return redirect()->route('admin.ticketCategories')->with('error', $result['message']);
         }
 
-        $category->restore();
-        return redirect()->route('admin.ticketCategories')->with('success', 'Category restored successfully.');
+        return redirect()->route('admin.ticketCategories')->with('success', $result['message']);
     }
 
     public function destroy($id)
     {
-        $category = TicketCategory::onlyTrashed()->findOrFail($id);
-        Gate::authorize('forceDelete', clone $category);
+        Gate::authorize('forceDelete', TicketCategory::class);
 
-        // Feature 4 Requirement: Add ticket count check here in the future
-        // if ($category->tickets()->count() > 0) {
-        //     return redirect()->back()->with('error', 'Cannot delete: Tickets are still assigned to this category.');
-        // }
-
-        $category->forceDelete();
+        TicketCategory::onlyTrashed()->findOrFail($id)->forceDelete();
+        
         return redirect()->route('admin.ticketCategories')->with('success', 'Category permanently deleted.');
     }
 }

@@ -5,99 +5,50 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\Team\StoreTeamRequest;
 use App\Http\Requests\Admin\Team\UpdateTeamRequest;
-use App\Models\Department;
-use App\Models\User;
-use App\Models\TeamRole;
+use App\Services\Admin\TeamService;
 use Illuminate\Http\Request;
 use App\Models\Team;
 use Illuminate\Support\Facades\Gate;
-use Illuminate\Support\Facades\DB;
 
 class TeamController extends Controller
 {
+    public function __construct(protected TeamService $teamService) {}
+
     public function index(Request $request)
     {
         Gate::authorize('viewAny', Team::class);
 
-        $departments = Department::whereNull('deleted_at')->orderBy('dept_name')->pluck('dept_name', 'id');
+        $dashboardData = $this->teamService->getDashboardTeams($request->all());
 
-        $teams = Team::query()
-            ->with('department')
-            ->withCount('members');
-
-        if ($request->filled('search')) {
-            $teams = $teams->search($request->search);
-        }
-
-        if ($request->filled('filter')) {
-            $teams = $teams->filter($request->filter);
-        }
-
-        if ($request->input('status') === 'archived') {
-            $teams = $teams->onlyTrashed();
-        }
-
-        if ($request->filled('sort')) {
-            $teams = $teams->sort($request->sort);
-        } else {
-            $teams = $teams->latest(); 
-        }
-
-        $teams = $teams->paginate(9)->withQueryString();
-
-        return view('admin.pages.teamManagement', compact('teams', 'departments'));
+        return view('admin.pages.teamManagement', $dashboardData);
     }
 
     public function show(Team $team)
     {
         Gate::authorize('view', $team);
 
-        $members = $team->members()->withPivot('team_role_id', 'created_at')->paginate(5);
-        
-        $teamRoles = TeamRole::pluck('role_name', 'id');
+        $details = $this->teamService->getTeamDetails($team);
 
-        return view('admin.pages.teamDetails', compact('team', 'members', 'teamRoles'));
+        return view('admin.pages.teamDetails', array_merge(['team' => $team], $details));
     }
 
     public function teamForm(?Team $team = null)
     {
         Gate::authorize('teamForm', $team ?? Team::class);
-        $depts = Department::orderBy('dept_name')->pluck('dept_name', 'id');
         
-        $personnel = User::query()
-            ->whereHas('role', function ($q) {
-                $q->where('slug_identifier', 'field_personnel');
-            })
-            ->where('is_active', true)
-            ->orderBy('first_name', 'asc')
-            ->select(['id', 'first_name', 'middle_name', 'last_name', 'name_ext'])
-            ->get();
-            
-        // Fetch real database roles instead of Enum
-        $memberRoles = TeamRole::orderBy('role_name')->get();
+        $formData = $this->teamService->getFormData();
 
-        return view('admin.forms.teamForm', compact('team', 'depts', 'personnel', 'memberRoles'));
+        return view('admin.forms.teamForm', array_merge(['team' => $team], $formData));
     }
 
     public function store(StoreTeamRequest $request)
     {
         Gate::authorize('create', Team::class);
 
-        $teamDetails = $request->safe()->except('members');
-        $assignedMembers = $request->validated('members', []);
-
-        DB::transaction(function () use ($teamDetails, $assignedMembers) {
-            $team = Team::create($teamDetails);
-
-            if (!empty($assignedMembers)) {
-                $formattedMembers = collect($assignedMembers)->mapWithKeys(function ($member) {
-                    return [
-                        $member['user_id'] => ['team_role_id' => $member['team_role_id']]
-                    ];
-                });
-                $team->members()->sync($formattedMembers);
-            }
-        });
+        $this->teamService->createTeam(
+            $request->safe()->except('members'),
+            $request->validated('members', [])
+        );
 
         return redirect()->route('admin.teams')->with('success', 'Team and members created successfully.');
     }
@@ -106,35 +57,11 @@ class TeamController extends Controller
     {
         Gate::authorize('update', $team);
 
-        $teamDetails = $request->safe()->except('members');
-        $assignedMembers = $request->validated('members', []);
-
-        DB::transaction(function () use ($team, $teamDetails, $assignedMembers) {
-            $oldMemberIds = $team->members()->pluck('users.id')->toArray();
-
-            $team->update($teamDetails);
-
-            $formattedMembers = collect($assignedMembers)->mapWithKeys(function ($member) {
-                return [
-                    $member['user_id'] => ['team_role_id' => $member['team_role_id']]
-                ];
-            });
-
-            $changes = $team->members()->sync($formattedMembers);
-            $newMemberIds = array_keys($formattedMembers->toArray());
-
-            if (!empty($changes['attached']) || !empty($changes['detached']) || !empty($changes['updated'])) {
-                activity()
-                    ->useLog('Teams')
-                    ->performedOn($team)
-                    ->event('roster_updated')
-                    ->withProperties([
-                        'old' => ['member_ids' => $oldMemberIds],
-                        'attributes' => ['member_ids' => $newMemberIds]
-                    ])
-                    ->log("{$team->team_name} roster has been modified");
-            }
-        });
+        $this->teamService->updateTeam(
+            $team,
+            $request->safe()->except('members'),
+            $request->validated('members', [])
+        );
 
         return redirect()->route('admin.teams')->with('success', 'Team updated successfully.');
     }
@@ -152,36 +79,28 @@ class TeamController extends Controller
     public function archive(Team $team)
     {
         Gate::authorize('archive', $team);
-
         $team->delete();
-
         return redirect()->route('admin.teams')->with('success', 'Team archived successfully.');
     }
 
     public function restore($id)
     {
-        $team = Team::onlyTrashed()->findOrFail($id); 
+        Gate::authorize('restore', Team::class);
 
-        Gate::authorize('restore', clone $team);
+        $result = $this->teamService->restoreTeam($id);
 
-        $nameExists = Team::where('team_name', $team->team_name)->exists();
-
-        if ($nameExists) {
-            return redirect()->route('admin.teams')->with('error', 'Cannot restore team. An active team with the same name already exists.');
+        if (!$result['success']) {
+            return redirect()->route('admin.teams')->with('error', $result['message']);
         }
 
-        $team->restore();
-
-        return redirect()->route('admin.teams')->with('success', 'Team restored successfully.');
+        return redirect()->route('admin.teams')->with('success', $result['message']);
     }
 
     public function destroy($id)
     {
-        $team = Team::onlyTrashed()->findOrFail($id);
-
-        Gate::authorize('forceDelete', clone $team);
+        Gate::authorize('forceDelete', Team::class);
         
-        $team->forceDelete();
+        Team::onlyTrashed()->findOrFail($id)->forceDelete();
 
         return redirect()->route('admin.teams')->with('success', 'Team permanently deleted.');
     }
