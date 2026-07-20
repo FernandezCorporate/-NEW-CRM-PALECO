@@ -21,12 +21,13 @@ use App\Models\Team;
 use App\Models\AccountRole;
 use App\Models\Ticket;
 use App\Models\TicketStatusLog;
+use Laravel\Sanctum\HasApiTokens;
 
 #[Fillable(['username', 'first_name', 'middle_name', 'last_name', 'name_ext', 'email', 'contact', 'role_id', 'password', 'department_id', 'last_login', 'locked_until', 'is_active'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
-    use HasFactory, Notifiable, HasUlids, LogsActivity;
+    use HasFactory, Notifiable, HasUlids, LogsActivity, HasApiTokens;
 
     // --- CASTS ---
     protected function casts(): array
