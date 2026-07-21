@@ -2,27 +2,34 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Notifications\Notifiable;
-use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Casts\Attribute;
+use Illuminate\Database\Eloquent\Concerns\HasUlids;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Str;
-use Spatie\Activitylog\Models\Concerns\LogsActivity;
-use Spatie\Activitylog\Support\LogOptions;
-use App\Models\Department;
-use App\Models\Team;
-use App\Models\AccountRole;
-use App\Models\Ticket;
-use App\Models\TicketStatusLog;
+
 use Laravel\Sanctum\HasApiTokens;
 
+use Spatie\Activitylog\Models\Concerns\LogsActivity;
+use Spatie\Activitylog\Support\LogOptions;
+
+use App\Models\AccountRole;
+use App\Models\Department;
+use App\Models\Team;
+use App\Models\Ticket;
+use App\Models\TicketStatusLog;
+
+/*
+ * Represents an authenticated individual within the system.
+ * Manages credentials, roles, organizational assignments, and activity tracking.
+ */
 #[Fillable(['username', 'first_name', 'middle_name', 'last_name', 'name_ext', 'email', 'contact', 'role_id', 'password', 'department_id', 'last_login', 'locked_until', 'is_active'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
@@ -30,6 +37,10 @@ class User extends Authenticatable
     use HasFactory, Notifiable, HasUlids, LogsActivity, HasApiTokens;
 
     // --- CASTS ---
+
+    /*
+     * Defines strict datatype conversions and secures the password format.
+     */
     protected function casts(): array
     {
         return [
@@ -42,16 +53,26 @@ class User extends Authenticatable
     }
 
     // --- RELATIONSHIPS ---
+
+    /*
+     * Retrieves the global access role assigned to this user account.
+     */
     public function role(): BelongsTo
     {
         return $this->belongsTo(AccountRole::class, 'role_id');
     }
 
+    /*
+     * Retrieves the primary department this user operates under.
+     */
     public function department(): BelongsTo
     {
         return $this->belongsTo(Department::class);
     }
 
+    /*
+     * Retrieves the operational teams this user is deployed to, including their pivot roles.
+     */
     public function teams(): BelongsToMany
     {
         return $this->belongsToMany(Team::class, 'team_members')
@@ -59,17 +80,27 @@ class User extends Authenticatable
             ->withTimestamps();
     }
 
+    /*
+     * Retrieves all service tickets originally authored by this user.
+     */
     public function ticket(): HasMany
     {
         return $this->hasMany(Ticket::class);
     }
 
+    /*
+     * Retrieves all ticket status changes enacted by this user.
+     */
     public function ticketStatus(): HasMany
     {
         return $this->hasMany(TicketStatusLog::class, 'changed_by');
     }
 
     // --- ACCESSORS ---
+
+    /*
+     * Concatenates and properly formats the user's full legal name.
+     */
     protected function fullName(): Attribute
     {
         return Attribute::make(
@@ -84,6 +115,9 @@ class User extends Authenticatable
         );
     }
 
+    /*
+     * Extracts the first initials of the user's first and last name for frontend avatars.
+     */
     protected function avatarInitials(): Attribute
     {
         return Attribute::make(
@@ -91,6 +125,9 @@ class User extends Authenticatable
         );
     }
 
+    /*
+     * Converts the boolean active state into a human-readable label.
+     */
     protected function statusLabel(): Attribute
     {
         return Attribute::make(
@@ -99,6 +136,10 @@ class User extends Authenticatable
     }
 
     // --- SCOPE FUNCTIONS ---
+
+    /*
+     * Applies a multi-word search filter against names, emails, and usernames.
+     */
     public function scopeSearch(Builder $query, ?string $term): Builder
     {
         if (empty($term)) return $query;
@@ -120,6 +161,9 @@ class User extends Authenticatable
         });
     }
 
+    /*
+     * Applies a filter to restrict users based on their assigned role identifier.
+     */
     public function scopeFilter(Builder $query, ?string $filter): Builder
     {
         if (empty($filter) || $filter === 'all') return $query;
@@ -127,6 +171,9 @@ class User extends Authenticatable
         return $query->whereHas('role', fn ($q) => $q->where('slug_identifier', $filter));
     }
 
+    /*
+     * Applies sorting rules to the query based on chronology or alphabetical names.
+     */
     public function scopeSort(Builder $query, ?string $sort): Builder
     {
         return match ($sort) {
@@ -140,6 +187,11 @@ class User extends Authenticatable
     }
 
     // --- ACTIVITY LOG ---
+
+    /*
+     * Configures the Spatie Activitylog options for this model.
+     * Records critical changes to account details and captures activation states.
+     */
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()

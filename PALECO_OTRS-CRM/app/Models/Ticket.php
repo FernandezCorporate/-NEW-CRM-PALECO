@@ -2,18 +2,29 @@
 
 namespace App\Models;
 
-use App\Enums\ComplaintSources;
-use App\Enums\TicketStatus;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Casts\Attribute;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
+
 use Spatie\Activitylog\Models\Concerns\LogsActivity;
 use Spatie\Activitylog\Support\LogOptions;
 
+use App\Enums\ComplaintSources;
+use App\Enums\TicketStatus;
+
+use App\Models\Department;
+use App\Models\TicketCategory;
+use App\Models\TicketStatusLog;
+use App\Models\User;
+
+/*
+ * Represents a core service ticket or complaint logged into the system.
+ * Tracks location, categorization, assignments, and resolution states.
+ */
 class Ticket extends Model
 {
     use LogsActivity, SoftDeletes, HasUlids;
@@ -41,6 +52,11 @@ class Ticket extends Model
         'resolved_at'
     ];
 
+    // --- CASTS ---
+
+    /*
+     * Defines Enum and datetime casting for accurate data formatting.
+     */
     protected function casts(): array
     {
         return [
@@ -52,26 +68,45 @@ class Ticket extends Model
         ];
     }
 
+    // --- RELATIONSHIPS ---
+
+    /*
+     * Retrieves the department assigned to resolve this ticket.
+     */
     public function department(): BelongsTo
     {
         return $this->belongsTo(Department::class, 'department_id');
     }
 
+    /*
+     * Retrieves the system category assigned to this ticket.
+     */
     public function category(): BelongsTo
     {
         return $this->belongsTo(TicketCategory::class, 'category_id');
     }
 
+    /*
+     * Retrieves the chronological history of status changes for this ticket.
+     */
     public function statusLog(): HasMany
     {
         return $this->hasMany(TicketStatusLog::class, 'ticket_id', 'system_id');
     }
 
+    /*
+     * Retrieves the system user (CWD Officer) who originally created the ticket.
+     */
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by', 'id');
     }
 
+    // --- ACCESSORS ---
+
+    /*
+     * Generates a readable subject line combining the category and full address.
+     */
     protected function subject(): Attribute
     {
         return Attribute::make(
@@ -88,6 +123,55 @@ class Ticket extends Model
         );
     }
 
+    // --- SCOPE FUNCTIONS ---
+
+    /*
+     * Applies a search filter against the ticket number, description, and location.
+     */
+    public function scopeSearch($query, $search)
+    {
+        if (empty($search)) return $query;
+
+        return $query->where(function ($q) use ($search) {
+            $q->where('ticket_number', 'like', "%{$search}%")
+              ->orWhere('complaint_description', 'like', "%{$search}%")
+              ->orWhere('barangay', 'like', "%{$search}%")
+              ->orWhere('other_category_name', 'like', "%{$search}%");
+        });
+    }
+
+    /*
+     * Applies a filter to isolate tickets belonging to a specific category or the 'other' classification.
+     */
+    public function scopeFilterByCategory($query, $filter)
+    {
+        if (empty($filter) || $filter === 'all') return $query;
+
+        if ($filter === 'other') {
+            return $query->where('other_category', true);
+        }
+
+        return $query->where('category_id', $filter);
+    }
+
+    /*
+     * Applies sorting rules to the query based on chronological or status priorities.
+     */
+    public function scopeSort($query, $sort)
+    {
+        return match ($sort) {
+            'oldest' => $query->oldest(),
+            'status' => $query->orderBy('status'),
+            default => $query->latest(), // 'newest' is default
+        };
+    }
+
+    // --- ACTIVITY LOG ---
+
+    /*
+     * Configures the Spatie Activitylog options for this model.
+     * Records critical changes to ticket configurations and status updates.
+     */
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
@@ -104,39 +188,5 @@ class Ticket extends Model
             ])
             ->logOnlyDirty()
             ->setDescriptionForEvent(fn(string $eventName) => "Ticket {$this->ticket_number} has been {$eventName} by CWD Officer.");
-    }
-
-    // --- SCOPE FUNCTIONS ---
-
-    public function scopeSearch($query, $search)
-    {
-        if (empty($search)) return $query;
-
-        return $query->where(function ($q) use ($search) {
-            $q->where('ticket_number', 'like', "%{$search}%")
-              ->orWhere('complaint_description', 'like', "%{$search}%")
-              ->orWhere('barangay', 'like', "%{$search}%")
-              ->orWhere('other_category_name', 'like', "%{$search}%");
-        });
-    }
-
-    public function scopeFilterByCategory($query, $filter)
-    {
-        if (empty($filter) || $filter === 'all') return $query;
-
-        if ($filter === 'other') {
-            return $query->where('other_category', true);
-        }
-
-        return $query->where('category_id', $filter);
-    }
-
-    public function scopeSort($query, $sort)
-    {
-        return match ($sort) {
-            'oldest' => $query->oldest(),
-            'status' => $query->orderBy('status'),
-            default => $query->latest(), // 'newest' is default
-        };
     }
 }
