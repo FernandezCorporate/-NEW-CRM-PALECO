@@ -5,13 +5,9 @@ namespace App\Http\Requests\Admin\User;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
-use App\Models\AccountRole;
 
 class UpdateUserRequest extends FormRequest
 {
-    /**
-     * Determine if the user is authorized to make this request.
-     */
     public function authorize(): bool
     {
         return true;
@@ -31,21 +27,24 @@ class UpdateUserRequest extends FormRequest
 
     public function rules(): array
     {
-        $user = $this->route('user')->id;
+        // Retrieve the user instance from route model binding
+        $userModel = $this->route('user');
 
         return [
-            'username' => ['required', 'string', 'max:100', Rule::unique('users', 'username')->ignore($user)],
+            'username' => ['required', 'string', 'max:100', Rule::unique('users', 'username')->ignore($userModel->id)],
             'first_name' => ['required', 'string', 'max:255'],
             'middle_name' => ['nullable', 'string', 'max:255'],
             'last_name' => ['required', 'string', 'max:255'],
             'name_ext' => ['nullable', 'string', 'max:10'],
-            'email' => ['nullable', 'string', 'email:rfc,dns', 'max:255', Rule::unique('users', 'email')->ignore($user)],
+            'email' => ['nullable', 'string', 'email:rfc,dns', 'max:255', Rule::unique('users', 'email')->ignore($userModel->id)],
             'contact' => ['required', 'string', 'regex:/^(09|\+639)\d{9}$/'],
-            'role_id' => ['required', 'integer', Rule::exists('account_roles', 'id')],
+            
+            // role_id is entirely removed because it is immutable and disabled in the view
+            
             'department_id' => [
-                Rule::requiredIf(function () {
-                    $role = AccountRole::find($this->input('role_id'));
-                    return $role && $role->slug_identifier === 'foreman';
+                Rule::requiredIf(function () use ($userModel) {
+                    // Check the user's existing immutable role in the database
+                    return $userModel && $userModel->role->slug_identifier === 'foreman';
                 }),
                 'nullable', 
                 'integer', 

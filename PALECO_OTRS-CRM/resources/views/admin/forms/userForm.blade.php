@@ -76,26 +76,40 @@
                     @error('username') <p class="mt-1 text-xs text-rose-500">{{ $message }}</p> @enderror
                 </div>
 
-                <!-- Organization Row (MODIFIED) -->
+                <!-- Organization Row (MODIFIED FOR VISUAL LOCK) -->
                 <div class="md:col-span-6">
                     <label class="block text-sm font-semibold text-slate-700 mb-1.5">System Role <span class="text-rose-500">*</span></label>
-                    <select id="user-role-select" name="role_id" required class="w-full px-3.5 py-2.5 border rounded-lg shadow-sm text-sm focus:outline-none transition-colors bg-white cursor-pointer
-                        {{ $errors->has('role_id') ? 'border-rose-300 focus:border-rose-500 focus:ring-1 focus:ring-rose-500' : 'border-slate-300 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500' }}">
+                    <div class="relative">
+                        <select id="user-role-select" name="role_id" {{ isset($user) ? 'disabled' : 'required' }} 
+                            class="w-full px-3.5 py-2.5 border rounded-lg shadow-sm text-sm focus:outline-none transition-colors 
+                            {{ isset($user) ? 'bg-slate-50 text-slate-500 cursor-not-allowed border-slate-200' : ($errors->has('role_id') ? 'bg-white border-rose-300 focus:border-rose-500 focus:ring-1 focus:ring-rose-500 cursor-pointer' : 'bg-white border-slate-300 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 cursor-pointer') }}">
+                            
+                            <option value="" disabled {{ old('role_id', optional($user)->role_id) ? '' : 'selected' }}>Assign a role...</option>
+                            @foreach ($roles as $role)
+                                <option value="{{ $role->id }}" data-slug="{{ $role->slug_identifier }}" {{ old('role_id', optional($user)->role_id) == $role->id ? 'selected' : '' }}>
+                                    {{ Str::headline($role->role_name) }}
+                                </option>
+                            @endforeach
+                        </select>
                         
-                        <option value="" disabled {{ old('role_id', optional($user)->role_id) ? '' : 'selected' }}>Assign a role...</option>
-                        @foreach ($roles as $role)
-                            <option value="{{ $role->id }}" data-slug="{{ $role->slug_identifier }}" {{ old('role_id', optional($user)->role_id) == $role->id ? 'selected' : '' }}>
-                                {{ Str::headline($role->role_name) }}
-                            </option>
-                        @endforeach
-                    </select>
+                        @if(isset($user))
+                            <div class="absolute inset-y-0 right-8 pr-3 flex items-center pointer-events-none">
+                                <svg class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                </svg>
+                            </div>
+                        @endif
+                    </div>
+                    @if(isset($user))
+                        <p class="mt-1 text-xs text-slate-500">System roles are locked after creation to preserve audit history.</p>
+                    @endif
                     @error('role_id') <p class="mt-1 text-xs text-rose-500">{{ $message }}</p> @enderror
                 </div>
 
                 <div class="md:col-span-6" id="department-wrapper">
                     <label class="block text-sm font-semibold text-slate-700 mb-1.5">Department</label>
                     <select id="department-select" name="department_id" class="tom-select-sync hidden" data-autosubmit="false" autocomplete="off"
-                        {{ $errors->has('department_id') ? 'border-rose-300 focus:border-rose-500 focus:ring-1 focus:ring-rose-500' : 'border-slate-300 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500' }}">
+                        class="{{ $errors->has('department_id') ? 'border-rose-300 focus:border-rose-500 focus:ring-1 focus:ring-rose-500' : 'border-slate-300 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500' }}">
                         
                         <option value="" disabled {{ old('department_id', optional($user)->department_id) ? '' : 'selected' }}>Select a department...</option>
                         @foreach ($depts as $id => $dept)
@@ -105,7 +119,7 @@
                         @endforeach
                     </select>
                     <p id="dept-team-message" class="mt-1 text-xs text-emerald-600 font-medium hidden">
-                        Only foremen can be directly asssigned to a department.<br>
+                        Only foremen can be directly assigned to a department.<br>
                         Field personnel departments are defined by team assignment. 
                     </p>
                     @error('department_id') <p class="mt-1 text-xs text-rose-500">{{ $message }}</p> @enderror
@@ -113,6 +127,7 @@
 
                 <!-- Row 5: Security (Only visible during creation) -->
                 @if(!isset($user))
+                    <!-- ... Keep password fields exactly the same as provided ... -->
                     <div class="md:col-span-6">
                         <label class="block text-sm font-semibold text-slate-700 mb-1.5">Password <span class="text-rose-500">*</span></label>
                         <div class="relative">
@@ -155,7 +170,6 @@
                     {{ isset($user) ? 'Update User' : 'Create User' }}
                 </button>
             </div>
-
         </form>
     </div>
 @endsection

@@ -56,7 +56,9 @@ class UserService
 
     public function processAndSaveUser(array $data, ?User $user = null): bool|User
     {
-        $role = AccountRole::find($data['role_id']);
+        // If updating an existing user, pull their immutable role from the database. 
+        // If creating a new user, fetch the role selected in the request.
+        $role = $user ? $user->role : AccountRole::find($data['role_id']);
         
         // Field personnel are not tied directly to a single department
         if ($role && $role->slug_identifier === 'field_personnel') {
