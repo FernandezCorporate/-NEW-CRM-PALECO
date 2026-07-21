@@ -1,6 +1,6 @@
 # PALECO OTRS - Backend & API Setup Guide
 
-This repository contains the backend API and web administrative portal for the PALECO Service Ticket ecosystem. This guide is tailored for mobile developers to easily set up the local backend environment and connect the Flutter application to the API.
+This repository contains the backend API and web administrative portal for the PALECO Service Ticket ecosystem. This guide is tailored for mobile developers to easily set up the local backend environment and connect the Flutter application to the API, as well as accessing the web-based Blade interface.
 
 ## 🌟 System Features Overview
 
@@ -12,20 +12,22 @@ This repository contains the backend API and web administrative portal for the P
 
 ## 🛠️ Local Setup Guide
 
-Follow these steps to get the backend running locally on your machine.
+Follow these steps to get the backend and frontend assets running locally on your machine.
 
 ### 1. Requirements
 Ensure you have the following installed on your machine:
 * **PHP** >= 8.1
 * **Composer**
+* **Node.js & NPM** (Required for compiling Tailwind CSS and Tom Select dependencies)
 * **MySQL Server** (via XAMPP, WAMP, MAMP, or standard local install)
 
 ### 2. Installation
-Clone the repository and install the backend PHP dependencies:
+Clone the repository and install both the backend PHP dependencies and frontend Node dependencies:
 ```bash
 git clone <repository_url>
 cd <repository_folder>
 composer install
+npm install
 ```
 
 ### 3. Environment Configuration
@@ -34,14 +36,16 @@ Copy the environment example file and generate the application key:
 cp .env.example .env
 php artisan key:generate
 ```
-Open the `.env` file and configure your database credentials to match your local MySQL server:
+Open the `.env` file and configure your application URL and database credentials. Update them to match your local MySQL server setup:
 ```env
+APP_URL=http://localhost:8000
+
 DB_CONNECTION=mysql
 DB_HOST=127.0.0.1
 DB_PORT=3306
 DB_DATABASE=paleco_otrs
 DB_USERNAME=root
-DB_PASSWORD=
+DB_PASSWORD="1234"
 ```
 
 ### 4. Database Migration & Seeding
@@ -52,9 +56,18 @@ Run the migrations and seed the database with the required roles and test accoun
 php artisan migrate:fresh --seed
 ```
 
-### 5. Serving the Application (CRITICAL FOR MOBILE TESTING)
-If you are testing the mobile app on a physical device or an Android emulator, it **cannot** communicate with `localhost` or `127.0.0.1`. You must host the backend on your local network IP:
+### 5. Serving the Application
+Depending on what you are testing, use one of the following methods to start the system:
 
+**Option A: Web Portal & Blade Interface (Full Stack)**
+To access the web system and compile the frontend assets (Tailwind CSS, Tom Select), use the following full-stack command. This will start the local server and Vite for hot-module replacement:
+```bash
+composer run dev
+```
+*You can now access the web system at `http://localhost:8000`.*
+
+**Option B: Mobile API Testing (CRITICAL FOR PHYSICAL DEVICES)**
+If you are testing the mobile app on a physical device or an Android emulator, it **cannot** communicate with `localhost`. You must host the backend on your local network IP:
 ```bash
 php artisan serve --host=0.0.0.0 --port=8000
 ```
