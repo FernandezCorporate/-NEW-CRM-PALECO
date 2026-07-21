@@ -143,13 +143,18 @@ class TicketCategoryController extends Controller
 
     /*
      * Permanently eradicates the ticket category record from the database.
+     * Delegates to the service layer to ensure it isn't orphaned from existing tickets.
      */
     public function destroy($id)
     {
         Gate::authorize('forceDelete', TicketCategory::class);
 
-        TicketCategory::onlyTrashed()->findOrFail($id)->forceDelete();
+        $result = $this->categoryService->permanentlyDeleteCategory($id);
+
+        if (!$result['success']) {
+            return redirect()->route('admin.ticketCategories')->with('error', $result['message']);
+        }
         
-        return redirect()->route('admin.ticketCategories')->with('success', 'Category permanently deleted.');
+        return redirect()->route('admin.ticketCategories')->with('success', $result['message']);
     }
 }

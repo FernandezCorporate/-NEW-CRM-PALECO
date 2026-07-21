@@ -142,13 +142,18 @@ class DepartmentController extends Controller
 
     /*
      * Permanently eradicates the department record from the database.
+     * Delegates to the service layer to ensure no relational constraints are violated.
      */
     public function destroy($id)
     {
         Gate::authorize('forceDelete', Department::class);
         
-        Department::onlyTrashed()->findOrFail($id)->forceDelete();
+        $result = $this->departmentService->permanentlyDeleteDepartment($id);
+
+        if (!$result['success']) {
+            return redirect()->route('admin.departments')->with('error', $result['message']);
+        }
         
-        return redirect()->route('admin.departments')->with('success', 'Department permanently deleted.');
+        return redirect()->route('admin.departments')->with('success', $result['message']);
     }
 }

@@ -2,17 +2,25 @@
 
 namespace App\Services\Api\Auth;
 
-use App\Models\User;
-use App\Events\LoginEvents;
-use App\Enums\NonModelActions;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
 use Symfony\Component\HttpFoundation\Response;
 
+use App\Enums\NonModelActions;
+use App\Events\LoginEvents;
+use App\Models\User;
+
+/*
+ * Encapsulates the core mobile API authentication logic.
+ * Enforces stateless token generation and specific field access constraints.
+ */
 class MobileAuthService
 {
-    /**
-     * Processes the mobile login attempt and returns a structured response array.
+    // --- CORE PROCESSES ---
+
+    /*
+     * Orchestrates the mobile login attempt.
+     * Implements strict rate limiting, verifies credentials via hash, and issues a secure Sanctum token.
      */
     public function processLogin(array $credentials, string $ip): array
     {
@@ -78,10 +86,11 @@ class MobileAuthService
         ];
     }
 
-    /* -------------------------------------------------------------------------
-     * PRIVATE HELPER METHODS 
-     * ------------------------------------------------------------------------- */
+    // --- PRIVATE HELPER METHODS ---
 
+    /*
+     * Checks if the user model has an active database-level lockout timestamp applied.
+     */
     private function handleDatabaseLockout(?User $user): ?string
     {
         if (!$user || !$user->locked_until) return null;
@@ -96,6 +105,9 @@ class MobileAuthService
         return null;
     }
 
+    /*
+     * Applies a database lockout if the request-based rate limiter indicates suspicious spam behavior.
+     */
     private function handleRateLimitExceeded(?User $user, string $rateLimitKey): string
     {
         if ($user && !$user->locked_until) {

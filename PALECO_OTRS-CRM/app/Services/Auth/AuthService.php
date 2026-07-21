@@ -2,17 +2,25 @@
 
 namespace App\Services\Auth;
 
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\RateLimiter;
-use App\Models\User;
-use App\Events\LoginEvents;
-use App\Enums\NonModelActions;
-use Illuminate\Http\Request;
 
+use App\Enums\NonModelActions;
+use App\Events\LoginEvents;
+use App\Models\User;
+
+/*
+ * Encapsulates the core web authentication logic.
+ * Manages complex sequences including rate limiting, database lockouts, role verification, and smart routing.
+ */
 class AuthService
 {
-    /**
-     * Processes the entire login attempt and returns a structured array with the result.
+    // --- CORE PROCESSES ---
+
+    /*
+     * Orchestrates the entire login attempt process.
+     * Evaluates security constraints sequentially before finalizing the session and determining the redirect.
      */
     public function processLogin(array $credentials, string $ip, string $expectedRole, Request $request): array
     {
@@ -73,8 +81,8 @@ class AuthService
         return ['success' => true, 'redirect_url' => $redirectUrl];
     }
 
-    /**
-     * Terminates a session safely.
+    /*
+     * Safely flushes and invalidates the user's web session upon logout or forced termination.
      */
     public function terminateSession(Request $request): void
     {
@@ -83,10 +91,11 @@ class AuthService
         $request->session()->regenerateToken();
     }
 
-    /* -------------------------------------------------------------------------
-     * PRIVATE HELPER METHODS
-     * ------------------------------------------------------------------------- */
+    // --- PRIVATE HELPER METHODS ---
 
+    /*
+     * Maps the user's role string to their designated dashboard route.
+     */
     private function getLandingRoute(string $roleSlug): ?string
     {
         return match($roleSlug) {
@@ -96,6 +105,9 @@ class AuthService
         };
     }
 
+    /*
+     * Intercepts "intended" URLs to prevent users from cross-pollinating into invalid administrative areas after logging in.
+     */
     private function calculateSmartRedirect(Request $request, string $userRoleSlug, string $landingRoute): string
     {
         $intendedUrl = $request->session()->pull('url.intended', $landingRoute);
@@ -111,6 +123,9 @@ class AuthService
         return $intendedUrl;
     }
 
+    /*
+     * Checks if the user model has an active database-level lockout timestamp applied.
+     */
     private function handleDatabaseLockout(?User $user): ?string
     {
         if (!$user || !$user->locked_until) return null;
@@ -125,6 +140,9 @@ class AuthService
         return null;
     }
 
+    /*
+     * Applies a database lockout if the request-based rate limiter indicates suspicious spam behavior.
+     */
     private function handleRateLimitExceeded(?User $user, string $rateLimitKey): string
     {
         if ($user && !$user->locked_until) {

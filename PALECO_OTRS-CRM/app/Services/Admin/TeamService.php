@@ -2,14 +2,25 @@
 
 namespace App\Services\Admin;
 
-use App\Models\Team;
-use App\Models\Department;
-use App\Models\User;
-use App\Models\TeamRole;
 use Illuminate\Support\Facades\DB;
 
+use App\Models\Department;
+use App\Models\Team;
+use App\Models\TeamRole;
+use App\Models\User;
+
+/*
+ * Encapsulates the business logic for managing operational Teams.
+ * Handles complex relational syncing and roster transaction logging.
+ */
 class TeamService
 {
+    // --- VIEW DATA AGGREGATION ---
+
+    /*
+     * Retrieves a paginated list of teams alongside active department choices.
+     * Applies search, filter, and sort scopes directly to the query.
+     */
     public function getDashboardTeams(array $filters): array
     {
         $departments = Department::whereNull('deleted_at')->orderBy('dept_name')->pluck('dept_name', 'id');
@@ -28,6 +39,10 @@ class TeamService
         return compact('teams', 'departments');
     }
 
+    /*
+     * Compiles detailed records for a specific team's profile.
+     * Includes a paginated list of attached members and available team roles.
+     */
     public function getTeamDetails(Team $team): array
     {
         $members = $team->members()->withPivot('team_role_id', 'created_at')->paginate(5);
@@ -36,6 +51,9 @@ class TeamService
         return compact('members', 'teamRoles');
     }
 
+    /*
+     * Gathers all required relational data (departments, personnel, roles) to populate the Team form.
+     */
     public function getFormData(): array
     {
         $depts = Department::orderBy('dept_name')->pluck('dept_name', 'id');
@@ -52,6 +70,11 @@ class TeamService
         return compact('depts', 'personnel', 'memberRoles');
     }
 
+    // --- MUTATING & STATE METHODS ---
+
+    /*
+     * Creates a new team and syncs the assigned members within an atomic database transaction.
+     */
     public function createTeam(array $teamDetails, array $assignedMembers): void
     {
         DB::transaction(function () use ($teamDetails, $assignedMembers) {
@@ -66,6 +89,10 @@ class TeamService
         });
     }
 
+    /*
+     * Updates an existing team and synchronizes its roster within a transaction.
+     * Automatically logs an activity event if the membership list is modified.
+     */
     public function updateTeam(Team $team, array $teamDetails, array $assignedMembers): void
     {
         DB::transaction(function () use ($team, $teamDetails, $assignedMembers) {
@@ -94,6 +121,10 @@ class TeamService
         });
     }
 
+    /*
+     * Attempts to restore a soft-deleted team.
+     * Enforces uniqueness checks against active teams sharing the same name.
+     */
     public function restoreTeam(int $id): array
     {
         $team = Team::onlyTrashed()->findOrFail($id); 

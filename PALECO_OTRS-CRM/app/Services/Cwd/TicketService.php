@@ -2,15 +2,23 @@
 
 namespace App\Services\Cwd;
 
-use App\Models\Ticket;
-use App\Enums\TicketStatus;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
+use App\Enums\TicketStatus;
+use App\Models\Ticket;
+
+/*
+ * Encapsulates the core backend processing for Service Tickets.
+ * Safeguards database integrity during concurrent ticket creation.
+ */
 class TicketService
 {
-    /**
-     * Safely executes automated row tracking assignments inside a singular atomic transaction blocks.
+    // --- CORE PROCESSES ---
+
+    /*
+     * Safely executes automated row tracking and ticket assignments inside a singular atomic transaction block.
+     * Generates a sequential ID, creates the master record, and stamps the initial lifecycle log.
      */
     public function createCwdTicket(array $validatedData): Ticket
     {
@@ -38,8 +46,11 @@ class TicketService
         });
     }
 
-    /**
-     * Computes safe sequential indexing numbers leveraging table block row allocations.
+    // --- PRIVATE HELPER METHODS ---
+
+    /*
+     * Computes safe, human-readable sequential indexing numbers.
+     * Leverages explicit row locking (`lockForUpdate`) to completely prevent sequence overlap during concurrent submissions.
      */
     private function generateSequentialNumber(): string
     {

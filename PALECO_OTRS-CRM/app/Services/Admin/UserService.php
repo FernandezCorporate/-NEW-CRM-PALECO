@@ -2,13 +2,24 @@
 
 namespace App\Services\Admin;
 
-use App\Models\User;
-use App\Models\AccountRole;
-use App\Models\TeamRole;
 use Illuminate\Support\Facades\DB;
 
+use App\Models\AccountRole;
+use App\Models\TeamRole;
+use App\Models\User;
+
+/*
+ * Encapsulates the business logic for managing system User accounts.
+ * Manages complex role aggregation, team assignments, and profile updates.
+ */
 class UserService
 {
+    // --- VIEW DATA AGGREGATION ---
+
+    /*
+     * Compiles the dashboard statistics and paginated user list.
+     * Executes optimized raw queries to generate total counts for each active role type.
+     */
     public function getDashboardUsers(array $filters): array
     {
         $roles = AccountRole::orderBy('role_name')->get();
@@ -35,6 +46,10 @@ class UserService
         return compact('users', 'roles', 'activeCounts');
     }
 
+    /*
+     * Retrieves detailed relational data for a specific user.
+     * Transforms pivot table data to include human-readable team roles for their assignments.
+     */
     public function getUserDetails(User $user): array
     {
         $user->load('department');
@@ -54,6 +69,12 @@ class UserService
         return compact('assignedTeams');
     }
 
+    // --- MUTATING & STATE METHODS ---
+
+    /*
+     * Handles the dual purpose of creating a new user or updating an existing one.
+     * Evaluates role identifiers to conditionally strip department links for field personnel.
+     */
     public function processAndSaveUser(array $data, ?User $user = null): bool|User
     {
         // If updating an existing user, pull their immutable role from the database. 
@@ -76,6 +97,9 @@ class UserService
         return User::create($data);
     }
 
+    /*
+     * Flips the active status boolean on a user account to grant or revoke system access.
+     */
     public function toggleUserStatus(User $user, bool $isActive): void
     {
         $user->is_active = $isActive;

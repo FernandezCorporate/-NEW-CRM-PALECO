@@ -1,17 +1,31 @@
 <?php
 
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
+
 use App\Http\Controllers\Auth\AuthController;
+
 use App\Http\Controllers\Admin\AdminDashboardController;
-use Illuminate\Support\Facades\Auth;
-use App\Http\Controllers\Cwd\CwdDashboardController;
 use App\Http\Controllers\Admin\DepartmentController;
 use App\Http\Controllers\Admin\TeamController;
 use App\Http\Controllers\Admin\TicketCategoryController;
 use App\Http\Controllers\Admin\UserController;
+
+use App\Http\Controllers\Cwd\CwdDashboardController;
 use App\Http\Controllers\Cwd\TicketController;
 
+/*
+|--------------------------------------------------------------------------
+| Web Routes
+|--------------------------------------------------------------------------
+| Handles browser-based routing, session management, and view mapping.
+*/
+
+/*
+ * Unauthenticated Guest Portal
+ * Handles login presentation and post-submission verification.
+ */
 Route::middleware('guest')->group(function() {
     Route::get('/portal', [AuthController::class, 'showRoleSelection'])->name('portal');
     
@@ -23,9 +37,16 @@ Route::middleware('guest')->group(function() {
     })->name('login');
 });
 
+/*
+ * Authenticated Web Portal
+ * Protected domains requiring active sessions. Handles smart-routing and core module operations.
+ */
 Route::middleware('auth')->group(function() {
     
-    // Root routing gatekeeper
+    /*
+     * Root Routing Gatekeeper
+     * Automatically redirects validated users to their respective workspace depending on role logic.
+     */
     Route::get('/', function (Request $request) {
         $dashboardRoute = match (Auth::user()->role->slug_identifier) {
             'admin' => 'admin.dashboard',
@@ -44,6 +65,10 @@ Route::middleware('auth')->group(function() {
         return redirect()->route($dashboardRoute);
     })->name('dashboard');
 
+    /*
+     * Administrator Domain
+     * Explicitly protected by a specific gate ensuring only standard admins bypass.
+     */
     Route::prefix('admin')->middleware('can:access-admin')->group(function() {
         Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('admin.dashboard');
 
@@ -122,18 +147,23 @@ Route::middleware('auth')->group(function() {
         });
     });
 
-
+    /*
+     * CWD Officer Domain
+     * Explicitly protected by a gate verifying CWD officer credentials.
+     */
     Route::prefix('cwd')->middleware('can:access-cwd_officer')->group(function() {
         Route::get('/dashboard', [CwdDashboardController::class, 'index'])->name('cwd.dashboard');
 
         Route::prefix('tickets')->group(function() {
             Route::get('/', [TicketController::class, 'index'])->name('cwd.tickets');
             Route::get('/create', [TicketController::class, 'ticketForm'])->name('cwd.tickets.createForm');
-            
-            // Added creation storage processing route
             Route::post('/', [TicketController::class, 'store'])->name('cwd.tickets.store');
         });
     });
 
+    /*
+     * Universal Web Authentication Routes
+     * Open to any authenticated user attempting to leave the system.
+     */
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 });
