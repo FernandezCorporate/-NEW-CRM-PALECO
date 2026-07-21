@@ -2,20 +2,17 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
-use Database\Seeders\UserSeeder;
-use Database\Seeders\RoleSeeder;
-use Database\Seeders\TeamRoleSeeder;
 
+/*
+ * Master seeder class that orchestrates the execution of all other seeders.
+ * Ensures required reference tables (like roles) are populated before users.
+ */
 class DatabaseSeeder extends Seeder
 {
     use WithoutModelEvents;
 
-    /**
-     * Seed the application's database.
-     */
     public function run(): void
     {
         $this->call([

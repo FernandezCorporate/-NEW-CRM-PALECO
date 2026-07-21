@@ -6,26 +6,23 @@ use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use App\Models\TeamRole;
 
+/*
+ * Populates the operational roles used specifically within Team assignments.
+ */
 class TeamRoleSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
+    use WithoutModelEvents;
+
     public function run(): void
     {
-        TeamRole::create([
-            'role_name' => 'Team_leader',
-            'slug_identifier' => 'team_leader'
-        ]);
+        $roles = [
+            ['role_name' => 'Team Leader', 'slug_identifier' => 'team_leader'],
+            ['role_name' => 'Team Member', 'slug_identifier' => 'team_member'],
+            ['role_name' => 'Backup', 'slug_identifier' => 'backup'],
+        ];
 
-        TeamRole::create([
-            'role_name' => 'Team_member',
-            'slug_identifier' => 'team_member'
-        ]);
-
-        TeamRole::create([
-            'role_name' => 'Backup',
-            'slug_identifier' => 'backup'
-        ]);
+        foreach ($roles as $role) {
+            TeamRole::create($role);
+        }
     }
 }
