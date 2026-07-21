@@ -2,6 +2,10 @@
 
 namespace App\Enums;
 
+/*
+ * Manages the complete lifecycle stages of service tickets.
+ * Maps operational states from creation to final supervisor verification.
+ */
 enum TicketStatus: string
 {
     case OPEN = 'open';               // CWD created it, department assigned.
@@ -10,6 +14,10 @@ enum TicketStatus: string
     case RESOLVED = 'resolved';       // Field personnel submitted proof of completion.
     case CLOSED = 'closed';           // Foreman verified the proof and closed the ticket.
 
+    /*
+     * Returns the human-readable text presentation of the status.
+     * Used on administrative data tables and worker mobile interfaces.
+     */
     public function label(): string
     {
         return match($this) {
