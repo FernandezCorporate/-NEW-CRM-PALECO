@@ -3,25 +3,35 @@
 namespace App\Http\Controllers\Cwd;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Cwd\StoreTicketRequest;
-use App\Services\Cwd\TicketService;
-use App\Models\Ticket;
-use App\Models\TicketCategory;
-use App\Models\Department;
-use App\Enums\ComplaintSources;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 
+use App\Http\Requests\Cwd\StoreTicketRequest;
+
+use App\Services\Cwd\TicketService;
+
+use App\Models\Department;
+use App\Models\Ticket;
+use App\Models\TicketCategory;
+
+use App\Enums\ComplaintSources;
+
+/*
+ * Manages the core service ticket lifecycle for CWD Officers.
+ * Handles querying the ticket registry and processing new incoming utility complaints.
+ */
 class TicketController extends Controller
 {
-    /**
-     * Display the Ticket Management Dashboard with Search, Filter, and Sort capabilities.
+    // --- VIEW METHODS ---
+
+    /*
+     * Retrieves and renders the Ticket Management Dashboard.
+     * Utilizes Eloquent model scopes for robust Search, Filter, and Sort capabilities.
      */
     public function index(Request $request)
     {
         Gate::authorize('viewAny', Ticket::class);
 
-        // Eloquent chain utilizing the model scopes for clean abstraction
         $tickets = Ticket::with(['category', 'department', 'creator'])
             ->search($request->search)
             ->filterByCategory($request->filter)
@@ -34,8 +44,10 @@ class TicketController extends Controller
         return view('cwd.pages.ticketManagement', compact('tickets', 'categories'));
     }
 
-    /**
-     * Render the Ticket Creation Form.
+    // --- FORM METHODS ---
+
+    /*
+     * Renders the dynamic Ticket Creation Form, populating necessary dropdowns.
      */
     public function ticketForm(?Ticket $ticket = null)
     {
@@ -48,8 +60,10 @@ class TicketController extends Controller
         return view('cwd.forms.ticketForm', compact('ticket', 'sources', 'categories', 'departments'));
     }
 
-    /**
-     * Process the submission of a new CWD Ticket.
+    // --- MUTATING METHODS ---
+
+    /*
+     * Processes validated request data to register and queue a newly submitted service ticket.
      */
     public function store(StoreTicketRequest $request, TicketService $ticketService)
     {
