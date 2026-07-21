@@ -2,12 +2,15 @@
 
 namespace App\Http\Requests\Auth;
 
-use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
+/*
+ * Validates incoming authentication attempts.
+ * Ensures the basic required fields for login are present and sanitized.
+ */
 class LoginRequest extends FormRequest
 {
-    /**
+    /*
      * Determine if the user is authorized to make this request.
      */
     public function authorize(): bool
@@ -15,6 +18,9 @@ class LoginRequest extends FormRequest
         return true;
     }
 
+    /*
+     * Sanitizes the username input by trimming whitespace before validation.
+     */
     protected function prepareForValidation(): void
     {
         $this->merge([
@@ -22,16 +28,28 @@ class LoginRequest extends FormRequest
         ]);
     }
 
-    /**
-     * Get the validation rules that apply to the request.
-     *
-     * @return array<string, ValidationRule|array<mixed>|string>
+    /*
+     * Defines the strict validation rules for the login form.
      */
     public function rules(): array
     {
         return [
             'username' => ['required', 'string'],
             'password' => ['required', 'string'],
+        ];
+    }
+
+    /*
+     * Provides user-friendly error messages for authentication inputs.
+     */
+    public function messages(): array
+    {
+        return [
+            'username.required' => 'Please enter your username to continue.',
+            'username.string'   => 'The username format is invalid.',
+            
+            'password.required' => 'Please enter your password to log in.',
+            'password.string'   => 'The password format is invalid.',
         ];
     }
 }
