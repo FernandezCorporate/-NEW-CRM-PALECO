@@ -104,7 +104,7 @@ class DepartmentService
         $dept = Department::onlyTrashed()->findOrFail($id);
 
         // Proactive Relationship Checks
-        $hasTickets = Ticket::where('department_id', $dept->id)->exists();
+        $hasTickets = $dept->tickets()->exists();
         $hasTeams = $dept->teams()->exists();
         $hasUsers = $dept->users()->exists();
 

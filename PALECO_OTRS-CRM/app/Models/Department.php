@@ -14,6 +14,7 @@ use Spatie\Activitylog\Support\LogOptions;
 
 use App\Models\Team;
 use App\Models\User;
+use App\Models\Ticket;
 
 /*
  * Represents a primary organizational unit within the cooperative.
@@ -53,6 +54,14 @@ class Department extends Model
     public function teams(): HasMany
     {
         return $this->hasMany(Team::class, 'department_id');
+    }
+
+    /*
+     * Retrieves all tickets assigned to this department.
+     */
+    public function tickets(): HasMany
+    {
+        return $this->hasMany(Ticket::class, 'department_id');
     }
 
     // --- SCOPE FUNCTIONS ---
