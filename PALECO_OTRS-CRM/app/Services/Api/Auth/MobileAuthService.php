@@ -68,7 +68,10 @@ class MobileAuthService
         $user->updateQuietly(['last_login' => now()]);
         LoginEvents::dispatch(NonModelActions::LOGIN_SUCCESS, $user);
         
-        // 6. Generate Sanctum Token & Payload
+        // 6. Delete previous tokens (Only one active token per mobile user)
+        $user->tokens()->delete();
+
+        // 7. Generate Sanctum Token & Payload
         $token = $user->createToken($credentials['device_name'])->plainTextToken;
 
         return [
