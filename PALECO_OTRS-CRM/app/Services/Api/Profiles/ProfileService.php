@@ -4,26 +4,17 @@ namespace App\Services\Api\Profiles;
 
 use App\Models\User;
 
+/*
+ * Manages profile data retrieval for the mobile API.
+ */
 class ProfileService
 {
-    /**
-     * Retrieves and formats the authenticated user's profile data.
+    /*
+     * Retrieves the authenticated user and loads necessary relationships for formatting.
      */
-    public function getProfileData(User $user): array
+    public function getProfileData(User $user): User
     {
-        $user->load(['role', 'department']);
-        
-        return [
-            'id'          => $user->id,
-            'username'    => $user->username,
-            'first_name'  => $user->first_name,
-            'middle_name' => $user->middle_name,
-            'last_name'   => $user->last_name,
-            'name_ext'    => $user->name_ext,
-            'email'       => $user->email,
-            'contact'     => $user->contact,
-            'role'        => $user->role?->role_name, 
-            'department'  => $user->department?->dept_name,
-        ];
+        // 1. Load dependencies required by the UserResource class
+        return $user->load(['role', 'department']);
     }
 }

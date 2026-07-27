@@ -78,13 +78,8 @@ class MobileAuthService
             'success' => true,
             'status' => Response::HTTP_OK,
             'token' => $token,
-            'user' => [
-                'id' => $user->id,
-                'name' => $user->full_name, 
-                'email' => $user->contact,
-                'role' => $userRoleSlug,
-                'department_id' => $user->department_id,
-            ]
+            // Return the raw model instance loaded with necessary relations for the Resource mapping
+            'user' => $user->load(['role', 'department'])
         ];
     }
 

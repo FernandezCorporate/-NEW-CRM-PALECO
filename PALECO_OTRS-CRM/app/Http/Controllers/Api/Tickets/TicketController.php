@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\Api\Tickets;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\Api\TicketResource;
 use App\Services\Api\Tickets\TicketService;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 /*
@@ -20,7 +20,7 @@ class TicketController extends Controller
     /*
      * Fetch and return the paginated ticket inbox scoped dynamically by role.
      */
-    public function index(Request $request): JsonResponse
+    public function index(Request $request)
     {
         // Eager load the role to ensure the service can check the slug_identifier
         $user = $request->user()->load('role');
@@ -30,10 +30,7 @@ class TicketController extends Controller
             $request->only(['search', 'category', 'status', 'sort'])
         );
 
-        return response()->json([
-            'success' => true,
-            'status'  => 200,
-            'data'    => $tickets
-        ]);
+        // TicketResource::collection automatically maps the data and appends pagination metadata
+        return TicketResource::collection($tickets);
     }
 }

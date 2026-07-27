@@ -8,7 +8,7 @@ use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 use App\Http\Requests\Api\Auth\MobileLoginRequest;
-
+use App\Http\Resources\Api\UserResource;
 use App\Services\Api\Auth\MobileAuthService;
 
 /*
@@ -40,7 +40,8 @@ class AuthController extends Controller
             'message' => 'Authentication successful.',
             'access_token' => $result['token'],
             'token_type' => 'Bearer',
-            'user' => $result['user']
+            // Dynamically wraps the user model using the standardized UserResource
+            'user' => new UserResource($result['user'])
         ], Response::HTTP_OK);
     }
 
