@@ -80,7 +80,6 @@ class MobileAuthService
             'token' => $token,
             'user' => [
                 'id' => $user->id,
-                // Use your custom accessor instead of 'name'
                 'name' => $user->full_name, 
                 'email' => $user->contact,
                 'role' => $userRoleSlug,
