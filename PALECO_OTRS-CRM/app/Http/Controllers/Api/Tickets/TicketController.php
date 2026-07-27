@@ -9,7 +9,7 @@ use Illuminate\Http\Request;
 
 /*
  * Manages the service ticket inbox for mobile application users.
- * Handles querying the ticket registry restricted to the authenticated user's department.
+ * Handles querying the ticket registry restricted to the authenticated user's role.
  */
 class TicketController extends Controller
 {
@@ -18,12 +18,15 @@ class TicketController extends Controller
     // --- VIEW METHODS ---
 
     /*
-     * Fetch and return the paginated ticket inbox for the authenticated user's department.
+     * Fetch and return the paginated ticket inbox scoped dynamically by role.
      */
     public function index(Request $request): JsonResponse
     {
-        $tickets = $this->ticketService->getDepartmentTickets(
-            $request->user(), 
+        // Eager load the role to ensure the service can check the slug_identifier
+        $user = $request->user()->load('role');
+
+        $tickets = $this->ticketService->getInboxTickets(
+            $user, 
             $request->only(['search', 'category', 'status', 'sort'])
         );
 
