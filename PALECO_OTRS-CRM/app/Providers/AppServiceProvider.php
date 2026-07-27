@@ -45,6 +45,22 @@ class AppServiceProvider extends ServiceProvider
         });
 
         /*
+         * Mobile API Gates
+         * Secures endpoints for the Flutter application based on field roles.
+         */
+        Gate::define('access-foreman', function (User $user) {
+            return $user->role->slug_identifier === 'foreman'
+                ? Response::allow()
+                : Response::denyAsNotFound();
+        });
+
+        Gate::define('access-field_personnel', function (User $user) {
+            return $user->role->slug_identifier === 'field_personnel'
+                ? Response::allow()
+                : Response::denyAsNotFound();
+        });
+
+        /*
          * Appends IP address and User Agent to all activity logs generated via HTTP requests.
          */
         Activity::beforeLogging(function (ActivityContract $activity) {

@@ -110,6 +110,14 @@ class Ticket extends Model
         return $this->hasMany(Ticket::class, 'parent_ticket_id', 'system_id');
     }
 
+    /*
+     * Retrieves the chronological history of team assignments for SLA tracking.
+     */
+    public function assignments(): HasMany
+    {
+        return $this->hasMany(TicketAssignment::class, 'ticket_id', 'system_id');
+    }
+
     // --- ACCESSORS ---
 
     /*

@@ -28,6 +28,8 @@ class UserPolicy
     public function reactivateConfirm(User $user, User $targetUser): bool { return $user->role->slug_identifier === 'admin' && $targetUser->role->slug_identifier !== 'admin'; }
     public function reactivate(User $user, User $targetUser): bool { return $user->role->slug_identifier === 'admin' && $targetUser->role->slug_identifier !== 'admin'; }
 
+    public function viewProfile(User $user, User $targetUser): bool { return $user->is($targetUser) && in_array($user->role->slug_identifier, ['admin', 'cwd_officer', 'foreman', 'field_personnel']); }
+
     /*
      * viewAny: Determines if the user can view the list of system users.
      * userForm: Determines if the user can access the user creation or editing form.
@@ -38,5 +40,6 @@ class UserPolicy
      * deactivate: Determines if the user can successfully deactivate a target account.
      * reactivateConfirm: Determines if the user can access the reactivation confirmation prompt.
      * reactivate: Determines if the user can successfully reactivate a target account.
+     * viewProfile: Determines if the user can view their own profile and account information.
      */
 }

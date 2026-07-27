@@ -7,6 +7,9 @@ use App\Http\Resources\Api\UserResource;
 use App\Services\Api\Profiles\ProfileService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
+
+use App\Policies\UserPolicy;
 
 class ProfileController extends Controller
 {
@@ -20,6 +23,8 @@ class ProfileController extends Controller
      */
     public function show(Request $request): JsonResponse
     {
+        Gate::authorize('viewProfile', $request->user());
+
         $userModel = $this->profileService->getProfileData($request->user());
 
         return response()->json([

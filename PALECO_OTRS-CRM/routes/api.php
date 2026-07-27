@@ -25,11 +25,32 @@ Route::post('/login', [AuthController::class, 'login'])->middleware('guest');
  * Strictly guarded by Laravel Sanctum; requires a valid Bearer token in the header.
  */
 Route::middleware('auth:sanctum')->group(function () {
-    Route::post('/logout', [AuthController::class, 'logout']);
     
+    // --- SHARED MOBILE ENDPOINTS (Accessible by all authenticated mobile users) ---
+    Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/user/profile', [ProfileController::class, 'show']);
-
+    
     Route::prefix('tickets')->group(function () {
         Route::get('/', [TicketController::class, 'index']);
+    });
+
+    // --- FOREMAN SPECIFIC ENDPOINTS ---
+    Route::middleware('can:access-foreman')->group(function () {
+        
+        Route::prefix('tickets')->group(function () {
+            Route::post('/{ticket}/assign', [TicketController::class, 'assign']);
+            // Future Foreman endpoints go here (e.g., escalate, close, prioritize)
+        });
+
+        // Future Team Management endpoints go here (e.g., GET /teams, POST /teams/{team}/substitutes)
+    });
+
+    // --- FIELD PERSONNEL SPECIFIC ENDPOINTS ---
+    Route::middleware('can:access-field_personnel')->group(function () {
+        
+        Route::prefix('tickets')->group(function () {
+            // Future Field Personnel endpoints go here (e.g., PATCH /{ticket}/status, POST /{ticket}/resolve)
+        });
+
     });
 });
