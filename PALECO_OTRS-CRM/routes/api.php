@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 
 use App\Http\Controllers\Api\Auth\AuthController;
 use App\Http\Controllers\Api\Profiles\ProfileController;
+use App\Http\Controllers\Api\Tickets\TicketController;
 
 /*
 |--------------------------------------------------------------------------
@@ -27,4 +28,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     
     Route::get('/user/profile', [ProfileController::class, 'show']);
+
+    Route::prefix('tickets')->group(function () {
+        Route::get('/', [TicketController::class, 'index']);
+    });
 });

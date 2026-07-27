@@ -102,6 +102,14 @@ class Ticket extends Model
         return $this->belongsTo(User::class, 'created_by', 'id');
     }
 
+    /*
+     * Retrieves any child tickets spawned from this parent ticket.
+     */
+    public function childTickets(): HasMany
+    {
+        return $this->hasMany(Ticket::class, 'parent_ticket_id', 'system_id');
+    }
+
     // --- ACCESSORS ---
 
     /*
@@ -163,6 +171,68 @@ class Ticket extends Model
             'oldest' => $query->oldest(),
             'status' => $query->orderBy('status'),
             default => $query->latest(), // 'newest' is default
+        };
+    }
+
+    // --- MOBILE API SCOPE FUNCTIONS ---
+
+    /*
+     * Applies a comprehensive search filter against fields specifically returned in the API payload.
+     */
+    public function scopeApiSearch($query, $search)
+    {
+        if (empty($search)) return $query;
+
+        return $query->where(function ($q) use ($search) {
+            $q->where('ticket_number', 'like', "%{$search}%")
+              ->orWhere('complaint_source', 'like', "%{$search}%")
+              ->orWhere('purok', 'like', "%{$search}%")
+              ->orWhere('street', 'like', "%{$search}%")
+              ->orWhere('barangay', 'like', "%{$search}%")
+              ->orWhere('status', 'like', "%{$search}%")
+              ->orWhere('other_category_name', 'like', "%{$search}%")
+              ->orWhereHas('category', function ($catQuery) use ($search) {
+                  $catQuery->where('category_name', 'like', "%{$search}%");
+              });
+        });
+    }
+
+    /*
+     * Applies a filter isolating tickets based on the exact category name or the 'other' classification.
+     */
+    public function scopeApiFilterByCategoryName($query, $filter)
+    {
+        if (empty($filter)) return $query;
+
+        if (strtolower($filter) === 'other') {
+            return $query->where('other_category', true);
+        }
+
+        return $query->whereHas('category', function ($q) use ($filter) {
+            $q->where('category_name', $filter);
+        });
+    }
+
+    /*
+     * Applies a strict status match filter for the API list view.
+     */
+    public function scopeApiFilterByStatus($query, $status)
+    {
+        if (empty($status)) return $query;
+
+        return $query->where('status', $status);
+    }
+
+    /*
+     * Applies precise sorting rules for the mobile interface prioritizing ticket numbers and chronology.
+     */
+    public function scopeApiSort($query, $sort)
+    {
+        return match ($sort) {
+            'ticket_number_asc'  => $query->orderBy('ticket_number', 'asc'),
+            'ticket_number_desc' => $query->orderBy('ticket_number', 'desc'),
+            'oldest'             => $query->oldest('created_at'),
+            default              => $query->latest('created_at'),
         };
     }
 
