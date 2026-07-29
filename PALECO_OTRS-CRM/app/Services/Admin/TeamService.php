@@ -92,13 +92,16 @@ class TeamService
     /*
      * Updates an existing team and synchronizes its roster within a transaction.
      * Automatically logs an activity event if the membership list is modified.
+     * Returns true if any data or member assignments were actually changed.
      */
-    public function updateTeam(Team $team, array $teamDetails, array $assignedMembers): void
+    public function updateTeam(Team $team, array $teamDetails, array $assignedMembers): bool
     {
-        DB::transaction(function () use ($team, $teamDetails, $assignedMembers) {
+        return DB::transaction(function () use ($team, $teamDetails, $assignedMembers) {
             $oldMemberIds = $team->members()->pluck('users.id')->toArray();
 
-            $team->update($teamDetails);
+            $team->fill($teamDetails);
+            $isTeamDirty = $team->isDirty();
+            $team->save();
 
             $formattedMembers = collect($assignedMembers)->mapWithKeys(function ($member) {
                 return [$member['user_id'] => ['team_role_id' => $member['team_role_id']]];
@@ -106,8 +109,10 @@ class TeamService
 
             $changes = $team->members()->sync($formattedMembers);
             $newMemberIds = array_keys($formattedMembers->toArray());
-
-            if (!empty($changes['attached']) || !empty($changes['detached']) || !empty($changes['updated'])) {
+            
+            $membersChanged = !empty($changes['attached']) || !empty($changes['detached']) || !empty($changes['updated']);
+            
+            if ($membersChanged) {
                 activity()
                     ->useLog('Teams')
                     ->performedOn($team)
@@ -118,6 +123,9 @@ class TeamService
                     ])
                     ->log("{$team->team_name} roster has been modified");
             }
+            
+            // 3. Return the boolean state back to the controller
+            return $isTeamDirty || $membersChanged;
         });
     }
 

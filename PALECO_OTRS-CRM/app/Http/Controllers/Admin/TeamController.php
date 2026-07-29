@@ -83,18 +83,27 @@ class TeamController extends Controller
 
     /*
      * Processes validated request data to commit updates to a team and sync its membership list.
+     * Redirects back to the originating view (dashboard or details page) if no changes were detected.
      */
     public function update(UpdateTeamRequest $request, Team $team)
     {
         Gate::authorize('update', $team);
 
-        $this->teamService->updateTeam(
+        $wasUpdated = $this->teamService->updateTeam(
             $team,
             $request->safe()->except('members'),
             $request->validated('members', [])
         );
 
-        return redirect()->route('admin.teams')->with('success', 'Team updated successfully.');
+        $redirectRoute = $request->query('source') === 'details' 
+            ? route('admin.teams.show', $team) 
+            : route('admin.teams');
+
+        if (!$wasUpdated) {
+            return redirect($redirectRoute)->with('info', 'No changes were made to the team.');
+        }
+
+        return redirect($redirectRoute)->with('success', 'Team updated successfully.');
     }
 
     // --- DESTRUCTIVE & STATE METHODS ---
