@@ -27,11 +27,6 @@ class Team extends Model
 {
     use HasUlids, SoftDeletes, LogsActivity;
 
-    // --- CASTS ---
-
-    /*
-     * Defines the data type conversions for specific attributes.
-     */
     protected function casts(): array
     {
         return [
@@ -40,19 +35,11 @@ class Team extends Model
         ];
     }
 
-    // --- RELATIONSHIPS ---
-
-    /*
-     * Retrieves the department that this team belongs to.
-     */
     public function department(): BelongsTo
     {
         return $this->belongsTo(Department::class);
     }
 
-    /*
-     * Retrieves the members (Users) assigned to this team alongside their pivot roles.
-     */
     public function members(): BelongsToMany
     {
         return $this->belongsToMany(User::class, 'team_members')
@@ -60,25 +47,52 @@ class Team extends Model
             ->withTimestamps();
     }
 
-    /*
-     * Retrieves all service tickets assigned to this team.
-     */
     public function ticket(): HasMany
     {
         return $this->hasMany(Ticket::class);
     }
 
-    // --- SCOPE FUNCTIONS ---
+    // --- STANDARD WEB SCOPE FUNCTIONS ---
 
-    /*
-     * Applies a multi-word search filter against team name, description, and shift times.
-     */
     public function scopeSearch(Builder $query, ?string $term): Builder
     {
         if (empty($term)) return $query;
-
         $words = array_filter(explode(' ', $term));
+        return $query->where(function ($query) use ($words) {
+            foreach ($words as $word) {
+                $searchWord = "%{$word}%";
+                $query->where(function ($subQuery) use ($searchWord) {
+                    $subQuery->where('team_name', 'like', $searchWord)
+                          ->orWhere('team_desc', 'like', $searchWord)
+                          ->orWhere('shift_start', 'like', $searchWord)
+                          ->orWhere('shift_end', 'like', $searchWord);
+                });
+            }
+        });
+    }
 
+    public function scopeFilter(Builder $query, ?string $filter): Builder
+    {
+        if (empty($filter) || $filter === 'all') return $query;
+        return $query->where('department_id', $filter);
+    }
+
+    public function scopeSort(Builder $query, ?string $sort): Builder
+    {
+        return match ($sort) {
+            'oldest' => $query->oldest(),
+            'team_nameASC' => $query->orderBy('team_name', 'asc'),
+            'team_nameDESC' => $query->orderBy('team_name', 'desc'),
+            default => $query->latest(),
+        };
+    }
+
+    // --- MOBILE API SCOPE FUNCTIONS ---
+
+    public function scopeApiSearch(Builder $query, ?string $term): Builder
+    {
+        if (empty($term)) return $query;
+        $words = array_filter(explode(' ', $term));
         return $query->where(function ($query) use ($words) {
             foreach ($words as $word) {
                 $searchWord = "%{$word}%";
@@ -93,19 +107,19 @@ class Team extends Model
     }
 
     /*
-     * Applies a filter to restrict teams to a specific department ID.
+     * Dedicated API scope to filter teams by their lifecycle status.
      */
-    public function scopeFilter(Builder $query, ?string $filter): Builder
+    public function scopeApiFilterStatus(Builder $query, ?string $status): Builder
     {
-        if (empty($filter) || $filter === 'all') return $query;
-
-        return $query->where('department_id', $filter);
+        return match ($status) {
+            'archive', 'archived' => $query->onlyTrashed(), // Supports ?filter=archive
+            'all'                 => $query->withTrashed(),   
+            'active'              => $query->whereNull('deleted_at'),
+            default               => $query->whereNull('deleted_at'), // Safely defaults to active
+        };
     }
 
-    /*
-     * Applies sorting rules to the query based on the requested sort parameter.
-     */
-    public function scopeSort(Builder $query, ?string $sort): Builder
+    public function scopeApiSort(Builder $query, ?string $sort): Builder
     {
         return match ($sort) {
             'oldest' => $query->oldest(),
@@ -115,16 +129,12 @@ class Team extends Model
             'shift_startDESC' => $query->orderBy('shift_start', 'desc'),
             'shift_endASC' => $query->orderBy('shift_end', 'asc'),
             'shift_endDESC' => $query->orderBy('shift_end', 'desc'),
-            default => $query->latest(), // 'newest'
+            default => $query->latest(), 
         };
     }
 
     // --- ACTIVITY LOG ---
 
-    /*
-     * Configures the Spatie Activitylog options for this model.
-     * Records changes to team configurations and lifecycle events.
-     */
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()

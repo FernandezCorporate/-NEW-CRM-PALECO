@@ -124,7 +124,6 @@ class TeamService
                     ->log("{$team->team_name} roster has been modified");
             }
             
-            // 3. Return the boolean state back to the controller
             return $isTeamDirty || $membersChanged;
         });
     }
@@ -133,7 +132,7 @@ class TeamService
      * Attempts to restore a soft-deleted team.
      * Enforces uniqueness checks against active teams sharing the same name.
      */
-    public function restoreTeam(int $id): array
+    public function restoreTeam(string $id): array // FIXED: ULIDs are strings, not ints
     {
         $team = Team::onlyTrashed()->findOrFail($id); 
 
@@ -143,5 +142,28 @@ class TeamService
 
         $team->restore();
         return ['success' => true, 'message' => 'Team restored successfully.'];
+    }
+
+    /*
+     * Ensures teams with existing tickets cannot be forcefully removed from the database.
+     */
+    public function forceDeleteTeam(string $id): array
+    {
+        $team = Team::onlyTrashed()->findOrFail($id);
+        
+        // Block the deletion if there are any associated tickets to maintain DB integrity
+        if ($team->ticket()->exists()) {
+            return [
+                'success' => false, 
+                'message' => "Cannot permanently delete {$team->team_name} because it is currently assigned to existing service tickets. You may only keep it archived."
+            ];
+        }
+        
+        $team->forceDelete();
+        
+        return [
+            'success' => true, 
+            'message' => 'Team permanently deleted.'
+        ];
     }
 }

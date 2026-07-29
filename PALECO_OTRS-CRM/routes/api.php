@@ -44,7 +44,8 @@ Route::middleware('auth:sanctum')->group(function () {
         });
 
         Route::prefix('teams')->group(function () {
-            Route::get('/', [\App\Http\Controllers\Api\Teams\TeamController::class, 'index']);
+            Route::get('/', [TeamController::class, 'index'])->withTrashed();
+            Route::get('/{team}', [TeamController::class, 'show'])->withTrashed();
         });
     });
 

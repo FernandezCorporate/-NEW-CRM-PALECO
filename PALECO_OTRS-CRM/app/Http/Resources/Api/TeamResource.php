@@ -20,7 +20,6 @@ class TeamResource extends JsonResource
 
     public function toArray(Request $request): array
     {
-        // Populate the static role cache once per API request
         if (empty(self::$roles)) {
             self::$roles = TeamRole::pluck('role_name', 'id')->toArray();
         }
@@ -31,6 +30,10 @@ class TeamResource extends JsonResource
             'team_desc'       => $this->team_desc, 
             'shift_start'     => $this->shift_start,
             'shift_end'       => $this->shift_end,
+
+            // --- LIFECYCLE STATE ---
+            'deleted_at'      => $this->deleted_at,
+            'is_archived'     => !is_null($this->deleted_at),
             
             'members_count'   => $this->members_count ?? 0,
             
@@ -51,7 +54,6 @@ class TeamResource extends JsonResource
                         'id'           => $member->id,
                         'full_name'    => $member->full_name,
                         'team_role_id' => $member->pivot->team_role_id ?? null,
-                        // Map the role name seamlessly from the static cache
                         'role_name'    => self::$roles[$member->pivot->team_role_id] ?? 'Unknown Role',
                     ];
                 });

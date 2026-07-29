@@ -134,7 +134,7 @@ class TeamController extends Controller
     /*
      * Recovers a previously archived team back to active status.
      */
-    public function restore($id)
+    public function restore(string $id) // FIXED: ULIDs are strings, not ints
     {
         Gate::authorize('restore', Team::class);
 
@@ -148,14 +148,18 @@ class TeamController extends Controller
     }
 
     /*
-     * Permanently eradicates the team record from the database.
+     * Permanently eradicates the team record from the database, preventing orphaned tickets.
      */
-    public function destroy($id)
+    public function destroy(string $id) // FIXED: ULIDs are strings, not ints
     {
         Gate::authorize('forceDelete', Team::class);
         
-        Team::onlyTrashed()->findOrFail($id)->forceDelete();
+        $result = $this->teamService->forceDeleteTeam($id);
 
-        return redirect()->route('admin.teams')->with('success', 'Team permanently deleted.');
+        if (!$result['success']) {
+            return redirect()->route('admin.teams')->with('error', $result['message']);
+        }
+
+        return redirect()->route('admin.teams')->with('success', $result['message']);
     }
 }

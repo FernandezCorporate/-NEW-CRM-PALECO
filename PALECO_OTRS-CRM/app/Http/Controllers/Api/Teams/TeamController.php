@@ -15,15 +15,28 @@ class TeamController extends Controller
     public function __construct(protected TeamService $teamService) {}
 
     /*
-     * Fetches a list of all teams belonging to the authenticated Foreman's department.
+     * Fetches a list of teams belonging to the authenticated Foreman's department.
      */
     public function index(Request $request)
     {
         $teams = $this->teamService->getDepartmentTeams(
             $request->user(),
-            $request->only(['search', 'sort'])
+            $request->only(['search', 'sort', 'filter']) 
         );
 
         return TeamResource::collection($teams);
+    }
+
+    /*
+     * Fetches detailed information, workload statistics, and the roster for a specific team.
+     */
+    public function show(Request $request, \App\Models\Team $team)
+    {
+        $team = $this->teamService->getDepartmentTeam(
+            $request->user(), 
+            $team
+        );
+
+        return new TeamResource($team);
     }
 }
