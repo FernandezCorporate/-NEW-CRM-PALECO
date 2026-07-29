@@ -45,24 +45,18 @@ class TicketController extends Controller
      */
     public function assign(AssignTicketRequest $request, Ticket $ticket): JsonResponse
     {
+        // 1. Security Gate: Checks user role privilege
         Gate::authorize('assign', $ticket);
+        
         $user = $request->user();
         $requestedTeamId = $request->validated('team_id');
-
-        // 1. Security Gate: Ensure the Foreman owns this ticket's department
-        if ($ticket->department_id !== $user->department_id) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Access Denied: You cannot assign tickets belonging to another department.'
-            ], 403); // 403 Forbidden
-        }
 
         // 2. Idempotency Gate: Prevent logging if the team is already assigned
         if ($ticket->team_id === $requestedTeamId) {
             return response()->json([
                 'success' => false,
                 'message' => 'This ticket is already assigned to the selected team. No changes were made.'
-            ], 422); // 422 Unprocessable Entity
+            ], 422); 
         }
 
         // 3. Execute transactional assignment

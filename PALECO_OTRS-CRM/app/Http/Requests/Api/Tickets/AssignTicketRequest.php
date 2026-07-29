@@ -14,8 +14,7 @@ class AssignTicketRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        // Must be a foreman to assign teams via mobile
-        return $this->user()->role->slug_identifier === 'foreman';
+        return true;
     }
 
     /*
