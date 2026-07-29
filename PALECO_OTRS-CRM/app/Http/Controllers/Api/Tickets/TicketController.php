@@ -59,7 +59,10 @@ class TicketController extends Controller
             ], 422); 
         }
 
-        // 3. Execute transactional assignment
+        // 3. Action Detection: Determine if it's a fresh assignment or a reassignment
+        $action = is_null($ticket->team_id) ? 'assigned' : 'reassigned';
+
+        // 4. Execute transactional assignment
         $updatedTicket = $this->ticketService->assignTicket(
             $ticket, 
             $requestedTeamId, 
@@ -69,7 +72,8 @@ class TicketController extends Controller
         return response()->json([
             'success' => true,
             'status'  => 200,
-            'message' => "Ticket {$updatedTicket->ticket_number} has been successfully dispatched.",
+            // 5. Inject the dynamic action into the success message
+            'message' => "Ticket {$updatedTicket->ticket_number} has been successfully {$action}.",
             'data'    => new TicketResource($updatedTicket)
         ]);
     }

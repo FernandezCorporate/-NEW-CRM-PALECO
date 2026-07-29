@@ -262,9 +262,30 @@ class Ticket extends Model
                 'other_category_name',
                 'barangay',
                 'department_id',
+                'team_id', // 1. ADDED: Spatie must watch this column to detect assignments
                 'status'
             ])
             ->logOnlyDirty()
-            ->setDescriptionForEvent(fn(string $eventName) => "Ticket {$this->ticket_number} has been {$eventName} by CWD Officer.");
+            ->setDescriptionForEvent(function(string $eventName) {
+                
+                // 2. DYNAMIC ASSIGNMENT LOGIC: Intercept updates where the team changes
+                if ($eventName === 'updated' && $this->isDirty('team_id')) {
+                    // Check if the ticket had a team previously (reassigned) or if it was null (assigned)
+                    $action = $this->getOriginal('team_id') === null ? 'assigned' : 'reassigned';
+                    return "Ticket {$this->ticket_number} has been {$action} to a field team.";
+                }
+
+                // 3. DEFAULT LOGIC: Handle all other standard state changes
+                $action = match($eventName) {
+                    'created'  => 'created',
+                    'updated'  => 'modified',
+                    'deleted'  => $this->isForceDeleting() ? 'permanently deleted' : 'archived',
+                    'restored' => 'restored',
+                    default    => $eventName,
+                };
+                
+                // 4. REMOVED: "by CWD Officer" is gone so Foremen aren't mislabeled
+                return "Ticket {$this->ticket_number} has been {$action}.";
+            });
     }
 }
