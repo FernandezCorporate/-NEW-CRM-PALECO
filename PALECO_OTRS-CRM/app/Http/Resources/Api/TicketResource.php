@@ -17,6 +17,7 @@ class TicketResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
+            'id'                  => $this->system_id,
             'ticket_number'       => $this->ticket_number,
             'complaint_source'    => $this->complaint_source?->value ?? $this->complaint_source,
             'category_name'       => $this->other_category 

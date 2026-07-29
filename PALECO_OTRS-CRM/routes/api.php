@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\Auth\AuthController;
 use App\Http\Controllers\Api\Profiles\ProfileController;
 use App\Http\Controllers\Api\Tickets\TicketController;
+use App\Http\Controllers\Api\Teams\TeamController;
 
 /*
 |--------------------------------------------------------------------------
@@ -42,7 +43,9 @@ Route::middleware('auth:sanctum')->group(function () {
             // Future Foreman endpoints go here (e.g., escalate, close, prioritize)
         });
 
-        // Future Team Management endpoints go here (e.g., GET /teams, POST /teams/{team}/substitutes)
+        Route::prefix('teams')->group(function () {
+            Route::get('/', [\App\Http\Controllers\Api\Teams\TeamController::class, 'index']);
+        });
     });
 
     // --- FIELD PERSONNEL SPECIFIC ENDPOINTS ---
