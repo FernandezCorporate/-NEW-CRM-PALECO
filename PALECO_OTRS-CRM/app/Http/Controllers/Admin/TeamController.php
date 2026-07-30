@@ -57,6 +57,10 @@ class TeamController extends Controller
      */
     public function teamForm(?Team $team = null)
     {
+        if ($team?->trashed()) {
+            return redirect()->route('admin.teams')->with('error', 'The team you are trying to edit has been archived by another administrator.');
+        }
+
         Gate::authorize('teamForm', $team ?? Team::class);
         
         $formData = $this->teamService->getFormData();
@@ -87,6 +91,10 @@ class TeamController extends Controller
      */
     public function update(UpdateTeamRequest $request, Team $team)
     {
+        if ($team->trashed()) {
+            return redirect()->route('admin.teams')->with('error', 'Failed to save changes. The team was recently archived by another administrator.');
+        }
+
         Gate::authorize('update', $team);
 
         $result = $this->teamService->updateTeam(
@@ -117,11 +125,20 @@ class TeamController extends Controller
      */
     public function deleteConfirm(Request $request, Team $team)
     {
+        $isForceDelete = $request->routeIs('admin.teams.forceDeleteConfirm');
+        
+        // State Guards
+        if ($isForceDelete && !$team->trashed()) {
+            return redirect()->route('admin.teams')->with('error', 'This team was restored by another administrator and must be archived before permanent deletion.');
+        }
+
+        if (!$isForceDelete && $team->trashed()) {
+            return redirect()->route('admin.teams')->with('info', 'This team has already been archived.');
+        }
+
         Gate::authorize('deleteConfirm', clone $team);
 
-        $isForceDelete = $request->routeIs('admin.teams.forceDeleteConfirm');
         $title = $isForceDelete ? 'Permanently Delete Team' : 'Archive Team';
-
         return view('admin.prompts.teamDeleteConfirm', compact('team', 'title', 'isForceDelete'));
     }
 
@@ -130,6 +147,10 @@ class TeamController extends Controller
      */
     public function archive(Team $team)
     {
+        if ($team->trashed()) {
+            return redirect()->route('admin.teams')->with('error', 'This team has already been archived.');
+        }
+
         Gate::authorize('archive', $team);
         
         $result = $this->teamService->archiveTeam($team);
@@ -144,7 +165,7 @@ class TeamController extends Controller
     /*
      * Recovers a previously archived team back to active status.
      */
-    public function restore(string $id) // FIXED: ULIDs are strings, not ints
+    public function restore(string $id)
     {
         Gate::authorize('restore', Team::class);
 
@@ -160,7 +181,7 @@ class TeamController extends Controller
     /*
      * Permanently eradicates the team record from the database, preventing orphaned tickets.
      */
-    public function destroy(string $id) // FIXED: ULIDs are strings, not ints
+    public function destroy(string $id)
     {
         Gate::authorize('forceDelete', Team::class);
         

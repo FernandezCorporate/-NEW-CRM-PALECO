@@ -103,39 +103,43 @@ class UserController extends Controller
     
     // --- DESTRUCTIVE & STATE METHODS ---
 
-    /*
-     * Renders the confirmation prompt for deactivating a user account.
-     */
     public function deactivateConfirm(User $user)
     {
+        if (!$user->is_active) {
+            return redirect()->route('admin.users')->with('info', 'This account is already deactivated.');
+        }
+
         Gate::authorize('deactivateConfirm', $user);
         return view('admin.prompts.userDeactivateConfirm', ['userAccount' => $user]);
     }
 
-    /*
-     * Executes the deactivation protocol to suspend access for the specified user.
-     */
     public function deactivate(User $user)
     {
+        if (!$user->is_active) {
+            return redirect()->route('admin.users')->with('info', 'This account has already been deactivated by another administrator.');
+        }
+
         Gate::authorize('deactivate', $user);
         $this->userService->toggleUserStatus($user, false);
         return redirect()->route('admin.users')->with('success', 'Account deactivated successfully.');
     }
 
-    /*
-     * Renders the confirmation prompt for reactivating a suspended user account.
-     */
     public function reactivateConfirm(User $user)
     {
+        if ($user->is_active) {
+            return redirect()->route('admin.users')->with('info', 'This account is already active.');
+        }
+
         Gate::authorize('reactivateConfirm', $user);
         return view('admin.prompts.userReactivateConfirm', ['userAccount' => $user]);
     }
 
-    /*
-     * Executes the reactivation protocol to restore access for the specified user.
-     */
     public function reactivate(User $user)
     {
+        if ($user->is_active) {
+            return redirect()->route('admin.users')->with('info', 'This account has already been reactivated by another administrator.');
+        }
+
         Gate::authorize('reactivate', $user);
         $this->userService->toggleUserStatus($user, true);
         return redirect()->route('admin.users')->with('success', 'Account reactivated successfully.');

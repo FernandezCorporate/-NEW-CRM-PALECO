@@ -35,6 +35,10 @@ class TicketCategoryController extends Controller
 
     public function ticketCategoryForm(?TicketCategory $category = null)
     {
+        if ($category?->trashed()) {
+            return redirect()->route('admin.ticketCategories')->with('error', 'The category you are trying to edit has been archived by another administrator.');
+        }
+
         Gate::authorize('ticketCategoryForm', $category ?? TicketCategory::class);
         return view('admin.forms.ticketCategoryForm', compact('category'));
     }
@@ -50,6 +54,10 @@ class TicketCategoryController extends Controller
 
     public function update(UpdateTicketCategoryRequest $request, TicketCategory $category)
     {
+        if ($category->trashed()) {
+            return redirect()->route('admin.ticketCategories')->with('error', 'Failed to save changes. The category was recently archived by another administrator.');
+        }
+
         Gate::authorize('update', $category);
 
         $result = $this->categoryService->updateCategory($category, $request->validated());
@@ -72,17 +80,28 @@ class TicketCategoryController extends Controller
     public function deleteConfirm(Request $request, TicketCategory $category)
     {
         $isForceDelete = $request->routeIs('admin.ticketCategories.forceDeleteConfirm');
-        $category = $isForceDelete ? TicketCategory::onlyTrashed()->findOrFail($category->id) : $category;
+        
+        // State Guards
+        if ($isForceDelete && !$category->trashed()) {
+            return redirect()->route('admin.ticketCategories')->with('error', 'This category was restored by another administrator and must be archived before permanent deletion.');
+        }
+
+        if (!$isForceDelete && $category->trashed()) {
+            return redirect()->route('admin.ticketCategories')->with('info', 'This category has already been archived.');
+        }
 
         Gate::authorize('deleteConfirm', clone $category);
 
         $title = $isForceDelete ? 'Permanently Delete Category' : 'Archive Category';
-        
         return view('admin.prompts.ticketCategoryDeleteConfirm', compact('category', 'title', 'isForceDelete'));
     }
 
     public function archive(TicketCategory $category)
     {
+        if ($category->trashed()) {
+            return redirect()->route('admin.ticketCategories')->with('error', 'This category has already been archived.');
+        }
+
         Gate::authorize('archive', $category);
         
         $result = $this->categoryService->archiveCategory($category);

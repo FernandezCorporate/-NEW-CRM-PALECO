@@ -139,9 +139,17 @@ class TeamService
         return ['success' => true, 'message' => 'Team archived successfully.'];
     }
 
-    public function restoreTeam(string $id): array
+    public function restoreTeam(string $id): array 
     {
-        $team = Team::onlyTrashed()->findOrFail($id); 
+        $team = Team::withTrashed()->find($id); 
+        
+        if (!$team) {
+            return ['success' => false, 'message' => 'Team no longer exists. It may have been permanently deleted.'];
+        }
+
+        if (!$team->trashed()) {
+            return ['success' => false, 'message' => 'Team is already active.'];
+        }
 
         if (Team::where('team_name', $team->team_name)->exists()) {
             return ['success' => false, 'message' => 'Cannot restore team. An active team with the same name already exists.'];
@@ -153,20 +161,22 @@ class TeamService
 
     public function forceDeleteTeam(string $id): array
     {
-        $team = Team::onlyTrashed()->findOrFail($id);
+        $team = Team::withTrashed()->find($id);
+        
+        if (!$team) {
+            return ['success' => true, 'message' => 'Team has already been permanently deleted.'];
+        }
+
+        if (!$team->trashed()) {
+            return ['success' => false, 'message' => 'Cannot permanently delete this team because it was recently restored.'];
+        }
         
         if ($team->ticket()->exists()) {
-            return [
-                'success' => false, 
-                'message' => "Cannot permanently delete {$team->team_name} because it is currently assigned to existing service tickets. You may only keep it archived."
-            ];
+            return ['success' => false, 'message' => "Cannot permanently delete {$team->team_name} because it is currently assigned to existing service tickets."];
         }
         
         $team->forceDelete();
         
-        return [
-            'success' => true, 
-            'message' => 'Team permanently deleted.'
-        ];
+        return ['success' => true, 'message' => 'Team permanently deleted.'];
     }
 }

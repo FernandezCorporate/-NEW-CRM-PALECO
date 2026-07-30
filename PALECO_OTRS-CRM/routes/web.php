@@ -98,11 +98,11 @@ Route::middleware(['auth', CheckIfActive::class])->group(function() {
             Route::get('/create', [DepartmentController::class, 'departmentForm'])->name('admin.departments.createForm');
             Route::post('/', [DepartmentController::class, 'store'])->name('admin.departments.store');
 
-            Route::get('/{dept}/edit', [DepartmentController::class, 'departmentForm'])->name('admin.departments.editForm')->whereNumber('dept');
-            Route::put('/{dept}', [DepartmentController::class, 'update'])->name('admin.departments.update')->whereNumber('dept');
+            Route::get('/{dept}/edit', [DepartmentController::class, 'departmentForm'])->name('admin.departments.editForm')->whereNumber('dept')->withTrashed();
+            Route::put('/{dept}', [DepartmentController::class, 'update'])->name('admin.departments.update')->whereNumber('dept')->withTrashed();
 
-            Route::get('/{dept}/archive', [DepartmentController::class, 'deleteConfirm'])->name('admin.departments.deleteConfirm')->whereNumber('dept');
-            Route::delete('/{dept}', [DepartmentController::class, 'archive'])->name('admin.departments.archive')->whereNumber('dept');
+            Route::get('/{dept}/archive', [DepartmentController::class, 'deleteConfirm'])->name('admin.departments.deleteConfirm')->whereNumber('dept')->withTrashed();
+            Route::delete('/{dept}', [DepartmentController::class, 'archive'])->name('admin.departments.archive')->whereNumber('dept')->withTrashed();
 
             Route::patch('/{dept}/restore', [DepartmentController::class, 'restore'])->name('admin.departments.restore')->whereNumber('dept')->withTrashed();
 
@@ -117,11 +117,11 @@ Route::middleware(['auth', CheckIfActive::class])->group(function() {
             Route::get('/create', [TeamController::class, 'teamForm'])->name('admin.teams.createForm');
             Route::post('/', [TeamController::class, 'store'])->name('admin.teams.store');
 
-            Route::get('/teams/form/{team}', [TeamController::class, 'teamForm'])->name('admin.teams.editForm')->whereUlid('team'); 
-            Route::put('/teams/{team}', [TeamController::class, 'update'])->name('admin.teams.update')->whereUlid('team');
+            Route::get('/teams/form/{team}', [TeamController::class, 'teamForm'])->name('admin.teams.editForm')->whereUlid('team')->withTrashed(); 
+            Route::put('/teams/{team}', [TeamController::class, 'update'])->name('admin.teams.update')->whereUlid('team')->withTrashed();
 
-            Route::get('/{team}/archive', [TeamController::class, 'deleteConfirm'])->name('admin.teams.deleteConfirm')->whereUlid('team');
-            Route::delete('/{team}', [TeamController::class, 'archive'])->name('admin.teams.archive')->whereUlid('team');
+            Route::get('/{team}/archive', [TeamController::class, 'deleteConfirm'])->name('admin.teams.deleteConfirm')->whereUlid('team')->withTrashed();
+            Route::delete('/{team}', [TeamController::class, 'archive'])->name('admin.teams.archive')->whereUlid('team')->withTrashed();
 
             Route::patch('/{team}/restore', [TeamController::class, 'restore'])->name('admin.teams.restore')->whereUlid('team');
 
@@ -136,11 +136,11 @@ Route::middleware(['auth', CheckIfActive::class])->group(function() {
             Route::get('/create', [TicketCategoryController::class, 'ticketCategoryForm'])->name('admin.ticketCategories.createForm');
             Route::post('/', [TicketCategoryController::class, 'store'])->name('admin.ticketCategories.store');
 
-            Route::get('/{category}/edit', [TicketCategoryController::class, 'ticketCategoryForm'])->name('admin.ticketCategories.editForm')->whereNumber('category');
-            Route::put('/{category}', [TicketCategoryController::class, 'update'])->name('admin.ticketCategories.update')->whereNumber('category');
+            Route::get('/{category}/edit', [TicketCategoryController::class, 'ticketCategoryForm'])->name('admin.ticketCategories.editForm')->whereNumber('category')->withTrashed();
+            Route::put('/{category}', [TicketCategoryController::class, 'update'])->name('admin.ticketCategories.update')->whereNumber('category')->withTrashed();
 
-            Route::get('/{category}/archive', [TicketCategoryController::class, 'deleteConfirm'])->name('admin.ticketCategories.deleteConfirm')->whereNumber('category');
-            Route::delete('/{category}', [TicketCategoryController::class, 'archive'])->name('admin.ticketCategories.archive')->whereNumber('category');
+            Route::get('/{category}/archive', [TicketCategoryController::class, 'deleteConfirm'])->name('admin.ticketCategories.deleteConfirm')->whereNumber('category')->withTrashed();
+            Route::delete('/{category}', [TicketCategoryController::class, 'archive'])->name('admin.ticketCategories.archive')->whereNumber('category')->withTrashed();
 
             Route::patch('/{category}/restore', [TicketCategoryController::class, 'restore'])->name('admin.ticketCategories.restore')->whereNumber('category')->withTrashed();
 

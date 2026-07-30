@@ -75,7 +75,15 @@ class DepartmentService
 
     public function restoreDepartment(int $id): array
     {
-        $dept = Department::onlyTrashed()->findOrFail($id);
+        $dept = Department::withTrashed()->find($id);
+        
+        if (!$dept) {
+            return ['success' => false, 'message' => 'Department no longer exists. It may have been permanently deleted by another administrator.'];
+        }
+
+        if (!$dept->trashed()) {
+            return ['success' => false, 'message' => 'Department is already active.'];
+        }
 
         if (Department::where('dept_name', $dept->dept_name)->exists()) {
             return ['success' => false, 'message' => 'Cannot restore department. An active department with the same name already exists.'];
@@ -87,10 +95,18 @@ class DepartmentService
 
     public function permanentlyDeleteDepartment(int $id): array
     {
-        $dept = Department::onlyTrashed()->findOrFail($id);
+        $dept = Department::withTrashed()->find($id);
+
+        if (!$dept) {
+            return ['success' => true, 'message' => 'Department has already been permanently deleted.'];
+        }
+
+        if (!$dept->trashed()) {
+            return ['success' => false, 'message' => 'Cannot permanently delete this department because it was recently restored.'];
+        }
 
         if ($dept->tickets()->exists() || $dept->teams()->exists() || $dept->users()->exists()) {
-            return ['success' => false, 'message' => 'Cannot permanently delete this department.'];
+            return ['success' => false, 'message' => 'Cannot permanently delete this department. It contains historical data.'];
         }
 
         $dept->forceDelete();

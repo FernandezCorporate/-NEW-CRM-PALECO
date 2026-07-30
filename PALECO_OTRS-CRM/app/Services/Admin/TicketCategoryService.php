@@ -56,7 +56,15 @@ class TicketCategoryService
 
     public function restoreCategory(int $id): array
     {
-        $category = TicketCategory::onlyTrashed()->findOrFail($id);
+        $category = TicketCategory::withTrashed()->find($id);
+
+        if (!$category) {
+            return ['success' => false, 'message' => 'Category no longer exists. It may have been permanently deleted.'];
+        }
+
+        if (!$category->trashed()) {
+            return ['success' => false, 'message' => 'Category is already active.'];
+        }
 
         if (TicketCategory::where('category_name', $category->category_name)->exists()) {
             return ['success' => false, 'message' => 'Cannot restore category. An active category with the same name already exists.'];
@@ -68,20 +76,22 @@ class TicketCategoryService
 
     public function permanentlyDeleteCategory(int $id): array
     {
-        $category = TicketCategory::onlyTrashed()->findOrFail($id);
+        $category = TicketCategory::withTrashed()->find($id);
+
+        if (!$category) {
+            return ['success' => true, 'message' => 'Category has already been permanently deleted.'];
+        }
+
+        if (!$category->trashed()) {
+            return ['success' => false, 'message' => 'Cannot permanently delete this category because it was recently restored.'];
+        }
 
         if ($category->ticket()->exists()) {
-            return [
-                'success' => false, 
-                'message' => 'Cannot permanently delete this category because it is currently referenced by existing service tickets.'
-            ];
+            return ['success' => false, 'message' => 'Cannot permanently delete this category because it is currently referenced by existing service tickets.'];
         }
 
         $category->forceDelete();
 
-        return [
-            'success' => true, 
-            'message' => 'Category permanently deleted.'
-        ];
+        return ['success' => true, 'message' => 'Category permanently deleted.'];
     }
 }

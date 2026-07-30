@@ -60,6 +60,10 @@ class DepartmentController extends Controller
      */
     public function departmentForm(?Department $dept = null)
     {
+        if ($dept?->trashed()) {
+            return redirect()->route('admin.departments')->with('error', 'The department you are trying to edit has been archived by another administrator.');
+        }
+
         Gate::authorize('departmentForm', $dept ?? Department::class);
         return view('admin.forms.departmentForm', compact('dept'));
     }
@@ -84,6 +88,10 @@ class DepartmentController extends Controller
      */
     public function update(UpdateDepartmentRequest $request, Department $dept)
     {
+        if ($dept->trashed()) {
+            return redirect()->route('admin.departments')->with('error', 'Failed to save changes. The department was recently archived by another administrator.');
+        }
+
         Gate::authorize('update', $dept);
 
         $result = $this->departmentService->updateDepartment($dept, $request->validated());
@@ -111,7 +119,16 @@ class DepartmentController extends Controller
     public function deleteConfirm(Request $request, Department $dept)
     {
         $isForceDelete = $request->routeIs('admin.departments.forceDeleteConfirm');
-        $dept = $isForceDelete ? Department::onlyTrashed()->findOrFail($dept->id) : $dept;
+
+        // State Guards: Prevent loading the prompt if the state already shifted
+        if ($isForceDelete && !$dept->trashed()) {
+            return redirect()->route('admin.departments')->with('error', 'This department was restored by another administrator and must be archived before permanent deletion.');
+        }
+
+        if (!$isForceDelete && $dept->trashed()) {
+            return redirect()->route('admin.departments')->with('info', 'This department has already been archived.');
+        }
+
         Gate::authorize('deleteConfirm', $dept);
 
         $title = $isForceDelete ? 'Permanently Delete Department' : 'Archive Department';
@@ -123,6 +140,10 @@ class DepartmentController extends Controller
      */
     public function archive(Department $dept)
     {
+        if ($dept->trashed()) {
+            return redirect()->route('admin.departments')->with('error', 'This department has already been archived.');
+        }
+
         Gate::authorize('archive', $dept);
         
         $result = $this->departmentService->archiveDepartment($dept);
