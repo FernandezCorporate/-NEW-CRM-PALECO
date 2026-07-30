@@ -18,9 +18,8 @@
             @csrf
             @isset($user)
                 @method('PUT')
+                <input type="hidden" name="original_updated_at" value="{{ $user->updated_at }}">
             @endisset
-
-            <input type="hidden" name="original_updated_at" value="{{ $user->updated_at }}">
 
             <div class="mb-6 pb-4 border-b border-slate-100 flex justify-between items-center">
                 <h2 class="text-base font-semibold text-slate-800">Account Details</h2>

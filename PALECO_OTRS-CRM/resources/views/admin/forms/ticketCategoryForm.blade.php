@@ -17,9 +17,8 @@
 
             @isset($category)
                 @method('PUT')
+                <input type="hidden" name="original_updated_at" value="{{ $category->updated_at }}">
             @endisset
-
-            <input type="hidden" name="original_updated_at" value="{{ $category->updated_at }}">
             
             <div class="p-6 space-y-6">
                 <div>

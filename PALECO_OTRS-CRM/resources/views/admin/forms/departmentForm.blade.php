@@ -16,10 +16,8 @@
 
             @isset($dept)
                 @method('PUT')
-            @endisset
-
-            <input type="hidden" name="original_updated_at" value="{{ $dept->updated_at }}">
-            
+                <input type="hidden" name="original_updated_at" value="{{ $dept->updated_at }}">
+            @endisset    
             <div class="p-6 space-y-6">
                 <div>
                     <label for="dept_name" class="block text-sm font-semibold text-slate-700 mb-1.5">

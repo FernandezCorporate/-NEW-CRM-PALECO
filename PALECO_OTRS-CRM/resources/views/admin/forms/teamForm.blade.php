@@ -16,10 +16,8 @@
             @csrf
             @isset($team)
                 @method('PUT')
+                <input type="hidden" name="original_updated_at" value="{{ $team->updated_at }}">
             @endisset
-
-            <input type="hidden" name="original_updated_at" value="{{ $team->updated_at }}">
-            
             <!-- Section 1: Team Details -->
             <div class="p-6 md:p-8 space-y-6">
                 <h2 class="text-base font-bold text-slate-800 border-b border-slate-200 pb-2 mb-4">Team Details</h2>
