@@ -26,6 +26,7 @@ class UpdateTicketCategoryRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'original_updated_at' => ['required', 'string'],
             'category_name' => [
                 'required', 
                 'string', 

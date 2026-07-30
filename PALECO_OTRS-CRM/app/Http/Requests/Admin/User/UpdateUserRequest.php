@@ -45,6 +45,7 @@ class UpdateUserRequest extends FormRequest
         $userModel = $this->route('user');
 
         return [
+            'original_updated_at' => ['required', 'string'],
             'username' => ['required', 'string', 'max:100', Rule::unique('users', 'username')->ignore($userModel->id)],
             'first_name' => ['required', 'string', 'max:255'],
             'middle_name' => ['nullable', 'string', 'max:255'],

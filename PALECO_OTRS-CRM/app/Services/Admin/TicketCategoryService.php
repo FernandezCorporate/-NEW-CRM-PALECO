@@ -10,11 +10,6 @@ use App\Models\TicketCategory;
  */
 class TicketCategoryService
 {
-    // --- VIEW DATA AGGREGATION ---
-
-    /*
-     * Retrieves a paginated list of ticket categories filtered by search or active/archived state.
-     */
     public function getDashboardCategories(array $filters)
     {
         $query = TicketCategory::query()
@@ -28,28 +23,37 @@ class TicketCategoryService
         return $query->paginate(10)->withQueryString();
     }
 
-    // --- MUTATING & STATE METHODS ---
-
-    /*
-     * Updates an existing ticket category.
-     * Returns a boolean indicating whether the record was actually modified.
-     */
-    public function updateCategory(TicketCategory $category, array $data): bool
+    public function updateCategory(TicketCategory $category, array $data): array
     {
+        if ((string) $category->updated_at !== $data['original_updated_at']) {
+            return ['success' => false, 'message' => 'Conflict: This category was modified by another user while you were editing.'];
+        }
+        unset($data['original_updated_at']);
+
         $category->fill($data);
         
-        if ($category->isClean()) {
-            return false;
-        }
+        if ($category->isClean()) return ['success' => true, 'changed' => false];
 
         $category->save();
-        return true;
+        return ['success' => true, 'changed' => true];
     }
 
     /*
-     * Attempts to restore a soft-deleted ticket category.
-     * Prevents restoration if an active category has since claimed the same name.
+     * Safely archives a category only if it has no active tickets attached.
      */
+    public function archiveCategory(TicketCategory $category): array
+    {
+        if ($category->ticket()->exists()) {
+            return [
+                'success' => false, 
+                'message' => 'Cannot archive this category because it is currently assigned to existing service tickets.'
+            ];
+        }
+
+        $category->delete();
+        return ['success' => true, 'message' => 'Category archived successfully.'];
+    }
+
     public function restoreCategory(int $id): array
     {
         $category = TicketCategory::onlyTrashed()->findOrFail($id);
@@ -62,17 +66,10 @@ class TicketCategoryService
         return ['success' => true, 'message' => 'Category restored successfully.'];
     }
 
-    // --- DESTRUCTIVE METHODS ---
-
-    /*
-     * Proactively checks if the category is tied to any existing service tickets.
-     * Blocks permanent deletion to preserve the historical integrity of logged complaints.
-     */
     public function permanentlyDeleteCategory(int $id): array
     {
         $category = TicketCategory::onlyTrashed()->findOrFail($id);
 
-        // Check if any tickets are using this category using the defined relationship
         if ($category->ticket()->exists()) {
             return [
                 'success' => false, 

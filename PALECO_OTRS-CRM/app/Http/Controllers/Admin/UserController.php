@@ -88,9 +88,13 @@ class UserController extends Controller
     {
         Gate::authorize('update', $user);
 
-        $wasUpdated = $this->userService->processAndSaveUser($request->validated(), $user);
+        $result = $this->userService->processAndSaveUser($request->validated(), $user);
 
-        if (!$wasUpdated) {
+        if (!$result['success']) {
+            return redirect()->back()->with('error', $result['message'])->withInput();
+        }
+
+        if (!$result['changed']) {
             return redirect()->route('admin.users')->with('info', 'No changes were made to the user.');
         }
 

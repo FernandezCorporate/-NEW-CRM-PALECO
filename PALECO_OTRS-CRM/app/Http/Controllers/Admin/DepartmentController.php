@@ -86,13 +86,17 @@ class DepartmentController extends Controller
     {
         Gate::authorize('update', $dept);
 
-        $wasUpdated = $this->departmentService->updateDepartment($dept, $request->validated());
+        $result = $this->departmentService->updateDepartment($dept, $request->validated());
         
+        if (!$result['success']) {
+            return redirect()->back()->with('error', $result['message'])->withInput();
+        }
+
         $redirectRoute = $request->query('source') === 'details' 
             ? route('admin.departments.show', $dept) 
             : route('admin.departments');
 
-        if (!$wasUpdated) {
+        if (!$result['changed']) {
             return redirect($redirectRoute)->with('info', 'No changes were made to the department.');
         }
 
@@ -120,8 +124,14 @@ class DepartmentController extends Controller
     public function archive(Department $dept)
     {
         Gate::authorize('archive', $dept);
-        $dept->delete();
-        return redirect()->route('admin.departments')->with('success', 'Department archived successfully.');
+        
+        $result = $this->departmentService->archiveDepartment($dept);
+        
+        if (!$result['success']) {
+            return redirect()->route('admin.departments')->with('error', $result['message']);
+        }
+
+        return redirect()->route('admin.departments')->with('success', $result['message']);
     }
 
     /*

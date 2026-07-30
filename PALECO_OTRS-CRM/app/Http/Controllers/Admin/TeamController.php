@@ -89,17 +89,21 @@ class TeamController extends Controller
     {
         Gate::authorize('update', $team);
 
-        $wasUpdated = $this->teamService->updateTeam(
+        $result = $this->teamService->updateTeam(
             $team,
             $request->safe()->except('members'),
             $request->validated('members', [])
         );
 
+        if (!$result['success']) {
+            return redirect()->back()->with('error', $result['message'])->withInput();
+        }
+
         $redirectRoute = $request->query('source') === 'details' 
             ? route('admin.teams.show', $team) 
             : route('admin.teams');
 
-        if (!$wasUpdated) {
+        if (!$result['changed']) {
             return redirect($redirectRoute)->with('info', 'No changes were made to the team.');
         }
 
@@ -127,8 +131,14 @@ class TeamController extends Controller
     public function archive(Team $team)
     {
         Gate::authorize('archive', $team);
-        $team->delete();
-        return redirect()->route('admin.teams')->with('success', 'Team archived successfully.');
+        
+        $result = $this->teamService->archiveTeam($team);
+        
+        if (!$result['success']) {
+            return redirect()->route('admin.teams')->with('error', $result['message']);
+        }
+        
+        return redirect()->route('admin.teams')->with('success', $result['message']);
     }
 
     /*

@@ -38,7 +38,8 @@
                 <div class="bg-amber-50 border-amber-100 text-amber-800 border rounded-lg p-4 mb-8 text-left text-sm">
                     <ul class="list-disc list-inside space-y-1">
                         <li class="font-bold">The user will be blocked from logging in.</li>
-                        <li>Their historical activity logs and records will remain intact.</li>
+                        <li>Their historical activity logs will remain intact.</li>
+                        <li>If the user is a field personnel account, their team memberships will be removed.</li>
                         <li>You can reactivate this account later from the user management dashboard.</li>
                     </ul>
                 </div>

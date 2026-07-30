@@ -29,6 +29,7 @@ class UpdateDepartmentRequest extends FormRequest
         $deptId = $this->route('dept')->id;
 
         return [
+            'original_updated_at' => ['required', 'string'],
             'dept_name' => [
                 'required', 
                 'string', 

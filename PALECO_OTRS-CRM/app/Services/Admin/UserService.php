@@ -14,12 +14,6 @@ use App\Models\User;
  */
 class UserService
 {
-    // --- VIEW DATA AGGREGATION ---
-
-    /*
-     * Compiles the dashboard statistics and paginated user list.
-     * Executes optimized raw queries to generate total counts for each active role type.
-     */
     public function getDashboardUsers(array $filters): array
     {
         $roles = AccountRole::orderBy('role_name')->get();
@@ -46,10 +40,6 @@ class UserService
         return compact('users', 'roles', 'activeCounts');
     }
 
-    /*
-     * Retrieves detailed relational data for a specific user.
-     * Transforms pivot table data to include human-readable team roles for their assignments.
-     */
     public function getUserDetails(User $user): array
     {
         $user->load('department');
@@ -69,40 +59,48 @@ class UserService
         return compact('assignedTeams');
     }
 
-    // --- MUTATING & STATE METHODS ---
-
-    /*
-     * Handles the dual purpose of creating a new user or updating an existing one.
-     * Evaluates role identifiers to conditionally strip department links for field personnel.
-     */
-    public function processAndSaveUser(array $data, ?User $user = null): bool|User
+    public function processAndSaveUser(array $data, ?User $user = null): array
     {
-        // If updating an existing user, pull their immutable role from the database. 
-        // If creating a new user, fetch the role selected in the request.
+        if ($user) {
+            if ((string) $user->updated_at !== $data['original_updated_at']) {
+                return ['success' => false, 'message' => 'Conflict: This user profile was modified by another admin while you were editing.'];
+            }
+            unset($data['original_updated_at']);
+        }
+
         $role = $user ? $user->role : AccountRole::find($data['role_id']);
         
-        // Field personnel are not tied directly to a single department
         if ($role && $role->slug_identifier === 'field_personnel') {
             $data['department_id'] = null;
         }
 
         if ($user) {
             $user->fill($data);
-            if ($user->isClean()) return false;
+            if ($user->isClean()) return ['success' => true, 'changed' => false];
             
             DB::transaction(fn() => $user->save());
-            return true;
+            return ['success' => true, 'changed' => true];
         }
 
-        return User::create($data);
+        User::create($data);
+        return ['success' => true, 'changed' => true]; // Fallback for Store requests
     }
 
     /*
      * Flips the active status boolean on a user account to grant or revoke system access.
+     * Guaranteed safe detachment via transactions.
      */
     public function toggleUserStatus(User $user, bool $isActive): void
     {
-        $user->is_active = $isActive;
-        $user->save();
+        DB::transaction(function () use ($user, $isActive) {
+            $user->is_active = $isActive;
+            
+            // Automated cleanup: Detach ghost workers from operational rosters
+            if (!$isActive && $user->role->slug_identifier === 'field_personnel') {
+                $user->teams()->detach();
+            }
+
+            $user->save();
+        });
     }
 }

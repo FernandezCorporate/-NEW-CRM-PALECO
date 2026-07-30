@@ -17,6 +17,8 @@
             @isset($team)
                 @method('PUT')
             @endisset
+
+            <input type="hidden" name="original_updated_at" value="{{ $team->updated_at }}">
             
             <!-- Section 1: Team Details -->
             <div class="p-6 md:p-8 space-y-6">

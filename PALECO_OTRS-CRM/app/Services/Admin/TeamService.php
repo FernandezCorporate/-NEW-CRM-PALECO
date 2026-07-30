@@ -15,12 +15,6 @@ use App\Models\User;
  */
 class TeamService
 {
-    // --- VIEW DATA AGGREGATION ---
-
-    /*
-     * Retrieves a paginated list of teams alongside active department choices.
-     * Applies search, filter, and sort scopes directly to the query.
-     */
     public function getDashboardTeams(array $filters): array
     {
         $departments = Department::whereNull('deleted_at')->orderBy('dept_name')->pluck('dept_name', 'id');
@@ -39,10 +33,6 @@ class TeamService
         return compact('teams', 'departments');
     }
 
-    /*
-     * Compiles detailed records for a specific team's profile.
-     * Includes a paginated list of attached members and available team roles.
-     */
     public function getTeamDetails(Team $team): array
     {
         $members = $team->members()->withPivot('team_role_id', 'created_at')->paginate(5);
@@ -51,9 +41,6 @@ class TeamService
         return compact('members', 'teamRoles');
     }
 
-    /*
-     * Gathers all required relational data (departments, personnel, roles) to populate the Team form.
-     */
     public function getFormData(): array
     {
         $depts = Department::orderBy('dept_name')->pluck('dept_name', 'id');
@@ -70,11 +57,6 @@ class TeamService
         return compact('depts', 'personnel', 'memberRoles');
     }
 
-    // --- MUTATING & STATE METHODS ---
-
-    /*
-     * Creates a new team and syncs the assigned members within an atomic database transaction.
-     */
     public function createTeam(array $teamDetails, array $assignedMembers): void
     {
         DB::transaction(function () use ($teamDetails, $assignedMembers) {
@@ -91,48 +73,73 @@ class TeamService
 
     /*
      * Updates an existing team and synchronizes its roster within a transaction.
-     * Automatically logs an activity event if the membership list is modified.
-     * Returns true if any data or member assignments were actually changed.
+     * Uses strict array comparisons to prevent false positive updates caused by Laravel timestamps.
      */
-    public function updateTeam(Team $team, array $teamDetails, array $assignedMembers): bool
+    public function updateTeam(Team $team, array $teamDetails, array $assignedMembers): array
     {
+        if ((string) $team->updated_at !== $teamDetails['original_updated_at']) {
+            return ['success' => false, 'message' => 'Conflict: This team was modified by another user while you were editing.'];
+        }
+        unset($teamDetails['original_updated_at']);
+
         return DB::transaction(function () use ($team, $teamDetails, $assignedMembers) {
-            $oldMemberIds = $team->members()->pluck('users.id')->toArray();
+            
+            // 1. Snapshot the exact state of the old roster mapped as [user_id => role_id]
+            $oldRoster = $team->members()->get()->mapWithKeys(function ($m) {
+                return [$m->id => (int) $m->pivot->team_role_id];
+            })->toArray();
+            
+            // 2. Format the incoming array identically for a strict comparison
+            $newRoster = collect($assignedMembers)->mapWithKeys(function ($member) {
+                return [$member['user_id'] => (int) $member['team_role_id']];
+            })->toArray();
+
+            // 3. Sort by keys to ensure identical order before comparing
+            ksort($oldRoster);
+            ksort($newRoster);
+            
+            // Strict PHP evaluation guarantees we only log changes if data actually changed
+            $membersChanged = ($oldRoster !== $newRoster);
 
             $team->fill($teamDetails);
             $isTeamDirty = $team->isDirty();
             $team->save();
 
-            $formattedMembers = collect($assignedMembers)->mapWithKeys(function ($member) {
-                return [$member['user_id'] => ['team_role_id' => $member['team_role_id']]];
-            });
-
-            $changes = $team->members()->sync($formattedMembers);
-            $newMemberIds = array_keys($formattedMembers->toArray());
-            
-            $membersChanged = !empty($changes['attached']) || !empty($changes['detached']) || !empty($changes['updated']);
-            
             if ($membersChanged) {
+                $formattedMembers = collect($assignedMembers)->mapWithKeys(function ($member) {
+                    return [$member['user_id'] => ['team_role_id' => $member['team_role_id']]];
+                });
+
+                $team->members()->sync($formattedMembers);
+                
                 activity()
                     ->useLog('Teams')
                     ->performedOn($team)
                     ->event('roster_updated')
                     ->withProperties([
-                        'old' => ['member_ids' => $oldMemberIds],
-                        'attributes' => ['member_ids' => $newMemberIds]
+                        'old' => ['member_ids' => array_keys($oldRoster)], 
+                        'attributes' => ['member_ids' => array_keys($newRoster)]
                     ])
                     ->log("{$team->team_name} roster has been modified");
             }
             
-            return $isTeamDirty || $membersChanged;
+            return ['success' => true, 'changed' => $isTeamDirty || $membersChanged];
         });
     }
 
-    /*
-     * Attempts to restore a soft-deleted team.
-     * Enforces uniqueness checks against active teams sharing the same name.
-     */
-    public function restoreTeam(string $id): array // FIXED: ULIDs are strings, not ints
+    public function archiveTeam(Team $team): array
+    {
+        $hasActiveTickets = $team->ticket()->exists();
+        
+        if ($hasActiveTickets) {
+            return ['success' => false, 'message' => 'Cannot archive team. They currently have active assigned service tickets.'];
+        }
+        
+        $team->delete();
+        return ['success' => true, 'message' => 'Team archived successfully.'];
+    }
+
+    public function restoreTeam(string $id): array
     {
         $team = Team::onlyTrashed()->findOrFail($id); 
 
@@ -144,14 +151,10 @@ class TeamService
         return ['success' => true, 'message' => 'Team restored successfully.'];
     }
 
-    /*
-     * Ensures teams with existing tickets cannot be forcefully removed from the database.
-     */
     public function forceDeleteTeam(string $id): array
     {
         $team = Team::onlyTrashed()->findOrFail($id);
         
-        // Block the deletion if there are any associated tickets to maintain DB integrity
         if ($team->ticket()->exists()) {
             return [
                 'success' => false, 
