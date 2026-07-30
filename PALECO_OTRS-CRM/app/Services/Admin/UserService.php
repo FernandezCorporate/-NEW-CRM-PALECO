@@ -83,21 +83,26 @@ class UserService
         }
 
         User::create($data);
-        return ['success' => true, 'changed' => true]; // Fallback for Store requests
+        return ['success' => true, 'changed' => true]; 
     }
 
     /*
      * Flips the active status boolean on a user account to grant or revoke system access.
-     * Guaranteed safe detachment via transactions.
+     * Guaranteed safe detachment and token revocation via transactions.
      */
     public function toggleUserStatus(User $user, bool $isActive): void
     {
         DB::transaction(function () use ($user, $isActive) {
             $user->is_active = $isActive;
             
-            // Automated cleanup: Detach ghost workers from operational rosters
-            if (!$isActive && $user->role->slug_identifier === 'field_personnel') {
-                $user->teams()->detach();
+            if (!$isActive) {
+                // 1. Instantly kill any active mobile sessions
+                $user->tokens()->delete();
+
+                // 2. Automated cleanup: Detach ghost workers from operational rosters
+                if ($user->role->slug_identifier === 'field_personnel') {
+                    $user->teams()->detach();
+                }
             }
 
             $user->save();

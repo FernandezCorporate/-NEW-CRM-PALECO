@@ -40,6 +40,7 @@
                         <li class="font-bold">The user will be blocked from logging in.</li>
                         <li>Their historical activity logs will remain intact.</li>
                         <li>If the user is a field personnel account, their team memberships will be removed.</li>
+                        <li>Mobile users will be logged out of their account.</li>
                         <li>You can reactivate this account later from the user management dashboard.</li>
                     </ul>
                 </div>

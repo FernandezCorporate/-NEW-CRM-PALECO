@@ -15,6 +15,8 @@ use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Cwd\CwdDashboardController;
 use App\Http\Controllers\Cwd\TicketController;
 
+use App\Http\Middleware\CheckIfActive;
+
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -41,7 +43,7 @@ Route::middleware('guest')->group(function() {
  * Authenticated Web Portal
  * Protected domains requiring active sessions. Handles smart-routing and core module operations.
  */
-Route::middleware('auth')->group(function() {
+Route::middleware(['auth', CheckIfActive::class])->group(function() {
     
     /*
      * Root Routing Gatekeeper
