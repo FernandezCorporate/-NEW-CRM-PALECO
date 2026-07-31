@@ -96,6 +96,7 @@
                             <th class="p-4 font-medium">Department</th>
                             <th class="p-4 font-medium">Shift Schedule</th>
                             <th class="p-4 font-medium">Members</th>
+                            <th class="p-4 font-medium">Tickets</th>
                             <th class="p-4 font-medium text-right">Actions</th>
                         </tr>
                     </thead>
@@ -117,6 +118,11 @@
                                 <td class="p-4 text-sm text-slate-700">
                                     <span class="inline-flex items-center justify-center bg-emerald-100 text-emerald-800 h-6 w-6 rounded-full font-bold text-xs">
                                         {{ $team->members_count }}
+                                    </span>
+                                </td>
+                                <td class="p-4 text-sm text-slate-700">
+                                    <span class="inline-flex items-center justify-center bg-emerald-100 text-emerald-800 h-6 w-6 rounded-full font-bold text-xs">
+                                        {{ $team->ticket_count }}
                                     </span>
                                 </td>
                                 <td class="p-4">

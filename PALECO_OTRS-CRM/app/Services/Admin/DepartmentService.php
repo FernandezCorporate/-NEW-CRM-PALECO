@@ -29,7 +29,7 @@ class DepartmentService
 
     public function getDepartmentDetails(Department $dept): array
     {
-        $assignedTeams = $dept->teams()->withCount('members')->paginate(1, ['*'], 'page_teams')->withQueryString();
+        $assignedTeams = $dept->teams()->withCount('members')->paginate(5, ['*'], 'page_teams')->withQueryString();
 
         $personnelCount = User::query()
             ->where('is_active', true)
@@ -40,9 +40,9 @@ class DepartmentService
         $foremanQuery = $dept->users()->where('is_active', true)
             ->whereHas('role', fn($q) => $q->where('slug_identifier', 'foreman'));
 
-        $foremanCollection = $foremanQuery->paginate(2, ['*'], 'page_foreman')->withQueryString();
+        $foremanCollection = $foremanQuery->paginate(5, ['*'], 'page_foreman')->withQueryString();
 
-        $assignedTickets = $dept->tickets()->latest('reported_at')->paginate(2, ['*'], 'page_tickets')->withQueryString();
+        $assignedTickets = $dept->tickets()->latest('reported_at')->paginate(5, ['*'], 'page_tickets')->withQueryString();
         
         return [
             'assignedTickets' => $assignedTickets,

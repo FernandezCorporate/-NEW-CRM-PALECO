@@ -19,7 +19,7 @@ class TeamService
     {
         $departments = Department::whereNull('deleted_at')->orderBy('dept_name')->pluck('dept_name', 'id');
 
-        $query = Team::with('department')->withCount('members')
+        $query = Team::with('department')->withCount('members', 'ticket')
             ->search($filters['search'] ?? null)
             ->filter($filters['filter'] ?? null)
             ->sort($filters['sort'] ?? null);
@@ -35,10 +35,26 @@ class TeamService
 
     public function getTeamDetails(Team $team): array
     {
-        $members = $team->members()->withPivot('team_role_id', 'created_at')->paginate(5);
+        $members = $team->members()
+            ->withPivot('team_role_id', 'created_at')
+            ->paginate(5, ['*'], 'page_members')
+            ->withQueryString();
+            
         $teamRoles = TeamRole::pluck('role_name', 'id');
 
-        return compact('members', 'teamRoles');
+        // Map the role name directly into the member object
+        $members->getCollection()->transform(function ($member) use ($teamRoles) {
+            $member->assigned_role_name = $teamRoles[$member->pivot->team_role_id] ?? 'Unknown Role';
+            return $member;
+        });
+
+        // Add the paginated tickets query utilizing the singular ticket() relationship[cite: 12]
+        $assignedTickets = $team->ticket()
+            ->latest('reported_at')
+            ->paginate(5, ['*'], 'page_tickets')
+            ->withQueryString();
+
+        return compact('members', 'assignedTickets');
     }
 
     public function getFormData(): array
