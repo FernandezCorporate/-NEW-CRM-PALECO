@@ -78,6 +78,7 @@
                     <th class="px-6 py-4">Department Name</th>
                     <th class="px-6 py-4">Active Foremen</th>
                     <th class="px-6 py-4">Active Teams</th>
+                    <th class="px-6 py-4">Assigned Tickets</th>
                     <th class="px-6 py-4">Date Created</th>
                     <th class="px-6 py-4">Actions</th>
                 </tr>
@@ -94,6 +95,11 @@
                         <td class="px-6 py-4 text-slate-500 text-sm">
                             <div class="truncate max-w-md" title="{{ $department->active_team_count }}">
                                 {{ $department->active_team_count ?? 0 }}
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 text-slate-500 text-sm">
+                            <div class="truncate max-w-md" title="{{ $department->active_team_count }}">
+                                {{ $department->assigned_ticket_count ?? 0 }}
                             </div>
                         </td>
                         <td class="px-6 py-4 text-slate-500 text-sm">{{ $department->created_at->format('M d, Y') }}</td>

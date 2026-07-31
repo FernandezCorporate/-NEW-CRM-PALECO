@@ -13,7 +13,8 @@ class DepartmentService
             'users as active_foremen_count' => function ($query) {
                 $query->where('is_active', true)->whereHas('role', fn($q) => $q->where('slug_identifier', 'foreman'));
             },
-            'teams as active_team_count'
+            'teams as active_team_count',
+            'tickets as assigned_ticket_count'
         ]);
 
         $query->search($filters['search'] ?? null)
@@ -28,7 +29,7 @@ class DepartmentService
 
     public function getDepartmentDetails(Department $dept): array
     {
-        $assignedTeams = $dept->teams()->withCount('members')->paginate(5, ['*'], 'page');
+        $assignedTeams = $dept->teams()->withCount('members')->paginate(1, ['*'], 'page_teams')->withQueryString();
 
         $personnelCount = User::query()
             ->where('is_active', true)
@@ -38,12 +39,17 @@ class DepartmentService
 
         $foremanQuery = $dept->users()->where('is_active', true)
             ->whereHas('role', fn($q) => $q->where('slug_identifier', 'foreman'));
+
+        $foremanCollection = $foremanQuery->paginate(2, ['*'], 'page_foreman')->withQueryString();
+
+        $assignedTickets = $dept->tickets()->latest('reported_at')->paginate(2, ['*'], 'page_tickets')->withQueryString();
         
         return [
+            'assignedTickets' => $assignedTickets,
             'assignedTeams' => $assignedTeams,
             'personnelCount' => $personnelCount,
             'foremanCount' => $foremanQuery->count(),
-            'foremanCollection' => $foremanQuery->paginate(5, ['*'], 'page_foreman')
+            'foremanCollection' => $foremanCollection
         ];
     }
 
