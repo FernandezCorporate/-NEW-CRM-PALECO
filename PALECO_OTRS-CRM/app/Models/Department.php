@@ -41,11 +41,12 @@ class Department extends Model
     // --- RELATIONSHIPS ---
 
     /*
-     * Retrieves all users directly assigned to this department.
+     * Retrieves all foremen directly assigned to this department.
      */
-    public function users(): HasMany
+    public function foremen(): HasMany
     {
-        return $this->hasMany(User::class, 'department_id');
+        return $this->hasMany(User::class, 'department_id')
+                    ->whereHas('role', fn($q) => $q->where('slug_identifier', 'foreman'));
     }
 
     /*
@@ -94,6 +95,18 @@ class Department extends Model
             'dept_descDESC' => $query->orderBy('dept_desc', 'desc'),
             default => $query->latest(),
         };
+    }
+
+    /*
+     * Applies filtering rules to the query based on the requested filter parameter.
+     */
+    public function scopeFilter(Builder $query, ?string $filter): Builder
+    {
+        if (($filter) === 'archived') {
+            return $query->onlyTrashed();
+        }
+
+        return $query;
     }
 
     // --- ACTIVITY LOG ---

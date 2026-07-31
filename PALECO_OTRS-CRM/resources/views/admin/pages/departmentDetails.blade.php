@@ -141,7 +141,7 @@
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100">
-                        @forelse ($foremanCollection as $foreman)
+                        @forelse ($assignedForeman as $foreman)
                             <tr class="hover:bg-slate-50/75 transition-colors group">
                                 <td class="px-6 py-4">
                                     <div class="flex flex-col">
@@ -174,9 +174,9 @@
             </div>
             
             <!-- Foremen Pagination -->
-            @if($foremanCollection->hasPages())
+            @if($assignedForeman->hasPages())
                 <div class="px-6 py-4 border-t border-slate-100 bg-white">
-                    {{ $foremanCollection->onEachSide(0)->links() }}
+                    {{ $assignedForeman->onEachSide(0)->links() }}
                 </div>
             @endif
         </div>

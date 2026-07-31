@@ -4,7 +4,6 @@ namespace App\Enums;
 
 /*
  * Defines acceptable inputs for the complaint_source field in the tickets table.
- * Provides modularity and reusability for complaint sources.
  * Avoids hard-coding options for frontend dropdown menus.
  */
 enum ComplaintSources: string

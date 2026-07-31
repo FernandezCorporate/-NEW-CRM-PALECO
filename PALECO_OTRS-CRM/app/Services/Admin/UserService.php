@@ -3,15 +3,10 @@
 namespace App\Services\Admin;
 
 use Illuminate\Support\Facades\DB;
-
 use App\Models\AccountRole;
 use App\Models\TeamRole;
 use App\Models\User;
 
-/*
- * Encapsulates the business logic for managing system User accounts.
- * Manages complex role aggregation, team assignments, and profile updates.
- */
 class UserService
 {
     public function getDashboardUsers(array $filters): array
@@ -61,12 +56,8 @@ class UserService
 
     public function processAndSaveUser(array $data, ?User $user = null): array
     {
-        if ($user) {
-            if ((string) $user->updated_at !== $data['original_updated_at']) {
-                return ['success' => false, 'message' => 'Conflict: This user profile was modified by another admin while you were editing.'];
-            }
-            unset($data['original_updated_at']);
-        }
+        $originalUpdatedAt = $data['original_updated_at'] ?? null;
+        unset($data['original_updated_at']);
 
         $role = $user ? $user->role : AccountRole::find($data['role_id']);
         
@@ -75,31 +66,34 @@ class UserService
         }
 
         if ($user) {
-            $user->fill($data);
-            if ($user->isClean()) return ['success' => true, 'changed' => false];
-            
-            DB::transaction(fn() => $user->save());
-            return ['success' => true, 'changed' => true];
+            return DB::transaction(function () use ($user, $data, $originalUpdatedAt) {
+                $lockedUser = User::query()->where('id', $user->id)->lockForUpdate()->first();
+
+                if ((string) $lockedUser->updated_at !== $originalUpdatedAt) {
+                    return ['success' => false, 'message' => 'Conflict: This user profile was modified by another admin while you were editing.'];
+                }
+
+                $lockedUser->fill($data);
+                
+                if ($lockedUser->isClean()) return ['success' => true, 'changed' => false];
+                
+                $lockedUser->save(); 
+                return ['success' => true, 'changed' => true];
+            });
         }
 
         User::create($data);
         return ['success' => true, 'changed' => true]; 
     }
 
-    /*
-     * Flips the active status boolean on a user account to grant or revoke system access.
-     * Guaranteed safe detachment and token revocation via transactions.
-     */
     public function toggleUserStatus(User $user, bool $isActive): void
     {
         DB::transaction(function () use ($user, $isActive) {
             $user->is_active = $isActive;
             
             if (!$isActive) {
-                // 1. Instantly kill any active mobile sessions
                 $user->tokens()->delete();
 
-                // 2. Automated cleanup: Detach ghost workers from operational rosters
                 if ($user->role->slug_identifier === 'field_personnel') {
                     $user->teams()->detach();
                 }

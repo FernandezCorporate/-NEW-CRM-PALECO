@@ -4,6 +4,10 @@ namespace App\Policies;
 
 use App\Models\User;
 
+/*
+ * Defines RBAC (Role-based access controls) for each available action on a department resource.
+ * Implemented as gate checks at the start of every CRUD method on the DepartmentController.
+ */
 class DepartmentPolicy
 {
     public function viewAny(User $user): bool { return $user->role->slug_identifier === 'admin'; }
@@ -13,20 +17,18 @@ class DepartmentPolicy
     public function update(User $user): bool { return $user->role->slug_identifier === 'admin'; }
     public function deleteConfirm(User $user): bool { return $user->role->slug_identifier === 'admin'; }
     public function archive(User $user): bool { return $user->role->slug_identifier === 'admin'; }
-    public function delete(User $user): bool { return $user->role->slug_identifier === 'admin'; }
     public function restore(User $user): bool { return $user->role->slug_identifier === 'admin'; }
     public function forceDelete(User $user): bool { return $user->role->slug_identifier === 'admin'; }   
 
     /*
-     * viewAny: Determines if the user can view the list of departments.
-     * view: Determines if the user can view a specific department's details.
-     * departmentForm: Determines if the user can access the department creation or edit forms.
-     * create: Determines if the user can create new departments.
-     * update: Determines if the user can update an existing department.
-     * deleteConfirm: Determines if the user can access the deletion confirmation prompt.
-     * archive: Determines if the user can soft-delete (archive) a department.
-     * delete: Determines if the user can initiate a standard delete operation.
-     * restore: Determines if the user can restore a previously archived department.
-     * forceDelete: Determines if the user can permanently delete a department.
+     * viewAny
+     * view:          => Admin only; view all department records.
+     * departmentForm => Admin only; access the add or edit department form.
+     * create:        => Admin only; add a new department record.
+     * update:        => Admin only; edit a department record.
+     * deleteConfirm  => Admin only; access the delete confirmation prompt (archive & force delete).
+     * archive:       => Admin only; archive a department record.
+     * restore:       => Admin only; restore an archived department record.
+     * forceDelete:   => Admin only; forcefully remove an archived department record.
      */
 }

@@ -5,7 +5,7 @@ namespace App\Events;
 use App\Enums\NonModelActions;
 use App\Models\User;
 
-use Illuminate\Foundation\Events\Dispatchable;  // Allows triggering the event fluently using LoginEvents::dispatch().
+use Illuminate\Foundation\Events\Dispatchable;  // Allows triggering the event fluently using LoginEvents::dispatch() instead of instantiation.
 use Illuminate\Queue\SerializesModels;          // Gracefully shrinks Eloquent models to just their IDs when sent to background queues.
 
 /*
@@ -17,7 +17,7 @@ class LoginEvents
 {
     use Dispatchable, SerializesModels;
 
-    public NonModelActions $action_category; // The specific authentication outcome (success, fail, deactivated).
+    public NonModelActions $action_category; // The specific authentication outcome defined by the NonModelActions enum (success, fail, deactivated).
     public ?User $user;                      // The user model attempting to log in, null if not found.
     public string $ip_address;               // The IP address where the login request originated.
     public string $user_agent;               // The browser or client used for the request.
@@ -25,6 +25,7 @@ class LoginEvents
 
     /*
      * Initializes the event payload with the provided action category and user model.
+     * Injects the value for the public properties declared above.
      * Automatically extracts the IP address, user agent, and username from the current HTTP request.
      */
     public function __construct(NonModelActions $action_category, ?User $user = null)

@@ -24,13 +24,13 @@ class LogUserAuthActivity implements ShouldQueue
             ->event($event->action_category->event())
             ->causedBy($event->user)
             ->withProperties([
-                "ip_address" => $event->ip_address,                                                               // Network origin of the login request.
-                "user_agent" => $event->user_agent,                                                               // Browser or client details used for the request.
-                "username"   => $event->user ? $event->user->username : $event->usernameInput,                    // Actual username, or the raw input if authentication fails.
-                "full_name"  => $event->user ? ucwords(trim($event->user->first_name . ' ' . $event->user->last_name)) : null, // Formatted full name, if the user model exists.
-                "role"       => $event->user?->role?->slug_identifier,                                            // The specific system role identifier tied to the user.
-                "email"      => $event->user?->email,                                                             // The user's registered email address.
-                "contact"    => $event->user?->contact                                                            // The user's registered contact number.
+                "ip_address" => $event->ip_address,                                                               
+                "user_agent" => $event->user_agent,                                                               
+                "username"   => $event->user ? $event->user->username : $event->usernameInput,                    
+                "full_name"  => $event->user ? ucwords(trim($event->user->first_name . ' ' . $event->user->last_name)) : null, 
+                "role"       => $event->user?->role?->slug_identifier,                                            
+                "email"      => $event->user?->email,                                                             
+                "contact"    => $event->user?->contact                                                            
             ])
             ->log($event->action_category->description());
     }

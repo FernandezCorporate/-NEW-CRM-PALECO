@@ -2,17 +2,13 @@
 
 namespace App\Services\Admin;
 
+use Illuminate\Support\Facades\DB;
 use App\Models\TicketCategory;
 
-/*
- * Encapsulates the business logic for managing Ticket Categories.
- * Provides abstracted querying and safe restoration/deletion mechanics.
- */
 class TicketCategoryService
 {
     public function getDashboardCategories(array $filters)
     {
-        // Appended withCount('ticket') to capture the total active volume[cite: 12]
         $query = TicketCategory::query()
             ->withCount('ticket') 
             ->search($filters['search'] ?? null)
@@ -25,9 +21,6 @@ class TicketCategoryService
         return $query->paginate(10)->withQueryString();
     }
 
-    /*
-     * Newly added method to fetch paginated tickets for the details view.
-     */
     public function getCategoryDetails(TicketCategory $category): array
     {
         $assignedTickets = $category->ticket()
@@ -40,22 +33,25 @@ class TicketCategoryService
 
     public function updateCategory(TicketCategory $category, array $data): array
     {
-        if ((string) $category->updated_at !== $data['original_updated_at']) {
-            return ['success' => false, 'message' => 'Conflict: This category was modified by another user while you were editing.'];
-        }
+        $originalUpdatedAt = $data['original_updated_at'];
         unset($data['original_updated_at']);
 
-        $category->fill($data);
-        
-        if ($category->isClean()) return ['success' => true, 'changed' => false];
+        return DB::transaction(function () use ($category, $data, $originalUpdatedAt) {
+            $lockedCategory = TicketCategory::where('id', $category->id)->lockForUpdate()->first();
 
-        $category->save();
-        return ['success' => true, 'changed' => true];
+            if ((string) $lockedCategory->updated_at !== $originalUpdatedAt) {
+                return ['success' => false, 'message' => 'Conflict: This category was modified by another user while you were editing.'];
+            }
+
+            $lockedCategory->fill($data);
+            
+            if ($lockedCategory->isClean()) return ['success' => true, 'changed' => false];
+
+            $lockedCategory->save(); 
+            return ['success' => true, 'changed' => true];
+        });
     }
 
-    /*
-     * Safely archives a category only if it has no active tickets attached.
-     */
     public function archiveCategory(TicketCategory $category): array
     {
         if ($category->ticket()->exists()) {

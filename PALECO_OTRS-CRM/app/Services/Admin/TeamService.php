@@ -9,10 +9,6 @@ use App\Models\Team;
 use App\Models\TeamRole;
 use App\Models\User;
 
-/*
- * Encapsulates the business logic for managing operational Teams.
- * Handles complex relational syncing and roster transaction logging.
- */
 class TeamService
 {
     public function getDashboardTeams(array $filters): array
@@ -42,13 +38,11 @@ class TeamService
             
         $teamRoles = TeamRole::pluck('role_name', 'id');
 
-        // Map the role name directly into the member object
         $members->getCollection()->transform(function ($member) use ($teamRoles) {
             $member->assigned_role_name = $teamRoles[$member->pivot->team_role_id] ?? 'Unknown Role';
             return $member;
         });
 
-        // Add the paginated tickets query utilizing the singular ticket() relationship[cite: 12]
         $assignedTickets = $team->ticket()
             ->latest('reported_at')
             ->paginate(5, ['*'], 'page_tickets')
@@ -87,56 +81,56 @@ class TeamService
         });
     }
 
-    /*
-     * Updates an existing team and synchronizes its roster within a transaction.
-     * Uses strict array comparisons to prevent false positive updates caused by Laravel timestamps.
-     */
     public function updateTeam(Team $team, array $teamDetails, array $assignedMembers): array
     {
-        if ((string) $team->updated_at !== $teamDetails['original_updated_at']) {
-            return ['success' => false, 'message' => 'Conflict: This team was modified by another user while you were editing.'];
-        }
+        $originalUpdatedAt = $teamDetails['original_updated_at'];
         unset($teamDetails['original_updated_at']);
 
-        return DB::transaction(function () use ($team, $teamDetails, $assignedMembers) {
+        return DB::transaction(function () use ($team, $teamDetails, $assignedMembers, $originalUpdatedAt) {
+            $lockedTeam = Team::where('id', $team->id)->lockForUpdate()->first();
+
+            if ((string) $lockedTeam->updated_at !== $originalUpdatedAt) {
+                return ['success' => false, 'message' => 'Conflict: This team was modified by another user while you were editing.'];
+            }
             
-            // 1. Snapshot the exact state of the old roster mapped as [user_id => role_id]
-            $oldRoster = $team->members()->get()->mapWithKeys(function ($m) {
+            $oldRoster = $lockedTeam->members()->get()->mapWithKeys(function ($m) {
                 return [$m->id => (int) $m->pivot->team_role_id];
             })->toArray();
             
-            // 2. Format the incoming array identically for a strict comparison
             $newRoster = collect($assignedMembers)->mapWithKeys(function ($member) {
                 return [$member['user_id'] => (int) $member['team_role_id']];
             })->toArray();
 
-            // 3. Sort by keys to ensure identical order before comparing
             ksort($oldRoster);
             ksort($newRoster);
             
-            // Strict PHP evaluation guarantees we only log changes if data actually changed
             $membersChanged = ($oldRoster !== $newRoster);
 
-            $team->fill($teamDetails);
-            $isTeamDirty = $team->isDirty();
-            $team->save();
+            $lockedTeam->fill($teamDetails);
+            $isTeamDirty = $lockedTeam->isDirty();
+
+            if ($isTeamDirty) {
+                $lockedTeam->save(); 
+            } elseif ($membersChanged) {
+                $lockedTeam->touch(); 
+            }
 
             if ($membersChanged) {
                 $formattedMembers = collect($assignedMembers)->mapWithKeys(function ($member) {
                     return [$member['user_id'] => ['team_role_id' => $member['team_role_id']]];
                 });
 
-                $team->members()->sync($formattedMembers);
+                $lockedTeam->members()->sync($formattedMembers);
                 
                 activity()
                     ->useLog('Teams')
-                    ->performedOn($team)
+                    ->performedOn($lockedTeam)
                     ->event('roster_updated')
                     ->withProperties([
                         'old' => ['member_ids' => array_keys($oldRoster)], 
                         'attributes' => ['member_ids' => array_keys($newRoster)]
                     ])
-                    ->log("{$team->team_name} roster has been modified");
+                    ->log("{$lockedTeam->team_name} roster has been modified");
             }
             
             return ['success' => true, 'changed' => $isTeamDirty || $membersChanged];

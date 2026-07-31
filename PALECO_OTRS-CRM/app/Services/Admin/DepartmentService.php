@@ -2,6 +2,7 @@
 
 namespace App\Services\Admin;
 
+use Illuminate\Support\Facades\DB;
 use App\Models\Department;
 use App\Models\User;
 
@@ -10,26 +11,24 @@ class DepartmentService
     public function getDashboardDepartments(array $filters)
     {
         $query = Department::query()->withCount([
-            'users as active_foremen_count' => function ($query) {
-                $query->where('is_active', true)->whereHas('role', fn($q) => $q->where('slug_identifier', 'foreman'));
-            },
+            'foremen as active_foremen_count',
             'teams as active_team_count',
             'tickets as assigned_ticket_count'
         ]);
 
         $query->search($filters['search'] ?? null)
-              ->sort($filters['sort'] ?? null);
-
-        if (($filters['filter'] ?? null) === 'archived') {
-            $query->onlyTrashed();
-        }
+              ->sort($filters['sort'] ?? null)
+              ->filter($filters['filter'] ?? null);
 
         return $query->paginate(9)->withQueryString();
     }
 
     public function getDepartmentDetails(Department $dept): array
     {
-        $assignedTeams = $dept->teams()->withCount('members')->paginate(5, ['*'], 'page_teams')->withQueryString();
+        $assignedTeams = $dept->teams()
+            ->withCount('members')
+            ->paginate(5, ['*'], 'page_teams')
+            ->withQueryString();
 
         $personnelCount = User::query()
             ->where('is_active', true)
@@ -37,10 +36,8 @@ class DepartmentService
             ->whereHas('teams', fn($q) => $q->where('department_id', $dept->id))
             ->count();
 
-        $foremanQuery = $dept->users()->where('is_active', true)
-            ->whereHas('role', fn($q) => $q->where('slug_identifier', 'foreman'));
-
-        $foremanCollection = $foremanQuery->paginate(5, ['*'], 'page_foreman')->withQueryString();
+        $foremanQuery = $dept->foremen()->where('is_active', true);
+        $assignedForeman = $foremanQuery->paginate(5, ['*'], 'page_foreman')->withQueryString();
 
         $assignedTickets = $dept->tickets()->latest('reported_at')->paginate(5, ['*'], 'page_tickets')->withQueryString();
         
@@ -49,26 +46,35 @@ class DepartmentService
             'assignedTeams' => $assignedTeams,
             'personnelCount' => $personnelCount,
             'foremanCount' => $foremanQuery->count(),
-            'foremanCollection' => $foremanCollection
+            'assignedForeman' => $assignedForeman
         ];
     }
 
     public function updateDepartment(Department $dept, array $data): array
     {
-        // Concurrency Check
-        if ((string) $dept->updated_at !== $data['original_updated_at']) {
-            return ['success' => false, 'message' => 'Conflict: Another administrator modified this department while you were editing. Please refresh and try again.'];
-        }
+        $originalUpdatedAt = $data['original_updated_at'];
         unset($data['original_updated_at']);
 
-        $dept->fill($data);
-        if ($dept->isClean()) return ['success' => true, 'changed' => false];
-        
-        $dept->save();
-        return ['success' => true, 'changed' => true];
+        return DB::transaction(function () use ($dept, $data, $originalUpdatedAt) {
+            $lockedDept = Department::where('id', $dept->id)->lockForUpdate()->first();
+
+            if ((string) $lockedDept->updated_at !== $originalUpdatedAt) {
+                return [
+                    'success' => false, 
+                    'message' => 'Conflict: Another administrator modified this department while you were editing. Please refresh and try again.'
+                ];
+            }
+
+            $lockedDept->fill($data);
+            
+            if ($lockedDept->isClean()) return ['success' => true, 'changed' => false];
+            
+            $lockedDept->save(); 
+            
+            return ['success' => true, 'changed' => true];
+        });
     }
 
-    // New Safe Archive Method
     public function archiveDepartment(Department $dept): array
     {
         if ($dept->teams()->exists() || $dept->users()->exists() || $dept->tickets()->exists()) {
