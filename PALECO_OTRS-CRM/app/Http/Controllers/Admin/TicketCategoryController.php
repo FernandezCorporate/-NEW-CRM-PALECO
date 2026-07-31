@@ -30,7 +30,10 @@ class TicketCategoryController extends Controller
     public function show(Request $request, TicketCategory $category)
     {
         Gate::authorize('view', clone $category);
-        return view('admin.pages.ticketCategoryDetails', compact('category'));
+        
+        $details = $this->categoryService->getCategoryDetails($category);
+        
+        return view('admin.pages.ticketCategoryDetails', array_merge(['category' => $category], $details));
     }
 
     public function ticketCategoryForm(?TicketCategory $category = null)

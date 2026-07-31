@@ -68,6 +68,7 @@
                 <tr class="bg-slate-50 border-b border-slate-200 text-xs font-semibold text-slate-500 uppercase tracking-wider">
                     <th class="px-6 py-4">Category Name</th>
                     <th class="px-6 py-4">Description</th>
+                    <th class="px-6 py-4">Usage Volume</th>
                     <th class="px-6 py-4">Date Created</th>
                     <th class="px-6 py-4">Actions</th>
                 </tr>
@@ -75,8 +76,16 @@
             <tbody class="divide-y divide-slate-100">
                 @forelse ($categories as $category)
                     <tr class="hover:bg-slate-50 transition-colors">
-                        <td class="px-6 py-4 font-medium text-slate-800">{{ $category->category_name }}</td>
+                        <td class="px-6 py-4 font-bold text-slate-900">{{ $category->category_name }}</td>
                         <td class="px-6 py-4 text-slate-500 text-sm max-w-xs truncate" title="{{ $category->category_desc }}">{{ $category->category_desc ?? '—' }}</td>
+                        
+                        <!-- Appended Dynamic Ticket Count Display[cite: 11] -->
+                        <td class="px-6 py-4">
+                            <span class="inline-flex items-center justify-center bg-indigo-50 text-indigo-700 border border-indigo-100 h-6 px-2.5 rounded-full font-bold text-xs">
+                                {{ $category->ticket_count }} Tickets
+                            </span>
+                        </td>
+                        
                         <td class="px-6 py-4 text-slate-500 text-sm">{{ $category->created_at?->format('M d, Y') ?? 'N/A' }}</td>
                         <td class="px-6 py-4">
                             <div class="flex items-center gap-2">
@@ -106,7 +115,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="4" class="px-6 py-12 text-center text-slate-500">No categories found.</td>
+                        <td colspan="5" class="px-6 py-12 text-center text-slate-500">No categories found.</td>
                     </tr>
                 @endforelse
             </tbody>
@@ -116,7 +125,7 @@
     <!-- Card View -->
     <div id="card-view-container" class="hidden grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 mb-4">
         @foreach ($categories as $category)
-            <div class="bg-white border border-slate-200 rounded-xl p-6 shadow-sm flex flex-col h-full">
+            <div class="bg-white border border-slate-200 rounded-xl p-6 shadow-sm flex flex-col h-full relative">
                 <div class="flex justify-between items-start mb-4 gap-4">
                     <h3 class="text-lg font-bold text-slate-900 leading-tight">{{ $category->category_name }}</h3>
                     <div class="flex items-center gap-1 shrink-0 bg-slate-50 p-1 rounded-lg border border-slate-100">
@@ -136,9 +145,14 @@
                     </div>
                 </div>
                 <p class="text-sm text-slate-500 mb-6 flex-grow line-clamp-3">{{ $category->category_desc ?? 'No description provided.' }}</p>
-                <div class="pt-4 border-t border-slate-100 flex justify-between items-center text-xs text-slate-400">
+                <div class="pt-4 border-t border-slate-100 flex justify-between items-center text-xs text-slate-500">
                     <div class="flex items-center gap-1.5 font-medium">Added {{ $category->created_at?->format('M d, Y') ?? 'N/A' }}</div>
-                    @if($category->trashed()) <span class="bg-slate-100 text-slate-500 font-bold px-2 py-0.5 rounded text-[10px] uppercase">Archived</span> @endif
+                    
+                    <!-- Appended Dynamic Ticket Count Display[cite: 11] -->
+                    <div class="flex items-center gap-1.5 font-bold text-indigo-600">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                        {{ $category->ticket_count }}
+                    </div>
                 </div>
             </div>
         @endforeach

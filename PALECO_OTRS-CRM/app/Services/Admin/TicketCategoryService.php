@@ -12,7 +12,9 @@ class TicketCategoryService
 {
     public function getDashboardCategories(array $filters)
     {
+        // Appended withCount('ticket') to capture the total active volume[cite: 12]
         $query = TicketCategory::query()
+            ->withCount('ticket') 
             ->search($filters['search'] ?? null)
             ->sort($filters['sort'] ?? null);
 
@@ -21,6 +23,19 @@ class TicketCategoryService
         }
 
         return $query->paginate(10)->withQueryString();
+    }
+
+    /*
+     * Newly added method to fetch paginated tickets for the details view.
+     */
+    public function getCategoryDetails(TicketCategory $category): array
+    {
+        $assignedTickets = $category->ticket()
+            ->latest('reported_at')
+            ->paginate(5, ['*'], 'page_tickets')
+            ->withQueryString();
+
+        return compact('assignedTickets');
     }
 
     public function updateCategory(TicketCategory $category, array $data): array
