@@ -77,12 +77,18 @@ class DepartmentService
 
     public function archiveDepartment(Department $dept): array
     {
-        if ($dept->teams()->exists() || $dept->users()->exists() || $dept->tickets()->exists()) {
-            return ['success' => false, 'message' => 'Cannot archive this department. It contains active teams, personnel, or history.'];
+        if ($dept->teams()->exists() || $dept->foremen()->exists() || $dept->tickets()->exists()) {
+            return [
+                'success' => false, 
+                'message' => 'Cannot archive this department. It contains active teams, personnel, or history.'
+            ];
         }
 
         $dept->delete();
-        return ['success' => true, 'message' => 'Department archived successfully.'];
+        return [
+            'success' => true, 
+            'message' => 'Department archived successfully.'
+        ];
     }
 
     public function restoreDepartment(int $id): array
@@ -90,19 +96,31 @@ class DepartmentService
         $dept = Department::withTrashed()->find($id);
         
         if (!$dept) {
-            return ['success' => false, 'message' => 'Department no longer exists. It may have been permanently deleted by another administrator.'];
+            return [
+                'success' => false, 
+                'message' => 'Department no longer exists. It may have been permanently deleted by another administrator.'
+            ];
         }
 
         if (!$dept->trashed()) {
-            return ['success' => false, 'message' => 'Department is already active.'];
+            return [
+                'success' => false, 
+                'message' => 'Department is already active.'
+            ];
         }
 
         if (Department::where('dept_name', $dept->dept_name)->exists()) {
-            return ['success' => false, 'message' => 'Cannot restore department. An active department with the same name already exists.'];
+            return [
+                'success' => false, 
+                'message' => 'Cannot restore department. An active department with the same name already exists.'
+            ];
         }
 
         $dept->restore();
-        return ['success' => true, 'message' => 'Department restored successfully.'];
+        return [
+            'success' => true, 
+            'message' => 'Department restored successfully.'
+        ];
     }
 
     public function permanentlyDeleteDepartment(int $id): array
@@ -110,18 +128,30 @@ class DepartmentService
         $dept = Department::withTrashed()->find($id);
 
         if (!$dept) {
-            return ['success' => true, 'message' => 'Department has already been permanently deleted.'];
+            return [
+                'success' => true, 
+                'message' => 'Department has already been permanently deleted.'
+            ];
         }
 
         if (!$dept->trashed()) {
-            return ['success' => false, 'message' => 'Cannot permanently delete this department because it was recently restored.'];
+            return [
+                'success' => false, 
+                'message' => 'Cannot permanently delete this department because it was recently restored.'
+            ];
         }
 
-        if ($dept->tickets()->exists() || $dept->teams()->exists() || $dept->users()->exists()) {
-            return ['success' => false, 'message' => 'Cannot permanently delete this department. It contains historical data.'];
+        if ($dept->tickets()->exists() || $dept->teams()->exists() || $dept->foremen()->exists()) {
+            return [
+                'success' => false, 
+                'message' => 'Cannot permanently delete this department. It contains historical data.'
+            ];
         }
 
         $dept->forceDelete();
-        return ['success' => true, 'message' => 'Department permanently deleted.'];
+        return [
+            'success' => true, 
+            'message' => 'Department permanently deleted.'
+        ];
     }
 }

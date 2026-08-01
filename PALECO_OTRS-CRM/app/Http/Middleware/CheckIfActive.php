@@ -20,7 +20,7 @@ class CheckIfActive
             $request->session()->regenerateToken();
 
             // Kick them back to the login screen with a message
-            return redirect()->route('login')->with('error', 'Your account has been deactivated. Please contact the administrator.');
+            return redirect()->route('portal')->with('error', 'Your account has been deactivated. Please contact the administrator.');
         }
 
         return $next($request);
