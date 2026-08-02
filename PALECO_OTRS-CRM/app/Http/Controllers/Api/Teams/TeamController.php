@@ -156,4 +156,25 @@ class TeamController extends Controller
             'message' => $result['message']
         ], 200);
     }
+
+    public function destroy(Request $request, Team $team)
+    {
+        // Route Model Binding automatically injects the trashed team
+        Gate::authorize('mobileDestroyTeam', $team);
+
+        // Pass the model directly, not the ID
+        $result = $this->teamService->forceDeleteTeam($team);
+
+        if (!$result['success']) {
+            return response()->json([
+                'success' => false,
+                'message' => $result['message']
+            ], 409); 
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => $result['message']
+        ], 200);
+    }
 }

@@ -53,6 +53,7 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::delete('/{team}/archive', [TeamController::class, 'archive'])->withTrashed();
 
             Route::patch('/{team}/restore', [TeamController::class, 'restore'])->whereUlid('team')->withTrashed();
+            Route::delete('/{team}/force-delete', [TeamController::class, 'destroy'])->name('admin.teams.destroy')->whereUlid('team')->withTrashed();
         });
     });
 

@@ -187,4 +187,22 @@ class TeamService
         $team->restore();
         return ['success' => true, 'message' => 'Team restored successfully.'];
     }
+
+    public function forceDeleteTeam(Team $team): array
+    {
+        // 1. State Guard
+        if (!$team->trashed()) {
+            return ['success' => false, 'message' => 'Cannot permanently delete an active team. Please archive it first.'];
+        }
+
+        // 2. Data Integrity Guard (Prevents orphaned tickets)
+        if ($team->ticket()->exists()) {
+            return ['success' => false, 'message' => "Cannot permanently delete {$team->team_name} because it is currently assigned to existing service tickets."];
+        }
+
+        // 3. Execute Deletion
+        $team->forceDelete();
+        
+        return ['success' => true, 'message' => 'Team permanently deleted successfully.'];
+    }
 }
