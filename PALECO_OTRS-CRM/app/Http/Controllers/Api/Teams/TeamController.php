@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\Teams;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\Teams\StoreTeamRequest;
+use App\Http\Requests\Api\Teams\UpdateTeamRequest;
 use App\Http\Resources\Api\TeamResource;
 use App\Services\Api\Teams\TeamService;
 use Illuminate\Http\Request;
@@ -70,5 +71,44 @@ class TeamController extends Controller
             'success' => true,
             'message' => 'Team and members created successfully.'
         ], 201);
+    }
+
+    public function update(UpdateTeamRequest $request, Team $team)
+    {
+        if ($team->trashed()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Conflict: This team has been archived by an administrator and can no longer be modified.'
+            ], 409); // 409 Conflict or 403 Forbidden
+        }
+        // 1. Policy Authorization (Ensures the foreman owns the team's department)
+        Gate::authorize('mobileUpdateTeam', $team);
+
+        // 2. Extract safe core team data
+        $teamDetails = $request->safe()->except('members');
+
+        // 3. Force the department ID to match the foreman's secure token
+        $teamDetails['department_id'] = $request->user()->department_id;
+
+        // 4. Hand off to the Service
+        $result = $this->teamService->updateTeam(
+            $team,
+            $teamDetails,
+            $request->validated('members', [])
+        );
+
+        // 5. Handle Optimistic Locking Conflict (HTTP 409 Conflict)
+        if (!$result['success']) {
+            return response()->json([
+                'success' => false,
+                'message' => $result['message']
+            ], 409); 
+        }
+
+        // 6. Return standard API success response (HTTP 200 OK)
+        return response()->json([
+            'success' => true,
+            'message' => $result['changed'] ? 'Team updated successfully.' : 'No changes were made to the team.'
+        ], 200);
     }
 }

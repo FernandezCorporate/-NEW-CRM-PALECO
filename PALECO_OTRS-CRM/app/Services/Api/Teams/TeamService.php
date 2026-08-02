@@ -87,4 +87,72 @@ class TeamService
             }
         });
     }
+
+    /*
+     * Updates an existing team and dynamically syncs roster changes.
+     * Uses pessimistic locking (lockForUpdate) to prevent race conditions via the API.
+     */
+    public function updateTeam(Team $team, array $teamDetails, array $assignedMembers): array
+    {
+        $originalUpdatedAt = $teamDetails['original_updated_at'];
+        unset($teamDetails['original_updated_at']);
+
+        return DB::transaction(function () use ($team, $teamDetails, $assignedMembers, $originalUpdatedAt) {
+            
+            // 1. Lock the row to prevent race conditions
+            $lockedTeam = Team::where('id', $team->id)->lockForUpdate()->first();
+
+            // 2. Optimistic timestamp check
+            if ((string) $lockedTeam->updated_at !== $originalUpdatedAt) {
+                return ['success' => false, 'message' => 'Conflict: This team was modified by another user while you were editing.'];
+            }
+            
+            // 3. Compare Roster Arrays to detect changes
+            $oldRoster = $lockedTeam->members()->get()->mapWithKeys(function ($m) {
+                return [$m->id => (int) $m->pivot->team_role_id];
+            })->toArray();
+            
+            $newRoster = collect($assignedMembers)->mapWithKeys(function ($member) {
+                return [$member['user_id'] => (int) $member['team_role_id']];
+            })->toArray();
+
+            ksort($oldRoster);
+            ksort($newRoster);
+            
+            $membersChanged = ($oldRoster !== $newRoster);
+
+            // 4. Update Core Details
+            $lockedTeam->fill($teamDetails);
+            $isTeamDirty = $lockedTeam->isDirty();
+
+            if ($isTeamDirty) {
+                $lockedTeam->save(); 
+            } elseif ($membersChanged) {
+                // If only roster changed, manually bump the team's timestamp for locking purposes
+                $lockedTeam->touch(); 
+            }
+
+            // 5. Sync Roster if changes were detected
+            if ($membersChanged) {
+                $formattedMembers = collect($assignedMembers)->mapWithKeys(function ($member) {
+                    return [$member['user_id'] => ['team_role_id' => $member['team_role_id']]];
+                });
+
+                $lockedTeam->members()->sync($formattedMembers);
+                
+                // Manually fire the roster_updated activity log to match the Web App
+                activity()
+                    ->useLog('Teams')
+                    ->performedOn($lockedTeam)
+                    ->event('roster_updated')
+                    ->withProperties([
+                        'old' => ['member_ids' => array_keys($oldRoster)], 
+                        'attributes' => ['member_ids' => array_keys($newRoster)]
+                    ])
+                    ->log("{$lockedTeam->team_name} roster has been modified");
+            }
+            
+            return ['success' => true, 'changed' => $isTeamDirty || $membersChanged];
+        });
+    }
 }
