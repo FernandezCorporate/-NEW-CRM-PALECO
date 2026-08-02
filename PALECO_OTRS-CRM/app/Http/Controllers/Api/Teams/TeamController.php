@@ -111,4 +111,30 @@ class TeamController extends Controller
             'message' => $result['changed'] ? 'Team updated successfully.' : 'No changes were made to the team.'
         ], 200);
     }
+
+    public function archive(Request $request, Team $team)
+    {
+        if ($team->trashed()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Conflict: This team has already been archived by an administrator.'
+            ], 409); 
+        }
+
+        Gate::authorize('mobileArchiveTeam', $team);
+
+        $result = $this->teamService->archiveTeam($team);
+
+        if (!$result['success']) {
+            return response()->json([
+                'success' => false,
+                'message' => $result['message']
+            ], 409); 
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => $result['message']
+        ], 200);
+    }
 }

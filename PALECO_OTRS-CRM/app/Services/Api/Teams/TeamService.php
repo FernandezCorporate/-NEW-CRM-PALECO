@@ -155,4 +155,16 @@ class TeamService
             return ['success' => true, 'changed' => $isTeamDirty || $membersChanged];
         });
     }
+
+    public function archiveTeam(Team $team): array
+    {
+        $hasActiveTickets = $team->ticket()->exists();
+        
+        if ($hasActiveTickets) {
+            return ['success' => false, 'message' => 'Cannot archive team. They currently have active assigned service tickets.'];
+        }
+        
+        $team->delete();
+        return ['success' => true, 'message' => 'Team archived successfully.'];
+    }
 }

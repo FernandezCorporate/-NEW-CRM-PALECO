@@ -49,6 +49,8 @@ Route::middleware('auth:sanctum')->group(function () {
 
             Route::post('/create', [TeamController::class, 'store']);
             Route::put('/{team}/update', [TeamController::class, 'update'])->withTrashed();
+
+            Route::delete('/{team}/archive', [TeamController::class, 'archive'])->withTrashed();
         });
     });
 
