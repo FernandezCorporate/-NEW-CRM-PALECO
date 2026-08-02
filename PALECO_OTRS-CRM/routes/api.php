@@ -51,6 +51,8 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::put('/{team}/update', [TeamController::class, 'update'])->withTrashed();
 
             Route::delete('/{team}/archive', [TeamController::class, 'archive'])->withTrashed();
+
+            Route::patch('/{team}/restore', [TeamController::class, 'restore'])->whereUlid('team')->withTrashed();
         });
     });
 

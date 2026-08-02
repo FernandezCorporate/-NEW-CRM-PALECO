@@ -167,4 +167,24 @@ class TeamService
         $team->delete();
         return ['success' => true, 'message' => 'Team archived successfully.'];
     }
+
+    public function restoreTeam(string $id): array 
+    {
+        $team = Team::withTrashed()->find($id);
+
+        if (!$team) {
+            return ['success' => false, 'message' => 'Team not found. It may have been permanently deleted or never existed.'];
+        }
+
+        if (!$team->trashed()) {
+            return ['success' => false, 'message' => 'This team is already active and cannot be restored.'];
+        }
+
+        if (Team::where('team_name', $team->team_name)->exists()) {
+            return ['success' => false, 'message' => 'Cannot restore team. A team with the same name already exists.'];
+        }
+
+        $team->restore();
+        return ['success' => true, 'message' => 'Team restored successfully.'];
+    }
 }

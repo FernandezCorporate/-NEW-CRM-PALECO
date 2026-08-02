@@ -137,4 +137,23 @@ class TeamController extends Controller
             'message' => $result['message']
         ], 200);
     }
+
+    public function restore(Request $request, Team $team)
+    {
+        Gate::authorize('mobileRestoreTeam', $team);
+
+        $result = $this->teamService->restoreTeam($team->id);
+
+        if (!$result['success']) {
+            return response()->json([
+                'success' => false,
+                'message' => $result['message']
+            ], 409); 
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => $result['message']
+        ], 200);
+    }
 }
