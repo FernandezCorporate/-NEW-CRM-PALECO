@@ -44,6 +44,8 @@ Route::middleware('auth:sanctum')->group(function () {
         });
 
         Route::prefix('teams')->group(function () {
+            Route::get('/form-options/{team?}', [TeamController::class, 'formOptions'])->whereUlid('team');
+
             Route::get('/', [TeamController::class, 'index'])->withTrashed();
             Route::get('/{team}', [TeamController::class, 'show'])->withTrashed();
 

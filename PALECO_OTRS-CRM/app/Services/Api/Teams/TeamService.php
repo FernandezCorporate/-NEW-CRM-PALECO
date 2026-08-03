@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\DB;
 use App\Enums\TicketStatus;
 use App\Models\Team;
 use App\Models\User;
+use App\Models\TeamRole;
 use Illuminate\Pagination\LengthAwarePaginator; 
 
 /*
@@ -204,5 +205,28 @@ class TeamService
         $team->forceDelete();
         
         return ['success' => true, 'message' => 'Team permanently deleted successfully.'];
+    }
+
+    /*
+     * Retrieves active field personnel and available team roles for mobile form population.
+     */
+    public function getFormOptions(): array
+    {
+        // 1. Fetch active users assigned to the 'field_personnel' role
+        $personnel = User::query()
+            ->whereHas('role', fn($q) => $q->where('slug_identifier', 'field_personnel'))
+            ->where('is_active', true)
+            ->orderBy('first_name', 'asc')
+            // Only select the exact columns needed by the mobile frontend to minimize payload size
+            ->select(['id', 'first_name', 'middle_name', 'last_name', 'name_ext'])
+            ->get();
+            
+        // 2. Fetch available team roles
+        $memberRoles = TeamRole::query()
+            ->orderBy('role_name')
+            ->select(['id', 'role_name'])
+            ->get();
+
+        return compact('personnel', 'memberRoles');
     }
 }

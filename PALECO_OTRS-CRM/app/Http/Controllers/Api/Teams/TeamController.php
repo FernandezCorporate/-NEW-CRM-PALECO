@@ -177,4 +177,27 @@ class TeamController extends Controller
             'message' => $result['message']
         ], 200);
     }
+
+    /*
+     * Retrieves the necessary dependencies (personnel and roles) to populate the mobile UI dropdowns.
+     * Can optionally accept a Team model to validate edit-mode authorization.
+     */
+    public function formOptions(Request $request, ?Team $team = null)
+    {
+        // 1. Contextual Authorization
+        if ($team) {
+            Gate::authorize('mobileTeamOptions', $team);
+        } else {
+            Gate::authorize('create', Team::class);
+        }
+
+        // 2. Fetch lightweight structured data from the service
+        $options = $this->teamService->getFormOptions();
+
+        // 3. Return standard API JSON response (No heavy API Resource needed)
+        return response()->json([
+            'success' => true,
+            'data' => $options
+        ], 200);
+    }
 }
