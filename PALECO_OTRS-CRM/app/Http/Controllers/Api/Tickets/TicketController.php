@@ -10,6 +10,7 @@ use App\Services\Api\Tickets\TicketService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
+use App\Enums\TicketStatus;
 
 use App\Policies\TicketPolicy;
 
@@ -74,6 +75,41 @@ class TicketController extends Controller
             'status'  => 200,
             // 5. Inject the dynamic action into the success message
             'message' => "Ticket {$updatedTicket->ticket_number} has been successfully {$action}.",
+            'data'    => new TicketResource($updatedTicket)
+        ]);
+    }
+
+    /*
+     * Updates the ticket status to in-progress and sets the start timestamp.
+     * Ensures only correctly assigned tickets can be initiated.
+     */
+    public function start(Request $request, Ticket $ticket): JsonResponse
+    {
+        // 1. Security Gate: Ensure user is on the assigned team
+        Gate::authorize('start', $ticket);
+
+        // 2. State Guard: Prevent starting a ticket that isn't in the ASSIGNED state
+        if ($ticket->status === TicketStatus::IN_PROGRESS) {
+            return response()->json([
+                'success' => false,
+                'message' => 'This ticket is already in progress.'
+            ], 422);
+        }
+
+        if ($ticket->status !== TicketStatus::ASSIGNED) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Only assigned tickets can be started.'
+            ], 422);
+        }
+
+        // 3. Execute transactional update
+        $updatedTicket = $this->ticketService->startTicket($ticket, $request->user());
+
+        return response()->json([
+            'success' => true,
+            'status'  => 200,
+            'message' => "Work has started on ticket {$updatedTicket->ticket_number}.",
             'data'    => new TicketResource($updatedTicket)
         ]);
     }

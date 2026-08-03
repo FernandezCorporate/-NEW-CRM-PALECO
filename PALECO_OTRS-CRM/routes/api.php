@@ -63,7 +63,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::middleware('can:access-field_personnel')->group(function () {
         
         Route::prefix('tickets')->group(function () {
-            // Future Field Personnel endpoints go here (e.g., PATCH /{ticket}/status, POST /{ticket}/resolve)
+            Route::patch('/{ticket}/start', [TicketController::class, 'start']);
         });
 
     });

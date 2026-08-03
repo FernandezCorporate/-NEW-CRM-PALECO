@@ -48,6 +48,7 @@ class Ticket extends Model
         'team_id',
         'created_by',
         'status',
+        'started_at',
         'reported_at',
         'resolved_at'
     ];
@@ -63,6 +64,7 @@ class Ticket extends Model
             'complaint_source' => ComplaintSources::class,
             'other_category' => 'boolean',
             'status' => TicketStatus::class,
+            'started_at' => 'datetime',
             'reported_at' => 'datetime',
             'resolved_at' => 'datetime',
         ];
@@ -76,6 +78,11 @@ class Ticket extends Model
     public function department(): BelongsTo
     {
         return $this->belongsTo(Department::class, 'department_id');
+    }
+
+    public function team(): BelongsTo
+    {
+        return $this->belongsTo(Team::class, 'team_id');
     }
 
     /*
@@ -263,7 +270,8 @@ class Ticket extends Model
                 'barangay',
                 'department_id',
                 'team_id', // 1. ADDED: Spatie must watch this column to detect assignments
-                'status'
+                'status',
+                'started_at',
             ])
             ->logOnlyDirty()
             ->setDescriptionForEvent(function(string $eventName) {
@@ -273,6 +281,10 @@ class Ticket extends Model
                     // Check if the ticket had a team previously (reassigned) or if it was null (assigned)
                     $action = $this->getOriginal('team_id') === null ? 'assigned' : 'reassigned';
                     return "Ticket {$this->ticket_number} has been {$action} to a field team.";
+                }
+
+                if ($eventName === 'updated' && $this->isDirty('status') && $this->status === TicketStatus::IN_PROGRESS) {
+                    return "Work has started on Ticket {$this->ticket_number}.";
                 }
 
                 // 3. DEFAULT LOGIC: Handle all other standard state changes

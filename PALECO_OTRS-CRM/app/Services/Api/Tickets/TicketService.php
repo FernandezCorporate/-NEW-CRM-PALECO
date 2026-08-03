@@ -79,4 +79,28 @@ class TicketService
             return $ticket->fresh(['category']);
         });
     }
+
+    public function startTicket(Ticket $ticket, User $worker): Ticket
+    {
+        return DB::transaction(function () use ($ticket, $worker) {
+            
+            $oldStatus = $ticket->status;
+
+            // 1. Log the state transition to provide an audit trail
+            TicketStatusLog::create([
+                'ticket_id'  => $ticket->system_id,
+                'old_status' => $oldStatus, 
+                'new_status' => TicketStatus::IN_PROGRESS,
+                'changed_by' => $worker->id,
+            ]);
+
+            // 2. Update the core ticket state and mark the start time
+            $ticket->update([
+                'status'     => TicketStatus::IN_PROGRESS,
+                'started_at' => now(),
+            ]);
+
+            return $ticket->fresh(['category']);
+        });
+    }
 }
