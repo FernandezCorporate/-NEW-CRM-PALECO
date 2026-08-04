@@ -9,6 +9,8 @@ use App\Models\TicketStatusLog;
 use App\Models\User;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
+use App\Enums\TicketAccomplishmentStatus;
+use App\Models\TicketAccomplishment;
 
 /*
  * Encapsulates the core ticket retrieval and operational logic for the mobile API.
@@ -101,6 +103,39 @@ class TicketService
             ]);
 
             return $ticket->fresh(['category']);
+        });
+    }
+
+    public function accomplishTicket(Ticket $ticket, User $worker, array $accomplishmentDetails): TicketAccomplishment
+    {
+        return DB::transaction(function () use ($ticket, $worker, $accomplishmentDetails) {
+            
+            // 1. Create the accomplishment report (Fixed typos)
+            $report = TicketAccomplishment::create([
+                'ticket_id' => $ticket->system_id,
+                'accomplished_by_id' => $worker->id, // Fixed missing _id
+                'remarks' => $accomplishmentDetails['remarks'],
+                'consumer_name' => $accomplishmentDetails['consumer_name'] ?? null,
+                'status' => TicketAccomplishmentStatus::PENDING,
+                'accomplished_at' => now(), // Fixed spelling
+            ]);
+
+            // 2. Added the missing status log for the audit trail
+            TicketStatusLog::create([
+                'ticket_id'  => $ticket->system_id,
+                'old_status' => $ticket->status, 
+                'new_status' => TicketStatus::RESOLVED,
+                'changed_by' => $worker->id,
+            ]);
+
+            // 3. Update the parent ticket
+            $ticket->update([
+                'status' => TicketStatus::RESOLVED,
+                'resolved_at' => now(),
+            ]);
+
+            // 4. Return the report instead of the ticket
+            return $report;
         });
     }
 }

@@ -64,6 +64,7 @@ Route::middleware('auth:sanctum')->group(function () {
         
         Route::prefix('tickets')->group(function () {
             Route::patch('/{ticket}/start', [TicketController::class, 'start']);
+            Route::post('/{ticket}/accomplish', [TicketController::class, 'accomplish']);
         });
 
     });

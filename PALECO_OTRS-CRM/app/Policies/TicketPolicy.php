@@ -14,6 +14,7 @@ class TicketPolicy
     public function assign(User $user, Ticket $ticket): bool { return $user->role->slug_identifier === 'foreman' && $user->department_id === $ticket->department_id; }
 
     public function start(User $user, Ticket $ticket): bool { return $user->role->slug_identifier === 'field_personnel' && $user->teams()->where('teams.id', $ticket->team_id)->exists(); }
+    public function accomplish(User $user, Ticket $ticket): bool { return $user->role->slug_identifier === 'field_personnel' && $user->teams()->where('teams.id', $ticket->team_id)->exists(); }
 
     /* WEB APP POLICIES
      * viewAny: Determines if the web app user can view the primary list of tickets.

@@ -11,6 +11,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use App\Enums\TicketStatus;
+use App\Http\Requests\Api\Tickets\SubmitAccomplishmentReport;
 
 use App\Policies\TicketPolicy;
 
@@ -111,6 +112,39 @@ class TicketController extends Controller
             'status'  => 200,
             'message' => "Work has started on ticket {$updatedTicket->ticket_number}.",
             'data'    => new TicketResource($updatedTicket)
+        ]);
+    }
+
+    public function accomplish(SubmitAccomplishmentReport $request, Ticket $ticket)
+    {
+        // 1. Security Gate
+        Gate::authorize('accomplish', $ticket);
+
+        // 2. State Guard
+        if ($ticket->status === TicketStatus::RESOLVED) {
+            return response()->json([
+                'success' => false,
+                'message' => 'An accomplishment report has already been submitted for this ticket.'
+            ], 422);
+        }
+
+
+        if ($ticket->status !== TicketStatus::IN_PROGRESS) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Only tickets that are in progress can be marked as accomplished.'
+            ], 422);
+        }
+
+        // 3. Execute transactional update (Service now returns the report)
+        $accomplishmentReport = $this->ticketService->accomplishTicket($ticket, $request->user(), $request->validated());
+
+        return response()->json([
+            'success' => true,
+            'status'  => 201,
+            // 4. Use $ticket->ticket_number instead of the report's property
+            'message' => "Accomplishment report for ticket {$ticket->ticket_number} has been submitted.",
+            'data'    => $accomplishmentReport->load('accomplishedBy') // This will now work perfectly
         ]);
     }
 }
