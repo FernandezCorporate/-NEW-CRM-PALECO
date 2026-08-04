@@ -125,6 +125,14 @@ class Ticket extends Model
         return $this->hasMany(TicketAssignment::class, 'ticket_id', 'system_id');
     }
 
+    /*
+     * Retrieves the accomplishment reports submitted for this ticket.
+     */
+    public function accomplishments(): HasMany
+    {
+        return $this->hasMany(TicketAccomplishment::class, 'ticket_id', 'system_id');
+    }
+
     // --- ACCESSORS ---
 
     /*
