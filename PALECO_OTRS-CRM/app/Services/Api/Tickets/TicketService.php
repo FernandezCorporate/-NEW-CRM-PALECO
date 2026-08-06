@@ -45,23 +45,18 @@ class TicketService
     {
         return DB::transaction(function () use ($ticket, $teamId, $assigner) {
             
-            // 1. Capture the current status
             $oldStatus = $ticket->status;
 
-            // 2. Close out any active previous assignment
             $ticket->assignments()
                    ->whereNull('unassigned_at')
                    ->update(['unassigned_at' => now()]);
 
-            // 3. Create the new SLA tracking log
             TicketAssignment::create([
                 'ticket_id'   => $ticket->system_id,
                 'team_id'     => $teamId,
                 'assigned_by' => $assigner->id,
             ]);
 
-            // 4. LOGIC FIX: Only log the state transition if the status actually changed
-            // If it's a reassignment, $oldStatus will already be ASSIGNED, so this skips the useless log.
             if ($oldStatus !== TicketStatus::ASSIGNED) {
                 TicketStatusLog::create([
                     'ticket_id'  => $ticket->system_id,
@@ -71,13 +66,11 @@ class TicketService
                 ]);
             }
 
-            // 5. Update the core ticket state
             $ticket->update([
                 'team_id' => $teamId,
                 'status'  => TicketStatus::ASSIGNED,
             ]);
 
-            // 6. Return fresh model for the API response
             return $ticket->fresh(['category']);
         });
     }
@@ -88,7 +81,6 @@ class TicketService
             
             $oldStatus = $ticket->status;
 
-            // 1. Log the state transition to provide an audit trail
             TicketStatusLog::create([
                 'ticket_id'  => $ticket->system_id,
                 'old_status' => $oldStatus, 
@@ -96,7 +88,6 @@ class TicketService
                 'changed_by' => $worker->id,
             ]);
 
-            // 2. Update the core ticket state and mark the start time
             $ticket->update([
                 'status'     => TicketStatus::IN_PROGRESS,
                 'started_at' => now(),
@@ -110,17 +101,15 @@ class TicketService
     {
         return DB::transaction(function () use ($ticket, $worker, $accomplishmentDetails) {
             
-            // 1. Create the accomplishment report (Fixed typos)
             $report = TicketAccomplishment::create([
                 'ticket_id' => $ticket->system_id,
-                'accomplished_by_id' => $worker->id, // Fixed missing _id
+                'accomplished_by_id' => $worker->id, 
                 'remarks' => $accomplishmentDetails['remarks'],
                 'consumer_name' => $accomplishmentDetails['consumer_name'] ?? null,
                 'status' => TicketAccomplishmentStatus::PENDING,
-                'accomplished_at' => now(), // Fixed spelling
+                'accomplished_at' => now(), 
             ]);
 
-            // 2. Added the missing status log for the audit trail
             TicketStatusLog::create([
                 'ticket_id'  => $ticket->system_id,
                 'old_status' => $ticket->status, 
@@ -128,27 +117,68 @@ class TicketService
                 'changed_by' => $worker->id,
             ]);
 
-            // 3. Update the parent ticket
             $ticket->update([
                 'status' => TicketStatus::RESOLVED,
                 'resolved_at' => now(),
             ]);
 
-            // 4. Return the report instead of the ticket
             return $report;
         });
     }
 
     // --- QUERY METHODS ---
 
-    /*
-     * Prepares a single accomplishment record by eager-loading necessary user relationships.
-     */
     public function getAccomplishmentDetails(TicketAccomplishment $accomplishment): TicketAccomplishment
     {
         return $accomplishment->load([
             'accomplishedBy',
             'rejectedBy'
         ]);
+    }
+
+    public function verifyAccomplishment(Ticket $ticket, TicketAccomplishment $accomplishment, array $data, User $foreman): void
+    {
+        DB::transaction(function () use ($ticket, $accomplishment, $data, $foreman) {
+            
+            $oldTicketStatus = $ticket->status;
+
+            if ($data['status'] === TicketAccomplishmentStatus::APPROVED->value) {
+                $accomplishment->update([
+                    'status' => TicketAccomplishmentStatus::APPROVED
+                ]);
+
+                $ticket->update([
+                    'status' => TicketStatus::CLOSED,
+                    'closed_at' => now(),
+                ]);
+
+                TicketStatusLog::create([
+                    'ticket_id'  => $ticket->system_id,
+                    'old_status' => $oldTicketStatus, 
+                    'new_status' => TicketStatus::CLOSED,
+                    'changed_by' => $foreman->id,
+                ]);
+            } 
+            
+            if ($data['status'] === TicketAccomplishmentStatus::REJECTED->value) {
+                $accomplishment->update([
+                    'status' => TicketAccomplishmentStatus::REJECTED,
+                    'rejection_reason' => $data['rejection_reason'],
+                    'rejected_by_id' => $foreman->id,
+                ]);
+
+                $ticket->update([
+                    'status' => TicketStatus::IN_PROGRESS,
+                    'resolved_at' => null, 
+                ]);
+
+                TicketStatusLog::create([
+                    'ticket_id'  => $ticket->system_id,
+                    'old_status' => $oldTicketStatus, 
+                    'new_status' => TicketStatus::IN_PROGRESS,
+                    'changed_by' => $foreman->id,
+                ]);
+            }
+        });
     }
 }

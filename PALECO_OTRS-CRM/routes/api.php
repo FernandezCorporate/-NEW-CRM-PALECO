@@ -45,6 +45,7 @@ Route::middleware('auth:sanctum')->group(function () {
         
         Route::prefix('tickets')->group(function () {
             Route::post('/{ticket}/assign', [TicketController::class, 'assign']);
+            Route::post('/{ticket}/accomplishments/{accomplishment}/verify', [TicketAccomplishmentController::class, 'verify']);
             // Future Foreman verify endpoint will go here
         });
 

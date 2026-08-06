@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\Tickets;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\Tickets\SubmitAccomplishmentReport;
+use App\Http\Requests\Api\Tickets\VerifyAccomplishmentRequest;
 use App\Http\Resources\Api\TicketAccomplishmentResource;
 use App\Models\Ticket;
 use App\Models\TicketAccomplishment;
@@ -11,6 +12,7 @@ use App\Services\Api\Tickets\TicketService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use App\Enums\TicketStatus;
+use App\Enums\TicketAccomplishmentStatus;
 
 class TicketAccomplishmentController extends Controller
 {
@@ -75,6 +77,36 @@ class TicketAccomplishmentController extends Controller
             'status'  => 201,
             'message' => "Accomplishment report for ticket {$ticket->ticket_number} has been submitted.",
             'data'    => new TicketAccomplishmentResource($accomplishmentReport->load('accomplishedBy')) 
+        ]);
+    }
+
+    public function verify(VerifyAccomplishmentRequest $request, Ticket $ticket, TicketAccomplishment $accomplishment)
+    {
+        // 1. Security Gate
+        Gate::authorize('verify', $ticket);
+
+        // 2. Data Integrity Guard
+        if ($accomplishment->ticket_id !== $ticket->system_id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'This accomplishment report does not belong to the requested ticket.'
+            ], 404);
+        }
+
+        // 3. State Guard
+        if ($accomplishment->status !== TicketAccomplishmentStatus::PENDING) { 
+            return response()->json([
+                'success' => false,
+                'message' => 'This accomplishment report has already been evaluated.'
+            ], 422);
+        }
+
+        // 4. Delegate to Service
+        $this->ticketService->verifyAccomplishment($ticket, $accomplishment, $request->validated(), $request->user());
+
+        return response()->json([
+            'success' => true,
+            'message' => "Accomplishment report successfully {$request->status}."
         ]);
     }
 }

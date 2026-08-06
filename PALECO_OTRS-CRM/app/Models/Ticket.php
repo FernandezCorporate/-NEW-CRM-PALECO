@@ -50,14 +50,12 @@ class Ticket extends Model
         'status',
         'started_at',
         'reported_at',
-        'resolved_at'
+        'resolved_at',
+        'closed_at',
     ];
 
     // --- CASTS ---
 
-    /*
-     * Defines Enum and datetime casting for accurate data formatting.
-     */
     protected function casts(): array
     {
         return [
@@ -67,14 +65,12 @@ class Ticket extends Model
             'started_at' => 'datetime',
             'reported_at' => 'datetime',
             'resolved_at' => 'datetime',
+            'closed_at' => 'datetime',
         ];
     }
 
     // --- RELATIONSHIPS ---
 
-    /*
-     * Retrieves the department assigned to resolve this ticket.
-     */
     public function department(): BelongsTo
     {
         return $this->belongsTo(Department::class, 'department_id');
@@ -85,49 +81,31 @@ class Ticket extends Model
         return $this->belongsTo(Team::class, 'team_id');
     }
 
-    /*
-     * Retrieves the system category assigned to this ticket.
-     */
     public function category(): BelongsTo
     {
         return $this->belongsTo(TicketCategory::class, 'category_id');
     }
 
-    /*
-     * Retrieves the chronological history of status changes for this ticket.
-     */
     public function statusLog(): HasMany
     {
         return $this->hasMany(TicketStatusLog::class, 'ticket_id', 'system_id');
     }
 
-    /*
-     * Retrieves the system user (CWD Officer) who originally created the ticket.
-     */
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by', 'id');
     }
 
-    /*
-     * Retrieves any child tickets spawned from this parent ticket.
-     */
     public function childTickets(): HasMany
     {
         return $this->hasMany(Ticket::class, 'parent_ticket_id', 'system_id');
     }
 
-    /*
-     * Retrieves the chronological history of team assignments for SLA tracking.
-     */
     public function assignments(): HasMany
     {
         return $this->hasMany(TicketAssignment::class, 'ticket_id', 'system_id');
     }
 
-    /*
-     * Retrieves the accomplishment reports submitted for this ticket.
-     */
     public function accomplishments(): HasMany
     {
         return $this->hasMany(TicketAccomplishment::class, 'ticket_id', 'system_id');
@@ -135,9 +113,6 @@ class Ticket extends Model
 
     // --- ACCESSORS ---
 
-    /*
-     * Generates a readable subject line combining the category and full address.
-     */
     protected function subject(): Attribute
     {
         return Attribute::make(
@@ -156,9 +131,6 @@ class Ticket extends Model
 
     // --- SCOPE FUNCTIONS ---
 
-    /*
-     * Applies a search filter against the ticket number, description, and location.
-     */
     public function scopeSearch($query, $search)
     {
         if (empty($search)) return $query;
@@ -171,9 +143,6 @@ class Ticket extends Model
         });
     }
 
-    /*
-     * Applies a filter to isolate tickets belonging to a specific category or the 'other' classification.
-     */
     public function scopeFilterByCategory($query, $filter)
     {
         if (empty($filter) || $filter === 'all') return $query;
@@ -185,23 +154,17 @@ class Ticket extends Model
         return $query->where('category_id', $filter);
     }
 
-    /*
-     * Applies sorting rules to the query based on chronological or status priorities.
-     */
     public function scopeSort($query, $sort)
     {
         return match ($sort) {
             'oldest' => $query->oldest(),
             'status' => $query->orderBy('status'),
-            default => $query->latest(), // 'newest' is default
+            default => $query->latest(),
         };
     }
 
     // --- MOBILE API SCOPE FUNCTIONS ---
 
-    /*
-     * Applies a comprehensive search filter against fields specifically returned in the API payload.
-     */
     public function scopeApiSearch($query, $search)
     {
         if (empty($search)) return $query;
@@ -220,9 +183,6 @@ class Ticket extends Model
         });
     }
 
-    /*
-     * Applies a filter isolating tickets based on the exact category name or the 'other' classification.
-     */
     public function scopeApiFilterByCategoryName($query, $filter)
     {
         if (empty($filter)) return $query;
@@ -236,9 +196,6 @@ class Ticket extends Model
         });
     }
 
-    /*
-     * Applies a strict status match filter for the API list view.
-     */
     public function scopeApiFilterByStatus($query, $status)
     {
         if (empty($status)) return $query;
@@ -246,9 +203,6 @@ class Ticket extends Model
         return $query->where('status', $status);
     }
 
-    /*
-     * Applies precise sorting rules for the mobile interface prioritizing ticket numbers and chronology.
-     */
     public function scopeApiSort($query, $sort)
     {
         return match ($sort) {
@@ -261,10 +215,6 @@ class Ticket extends Model
 
     // --- ACTIVITY LOG ---
 
-    /*
-     * Configures the Spatie Activitylog options for this model.
-     * Records critical changes to ticket configurations and status updates.
-     */
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
@@ -277,25 +227,37 @@ class Ticket extends Model
                 'other_category_name',
                 'barangay',
                 'department_id',
-                'team_id', // 1. ADDED: Spatie must watch this column to detect assignments
+                'team_id',
                 'status',
                 'started_at',
+                'closed_at',
             ])
             ->logOnlyDirty()
             ->setDescriptionForEvent(function(string $eventName) {
                 
-                // 2. DYNAMIC ASSIGNMENT LOGIC: Intercept updates where the team changes
                 if ($eventName === 'updated' && $this->isDirty('team_id')) {
-                    // Check if the ticket had a team previously (reassigned) or if it was null (assigned)
                     $action = $this->getOriginal('team_id') === null ? 'assigned' : 'reassigned';
                     return "Ticket {$this->ticket_number} has been {$action} to a field team.";
                 }
 
-                if ($eventName === 'updated' && $this->isDirty('status') && $this->status === TicketStatus::IN_PROGRESS) {
-                    return "Work has started on Ticket {$this->ticket_number}.";
+                if ($eventName === 'updated' && $this->isDirty('status')) {
+                    
+                    if ($this->status === TicketStatus::IN_PROGRESS) {
+                        if ($this->getOriginal('status') === TicketStatus::RESOLVED) {
+                            return "The accomplishment report was rejected. Ticket {$this->ticket_number} has been returned to In Progress.";
+                        }
+                        return "Work has started on Ticket {$this->ticket_number}.";
+                    }
+
+                    if ($this->status === TicketStatus::RESOLVED) {
+                        return "An accomplishment report was submitted. Ticket {$this->ticket_number} is now resolved and pending verification.";
+                    }
+
+                    if ($this->status === TicketStatus::CLOSED) {
+                        return "Ticket {$this->ticket_number} has been verified and closed.";
+                    }
                 }
 
-                // 3. DEFAULT LOGIC: Handle all other standard state changes
                 $action = match($eventName) {
                     'created'  => 'created',
                     'updated'  => 'modified',
@@ -304,7 +266,6 @@ class Ticket extends Model
                     default    => $eventName,
                 };
                 
-                // 4. REMOVED: "by CWD Officer" is gone so Foremen aren't mislabeled
                 return "Ticket {$this->ticket_number} has been {$action}.";
             });
     }
