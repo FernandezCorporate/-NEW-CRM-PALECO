@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\Auth\AuthController;
 use App\Http\Controllers\Api\Profiles\ProfileController;
 use App\Http\Controllers\Api\Tickets\TicketController;
+use App\Http\Controllers\Api\Tickets\TicketAccomplishmentController;
 use App\Http\Controllers\Api\Teams\TeamController;
 
 /*
@@ -31,8 +32,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/user/profile', [ProfileController::class, 'show']);
     
+    // Both roles can index and view. The service layer and policies automatically filter 
+    // the data (Foreman = Department, Field = Team).
     Route::prefix('tickets')->group(function () {
         Route::get('/', [TicketController::class, 'index']);
+        Route::get('/{ticket}/accomplishments', [TicketAccomplishmentController::class, 'index']);
+        Route::get('/{ticket}/accomplishments/{accomplishment}', [TicketAccomplishmentController::class, 'show']);
     });
 
     // --- FOREMAN SPECIFIC ENDPOINTS ---
@@ -40,7 +45,7 @@ Route::middleware('auth:sanctum')->group(function () {
         
         Route::prefix('tickets')->group(function () {
             Route::post('/{ticket}/assign', [TicketController::class, 'assign']);
-            // Future Foreman endpoints go here (e.g., escalate, close, prioritize)
+            // Future Foreman verify endpoint will go here
         });
 
         Route::prefix('teams')->group(function () {
@@ -64,7 +69,9 @@ Route::middleware('auth:sanctum')->group(function () {
         
         Route::prefix('tickets')->group(function () {
             Route::patch('/{ticket}/start', [TicketController::class, 'start']);
-            Route::post('/{ticket}/accomplish', [TicketController::class, 'accomplish']);
+            
+            // Refactored to match standard REST conventions for the TicketAccomplishmentController
+            Route::post('/{ticket}/accomplishments', [TicketAccomplishmentController::class, 'store']);
         });
 
     });

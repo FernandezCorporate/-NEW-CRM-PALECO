@@ -138,4 +138,17 @@ class TicketService
             return $report;
         });
     }
+
+    // --- QUERY METHODS ---
+
+    /*
+     * Prepares a single accomplishment record by eager-loading necessary user relationships.
+     */
+    public function getAccomplishmentDetails(TicketAccomplishment $accomplishment): TicketAccomplishment
+    {
+        return $accomplishment->load([
+            'accomplishedBy',
+            'rejectedBy'
+        ]);
+    }
 }
