@@ -11,6 +11,8 @@ use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use App\Enums\TicketAccomplishmentStatus;
 use App\Models\TicketAccomplishment;
+use App\Models\TicketEscalation;
+use App\Enums\EscalationStatus;
 
 /*
  * Encapsulates the core ticket retrieval and operational logic for the mobile API.
@@ -179,6 +181,27 @@ class TicketService
                     'changed_by' => $foreman->id,
                 ]);
             }
+        });
+    }
+
+    public function requestEscalation(Ticket $ticket, array $data, User $foreman): TicketEscalation
+    {
+        return DB::transaction(function () use ($ticket, $data, $foreman) {
+            
+            // 1. Create the escalation record
+            $escalation = $ticket->escalations()->create([
+                'suggested_department_id' => $data['suggested_department_id'] ?? null,
+                'reason'                  => $data['reason'],
+                'pre_escalation_status'   => $ticket->status->value,
+                'status'                  => EscalationStatus::PENDING,
+            ]);
+
+            // 2. Freeze the parent ticket
+            $ticket->update([
+                'status' => TicketStatus::PENDING_ESCALATION,
+            ]);
+
+            return $escalation;
         });
     }
 }

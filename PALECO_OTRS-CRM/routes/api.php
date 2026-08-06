@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\Profiles\ProfileController;
 use App\Http\Controllers\Api\Tickets\TicketController;
 use App\Http\Controllers\Api\Tickets\TicketAccomplishmentController;
 use App\Http\Controllers\Api\Teams\TeamController;
+use App\Http\Controllers\Api\Tickets\TicketEscalationController;
 
 /*
 |--------------------------------------------------------------------------
@@ -45,6 +46,7 @@ Route::middleware('auth:sanctum')->group(function () {
         
         Route::prefix('tickets')->group(function () {
             Route::post('/{ticket}/assign', [TicketController::class, 'assign']);
+            Route::post('/{ticket}/escalate', [TicketEscalationController::class, 'escalate']);
             Route::post('/{ticket}/accomplishments/{accomplishment}/verify', [TicketAccomplishmentController::class, 'verify']);
             // Future Foreman verify endpoint will go here
         });
