@@ -111,6 +111,11 @@ class Ticket extends Model
         return $this->hasMany(TicketAccomplishment::class, 'ticket_id', 'system_id');
     }
 
+    public function escalations(): HasMany
+    {
+        return $this->hasMany(TicketEscalation::class, 'ticket_id', 'system_id');
+    }
+
     // --- ACCESSORS ---
 
     protected function subject(): Attribute
@@ -237,7 +242,10 @@ class Ticket extends Model
                 
                 if ($eventName === 'updated' && $this->isDirty('team_id')) {
                     $action = $this->getOriginal('team_id') === null ? 'assigned' : 'reassigned';
-                    return "Ticket {$this->ticket_number} has been {$action} to a field team.";
+                    // Do not log team changes if the ticket is being escalated/unassigned
+                    if ($this->status !== TicketStatus::PENDING_ESCALATION) {
+                        return "Ticket {$this->ticket_number} has been {$action} to a field team.";
+                    }
                 }
 
                 if ($eventName === 'updated' && $this->isDirty('status')) {
@@ -246,7 +254,18 @@ class Ticket extends Model
                         if ($this->getOriginal('status') === TicketStatus::RESOLVED) {
                             return "The accomplishment report was rejected. Ticket {$this->ticket_number} has been returned to In Progress.";
                         }
+                        if ($this->getOriginal('status') === TicketStatus::PENDING_ESCALATION) {
+                            return "The escalation request was rejected. Ticket {$this->ticket_number} has been returned to its previous state.";
+                        }
                         return "Work has started on Ticket {$this->ticket_number}.";
+                    }
+
+                    if ($this->status === TicketStatus::PENDING_ESCALATION) {
+                        return "An escalation request was submitted. Ticket {$this->ticket_number} is pending management review.";
+                    }
+
+                    if ($this->status === TicketStatus::ESCALATED) {
+                        return "The escalation request was approved. Ticket {$this->ticket_number} has been routed to a new department.";
                     }
 
                     if ($this->status === TicketStatus::RESOLVED) {
