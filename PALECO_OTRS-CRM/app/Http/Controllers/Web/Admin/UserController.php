@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Gate;
 use App\Http\Requests\Web\Admin\User\StoreUserRequest;
 use App\Http\Requests\Web\Admin\User\UpdateUserRequest;
 
-use App\Services\Admin\UserService;
+use App\Services\Web\Admin\UserService;
 
 use App\Models\AccountRole;
 use App\Models\Department;

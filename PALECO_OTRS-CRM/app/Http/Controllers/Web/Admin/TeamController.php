@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Gate;
 use App\Http\Requests\Web\Admin\Team\StoreTeamRequest;
 use App\Http\Requests\Web\Admin\Team\UpdateTeamRequest;
 
-use App\Services\Admin\TeamService;
+use App\Services\Web\Admin\TeamService;
 
 use App\Models\Team;
 

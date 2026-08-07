@@ -7,7 +7,7 @@ use Illuminate\Http\Request;
 
 use App\Http\Requests\Web\Auth\LoginRequest;
 
-use App\Services\Auth\AuthService;
+use App\Services\Web\Auth\AuthService;
 
 /*
  * Manages the web-based authentication lifecycle.

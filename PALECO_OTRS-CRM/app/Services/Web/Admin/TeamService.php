@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services\Admin;
+namespace App\Services\Web\Admin;
 
 use Illuminate\Support\Facades\DB;
 

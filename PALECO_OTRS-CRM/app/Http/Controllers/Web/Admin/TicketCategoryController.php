@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Gate;
 use App\Http\Requests\Web\Admin\TicketCategory\StoreTicketCategoryRequest;
 use App\Http\Requests\Web\Admin\TicketCategory\UpdateTicketCategoryRequest;
 
-use App\Services\Admin\TicketCategoryService;
+use App\Services\Web\Admin\TicketCategoryService;
 
 use App\Models\TicketCategory;
 

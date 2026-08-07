@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Gate;
 use App\Http\Requests\Web\Admin\Department\StoreDepartmentRequest;
 use App\Http\Requests\Web\Admin\Department\UpdateDepartmentRequest;
 
-use App\Services\Admin\DepartmentService;
+use App\Services\Web\Admin\DepartmentService;
 
 use App\Models\Department;
 
