@@ -6,8 +6,8 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 
-use App\Http\Requests\Admin\Department\StoreDepartmentRequest;
-use App\Http\Requests\Admin\Department\UpdateDepartmentRequest;
+use App\Http\Requests\Web\Admin\Department\StoreDepartmentRequest;
+use App\Http\Requests\Web\Admin\Department\UpdateDepartmentRequest;
 
 use App\Services\Admin\DepartmentService;
 

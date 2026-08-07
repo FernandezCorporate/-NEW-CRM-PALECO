@@ -6,8 +6,8 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 
-use App\Http\Requests\Admin\TicketCategory\StoreTicketCategoryRequest;
-use App\Http\Requests\Admin\TicketCategory\UpdateTicketCategoryRequest;
+use App\Http\Requests\Web\Admin\TicketCategory\StoreTicketCategoryRequest;
+use App\Http\Requests\Web\Admin\TicketCategory\UpdateTicketCategoryRequest;
 
 use App\Services\Admin\TicketCategoryService;
 

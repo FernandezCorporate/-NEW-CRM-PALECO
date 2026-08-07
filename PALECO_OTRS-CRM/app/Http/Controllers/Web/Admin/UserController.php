@@ -6,8 +6,8 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 
-use App\Http\Requests\Admin\User\StoreUserRequest;
-use App\Http\Requests\Admin\User\UpdateUserRequest;
+use App\Http\Requests\Web\Admin\User\StoreUserRequest;
+use App\Http\Requests\Web\Admin\User\UpdateUserRequest;
 
 use App\Services\Admin\UserService;
 

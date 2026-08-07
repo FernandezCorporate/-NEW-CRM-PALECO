@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Web\Auth;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request; 
 
-use App\Http\Requests\Auth\LoginRequest;
+use App\Http\Requests\Web\Auth\LoginRequest;
 
 use App\Services\Auth\AuthService;
 

@@ -1,15 +1,15 @@
 <?php
 
-namespace App\Http\Requests\Admin\Department;
+namespace App\Http\Requests\Web\Admin\Department;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
 /*
- * Validates incoming HTTP requests for creating a new department.
- * Ensures the department name is uniquely registered among active records.
+ * Validates incoming HTTP requests for updating an existing department.
+ * Prevents name collisions while ignoring the department's own current name.
  */
-class StoreDepartmentRequest extends FormRequest
+class UpdateDepartmentRequest extends FormRequest
 {
     /*
      * Determines if the user is authorized to make this request.
@@ -21,19 +21,23 @@ class StoreDepartmentRequest extends FormRequest
     }
 
     /*
-     * Defines the strict validation rules for creating a department.
+     * Defines the strict validation rules for updating a department.
      */
     public function rules(): array
     {
+        // Extract the ID from the bound model
+        $deptId = $this->route('dept')->id;
+
         return [
+            'original_updated_at' => ['required', 'string'],
             'dept_name' => [
                 'required', 
                 'string', 
-                'max:255', 
-                // Only check uniqueness against active (non-deleted) records
-                Rule::unique('departments', 'dept_name')->whereNull('deleted_at')
+                Rule::unique('departments', 'dept_name')
+                    ->ignore($deptId)
+                    ->whereNull('deleted_at') // Ignore archived records
             ],
-            'dept_desc' => ['nullable', 'string', 'max:255'],
+            'dept_desc' => ['nullable', 'string'],
         ];
     }
 

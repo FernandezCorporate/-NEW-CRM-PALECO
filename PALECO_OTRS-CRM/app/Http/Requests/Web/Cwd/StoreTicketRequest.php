@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Requests\Cwd;
+namespace App\Http\Requests\Web\Cwd;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rules\Enum;

@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 
-use App\Http\Requests\Cwd\StoreTicketRequest;
+use App\Http\Requests\Web\Cwd\StoreTicketRequest;
 
 use App\Services\Cwd\TicketService;
 

@@ -6,8 +6,8 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 
-use App\Http\Requests\Admin\Team\StoreTeamRequest;
-use App\Http\Requests\Admin\Team\UpdateTeamRequest;
+use App\Http\Requests\Web\Admin\Team\StoreTeamRequest;
+use App\Http\Requests\Web\Admin\Team\UpdateTeamRequest;
 
 use App\Services\Admin\TeamService;
 

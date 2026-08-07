@@ -1,17 +1,15 @@
 <?php
 
-namespace App\Http\Requests\Admin\User;
+namespace App\Http\Requests\Web\Admin\User;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
-use App\Models\AccountRole;
-
 /*
- * Validates incoming HTTP requests for creating a new user account.
- * Handles extensive profile data, role-based constraints, and credential security.
+ * Validates incoming HTTP requests for updating an existing user account.
+ * Roles and passwords are excluded here, maintaining strict role-based department checks.
  */
-class StoreUserRequest extends FormRequest
+class UpdateUserRequest extends FormRequest
 {
     /*
      * Determines if the user is authorized to make this request.
@@ -38,30 +36,32 @@ class StoreUserRequest extends FormRequest
     }
 
     /*
-     * Defines the strict validation rules for creating a user account.
-     * Conditionally requires a department ID if the assigned role is a Foreman.
+     * Defines the strict validation rules for updating an account.
+     * Prevents unique field collisions by ignoring the user's current values.
      */
     public function rules(): array
     {
+        // Retrieve the user instance from route model binding
+        $userModel = $this->route('user');
+
         return [
-            'username' => ['required', 'string', 'max:100', Rule::unique('users', 'username')],
+            'original_updated_at' => ['required', 'string'],
+            'username' => ['required', 'string', 'max:100', Rule::unique('users', 'username')->ignore($userModel->id)],
             'first_name' => ['required', 'string', 'max:255'],
             'middle_name' => ['nullable', 'string', 'max:255'],
             'last_name' => ['required', 'string', 'max:255'],
             'name_ext' => ['nullable', 'string', 'max:10'],
-            'email' => ['nullable', 'string', 'email:rfc,dns', 'max:255', Rule::unique('users', 'email')],
-            'contact' => ['required', 'string', 'regex:/^(09|\+639)\d{9}$/'],
-            'role_id' => ['required', 'integer', Rule::exists('account_roles', 'id')],
+            'email' => ['nullable', 'string', 'email:rfc,dns', 'max:255', Rule::unique('users', 'email')->ignore($userModel->id)],
+            'contact' => ['required', 'string', 'regex:/^(09|\+639)\d{9}$/'],            
             'department_id' => [
-                Rule::requiredIf(function () {
-                    $role = AccountRole::find($this->input('role_id'));
-                    return $role && $role->slug_identifier === 'foreman';
+                Rule::requiredIf(function () use ($userModel) {
+                    // Check the user's existing immutable role in the database
+                    return $userModel && $userModel->role->slug_identifier === 'foreman';
                 }),
                 'nullable', 
                 'integer', 
                 Rule::exists('departments', 'id')->whereNull('deleted_at')
             ],
-            'password' => ['required', 'string', 'min:8', 'confirmed'],
         ];
     }
 
@@ -99,18 +99,9 @@ class StoreUserRequest extends FormRequest
             'contact.string'      => 'The contact number must be a valid text string.',
             'contact.regex'       => 'The contact number must be a valid Philippine mobile number starting with 09 or +639.',
             
-            'role_id.required'    => 'Please select an account role for the user.',
-            'role_id.integer'     => 'The selected role must be a valid integer.',
-            'role_id.exists'      => 'The selected account role does not exist.',
-            
-            'department_id.required' => 'A department must be assigned when the user\'s role is set to Foreman.',
+            'department_id.requiredIf' => 'A department must be assigned since the user\'s role is Foreman.',
             'department_id.integer'    => 'The department ID must be a valid integer.',
             'department_id.exists'     => 'The selected department does not exist.',
-            
-            'password.required'   => 'A password must be provided for the new account.',
-            'password.string'     => 'The password must be a valid text string.',
-            'password.min'        => 'The password must be at least 8 characters long.',
-            'password.confirmed'  => 'The password confirmation does not match.',
         ];
     }
 }

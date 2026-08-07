@@ -1,15 +1,15 @@
 <?php
 
-namespace App\Http\Requests\Admin\TicketCategory;
+namespace App\Http\Requests\Web\Admin\TicketCategory;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
 /*
- * Validates incoming HTTP requests for creating a new ticket category.
- * Enforces uniqueness to prevent duplicate system classifications.
+ * Validates incoming HTTP requests for updating an existing ticket category.
+ * Prevents name collisions while ignoring the category's own current name.
  */
-class StoreTicketCategoryRequest extends FormRequest
+class UpdateTicketCategoryRequest extends FormRequest
 {
     /*
      * Determines if the user is authorized to make this request.
@@ -21,12 +21,20 @@ class StoreTicketCategoryRequest extends FormRequest
     }
 
     /*
-     * Defines the strict validation rules for creating a category.
+     * Defines the strict validation rules for updating a category.
      */
     public function rules(): array
     {
         return [
-            'category_name' => ['required', 'string', 'max:100', Rule::unique('ticket_categories', 'category_name')->whereNull('deleted_at')],
+            'original_updated_at' => ['required', 'string'],
+            'category_name' => [
+                'required', 
+                'string', 
+                'max:100', 
+                Rule::unique('ticket_categories', 'category_name')
+                    ->ignore($this->route('category'))
+                    ->whereNull('deleted_at')
+            ],
             'category_desc' => ['nullable', 'string', 'max:255']
         ];
     }
