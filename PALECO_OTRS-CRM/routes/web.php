@@ -4,16 +4,16 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
 
-use App\Http\Controllers\Auth\AuthController;
+use App\Http\Controllers\Web\Auth\AuthController;
 
-use App\Http\Controllers\Admin\AdminDashboardController;
-use App\Http\Controllers\Admin\DepartmentController;
-use App\Http\Controllers\Admin\TeamController;
-use App\Http\Controllers\Admin\TicketCategoryController;
-use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\Web\Admin\AdminDashboardController;
+use App\Http\Controllers\Web\Admin\DepartmentController;
+use App\Http\Controllers\Web\Admin\TeamController;
+use App\Http\Controllers\Web\Admin\TicketCategoryController;
+use App\Http\Controllers\Web\Admin\UserController;
 
-use App\Http\Controllers\Cwd\CwdDashboardController;
-use App\Http\Controllers\Cwd\TicketController;
+use App\Http\Controllers\Web\Cwd\CwdDashboardController;
+use App\Http\Controllers\Web\Cwd\TicketController;
 
 use App\Http\Middleware\CheckIfActive;
 
