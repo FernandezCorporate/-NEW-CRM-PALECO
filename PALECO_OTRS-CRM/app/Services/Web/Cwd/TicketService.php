@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services\Cwd;
+namespace App\Services\Web\Cwd;
 
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;

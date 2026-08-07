@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Gate;
 
 use App\Http\Requests\Web\Cwd\StoreTicketRequest;
 
-use App\Services\Cwd\TicketService;
+use App\Services\Web\Cwd\TicketService;
 
 use App\Models\Department;
 use App\Models\Ticket;
