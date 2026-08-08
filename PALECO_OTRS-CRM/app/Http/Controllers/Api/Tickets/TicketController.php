@@ -27,7 +27,13 @@ class TicketController extends Controller
             $request->only(['search', 'category', 'status', 'sort'])
         );
 
-        return TicketResource::collection($tickets);
+        $counts = $this->ticketService->getTicketStatusCount($user);
+
+        return TicketResource::collection($tickets)->additional([
+            'meta' => [
+                'status_counts' => $counts
+            ]
+        ]);
     }
 
     public function assign(AssignTicketRequest $request, Ticket $ticket): JsonResponse

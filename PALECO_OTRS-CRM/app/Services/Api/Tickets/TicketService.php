@@ -41,6 +41,29 @@ class TicketService
         return $query->paginate(10)->withQueryString();
     }
 
+    public function getTicketStatusCount(User $user): array
+    {
+        $baseQuery = Ticket::query();
+
+        if ($user->role->slug_identifier === 'foreman') {
+            $baseQuery->where('department_id', $user->department_id);
+        } elseif ($user->role->slug_identifier === 'field_personnel') {
+            $teamIds = $user->teams()->pluck('teams.id');
+            $baseQuery->whereIn('team_id', $teamIds);
+        }
+
+        return [
+            'all' => (clone $baseQuery)->count(),
+            'open' => (clone $baseQuery)->where('status', TicketStatus::OPEN)->count(),
+            'assigned' => (clone $baseQuery)->where('status', TicketStatus::ASSIGNED)->count(),
+            'in_progress' => (clone $baseQuery)->where('status', TicketStatus::IN_PROGRESS)->count(),
+            'resolved' => (clone $baseQuery)->where('status', TicketStatus::RESOLVED)->count(),
+            'closed' => (clone $baseQuery)->where('status', TicketStatus::CLOSED)->count(),
+            'pending_escalation' => (clone $baseQuery)->where('status', TicketStatus::PENDING_ESCALATION)->count(),
+            'escalated' => (clone $baseQuery)->where('status', TicketStatus::ESCALATED)->count(),
+        ];
+    }
+
     // --- MUTATING METHODS ---
 
     public function assignTicket(Ticket $ticket, string $teamId, User $assigner): Ticket

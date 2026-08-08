@@ -20,6 +20,8 @@ class TicketResource extends JsonResource
             'id'                  => $this->system_id,
             'ticket_number'       => $this->ticket_number,
             'complaint_source'    => $this->complaint_source?->value ?? $this->complaint_source,
+
+            'ticket_subject'      => $this->subject,
             'complaint_description' => $this->complaint_description,
             'category_name'       => $this->other_category 
                                         ? $this->other_category_name 
