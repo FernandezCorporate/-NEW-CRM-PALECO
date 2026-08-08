@@ -1,14 +1,15 @@
 <?php
 
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Route;
-
 use App\Http\Controllers\Api\Auth\AuthController;
 use App\Http\Controllers\Api\Profiles\ProfileController;
-use App\Http\Controllers\Api\Tickets\TicketController;
-use App\Http\Controllers\Api\Tickets\TicketAccomplishmentController;
 use App\Http\Controllers\Api\Teams\TeamController;
+use App\Http\Controllers\Api\Tickets\TicketAccomplishmentController;
+use App\Http\Controllers\Api\Tickets\TicketController;
 use App\Http\Controllers\Api\Tickets\TicketEscalationController;
+use App\Http\Controllers\Api\Dashboard\DashboardController;
+
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
@@ -43,7 +44,9 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // --- FOREMAN SPECIFIC ENDPOINTS ---
     Route::middleware('can:access-foreman')->group(function () {
-        
+
+        Route::get('/foreman-dashboard', [DashboardController::class, 'foremanIndex']);
+
         Route::prefix('tickets')->group(function () {
             Route::post('/{ticket}/assign', [TicketController::class, 'assign']);
             Route::post('/{ticket}/escalate', [TicketEscalationController::class, 'escalate']);

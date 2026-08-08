@@ -36,6 +36,7 @@ class UserPolicy
 
     // Mobile app permissions
     public function viewProfile(User $user, User $targetUser): bool { return $user->is($targetUser) && in_array($user->role->slug_identifier, ['admin', 'cwd_officer', 'foreman', 'field_personnel']); }
+    public function viewForemanDashboard(User $user): bool { return $user->role->slug_identifier === 'foreman'; }
 
     /*
      * Web-app

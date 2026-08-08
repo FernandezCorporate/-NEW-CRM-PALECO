@@ -38,7 +38,7 @@ class TicketService
               ->apiFilterByStatus($params['status'] ?? null)
               ->apiSort($params['sort'] ?? null);
 
-        return $query->paginate(10);
+        return $query->paginate(10)->withQueryString();
     }
 
     // --- MUTATING METHODS ---
