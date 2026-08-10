@@ -4,64 +4,51 @@ namespace App\Services\Api\Dashboard;
 
 use App\Models\User;
 use App\Models\Ticket;
-
 use App\Enums\TicketStatus;
 
 class DashboardServices
 {
-// --- QUERY METHODS ---
+    // --- QUERY METHODS ---
 
     public function getForemanDashboardData(User $user): array
     {
         $baseQuery = Ticket::where('department_id', $user->department_id);
-
-        // 1. Calculate KPI Counts
-        $needsAssignmentCount = (clone $baseQuery)
-            ->whereNull('team_id')
-            ->where('status', TicketStatus::OPEN)
-            ->count();
-
-        $inProgressCount = (clone $baseQuery)->where('status', TicketStatus::IN_PROGRESS)->count();
-        $pendingVerificationCount = (clone $baseQuery)->where('status', TicketStatus::RESOLVED)->count();
-        $escalationReviewCount = (clone $baseQuery)->where('status', TicketStatus::PENDING_ESCALATION)->count();
-
-        // 2. Fetch Accordion Previews (Max 5, Eager Loaded)
         $relations = ['category', 'team', 'creator'];
 
+        // 1. Map the specific requirements for each accordion dynamically
+        $sections = [
+            'needs_assignment'     => ['status' => TicketStatus::OPEN, 'order' => 'reported_at', 'unassigned' => true],
+            'in_progress'          => ['status' => TicketStatus::IN_PROGRESS, 'order' => 'started_at'],
+            'pending_verification' => ['status' => TicketStatus::RESOLVED, 'order' => 'resolved_at'],
+            'escalation_review'    => ['status' => TicketStatus::PENDING_ESCALATION, 'order' => 'updated_at'],
+        ];
+
+        $accordions = [];
+
+        // 2. Iterate through the map to build queries, counts, and fetch previews
+        foreach ($sections as $key => $config) {
+            $query = clone $baseQuery;
+            $query->where('status', $config['status']);
+            
+            if (!empty($config['unassigned'])) {
+                $query->whereNull('team_id');
+            }
+
+            $accordions[$key] = [
+                'total_count' => (clone $query)->count(),
+                'tickets'     => $query->with($relations)->latest($config['order'])->limit(5)->get(),
+            ];
+        }
+
+        // 3. Extract the needed KPIs and return the finalized payload
         return [
             'kpis' => [
                 'total'            => (clone $baseQuery)->count(),
-                'needs_assignment' => $needsAssignmentCount,
-                'in_progress'      => $inProgressCount,
+                'needs_assignment' => $accordions['needs_assignment']['total_count'],
+                'in_progress'      => $accordions['in_progress']['total_count'],
                 'closed'           => (clone $baseQuery)->where('status', TicketStatus::CLOSED)->count(),
             ],
-            'accordions' => [
-                'needs_assignment' => [
-                    'total_count' => $needsAssignmentCount,
-                    'tickets'     => (clone $baseQuery)->with($relations)
-                                        ->whereNull('team_id')
-                                        ->where('status', TicketStatus::OPEN)
-                                        ->latest('reported_at')->limit(5)->get(),
-                ],
-                'in_progress' => [
-                    'total_count' => $inProgressCount,
-                    'tickets'     => (clone $baseQuery)->with($relations)
-                                        ->where('status', TicketStatus::IN_PROGRESS)
-                                        ->latest('started_at')->limit(5)->get(),
-                ],
-                'pending_verification' => [
-                    'total_count' => $pendingVerificationCount,
-                    'tickets'     => (clone $baseQuery)->with($relations)
-                                        ->where('status', TicketStatus::RESOLVED)
-                                        ->latest('resolved_at')->limit(5)->get(),
-                ],
-                'escalation_review' => [
-                    'total_count' => $escalationReviewCount,
-                    'tickets'     => (clone $baseQuery)->with($relations)
-                                        ->where('status', TicketStatus::PENDING_ESCALATION)
-                                        ->latest('updated_at')->limit(5)->get(),
-                ],
-            ]
+            'accordions' => $accordions
         ];
     }
 }

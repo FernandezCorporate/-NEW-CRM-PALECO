@@ -18,9 +18,9 @@ class TicketAssignmentController extends Controller
 {
     public function __construct(protected TicketService $ticketService) {}
 
-    public function assignOptions(Request $request): AnonymousResourceCollection
+    public function assignOptions(Request $request, Ticket $ticket): AnonymousResourceCollection
     {
-        Gate::authorize('assignOptions', Ticket::class);
+        Gate::authorize('assign', $ticket);
 
         $teams = $this->ticketService->getAssignOptions($request->user());
 
@@ -31,11 +31,16 @@ class TicketAssignmentController extends Controller
     {
         Gate::authorize('assign', $ticket);
         
-        // --- NEW GUARD: Prevent assignment if ticket is escalated ---
-        if (in_array($ticket->status, [TicketStatus::PENDING_ESCALATION, TicketStatus::ESCALATED])) {
+        $allowedStatuses = [
+            TicketStatus::OPEN, 
+            TicketStatus::ASSIGNED, 
+            TicketStatus::IN_PROGRESS
+        ];
+
+        if (!in_array($ticket->status, $allowedStatuses, true)) {
             return response()->json([
                 'success' => false,
-                'message' => 'This ticket is currently locked in an escalation workflow and cannot be reassigned.'
+                'message' => 'Tickets that are resolved, closed, or locked in an escalation workflow cannot be reassigned.'
             ], 422);
         }
         // ------------------------------------------------------------

@@ -53,7 +53,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
         Route::prefix('tickets')->group(function () {
 
-            Route::get('/assign-options', [TicketAssignmentController::class, 'assignOptions']);
+            Route::get('/{ticket}/assign-options', [TicketAssignmentController::class, 'assignOptions']);
             Route::post('/{ticket}/assign', [TicketAssignmentController::class, 'assign']);
             Route::post('/{ticket}/escalate', [TicketEscalationController::class, 'escalate']);
 

@@ -36,13 +36,14 @@ class TicketResource extends JsonResource
             'created_by'          => $this->created_by,
             'created_by_name'     => $this->creator?->full_name,
 
-            'reported_at'         => $this->reported_at?->toDateTimeString(),
-            'started_at'          => $this->started_at?->toDateTimeString(),
-            'resolved_at'         => $this->resolved_at?->toDateTimeString(),
-            'closed_at'           => $this->closed_at?->toDateTimeString(),
+            // FORMATTING APPLIED HERE
+            'reported_at'         => $this->reported_at?->format('M d, Y h:i A'),
+            'started_at'          => $this->started_at?->format('M d, Y h:i A'),
+            'resolved_at'         => $this->resolved_at?->format('M d, Y h:i A'),
+            'closed_at'           => $this->closed_at?->format('M d, Y h:i A'),
             
-            'created_at'          => $this->created_at?->toDateTimeString(),
-            'updated_at'          => $this->updated_at?->toDateTimeString(),
+            'created_at'          => $this->created_at?->format('M d, Y h:i A'),
+            'updated_at'          => $this->updated_at?->format('M d, Y h:i A'),
 
             'status'              => $this->status?->value ?? $this->status,
             'child_tickets_count' => $this->child_tickets_count ?? 0,
