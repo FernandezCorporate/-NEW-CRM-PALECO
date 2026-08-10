@@ -12,6 +12,7 @@ class TicketPolicy
     public function ticketForm(User $user): bool { return $user->role->slug_identifier === 'cwd_officer'; }
 
     public function viewInbox(User $user): bool { return in_array($user->role->slug_identifier, ['foreman', 'field_personnel']); }
+    public function assignOptions(User $user): bool { return $user->role->slug_identifier === 'foreman'; }
     public function assign(User $user, Ticket $ticket): bool { return $user->role->slug_identifier === 'foreman' && $user->department_id === $ticket->department_id; }
 
     public function view(User $user, Ticket $ticket): bool 

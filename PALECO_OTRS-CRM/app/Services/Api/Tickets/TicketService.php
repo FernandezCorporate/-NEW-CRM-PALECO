@@ -7,6 +7,7 @@ use App\Models\Ticket;
 use App\Models\TicketAssignment;
 use App\Models\TicketStatusLog;
 use App\Models\User;
+use App\Models\Team;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use App\Enums\TicketAccomplishmentStatus;
@@ -237,5 +238,13 @@ class TicketService
             'statusLog.updater',
             'childTickets'
         ])->loadCount('childTickets');
+    }
+
+    public function getAssignOptions(User $foreman)
+    {
+        return Team::query()
+            ->where('department_id', $foreman->department_id)
+            ->withCount('members')
+            ->get();
     }
 }

@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Api\Tickets;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Api\Tickets\AssignTicketRequest;
 use App\Http\Resources\Api\TicketResource;
 use App\Http\Resources\Api\TicketDetailedResource;
 use App\Models\Ticket;
@@ -49,36 +48,6 @@ class TicketController extends Controller
         return response()->json([
             'success' => true,
             'data'    => new TicketDetailedResource($detailedTicket)
-        ]);
-    }
-
-    public function assign(AssignTicketRequest $request, Ticket $ticket): JsonResponse
-    {
-        Gate::authorize('assign', $ticket);
-        
-        $user = $request->user();
-        $requestedTeamId = $request->validated('team_id');
-
-        if ($ticket->team_id === $requestedTeamId) {
-            return response()->json([
-                'success' => false,
-                'message' => 'This ticket is already assigned to the selected team. No changes were made.'
-            ], 422); 
-        }
-
-        $action = is_null($ticket->team_id) ? 'assigned' : 'reassigned';
-
-        $updatedTicket = $this->ticketService->assignTicket(
-            $ticket, 
-            $requestedTeamId, 
-            $user
-        );
-
-        return response()->json([
-            'success' => true,
-            'status'  => 200,
-            'message' => "Ticket {$updatedTicket->ticket_number} has been successfully {$action}.",
-            'data'    => new TicketResource($updatedTicket)
         ]);
     }
 

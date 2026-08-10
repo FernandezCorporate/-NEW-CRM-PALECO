@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\Auth\AuthController;
 use App\Http\Controllers\Api\Profiles\ProfileController;
 use App\Http\Controllers\Api\Teams\TeamController;
 use App\Http\Controllers\Api\Tickets\TicketAccomplishmentController;
+use App\Http\Controllers\Api\Tickets\TicketAssignmentController;
 use App\Http\Controllers\Api\Tickets\TicketController;
 use App\Http\Controllers\Api\Tickets\TicketEscalationController;
 use App\Http\Controllers\Api\Dashboard\DashboardController;
@@ -38,9 +39,9 @@ Route::middleware('auth:sanctum')->group(function () {
     // the data (Foreman = Department, Field = Team).
     Route::prefix('tickets')->group(function () {
         Route::get('/', [TicketController::class, 'index']);
-        Route::get('/{ticket}', [TicketController::class, 'show']);
+        Route::get('/{ticket}', [TicketController::class, 'show'])->whereUlid('ticket');
 
-        
+
         Route::get('/{ticket}/accomplishments', [TicketAccomplishmentController::class, 'index']);
         Route::get('/{ticket}/accomplishments/{accomplishment}', [TicketAccomplishmentController::class, 'show']);
     });
@@ -51,14 +52,17 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/foreman-dashboard', [DashboardController::class, 'foremanIndex']);
 
         Route::prefix('tickets')->group(function () {
-            Route::post('/{ticket}/assign', [TicketController::class, 'assign']);
+
+            Route::get('/assign-options', [TicketAssignmentController::class, 'assignOptions']);
+            Route::post('/{ticket}/assign', [TicketAssignmentController::class, 'assign']);
             Route::post('/{ticket}/escalate', [TicketEscalationController::class, 'escalate']);
+
             Route::post('/{ticket}/accomplishments/{accomplishment}/verify', [TicketAccomplishmentController::class, 'verify']);
             // Future Foreman verify endpoint will go here
         });
 
         Route::prefix('teams')->group(function () {
-            Route::get('/form-options/{team?}', [TeamController::class, 'formOptions'])->whereUlid('team');
+            Route::get('/team-options/{team?}', [TeamController::class, 'formOptions'])->whereUlid('team');
 
             Route::get('/', [TeamController::class, 'index'])->withTrashed();
             Route::get('/{team}', [TeamController::class, 'show'])->withTrashed();
