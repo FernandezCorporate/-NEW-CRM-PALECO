@@ -13,10 +13,10 @@ class TicketDetailedResource extends JsonResource
             'id'                  => $this->system_id,
             'ticket_number'       => $this->ticket_number,
             'status'              => $this->status?->value ?? $this->status,
-            'reported_at'         => $this->reported_at?->toDateTimeString(),
-            'started_at'          => $this->started_at?->toDateTimeString(),
-            'resolved_at'         => $this->resolved_at?->toDateTimeString(),
-            'closed_at'           => $this->closed_at?->toDateTimeString(),
+            'reported_at'         => $this->reported_at?->format('M d, Y h:i A'),
+            'started_at'          => $this->started_at?->format('M d, Y h:i A'),
+            'resolved_at'         => $this->resolved_at?->format('M d, Y h:i A'),
+            'closed_at'           => $this->closed_at?->format('M d, Y h:i A'),
             
             // Eager-loaded Dispatcher/Creator
             'creator'             => $this->whenLoaded('creator', function () {
@@ -62,7 +62,7 @@ class TicketDetailedResource extends JsonResource
                         'old_status'      => $log->old_status?->value ?? $log->old_status,
                         'new_status'      => $log->new_status?->value ?? $log->new_status,
                         'changed_by_name' => $log->updater?->full_name,
-                        'created_at'      => $log->created_at?->toDateTimeString(),
+                        'created_at'      => $log->created_at?->format('M d, Y h:i A'),
                     ];
                 });
             }),
