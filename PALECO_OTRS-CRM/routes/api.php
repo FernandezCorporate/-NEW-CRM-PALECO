@@ -38,6 +38,9 @@ Route::middleware('auth:sanctum')->group(function () {
     // the data (Foreman = Department, Field = Team).
     Route::prefix('tickets')->group(function () {
         Route::get('/', [TicketController::class, 'index']);
+        Route::get('/{ticket}', [TicketController::class, 'show']);
+
+        
         Route::get('/{ticket}/accomplishments', [TicketAccomplishmentController::class, 'index']);
         Route::get('/{ticket}/accomplishments/{accomplishment}', [TicketAccomplishmentController::class, 'show']);
     });

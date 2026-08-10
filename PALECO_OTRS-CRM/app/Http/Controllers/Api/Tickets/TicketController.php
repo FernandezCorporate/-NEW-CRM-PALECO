@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\Tickets;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\Tickets\AssignTicketRequest;
 use App\Http\Resources\Api\TicketResource;
+use App\Http\Resources\Api\TicketDetailedResource;
 use App\Models\Ticket;
 use App\Services\Api\Tickets\TicketService;
 use Illuminate\Http\JsonResponse;
@@ -33,6 +34,21 @@ class TicketController extends Controller
             'meta' => [
                 'status_counts' => $counts
             ]
+        ]);
+    }
+
+    public function show(Request $request, Ticket $ticket): JsonResponse
+    {
+        // 1. Policy Gate (Automatically checks if Foreman owns department or Field owns team)
+        Gate::authorize('view', $ticket);
+
+        // 2. Fetch eager-loaded ticket via Service
+        $detailedTicket = $this->ticketService->getDetailedTicketMobile($ticket);
+
+        // 3. Return Fat Payload
+        return response()->json([
+            'success' => true,
+            'data'    => new TicketDetailedResource($detailedTicket)
         ]);
     }
 

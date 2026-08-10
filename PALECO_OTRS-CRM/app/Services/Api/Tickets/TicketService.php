@@ -227,4 +227,15 @@ class TicketService
             return $escalation;
         });
     }
+
+    public function getDetailedTicketMobile(Ticket $ticket): Ticket
+    {
+        return $ticket->load([
+            'category',
+            'creator.role',
+            'team.members',
+            'statusLog.updater',
+            'childTickets'
+        ])->loadCount('childTickets');
+    }
 }
