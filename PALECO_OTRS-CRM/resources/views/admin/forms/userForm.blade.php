@@ -30,28 +30,28 @@
 
                 <div class="md:col-span-4">
                     <label class="block text-sm font-semibold text-slate-700 mb-1.5">First Name <span class="text-rose-500">*</span></label>
-                    <input type="text" name="first_name" required maxlength="255" value="{{ old('first_name', $user->first_name ?? '') }}"
+                    <input type="text" name="first_name" required maxlength="255" value="{{ old('first_name', $user->first_name ?? '') }}" placeholder="Enter First Name"
                         class="w-full px-3.5 py-2.5 border border-slate-300 rounded-lg shadow-sm text-sm focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-colors bg-white">
                     @error('first_name') <p class="mt-1 text-xs text-rose-500">{{ $message }}</p> @enderror
                 </div>
 
                 <div class="md:col-span-3">
                     <label class="block text-sm font-semibold text-slate-700 mb-1.5">Middle Name</label>
-                    <input type="text" name="middle_name" maxlength="255" value="{{ old('middle_name', $user->middle_name ?? '') }}"
+                    <input type="text" name="middle_name" maxlength="255" value="{{ old('middle_name', $user->middle_name ?? '') }}" placeholder="Enter Middle Name (Optional)"
                         class="w-full px-3.5 py-2.5 border border-slate-300 rounded-lg shadow-sm text-sm focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-colors bg-white">
                     @error('middle_name') <p class="mt-1 text-xs text-rose-500">{{ $message }}</p> @enderror
                 </div>
 
                 <div class="md:col-span-3">
                     <label class="block text-sm font-semibold text-slate-700 mb-1.5">Last Name <span class="text-rose-500">*</span></label>
-                    <input type="text" name="last_name" required maxlength="255" value="{{ old('last_name', $user->last_name ?? '') }}"
+                    <input type="text" name="last_name" required maxlength="255" value="{{ old('last_name', $user->last_name ?? '') }}" placeholder="Enter Last Name"
                         class="w-full px-3.5 py-2.5 border border-slate-300 rounded-lg shadow-sm text-sm focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-colors bg-white">
                     @error('last_name') <p class="mt-1 text-xs text-rose-500">{{ $message }}</p> @enderror
                 </div>
 
                 <div class="md:col-span-2">
                     <label class="block text-sm font-semibold text-slate-700 mb-1.5">Ext (e.g., Jr.)</label>
-                    <input type="text" name="name_ext" maxlength="10" value="{{ old('name_ext', $user->name_ext ?? '') }}"
+                    <input type="text" name="name_ext" maxlength="10" value="{{ old('name_ext', $user->name_ext ?? '') }}" placeholder="Enter Extension (optional)"
                         class="w-full px-3.5 py-2.5 border border-slate-300 rounded-lg shadow-sm text-sm focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-colors bg-white">
                     @error('name_ext') <p class="mt-1 text-xs text-rose-500">{{ $message }}</p> @enderror
                 </div>
@@ -72,46 +72,60 @@
 
                 <div class="md:col-span-12">
                     <label class="block text-sm font-semibold text-slate-700 mb-1.5">Username <span class="text-rose-500">*</span></label>
-                    <input type="text" name="username" required maxlength="100" value="{{ old('username', $user->username ?? '') }}"
+                    <input type="text" name="username" required maxlength="100" value="{{ old('username', $user->username ?? '') }}" placeholder="Enter Username"
                         class="w-full px-3.5 py-2.5 border border-slate-300 rounded-lg shadow-sm text-sm focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-colors bg-white">
                     @error('username') <p class="mt-1 text-xs text-rose-500">{{ $message }}</p> @enderror
                 </div>
 
                 <!-- Organization Row (MODIFIED FOR VISUAL LOCK) -->
                 <div class="md:col-span-6">
-                    <label class="block text-sm font-semibold text-slate-700 mb-1.5">System Role <span class="text-rose-500">*</span></label>
-                    <div class="relative">
-                        <select id="user-role-select" name="role_id" {{ isset($user) ? 'disabled' : 'required' }} 
-                            class="w-full px-3.5 py-2.5 border rounded-lg shadow-sm text-sm focus:outline-none transition-colors 
-                            {{ isset($user) ? 'bg-slate-50 text-slate-500 cursor-not-allowed border-slate-200' : ($errors->has('role_id') ? 'bg-white border-rose-300 focus:border-rose-500 focus:ring-1 focus:ring-rose-500 cursor-pointer' : 'bg-white border-slate-300 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 cursor-pointer') }}">
-                            
-                            <option value="" disabled {{ old('role_id', optional($user)->role_id) ? '' : 'selected' }}>Assign a role...</option>
-                            @foreach ($roles as $role)
-                                <option value="{{ $role->id }}" data-slug="{{ $role->slug_identifier }}" {{ old('role_id', optional($user)->role_id) == $role->id ? 'selected' : '' }}>
-                                    {{ Str::headline($role->role_name) }}
-                                </option>
-                            @endforeach
-                        </select>
-                        
-                        @if(isset($user))
-                            <div class="absolute inset-y-0 right-8 pr-3 flex items-center pointer-events-none">
-                                <svg class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                                </svg>
-                            </div>
-                        @endif
-                    </div>
-                    @if(isset($user))
-                        <p class="mt-1 text-xs text-slate-500">System roles are locked after creation to preserve audit history.</p>
-                    @endif
-                    @error('role_id') <p class="mt-1 text-xs text-rose-500">{{ $message }}</p> @enderror
-                </div>
+                <label class="block text-sm font-semibold text-slate-700 mb-1.5">System Role <span class="text-rose-500">*</span></label>
+                
+                <!-- Simplified classes, added tom-select-sync, removed manual SVG chevron -->
+                <select id="user-role-select" name="role_id" {{ isset($user) ? 'disabled' : 'required' }}
+                    class="tom-select-sync {{ $errors->has('role_id') ? 'border-rose-300 focus:border-rose-500 focus:ring-1 focus:ring-rose-500' : '' }}" 
+                    data-autosubmit="false" autocomplete="off">
+                    
+                    <option value="" disabled {{ old('role_id', optional($user)->role_id) ? '' : 'selected' }}>Assign a role...</option>
+                    @foreach ($roles as $role)
+                        <option value="{{ $role->id }}" data-slug="{{ $role->slug_identifier }}" {{ old('role_id', optional($user)->role_id) == $role->id ? 'selected' : '' }}>
+                            {{ Str::headline($role->role_name) }}
+                        </option>
+                    @endforeach
+                </select>
+                
+                @if(isset($user))
+                    <p class="mt-1 text-xs text-slate-500">System roles are locked after creation to preserve audit history.</p>
+                @endif
+                @error('role_id') <p class="mt-1 text-xs text-rose-500">{{ $message }}</p> @enderror
+            </div>
 
                 <div class="md:col-span-6" id="department-wrapper">
                     <label class="block text-sm font-semibold text-slate-700 mb-1.5">Department</label>
-                    <select id="department-select" name="department_id" class="tom-select-sync hidden" data-autosubmit="false" autocomplete="off"
-                        class="{{ $errors->has('department_id') ? 'border-rose-300 focus:border-rose-500 focus:ring-1 focus:ring-rose-500' : 'border-slate-300 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500' }}">
+                    
+                    <!-- Merged classes, removed 'hidden', kept data-autosubmit="false" -->
+                    <select id="department-select" name="department_id" data-autosubmit="false" autocomplete="off"
+                        class="tom-select-sync {{ $errors->has('department_id') ? 'border-rose-300 focus:border-rose-500 focus:ring-1 focus:ring-rose-500' : 'border-slate-300 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500' }}">
                         
+                        <option value="" disabled {{ old('department_id', optional($user)->department_id) ? '' : 'selected' }}>Select a department...</option>
+                        @foreach ($depts as $id => $dept)
+                            <option value="{{ $id }}" {{ old('department_id', optional($user)->department_id) == $id ? 'selected' : '' }}>
+                                {{ $dept }}
+                            </option>
+                        @endforeach
+                    </select>
+                    
+                    <p id="dept-team-message" class="mt-1 text-xs text-emerald-600 font-medium hidden">
+                        Only foremen can be directly assigned to a department.<br>
+                        Field personnel departments are defined by team assignment.
+                    </p>
+                    @error('department_id') <p class="mt-1 text-xs text-rose-500">{{ $message }}</p> @enderror
+                </div>
+
+                <div class="md:col-span-12" id="department-wrapper">
+                    <label class="block text-sm font-semibold text-slate-700 mb-1.5">Department</label>
+                    <!-- Kept as your form-input sync class so users can search through departments smoothly -->
+                    <select id="department-select" name="department_id" class="tom-select-sync hidden" data-autosubmit="false" autocomplete="off">
                         <option value="" disabled {{ old('department_id', optional($user)->department_id) ? '' : 'selected' }}>Select a department...</option>
                         @foreach ($depts as $id => $dept)
                             <option value="{{ $id }}" {{ old('department_id', optional($user)->department_id) == $id ? 'selected' : '' }}>
@@ -161,8 +175,8 @@
             <!-- Form Actions -->
             <div class="mt-8 pt-5 border-t border-slate-100 flex items-center justify-end gap-3">
                 <a href="{{ route('admin.users') }}" 
-                   class="action-link px-5 py-2.5 text-sm font-medium text-slate-600 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-200 transition-colors"
-                   data-loading-text="Canceling...">
+                    class="action-link px-5 py-2.5 text-sm font-medium text-slate-600 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-200 transition-colors"
+                    data-loading-text="Canceling...">
                     Cancel
                 </a>
                 

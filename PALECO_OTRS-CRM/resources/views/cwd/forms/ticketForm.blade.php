@@ -23,8 +23,13 @@
                 
                 <div>
                     <label for="complaint_source" class="block text-sm font-semibold text-gray-700 mb-1.5">Complaint Intake Source <span class="text-red-500">*</span></label>
-                    <select name="complaint_source" id="complaint_source" class="w-full rounded-md border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 focus:border-[#008f5d] focus:ring-1 focus:ring-[#008f5d] outline-none transition-colors">
-                        <option value="" class="text-gray-400">Select intake channel</option>
+                    
+                    <!-- Applied Custom Tom Select Pattern -->
+                    <select name="complaint_source" id="complaint_source" class="tom-select-sync" data-autosubmit="false" autocomplete="off" placeholder="Select intake channel">
+                        
+                        <!-- Empty option for native placeholder -->
+                        <option value=""></option>
+                        
                         @foreach($sources as $source)
                             <option value="{{ $source->value }}" {{ old('complaint_source') === $source->value ? 'selected' : '' }}>
                                 {{ $source->label() }}

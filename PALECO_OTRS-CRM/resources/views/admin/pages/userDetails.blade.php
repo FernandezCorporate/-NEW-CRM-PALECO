@@ -209,7 +209,7 @@
                                 </td>
                                 
                                 <td class="px-6 py-4 text-sm text-slate-600 font-medium">
-                                     {{ $team->pivot->created_at->format('M d, Y') }}
+                                    {{ $team->pivot->created_at->format('M d, Y') }}
                                 </td>
 
                                 <td class="px-6 py-4 text-right">

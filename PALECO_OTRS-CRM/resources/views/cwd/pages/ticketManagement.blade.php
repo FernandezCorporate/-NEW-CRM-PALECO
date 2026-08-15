@@ -35,7 +35,7 @@
 
             <!-- Filter Dropdowns -->
             <div class="flex items-center gap-3 w-full lg:w-auto shrink-0">
-                <select name="filter" onchange="this.form.submit()" class="border border-gray-300 py-2.5 pl-3 pr-8 rounded-md text-sm text-gray-900 bg-white cursor-pointer focus:outline-none focus:border-[#008f5d] focus:ring-1 focus:ring-[#008f5d]">
+                <select name="filter" class="ts-filter-dropdown hidden">
                     <option value="all">All Categories</option>
                     @foreach($categories as $category)
                         <option value="{{ $category->id }}" {{ request('filter') == $category->id ? 'selected' : '' }}>
@@ -45,7 +45,7 @@
                     <option value="other" {{ request('filter') == 'other' ? 'selected' : '' }}>Custom/Other Categories</option>
                 </select>
 
-                <select name="sort" onchange="this.form.submit()" class="border border-gray-300 py-2.5 pl-3 pr-8 rounded-md text-sm text-gray-900 bg-white cursor-pointer focus:outline-none focus:border-[#008f5d] focus:ring-1 focus:ring-[#008f5d]">
+                <select name="sort" class="ts-filter-dropdown hidden">
                     <option value="newest" {{ request('sort') == 'newest' ? 'selected' : '' }}>Newest First</option>
                     <option value="oldest" {{ request('sort') == 'oldest' ? 'selected' : '' }}>Oldest First</option>
                     <option value="status" {{ request('sort') == 'status' ? 'selected' : '' }}>Sort by Status</option>

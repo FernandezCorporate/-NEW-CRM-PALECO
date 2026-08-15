@@ -71,19 +71,30 @@ document.addEventListener('DOMContentLoaded', () => {
             element.name = element.name.replace('__INDEX__', memberIndex);
         });
 
+        // 1. Grab BOTH dropdowns from the cloned row
         const selectElement = clone.querySelector('.tom-select-dynamic');
+        const roleSelectElement = clone.querySelector('.tom-select-sync'); // NEW
+
         container.appendChild(clone);
 
+        // Initialize User Selection
         if (selectElement) {
             const ts = new TomSelect(selectElement, {
                 create: false,
                 maxOptions: null,
-                // REMOVED: dropdownParent: 'body'
                 onChange: function() {
                     syncDisabledOptions();
                 }
             });
             tsInstances.push(ts);
+        }
+
+        // 2. Initialize Role Selection (NEW)
+        if (roleSelectElement) {
+            new TomSelect(roleSelectElement, {
+                create: false,
+                maxOptions: null,
+            });
         }
 
         memberIndex++;
@@ -98,10 +109,17 @@ document.addEventListener('DOMContentLoaded', () => {
         if (removeBtn) {
             const row = removeBtn.closest('.member-row');
             
+            // Destroy User Selection
             const selectElement = row.querySelector('.tom-select-dynamic');
             if (selectElement && selectElement.tomselect) {
                 tsInstances = tsInstances.filter(ts => ts !== selectElement.tomselect);
                 selectElement.tomselect.destroy();
+            }
+
+            // Destroy Role Selection (NEW)
+            const roleSelectElement = row.querySelector('.tom-select-sync');
+            if (roleSelectElement && roleSelectElement.tomselect) {
+                roleSelectElement.tomselect.destroy();
             }
 
             row.remove();

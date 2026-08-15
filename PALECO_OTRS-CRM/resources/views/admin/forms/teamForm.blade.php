@@ -105,10 +105,12 @@
                     <!-- Render Existing Data so JS can pick it up -->
                     @foreach($currentMembers as $index => $member)
                         <div class="member-row flex flex-col md:flex-row gap-3 items-start md:items-center bg-white p-3 border border-slate-200 rounded-lg shadow-sm">
+                            
                             <!-- User Selection -->
                             <div class="w-full md:flex-1">
-                                <select name="members[{{ $index }}][user_id]" class="tom-select-dynamic" required>
-                                    <option value="" disabled>Select personnel...</option>
+                                <select name="members[{{ $index }}][user_id]" class="tom-select-dynamic" required autocomplete="off" placeholder="Select personnel...">
+                                    <!-- Empty option triggers Tom Select's native placeholder -->
+                                    <option value=""></option>
                                     @foreach ($personnel as $person)
                                         <option value="{{ $person->id }}" {{ $member['user_id'] == $person->id ? 'selected' : '' }}>{{ $person->full_name }}</option>
                                     @endforeach
@@ -117,10 +119,16 @@
 
                             <!-- Role Selection -->
                             <div class="w-full md:w-48 shrink-0">
-                                <select name="members[{{ $index }}][team_role_id]" required class="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm bg-slate-50 hover:bg-white focus:bg-white transition-colors focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500">
-                                    <option value="" disabled>Select Role...</option>
+                                <select name="members[{{ $index }}][team_role_id]" required 
+                                    class="tom-select-sync" data-autosubmit="false" autocomplete="off" placeholder="Select Role...">
+                                    
+                                    <!-- Empty option triggers Tom Select's native placeholder -->
+                                    <option value=""></option>
+                                    
                                     @foreach ($memberRoles as $role)
-                                        <option value="{{ $role->id }}" ...>{{ Str::headline($role->role_name) }}</option>
+                                        <option value="{{ $role->id }}" {{ isset($member['team_role_id']) && $member['team_role_id'] == $role->id ? 'selected' : '' }}>
+                                            {{ Str::headline($role->role_name) }}
+                                        </option>
                                     @endforeach
                                 </select>
                             </div>
@@ -142,22 +150,29 @@
             <!-- HTML Template for dynamically appended rows -->
             <template id="member-row-template">
                 <div class="member-row flex flex-col md:flex-row gap-3 items-start md:items-center bg-white p-3 border border-slate-200 rounded-lg shadow-sm">
+                    
+                    <!-- User Selection -->
                     <div class="w-full md:flex-1">
-                        <select name="members[__INDEX__][user_id]" class="tom-select-dynamic" required>
-                            <option value="" disabled selected>Select personnel...</option>
+                        <select name="members[__INDEX__][user_id]" class="tom-select-dynamic" required autocomplete="off" placeholder="Select personnel...">
+                            <option value=""></option>
                             @foreach ($personnel as $person)
                                 <option value="{{ $person->id }}">{{ $person->full_name }}</option>
                             @endforeach
                         </select>
                     </div>
+
+                    <!-- Role Selection (UPDATED TO TOM SELECT) -->
                     <div class="w-full md:w-48 shrink-0">
-                        <select name="members[__INDEX__][team_role_id]" required class="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm bg-slate-50 hover:bg-white focus:bg-white transition-colors focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500">
-                            <option value="" disabled selected>Select Role...</option>
+                        <select name="members[__INDEX__][team_role_id]" required 
+                            class="tom-select-sync" data-autosubmit="false" autocomplete="off" placeholder="Select Role...">
+                            <option value=""></option>
                             @foreach ($memberRoles as $role)
                                 <option value="{{ $role->id }}">{{ Str::headline($role->role_name) }}</option>
                             @endforeach
                         </select>
                     </div>
+
+                    <!-- Remove Button -->
                     <button type="button" class="remove-member-btn shrink-0 w-full md:w-auto inline-flex justify-center p-2.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors" title="Remove member">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                     </button>

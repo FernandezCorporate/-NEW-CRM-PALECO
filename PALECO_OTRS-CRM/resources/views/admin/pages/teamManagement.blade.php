@@ -39,23 +39,23 @@
             <div class="flex items-center gap-2">
                 
                 <!-- Status Filter (Active/Archived) -->
-                <select name="status" onchange="this.form.submit()" class="border border-slate-200 p-2.5 rounded-lg text-sm bg-white cursor-pointer focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500">
+                <select name="status" class="ts-filter-dropdown hidden">
                     <option value="active" {{ request('status') !== 'archived' ? 'selected' : '' }}>Active Teams</option>
                     <option value="archived" {{ request('status') === 'archived' ? 'selected' : '' }}>Archived Teams</option>
                 </select>
 
-                <!-- Department Filter (Tom Select) -->
+                <!-- Department Filter (Click-only version) -->
                 <div class="w-56 text-sm"> 
-                    <select name="filter" class="tom-select-sync hidden" data-autosubmit="true" autocomplete="off">
-                        <option value="all" {{ request('filter') === 'all' || empty(request('filter')) ? 'selected' : '' }}></option>
+                    <select name="filter" class="ts-filter-dropdown hidden">
+                        <option value="all" {{ request('filter') === 'all' || empty(request('filter')) ? 'selected' : '' }}>All Departments</option>
                         @foreach($departments as $id => $name)
                             <option value="{{ $id }}" {{ request('filter') == $id ? 'selected' : '' }}>{{ $name }}</option>
                         @endforeach
                     </select>
-                </div> 
+                </div>
 
                 <!-- Sort Dropdown -->
-                <select name="sort" onchange="this.form.submit()" class="border border-slate-200 p-2.5 rounded-lg text-sm bg-white cursor-pointer focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500">
+                <select name="sort" class="ts-filter-dropdown hidden">
                     <option value="newest" {{ request('sort') === 'newest' ? 'selected' : '' }}>Sort by Newest</option>
                     <option value="oldest" {{ request('sort') === 'oldest' ? 'selected' : '' }}>Sort by Oldest</option>
                     <option value="team_nameASC" {{ request('sort') === 'team_nameASC' ? 'selected' : '' }}>Name (A-Z)</option>
@@ -63,11 +63,12 @@
                     <option value="shift_startASC" {{ request('sort') === 'shift_startASC' ? 'selected' : '' }}>Shift Start (Earliest)</option>
                     <option value="shift_startDESC" {{ request('sort') === 'shift_startDESC' ? 'selected' : '' }}>Shift Start (Latest)</option>
                 </select>
+                
                 <noscript><button type="submit" class="bg-slate-500 text-white px-4 py-2 rounded">Apply</button></noscript>
                 
                 @if(request()->filled('filter') && request('filter') !== 'all')
                     <a href="{{ route('admin.teams', request()->except('filter')) }}" class="action-link bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 px-4 py-2.5 rounded-lg text-sm font-medium shadow-sm transition-colors" data-loading-text="Clearing...">
-                        Reset Dept
+                        Reset Department
                     </a>
                 @endif
             </div>

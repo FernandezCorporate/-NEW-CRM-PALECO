@@ -23,7 +23,7 @@
                     <label for="dept_name" class="block text-sm font-semibold text-slate-700 mb-1.5">
                         Department Name <span class="text-rose-500">*</span>
                     </label>
-                    <input type="text" id="dept_name" name="dept_name" value="{{ old('dept_name', $dept->dept_name ?? '') }}" required 
+                    <input type="text" id="dept_name" name="dept_name" value="{{ old('dept_name', $dept->dept_name ?? '') }}" required placeholder="Enter Department Name"
                         class="w-full px-3.5 py-2.5 border rounded-lg text-sm transition-colors focus:outline-none focus:ring-4 focus:ring-emerald-500/10 
                         @error('dept_name') border-rose-300 focus:border-rose-500 @else border-slate-200 focus:border-emerald-500 @enderror">
                     
@@ -36,7 +36,7 @@
                     <label for="dept_desc" class="block text-sm font-semibold text-slate-700 mb-1.5">
                         Department Description
                     </label>
-                    <textarea id="dept_desc" name="dept_desc" rows="4" 
+                    <textarea id="dept_desc" name="dept_desc" rows="4" placeholder="Enter Department Description"
                         class="w-full px-3.5 py-2.5 border border-slate-200 rounded-lg text-sm transition-colors focus:outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10">{{ old('dept_desc', $dept->dept_desc ?? '') }}</textarea>
                     <p class="mt-1.5 text-[11px] text-slate-400">Optional. Briefly describe the responsibilities of this department.</p>
                 </div>

@@ -25,7 +25,7 @@
                     <label for="category_name" class="block text-sm font-semibold text-slate-700 mb-1.5">
                         Category Name <span class="text-rose-500">*</span>
                     </label>
-                    <input type="text" id="category_name" name="category_name" value="{{ old('category_name', $category->category_name ?? '') }}" required 
+                    <input type="text" id="category_name" name="category_name" value="{{ old('category_name', $category->category_name ?? '') }}" required placeholder="Enter Category Name"
                         class="w-full px-3.5 py-2.5 border rounded-lg text-sm transition-colors focus:outline-none focus:ring-4 focus:ring-emerald-500/10 
                         @error('category_name') border-rose-300 focus:border-rose-500 @else border-slate-200 focus:border-emerald-500 @enderror">
                     
@@ -38,7 +38,7 @@
                     <label for="category_desc" class="block text-sm font-semibold text-slate-700 mb-1.5">
                         Category Description
                     </label>
-                    <textarea id="category_desc" name="category_desc" rows="4" 
+                    <textarea id="category_desc" name="category_desc" rows="4" placeholder="Enter Category Description"
                         class="w-full px-3.5 py-2.5 border border-slate-200 rounded-lg text-sm transition-colors focus:outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10">{{ old('category_desc', $category->category_desc ?? '') }}</textarea>
                     <p class="mt-1.5 text-[11px] text-slate-400">Optional. Briefly describe the properties of this category.</p>
                 </div>

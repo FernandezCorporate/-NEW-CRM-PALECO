@@ -24,14 +24,33 @@
     color: #94a3b8 !important; /* text-slate-400 */
 }
 
-/* The Dropdown Menu */
+/* -----------------------------------------
+   The Dropdown Menu (Keyframe Animated)
+----------------------------------------- */
+/* 1. Define the animation */
+@keyframes dropdownFadeIn {
+    0% {
+        opacity: 0;
+        transform: translateY(-8px) scale(0.98);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* 2. Apply it to the dropdown */
 .ts-dropdown {
     border: 1px solid #e2e8f0 !important;
     border-radius: 0.5rem !important;
-    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1) !important; /* shadow-md */
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1) !important;
     font-size: 0.875rem !important;
     margin-top: 4px !important;
-    overflow: hidden; /* Keeps the rounded corners sharp */
+    overflow: hidden; 
+    
+    /* The magic bullet: Runs the animation when display becomes block */
+    animation: dropdownFadeIn 0.15s ease-out forwards !important;
+    transform-origin: top;
 }
 
 /* Dropdown Options */
@@ -42,10 +61,9 @@
 /* Hover & Selected State inside the Dropdown */
 .ts-dropdown .option.active, 
 .ts-dropdown .option:hover {
-    background-color: #ecfdf5 !important; /* hover:bg-emerald-50 */
-    color: #047857 !important; /* text-emerald-700 */
+    background-color: #ecfdf5 !important;
+    color: #047857 !important;
 }
-
 /* -----------------------------------------
    Single Select Cursor & Layout Fixes
 ----------------------------------------- */

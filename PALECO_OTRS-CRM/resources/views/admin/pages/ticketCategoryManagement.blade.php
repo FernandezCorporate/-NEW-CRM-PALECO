@@ -34,12 +34,12 @@
 
             <!-- Filter and Sort Group -->
             <div class="flex items-center gap-2">
-                <select name="filter" onchange="this.form.submit()" class="border border-slate-200 p-2.5 rounded-lg text-sm bg-white cursor-pointer focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500">
+                <select name="filter" class="ts-filter-dropdown hidden">
                     <option value="active" {{ request('filter') === 'active' ? 'selected' : '' }}>Active Categories</option>
                     <option value="archived" {{ request('filter') === 'archived' ? 'selected' : '' }}>Archived Categories</option>
                 </select>
 
-                <select name="sort" onchange="this.form.submit()" class="border border-slate-200 p-2.5 rounded-lg text-sm bg-white cursor-pointer focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500">
+                <select name="sort" class="ts-filter-dropdown hidden">
                     <option value="newest" {{ request('sort') === 'newest' ? 'selected' : '' }}>Sort by Newest</option>
                     <option value="oldest" {{ request('sort') === 'oldest' ? 'selected' : '' }}>Sort by Oldest</option>
                     <option value="category_nameASC" {{ request('sort') === 'category_nameASC' ? 'selected' : '' }}>Name (A-Z)</option>

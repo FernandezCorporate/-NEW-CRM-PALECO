@@ -83,39 +83,42 @@
     </div>
 
     <!-- Controls Row -->
-    <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-6">
-        <form action="{{ route('admin.users') }}" method="GET" class="flex flex-col md:flex-row flex-wrap gap-4 w-full lg:w-auto">
-            
-            <div class="flex items-center gap-2">
-                <input type="text" name="search" placeholder="Search users..." value="{{ request('search') }}" class="border border-slate-200 p-2.5 rounded-lg text-sm focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 w-full md:w-64">
-                <button type="submit" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 rounded-lg text-sm font-medium shadow-sm transition-colors" data-loading-text="Searching...">Search</button>
-                @if(request()->filled('search'))
-                    <a href="{{ route('admin.users', request()->except('search')) }}" class="action-link bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 px-4 py-2.5 rounded-lg text-sm font-medium shadow-sm transition-colors" data-loading-text="Clearing...">Clear</a>
-                @endif
-            </div>
+<div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-6">
+    <form action="{{ route('admin.users') }}" method="GET" class="flex flex-col md:flex-row flex-wrap gap-4 w-full lg:w-auto">
+        
+        <!-- Search -->
+        <div class="flex items-center gap-2">
+            <input type="text" name="search" placeholder="Search users..." value="{{ request('search') }}" class="border border-slate-200 p-2.5 rounded-lg text-sm focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 w-full md:w-64">
+            <button type="submit" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 rounded-lg text-sm font-medium shadow-sm transition-colors" data-loading-text="Searching...">Search</button>
+            @if(request()->filled('search'))
+                <a href="{{ route('admin.users', request()->except('search')) }}" class="action-link bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 px-4 py-2.5 rounded-lg text-sm font-medium shadow-sm transition-colors" data-loading-text="Clearing...">Clear</a>
+            @endif
+        </div>
 
-            <div class="flex items-center gap-2">
-                <select name="filter" onchange="this.form.submit()" class="border border-slate-200 p-2.5 rounded-lg text-sm bg-white cursor-pointer focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500">
-                    <option value="all" {{ request('filter') === 'all' ? 'selected' : '' }}>All Roles</option>
-                    @foreach($roles as $role)
-                        <option value="{{ $role->slug_identifier }}" {{ request('filter') === $role->slug_identifier ? 'selected' : '' }}>
-                            {{ Str::headline($role->role_name) }}
-                        </option>
-                    @endforeach
-                </select>
+        <!-- Filters (Wrapped inside the form!) -->
+        <div class="flex items-center gap-2">
+            <select name="filter" class="ts-filter-dropdown hidden">
+                <option value="all" {{ request('filter') === 'all' ? 'selected' : '' }}>All Roles</option>
+                @foreach($roles as $role)
+                    <option value="{{ $role->slug_identifier }}" {{ request('filter') === $role->slug_identifier ? 'selected' : '' }}>
+                        {{ Str::headline($role->role_name) }}
+                    </option>
+                @endforeach
+            </select>
 
-                <select name="sort" onchange="this.form.submit()" class="border border-slate-200 p-2.5 rounded-lg text-sm bg-white cursor-pointer focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500">
-                    <option value="newest" {{ request('sort') === 'newest' ? 'selected' : '' }}>Sort by Newest</option>
-                    <option value="oldest" {{ request('sort') === 'oldest' ? 'selected' : '' }}>Sort by Oldest</option>
-                    <option value="first_nameASC" {{ request('sort') === 'first_nameASC' ? 'selected' : '' }}>First Name (A-Z)</option>
-                    <option value="first_nameDESC" {{ request('sort') === 'first_nameDESC' ? 'selected' : '' }}>First Name (Z-A)</option>
-                    <option value="last_nameASC" {{ request('sort') === 'last_nameASC' ? 'selected' : '' }}>Last Name (A-Z)</option>
-                    <option value="last_nameDESC" {{ request('sort') === 'last_nameDESC' ? 'selected' : '' }}>Last Name (Z-A)</option>
-                </select>
-                <noscript><button type="submit" class="bg-slate-500 text-white px-4 py-2 rounded">Apply</button></noscript>
-            </div>
-        </form>
-    </div>
+            <select name="sort" class="ts-filter-dropdown hidden">
+                <option value="newest" {{ request('sort') === 'newest' ? 'selected' : '' }}>Sort by Newest</option>
+                <option value="oldest" {{ request('sort') === 'oldest' ? 'selected' : '' }}>Sort by Oldest</option>
+                <option value="first_nameASC" {{ request('sort') === 'first_nameASC' ? 'selected' : '' }}>First Name (A-Z)</option>
+                <option value="first_nameDESC" {{ request('sort') === 'first_nameDESC' ? 'selected' : '' }}>First Name (Z-A)</option>
+                <option value="last_nameASC" {{ request('sort') === 'last_nameASC' ? 'selected' : '' }}>Last Name (A-Z)</option>
+                <option value="last_nameDESC" {{ request('sort') === 'last_nameDESC' ? 'selected' : '' }}>Last Name (Z-A)</option>
+            </select>
+            <noscript><button type="submit" class="bg-slate-500 text-white px-4 py-2 rounded">Apply</button></noscript>
+        </div>
+        
+    </form>
+</div>
 
     <!-- Table Container -->
     <div class="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden mb-4">
