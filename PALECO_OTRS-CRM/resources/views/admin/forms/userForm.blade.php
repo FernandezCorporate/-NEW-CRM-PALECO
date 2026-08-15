@@ -122,24 +122,6 @@
                     @error('department_id') <p class="mt-1 text-xs text-rose-500">{{ $message }}</p> @enderror
                 </div>
 
-                <div class="md:col-span-12" id="department-wrapper">
-                    <label class="block text-sm font-semibold text-slate-700 mb-1.5">Department</label>
-                    <!-- Kept as your form-input sync class so users can search through departments smoothly -->
-                    <select id="department-select" name="department_id" class="tom-select-sync hidden" data-autosubmit="false" autocomplete="off">
-                        <option value="" disabled {{ old('department_id', optional($user)->department_id) ? '' : 'selected' }}>Select a department...</option>
-                        @foreach ($depts as $id => $dept)
-                            <option value="{{ $id }}" {{ old('department_id', optional($user)->department_id) == $id ? 'selected' : '' }}>
-                                {{ $dept }}
-                            </option>
-                        @endforeach
-                    </select>
-                    <p id="dept-team-message" class="mt-1 text-xs text-emerald-600 font-medium hidden">
-                        Only foremen can be directly assigned to a department.<br>
-                        Field personnel departments are defined by team assignment. 
-                    </p>
-                    @error('department_id') <p class="mt-1 text-xs text-rose-500">{{ $message }}</p> @enderror
-                </div>
-
                 <!-- Row 5: Security (Only visible during creation) -->
                 @if(!isset($user))
                     <!-- ... Keep password fields exactly the same as provided ... -->
