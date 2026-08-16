@@ -240,11 +240,17 @@ class TicketService
         ])->loadCount('childTickets');
     }
 
-    public function getAssignOptions(User $foreman)
+    public function getAssignOptions(User $foreman, Ticket $ticket)
     {
-        return Team::query()
+        $teams = Team::query()
             ->where('department_id', $foreman->department_id)
-            ->withCount('members')
+            ->withCount('members', 'ticket')
             ->get();
+
+        $teams->each(function ($team) use ($ticket) {
+            $team->is_current = $team->id === $ticket->team_id;
+        });
+
+        return $teams;
     }
 }

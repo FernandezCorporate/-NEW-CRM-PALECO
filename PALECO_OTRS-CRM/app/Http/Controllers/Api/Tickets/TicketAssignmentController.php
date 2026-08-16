@@ -22,7 +22,7 @@ class TicketAssignmentController extends Controller
     {
         Gate::authorize('assign', $ticket);
 
-        $teams = $this->ticketService->getAssignOptions($request->user());
+        $teams = $this->ticketService->getAssignOptions($request->user(), $ticket);
 
         return AssignOptionResource::collection($teams);
     }

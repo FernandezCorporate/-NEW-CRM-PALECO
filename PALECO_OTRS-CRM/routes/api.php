@@ -23,7 +23,7 @@ use Illuminate\Support\Facades\Route;
  * Public API Endpoints
  * Open specifically for unauthenticated guests to request access tokens.
  */
-Route::post('/login', [AuthController::class, 'login'])->middleware('guest');
+Route::post('/login', [AuthController::class, 'login'])->middleware('guest');  // Documented
 
 /*
  * Authenticated API Endpoints
@@ -32,14 +32,14 @@ Route::post('/login', [AuthController::class, 'login'])->middleware('guest');
 Route::middleware('auth:sanctum')->group(function () {
     
     // --- SHARED MOBILE ENDPOINTS (Accessible by all authenticated mobile users) ---
-    Route::post('/logout', [AuthController::class, 'logout']);
-    Route::get('/user/profile', [ProfileController::class, 'show']);
+    Route::post('/logout', [AuthController::class, 'logout']);  // Documented
+    Route::get('/user/profile', [ProfileController::class, 'show']);    
     
     // Both roles can index and view. The service layer and policies automatically filter 
     // the data (Foreman = Department, Field = Team).
     Route::prefix('tickets')->group(function () {
-        Route::get('/', [TicketController::class, 'index']);
-        Route::get('/{ticket}', [TicketController::class, 'show'])->whereUlid('ticket');
+        Route::get('/', [TicketController::class, 'index']);    // Documented
+        Route::get('/{ticket}', [TicketController::class, 'show'])->whereUlid('ticket');    // Documented
 
 
         Route::get('/{ticket}/accomplishments', [TicketAccomplishmentController::class, 'index']);
@@ -49,12 +49,12 @@ Route::middleware('auth:sanctum')->group(function () {
     // --- FOREMAN SPECIFIC ENDPOINTS ---
     Route::middleware('can:access-foreman')->group(function () {
 
-        Route::get('/foreman-dashboard', [DashboardController::class, 'foremanIndex']);
+        Route::get('/foreman-dashboard', [DashboardController::class, 'foremanIndex']); // Documented
 
         Route::prefix('tickets')->group(function () {
 
-            Route::get('/{ticket}/assign-options', [TicketAssignmentController::class, 'assignOptions']);
-            Route::post('/{ticket}/assign', [TicketAssignmentController::class, 'assign']);
+            Route::get('/{ticket}/assign-options', [TicketAssignmentController::class, 'assignOptions']);   // Documented
+            Route::post('/{ticket}/assign', [TicketAssignmentController::class, 'assign']); // Documented
             Route::post('/{ticket}/escalate', [TicketEscalationController::class, 'escalate']);
 
             Route::post('/{ticket}/accomplishments/{accomplishment}/verify', [TicketAccomplishmentController::class, 'verify']);

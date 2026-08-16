@@ -15,6 +15,8 @@ class AssignOptionResource extends JsonResource
             'shift_start'   => $this->shift_start?->format('h:i A'),
             'shift_end'     => $this->shift_end?->format('h:i A'),
             'members_count' => $this->members_count ?? 0,
+            'tickets'       => $this->ticket_count ?? 0,
+            'is_current'    => $this->is_current ?? false,
         ];
     }
 }
