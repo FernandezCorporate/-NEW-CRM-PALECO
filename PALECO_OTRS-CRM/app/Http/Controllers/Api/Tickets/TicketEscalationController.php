@@ -9,10 +9,20 @@ use Illuminate\Support\Facades\Gate;
 use App\Models\Ticket;
 use App\Services\Api\Tickets\TicketService;
 use App\Enums\EscalationStatus;
+use App\Http\Resources\Api\EscalateOptionsResource;
 
 class TicketEscalationController extends Controller
 {
     public function __construct(protected TicketService $ticketService) {}
+
+    public function escalateOptions(Request $request, Ticket $ticket)
+    {
+        Gate::authorize('escalate', $ticket);
+
+        $departments = $this->ticketService->getEscalationOptions($request->user());
+
+        return EscalateOptionsResource::collection($departments);
+    }
 
     public function escalate(EscalationRequest $request, Ticket $ticket)
     {

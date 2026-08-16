@@ -8,6 +8,7 @@ use App\Models\TicketAssignment;
 use App\Models\TicketStatusLog;
 use App\Models\User;
 use App\Models\Team;
+use App\Models\Department;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use App\Enums\TicketAccomplishmentStatus;
@@ -244,7 +245,14 @@ class TicketService
     {
         $teams = Team::query()
             ->where('department_id', $foreman->department_id)
-            ->withCount('members', 'ticket')
+            ->withCount([
+                'members', 
+                'ticket' => function ($query) use ($ticket) {
+                    $query->whereIn('status', [
+                        TicketStatus::ASSIGNED,
+                        TicketStatus::IN_PROGRESS,
+                    ]);
+                }])
             ->get();
 
         $teams->each(function ($team) use ($ticket) {
@@ -252,5 +260,16 @@ class TicketService
         });
 
         return $teams;
+    }
+
+    public function getEscalationOptions(User $foreman)
+    {
+        $departments  = Department::query()->get();
+
+        $departments->each(function ($department) use ($foreman) {
+            $department->is_current = $department->id === $foreman->department_id;
+        });
+
+        return $departments;
     }
 }
