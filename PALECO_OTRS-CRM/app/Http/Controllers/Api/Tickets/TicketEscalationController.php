@@ -10,6 +10,7 @@ use App\Models\Ticket;
 use App\Services\Api\Tickets\TicketService;
 use App\Enums\EscalationStatus;
 use App\Http\Resources\Api\EscalateOptionsResource;
+use App\Http\Resources\Api\TicketResource;
 
 class TicketEscalationController extends Controller
 {
@@ -56,7 +57,7 @@ class TicketEscalationController extends Controller
             'success' => true,
             'status'  => 201,
             'message' => "Escalation request submitted. Ticket {$ticket->ticket_number} is now frozen pending CWD review.",
-            'data'    => $escalation 
+            'data'    => new TicketResource($escalation)
         ]);
     }
 }
