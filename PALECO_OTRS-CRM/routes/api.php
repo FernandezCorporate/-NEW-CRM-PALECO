@@ -57,7 +57,7 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::post('/{ticket}/assign', [TicketAssignmentController::class, 'assign']); // Documented
 
             Route::get('/{ticket}/escalate-options', [TicketEscalationController::class, 'escalateOptions']); // Documented
-            Route::post('/{ticket}/escalate', [TicketEscalationController::class, 'escalate']);
+            Route::post('/{ticket}/escalate', [TicketEscalationController::class, 'escalate']); // Documented
 
             Route::post('/{ticket}/accomplishments/{accomplishment}/verify', [TicketAccomplishmentController::class, 'verify']);
             // Future Foreman verify endpoint will go here
@@ -83,10 +83,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::middleware('can:access-field_personnel')->group(function () {
         
         Route::prefix('tickets')->group(function () {
-            Route::patch('/{ticket}/start', [TicketController::class, 'start']);
+            Route::patch('/{ticket}/start', [TicketController::class, 'start']); // Documented
             
             // Refactored to match standard REST conventions for the TicketAccomplishmentController
-            Route::post('/{ticket}/accomplishments', [TicketAccomplishmentController::class, 'store']);
+            Route::post('/{ticket}/accomplish', [TicketAccomplishmentController::class, 'store']);
         });
 
     });

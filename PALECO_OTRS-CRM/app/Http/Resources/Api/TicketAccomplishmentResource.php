@@ -16,7 +16,7 @@ class TicketAccomplishmentResource extends JsonResource
             'consumer_name' => $this->consumer_name,
             'status' => $this->status->value ?? $this->status, 
             'rejection_reason' => $this->rejection_reason,
-            'accomplished_at' => $this->accomplished_at?->toIso8601String(),
+            'accomplished_at' => $this->accomplished_at?->format('M d, Y h:i A'),
             
             'worker' => $this->whenLoaded('accomplishedBy', function () {
                 return [
