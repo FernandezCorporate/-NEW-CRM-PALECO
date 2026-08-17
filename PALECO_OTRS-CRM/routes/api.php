@@ -56,7 +56,7 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::get('/{ticket}/assign-options', [TicketAssignmentController::class, 'assignOptions']);   // Documented
             Route::post('/{ticket}/assign', [TicketAssignmentController::class, 'assign']); // Documented
 
-            Route::get('/{ticket}/escalate-options', [TicketEscalationController::class, 'escalateOptions']);
+            Route::get('/{ticket}/escalate-options', [TicketEscalationController::class, 'escalateOptions']); // Documented
             Route::post('/{ticket}/escalate', [TicketEscalationController::class, 'escalate']);
 
             Route::post('/{ticket}/accomplishments/{accomplishment}/verify', [TicketAccomplishmentController::class, 'verify']);

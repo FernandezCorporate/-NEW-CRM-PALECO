@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Gate;
 use App\Models\Ticket;
 use App\Services\Api\Tickets\TicketService;
 use App\Enums\EscalationStatus;
+use App\Enums\TicketStatus;
 use App\Http\Resources\Api\EscalateOptionsResource;
 use App\Http\Resources\Api\TicketResource;
 
@@ -30,11 +31,16 @@ class TicketEscalationController extends Controller
         // 1. Security Gate
         Gate::authorize('escalate', $ticket);
 
-        // 2. Integrity Guard: Prevent escalating to the same department
-        if ((int) $request->suggested_department_id === $ticket->department_id) {
+        $allowedStatuses = [
+            TicketStatus::OPEN,
+            TicketStatus::ASSIGNED,
+            TicketStatus::IN_PROGRESS
+        ];
+
+        if (!in_array($ticket->status, $allowedStatuses, true)) {
             return response()->json([
                 'success' => false,
-                'message' => 'You cannot escalate a ticket to your own department.'
+                'message' => 'Tickets that are resolved, closed, or locked in an escalation workflow cannot be escalated.'
             ], 422);
         }
 

@@ -30,17 +30,5 @@ class TicketPolicy
     public function start(User $user, Ticket $ticket): bool { return $user->role->slug_identifier === 'field_personnel' && $user->teams()->where('teams.id', $ticket->team_id)->exists(); }
     public function accomplish(User $user, Ticket $ticket): bool { return $user->role->slug_identifier === 'field_personnel' && $user->teams()->where('teams.id', $ticket->team_id)->exists(); }
     public function verify(User $user, Ticket $ticket): bool { return $user->role->slug_identifier === 'foreman' && $user->department_id === $ticket->department_id; }
-    public function escalate(User $user, Ticket $ticket): bool 
-    { 
-        // Must be a foreman for this department
-        if ($user->role->slug_identifier !== 'foreman' || $user->department_id !== $ticket->department_id) {
-            return false;
-        }
-
-        return in_array($ticket->status, [
-            TicketStatus::OPEN, 
-            TicketStatus::ASSIGNED, 
-            TicketStatus::IN_PROGRESS
-        ], true);
-    }
+    public function escalate(User $user, Ticket $ticket): bool { return $user->role->slug_identifier === 'foreman' && $user->department_id === $ticket->department_id;}
 }
