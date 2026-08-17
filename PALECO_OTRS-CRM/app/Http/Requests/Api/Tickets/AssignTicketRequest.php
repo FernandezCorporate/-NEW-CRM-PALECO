@@ -22,8 +22,12 @@ class AssignTicketRequest extends FormRequest
      */
     public function rules(): array
     {
+        $ticket = $this->route('ticket');
+        $isReassignment = !is_null($ticket->team_id);
+
         return [
             'team_id' => ['required', 'string', 'exists:teams,id'],
+            'reason' => [$isReassignment ? 'required' : 'nullable', 'string', 'max:1000'],
         ];
     }
 
@@ -33,7 +37,10 @@ class AssignTicketRequest extends FormRequest
     public function messages(): array
     {
         return [
+            'team_id.required' => 'A team must be selected for assignment.',
             'team_id.exists' => 'The selected team does not exist in the active roster.',
+            'reason.required' => 'A reason for reassigning the ticket is required.',
+            'reason.max' => 'The reason for reassigning the ticket may not exceed 1000 characters.',
         ];
     }
 }

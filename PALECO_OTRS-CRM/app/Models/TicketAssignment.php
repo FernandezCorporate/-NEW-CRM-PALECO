@@ -16,6 +16,7 @@ class TicketAssignment extends Model
         'ticket_id',
         'team_id',
         'assigned_by',
+        'reason',
         'unassigned_at'
     ];
 

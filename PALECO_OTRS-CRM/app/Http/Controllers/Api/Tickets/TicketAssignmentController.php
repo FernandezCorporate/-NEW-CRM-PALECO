@@ -47,6 +47,7 @@ class TicketAssignmentController extends Controller
         
         $user = $request->user();
         $requestedTeamId = $request->validated('team_id');
+        $requestedReason = $request->validated('reason');
 
         if ($ticket->team_id === $requestedTeamId) {
             return response()->json([
@@ -60,7 +61,8 @@ class TicketAssignmentController extends Controller
         $updatedTicket = $this->ticketService->assignTicket(
             $ticket, 
             $requestedTeamId, 
-            $user
+            $user,
+            $requestedReason
         );
 
         return response()->json([

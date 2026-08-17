@@ -68,9 +68,9 @@ class TicketService
 
     // --- MUTATING METHODS ---
 
-    public function assignTicket(Ticket $ticket, string $teamId, User $assigner): Ticket
+    public function assignTicket(Ticket $ticket, string $teamId, User $assigner, ?string $reason = null): Ticket
     {
-        return DB::transaction(function () use ($ticket, $teamId, $assigner) {
+        return DB::transaction(function () use ($ticket, $teamId, $assigner, $reason) {
             
             $oldStatus = $ticket->status;
 
@@ -82,6 +82,7 @@ class TicketService
                 'ticket_id'   => $ticket->system_id,
                 'team_id'     => $teamId,
                 'assigned_by' => $assigner->id,
+                'reason'      => $reason,
             ]);
 
             if ($oldStatus !== TicketStatus::ASSIGNED) {
