@@ -273,4 +273,14 @@ class TicketService
 
         return $departments;
     }
+
+    public function getAccomplishments(Ticket $ticket)
+    {
+        $accomplishments = $ticket->accomplishments()
+            ->with(['accomplishedBy', 'rejectedBy'])
+            ->latest('accomplished_at')
+            ->get();
+
+        return $accomplishments;
+    }
 }

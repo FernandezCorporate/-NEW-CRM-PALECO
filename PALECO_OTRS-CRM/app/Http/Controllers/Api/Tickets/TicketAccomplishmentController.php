@@ -22,10 +22,7 @@ class TicketAccomplishmentController extends Controller
     {
         Gate::authorize('view', $ticket);
 
-        $accomplishments = $ticket->accomplishments()
-            ->with(['accomplishedBy', 'rejectedBy'])
-            ->latest('accomplished_at')
-            ->get();
+        $accomplishments = $this->ticketService->getAccomplishments($ticket);
 
         return response()->json([
             'success' => true,
@@ -40,7 +37,7 @@ class TicketAccomplishmentController extends Controller
         if ($accomplishment->ticket_id !== $ticket->system_id) {
             return response()->json([
                 'success' => false,
-                'message' => 'This accomplishment report does not belong to the requested ticket.'
+                'message' => 'Accomplishment report not found.'
             ], 404);
         }
 

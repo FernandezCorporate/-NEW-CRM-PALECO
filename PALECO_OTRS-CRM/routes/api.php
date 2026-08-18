@@ -42,8 +42,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/{ticket}', [TicketController::class, 'show'])->whereUlid('ticket');    // Documented
 
 
-        Route::get('/{ticket}/accomplishments', [TicketAccomplishmentController::class, 'index']);
-        Route::get('/{ticket}/accomplishments/{accomplishment}', [TicketAccomplishmentController::class, 'show']);
+        Route::get('/{ticket}/accomplishments', [TicketAccomplishmentController::class, 'index']); // Docuemented
+        Route::get('/{ticket}/accomplishments/{accomplishment}', [TicketAccomplishmentController::class, 'show']); // Documented
     });
 
     // --- FOREMAN SPECIFIC ENDPOINTS ---
@@ -86,7 +86,7 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::patch('/{ticket}/start', [TicketController::class, 'start']); // Documented
             
             // Refactored to match standard REST conventions for the TicketAccomplishmentController
-            Route::post('/{ticket}/accomplish', [TicketAccomplishmentController::class, 'store']);
+            Route::post('/{ticket}/accomplish', [TicketAccomplishmentController::class, 'store']); // Documented
         });
 
     });
