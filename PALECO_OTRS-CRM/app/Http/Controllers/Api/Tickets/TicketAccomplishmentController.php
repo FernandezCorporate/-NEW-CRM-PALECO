@@ -99,11 +99,12 @@ class TicketAccomplishmentController extends Controller
         }
 
         // 4. Delegate to Service
-        $this->ticketService->verifyAccomplishment($ticket, $accomplishment, $request->validated(), $request->user());
+        $verifiedAccomplishment = $this->ticketService->verifyAccomplishment($ticket, $accomplishment, $request->validated(), $request->user());
 
         return response()->json([
             'success' => true,
-            'message' => "Accomplishment report successfully {$request->status}."
+            'message' => "Accomplishment report successfully {$request->status}.",
+            'data' => new TicketAccomplishmentResource($verifiedAccomplishment)
         ]);
     }
 }

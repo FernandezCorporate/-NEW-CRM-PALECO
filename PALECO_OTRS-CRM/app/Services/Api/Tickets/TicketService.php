@@ -160,19 +160,21 @@ class TicketService
     {
         return $accomplishment->load([
             'accomplishedBy',
-            'rejectedBy'
+            'rejectedBy',
+            'approvedBy',
         ]);
     }
 
-    public function verifyAccomplishment(Ticket $ticket, TicketAccomplishment $accomplishment, array $data, User $foreman): void
+    public function verifyAccomplishment(Ticket $ticket, TicketAccomplishment $accomplishment, array $data, User $foreman): TicketAccomplishment
     {
-        DB::transaction(function () use ($ticket, $accomplishment, $data, $foreman) {
+        return DB::transaction(function () use ($ticket, $accomplishment, $data, $foreman) {
             
             $oldTicketStatus = $ticket->status;
 
             if ($data['status'] === TicketAccomplishmentStatus::APPROVED->value) {
                 $accomplishment->update([
-                    'status' => TicketAccomplishmentStatus::APPROVED
+                    'status' => TicketAccomplishmentStatus::APPROVED,
+                    'approved_by_id' => $foreman->id,
                 ]);
 
                 $ticket->update([
@@ -207,6 +209,7 @@ class TicketService
                     'changed_by' => $foreman->id,
                 ]);
             }
+            return $accomplishment->fresh(['accomplishedBy', 'rejectedBy', 'approvedBy']);
         });
     }
 
@@ -277,7 +280,7 @@ class TicketService
     public function getAccomplishments(Ticket $ticket)
     {
         $accomplishments = $ticket->accomplishments()
-            ->with(['accomplishedBy', 'rejectedBy'])
+            ->with(['accomplishedBy', 'rejectedBy', 'approvedBy'])
             ->latest('accomplished_at')
             ->get();
 

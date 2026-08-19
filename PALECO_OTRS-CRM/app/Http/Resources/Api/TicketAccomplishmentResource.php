@@ -31,6 +31,13 @@ class TicketAccomplishmentResource extends JsonResource
                     'name' => $this->rejectedBy->full_name,
                 ];
             }),
+
+            'approved_by' => $this->whenLoaded('approvedBy', function () {
+                return [
+                    'id' => $this->approvedBy->id,
+                    'name' => $this->approvedBy->full_name,
+                ];
+            }),
         ];
     }
 }

@@ -20,6 +20,7 @@ class TicketAccomplishment extends Model
         'signature_path',
         'consumer_name',
         'status',
+        'approved_by_id',
         'rejected_by_id',
         'rejection_reason'
     ];
@@ -47,5 +48,10 @@ class TicketAccomplishment extends Model
     public function rejectedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'rejected_by_id');
+    }
+
+    public function approvedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'approved_by_id');
     }
 }
