@@ -37,7 +37,7 @@ class TeamService
               ->apiFilterStatus($params['filter'] ?? 'active') 
               ->apiSort($params['sort'] ?? null);
 
-        return $query->paginate(10); 
+        return $query->paginate(10)->withQueryString(); 
     }
 
     /*

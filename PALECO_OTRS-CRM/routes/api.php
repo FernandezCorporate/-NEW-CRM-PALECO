@@ -59,15 +59,14 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::get('/{ticket}/escalate-options', [TicketEscalationController::class, 'escalateOptions']); // Documented
             Route::post('/{ticket}/escalate', [TicketEscalationController::class, 'escalate']); // Documented
 
-            Route::post('/{ticket}/accomplishments/{accomplishment}/verify', [TicketAccomplishmentController::class, 'verify']);
-            // Future Foreman verify endpoint will go here
+            Route::post('/{ticket}/accomplishments/{accomplishment}/verify', [TicketAccomplishmentController::class, 'verify']); // Documented
         });
 
         Route::prefix('teams')->group(function () {
             Route::get('/team-options/{team?}', [TeamController::class, 'formOptions'])->whereUlid('team');
 
-            Route::get('/', [TeamController::class, 'index'])->withTrashed();
-            Route::get('/{team}', [TeamController::class, 'show'])->withTrashed();
+            Route::get('/', [TeamController::class, 'index'])->withTrashed(); // Documented
+            Route::get('/{team}', [TeamController::class, 'show'])->withTrashed(); // 
 
             Route::post('/create', [TeamController::class, 'store']);
             Route::put('/{team}/update', [TeamController::class, 'update'])->withTrashed();
@@ -75,7 +74,7 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::delete('/{team}/archive', [TeamController::class, 'archive'])->withTrashed();
 
             Route::patch('/{team}/restore', [TeamController::class, 'restore'])->whereUlid('team')->withTrashed();
-            Route::delete('/{team}/force-delete', [TeamController::class, 'destroy'])->name('admin.teams.destroy')->whereUlid('team')->withTrashed();
+            Route::delete('/{team}/force-delete', [TeamController::class, 'destroy'])->whereUlid('team')->withTrashed();
         });
     });
 
