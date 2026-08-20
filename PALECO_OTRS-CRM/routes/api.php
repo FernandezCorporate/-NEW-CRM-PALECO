@@ -66,7 +66,7 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::get('/team-options/{team?}', [TeamController::class, 'formOptions'])->whereUlid('team');
 
             Route::get('/', [TeamController::class, 'index'])->withTrashed(); // Documented
-            Route::get('/{team}', [TeamController::class, 'show'])->withTrashed(); // 
+            Route::get('/{team}', [TeamController::class, 'show'])->withTrashed(); // Documented
 
             Route::post('/create', [TeamController::class, 'store']);
             Route::put('/{team}/update', [TeamController::class, 'update'])->withTrashed();

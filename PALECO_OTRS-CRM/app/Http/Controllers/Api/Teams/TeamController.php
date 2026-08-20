@@ -26,7 +26,7 @@ class TeamController extends Controller
     {
         Gate::authorize('viewAnyDepartmentTeams', Team::class);
 
-        $teams = $this->teamService->getDepartmentTeams(
+        $teams = $this->teamService->deptTeamList(
             $request->user(),
             $request->only(['search', 'sort', 'filter']) 
         );
@@ -37,9 +37,11 @@ class TeamController extends Controller
     /*
      * Fetches detailed information, workload statistics, and the roster for a specific team.
      */
-    public function show(Request $request, Team $team)
+    public function show(Request $request, Team $team) 
     {
-        $team = $this->teamService->getDepartmentTeam(
+        gate::authorize('viewDepartmentTeams', $team);
+        
+        $team = $this->teamService->deptTeamDetails(
             $request->user(), 
             $team
         );

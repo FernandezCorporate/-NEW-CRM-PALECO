@@ -15,7 +15,7 @@ use Illuminate\Pagination\LengthAwarePaginator;
  */
 class TeamService
 {
-    public function getDepartmentTeams(User $user, array $params): LengthAwarePaginator 
+    public function deptTeamList(User $user, array $params): LengthAwarePaginator 
     {
         $query = Team::query()
             ->withTrashed() 
@@ -44,12 +44,8 @@ class TeamService
      * Retrieves a single team's details for a Foreman's department.
      * Works seamlessly for both active and archived teams.
      */
-    public function getDepartmentTeam(User $user, Team $team): Team
+    public function deptTeamDetails(User $user, Team $team): Team
     {
-        if ($team->department_id !== $user->department_id) {
-            abort(403, 'Access Denied: You cannot view teams outside your assigned department.');
-        }
-
         $team->loadCount([
             'members',
             'ticket as tickets_total',
