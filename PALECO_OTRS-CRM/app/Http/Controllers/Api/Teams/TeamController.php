@@ -40,7 +40,7 @@ class TeamController extends Controller
     public function show(Request $request, Team $team) 
     {
         gate::authorize('viewDepartmentTeams', $team);
-        
+
         $team = $this->teamService->deptTeamDetails(
             $request->user(), 
             $team
@@ -63,7 +63,7 @@ class TeamController extends Controller
         $teamDetails['department_id'] = $request->user()->department_id;
 
         // 3. Hand off to the service (this reuses the exact same logic as your web admin service)
-        $this->teamService->createTeam(
+        $newTeam = $this->teamService->createTeam(
             $teamDetails,
             $request->validated('members', [])
         );
@@ -71,7 +71,8 @@ class TeamController extends Controller
         // 4. Return standard API created response
         return response()->json([
             'success' => true,
-            'message' => 'Team and members created successfully.'
+            'message' => 'Team and members created successfully.',
+            'data' => new TeamResource($newTeam)
         ], 201);
     }
 

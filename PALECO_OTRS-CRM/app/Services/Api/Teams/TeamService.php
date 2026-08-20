@@ -67,9 +67,9 @@ class TeamService
      * Creates a new operational team and safely synchronizes the initial roster.
      * Wrapped in a transaction to prevent orphaned team records if roster syncing fails.
      */
-    public function createTeam(array $teamDetails, array $assignedMembers): void
+    public function createTeam(array $teamDetails, array $assignedMembers): Team
     {
-        DB::transaction(function () use ($teamDetails, $assignedMembers) {
+        return DB::transaction(function () use ($teamDetails, $assignedMembers) {
             
             // 1. Insert the core team details into the database
             $team = Team::create($teamDetails);
@@ -82,6 +82,10 @@ class TeamService
                 
                 $team->members()->sync($formattedMembers);
             }
+
+            return $team->fresh(['members' => function ($query) {
+                $query->select('users.id', 'users.first_name', 'users.middle_name', 'users.last_name', 'users.name_ext');
+            }]);
         });
     }
 
