@@ -68,7 +68,7 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::get('/', [TeamController::class, 'index'])->withTrashed(); // Documented
             Route::get('/{team}', [TeamController::class, 'show'])->withTrashed(); // Documented
 
-            Route::post('/create', [TeamController::class, 'store']);
+            Route::post('/create', [TeamController::class, 'store']); // Documented
             Route::put('/{team}/update', [TeamController::class, 'update'])->withTrashed();
 
             Route::delete('/{team}/archive', [TeamController::class, 'archive'])->withTrashed();

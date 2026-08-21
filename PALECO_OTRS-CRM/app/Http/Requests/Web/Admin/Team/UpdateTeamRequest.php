@@ -29,7 +29,15 @@ class UpdateTeamRequest extends FormRequest
 
         return [
             'original_updated_at' => ['required', 'string'],
-            'team_name' => ['required', 'string', 'max:255', Rule::unique('teams', 'team_name')->whereNull('deleted_at')->ignore($team)],
+            'team_name' => [
+                'required', 
+                'string', 
+                'max:255', 
+                Rule::unique('teams', 'team_name')->where(function ($query) {
+                    return $query->where('department_id', $this->input('department_id'))
+                                ->whereNull('deleted_at');
+                })->ignore($team)
+            ],
             'team_desc' => ['nullable', 'string', 'max:255'],
             'shift_start' => ['required', 'date_format:H:i'],
             'shift_end' => ['required', 'date_format:H:i'],

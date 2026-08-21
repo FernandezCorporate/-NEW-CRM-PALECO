@@ -7,7 +7,8 @@ use App\Enums\TicketStatus;
 use App\Models\Team;
 use App\Models\User;
 use App\Models\TeamRole;
-use Illuminate\Pagination\LengthAwarePaginator; 
+use Illuminate\Pagination\LengthAwarePaginator;
+use Carbon\Carbon;
 
 /*
  * Encapsulates the core team retrieval and creation logic for the mobile API.
@@ -104,7 +105,7 @@ class TeamService
             $lockedTeam = Team::where('id', $team->id)->lockForUpdate()->first();
 
             // 2. Optimistic timestamp check
-            if ((string) $lockedTeam->updated_at !== $originalUpdatedAt) {
+            if (! $lockedTeam->updated_at->eq(Carbon::parse($originalUpdatedAt))) {
                 return ['success' => false, 'message' => 'Conflict: This team was modified by another user while you were editing.'];
             }
             
@@ -153,7 +154,16 @@ class TeamService
                     ->log("{$lockedTeam->team_name} roster has been modified");
             }
             
-            return ['success' => true, 'changed' => $isTeamDirty || $membersChanged];
+        // Fetch the fresh data with updated relationships
+            $freshTeam = $lockedTeam->fresh(['members' => function ($query) {
+                $query->select('users.id', 'users.first_name', 'users.middle_name', 'users.last_name', 'users.name_ext');
+            }]);
+
+            return [
+                'success' => true, 
+                'changed' => $isTeamDirty || $membersChanged,
+                'team' => $freshTeam // <-- Pass the updated model back
+            ];
         });
     }
 
@@ -181,8 +191,10 @@ class TeamService
             return ['success' => false, 'message' => 'This team is already active and cannot be restored.'];
         }
 
-        if (Team::where('team_name', $team->team_name)->exists()) {
-            return ['success' => false, 'message' => 'Cannot restore team. A team with the same name already exists.'];
+        if (Team::where('team_name', $team->team_name)
+            ->where('department_id', $team->department_id)
+            ->exists()) {
+            return ['success' => false, 'message' => 'Cannot restore team. A team with the same name already exists within this department.'];
         }
 
         $team->restore();

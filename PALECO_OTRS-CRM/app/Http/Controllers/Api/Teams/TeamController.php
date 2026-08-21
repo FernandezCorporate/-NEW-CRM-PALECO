@@ -109,10 +109,11 @@ class TeamController extends Controller
         }
 
         // 6. Return standard API success response (HTTP 200 OK)
-        return response()->json([
-            'success' => true,
-            'message' => $result['changed'] ? 'Team updated successfully.' : 'No changes were made to the team.'
-        ], 200);
+    return response()->json([
+        'success' => $result['changed'] ? true : false,
+        'message' => $result['changed'] ? 'Team updated successfully.' : 'No changes were made to the team.',
+        'data' => new TeamResource($result['team']) // <-- Give Flutter the refreshed data!
+    ], 200);
     }
 
     public function archive(Request $request, Team $team)

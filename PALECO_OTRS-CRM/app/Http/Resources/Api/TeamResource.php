@@ -35,7 +35,8 @@ class TeamResource extends JsonResource
             'deleted_at'      => $this->deleted_at ? $this->deleted_at->format('M d, Y h:i A') : null,
             'is_archived'     => !is_null($this->deleted_at),
             
-            'updated_at'      => $this->updated_at ? $this->updated_at->format('M d, Y h:i A') : null,
+            'updated_at_value' => $this->updated_at ? $this->updated_at : null,
+            'updated_at_display'      => $this->updated_at ? $this->updated_at->format('M d, Y h:i A') : null,
             'members_count'   => $this->members_count ?? 0,
             
             // --- WORKLOAD STATISTICS ---

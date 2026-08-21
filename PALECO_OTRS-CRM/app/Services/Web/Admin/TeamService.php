@@ -161,7 +161,9 @@ class TeamService
             return ['success' => false, 'message' => 'Team is already active.'];
         }
 
-        if (Team::where('team_name', $team->team_name)->exists()) {
+        if (Team::where('team_name', $team->team_name)
+            ->where('department_id', $team->department_id)
+            ->exists()) {
             return ['success' => false, 'message' => 'Cannot restore team. An active team with the same name already exists.'];
         }
 
