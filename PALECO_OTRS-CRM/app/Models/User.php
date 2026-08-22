@@ -96,6 +96,11 @@ class User extends Authenticatable
         return $this->hasMany(TicketStatusLog::class, 'changed_by');
     }
 
+    public function escalations(): HasMany
+    {
+        return $this->hasMany(TicketEscalation::class, 'created_by');
+    }
+
     // --- ACCESSORS ---
 
     /*

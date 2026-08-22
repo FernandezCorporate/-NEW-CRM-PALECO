@@ -19,6 +19,7 @@ class TicketEscalation extends Model
         'pre_escalation_status',
         'rejection_reason',
         'reviewed_by',
+        'created_by',
         'reviewed_at',
     ];
 
@@ -37,9 +38,9 @@ class TicketEscalation extends Model
         return $this->belongsTo(Ticket::class, 'ticket_id', 'system_id');
     }
 
-    public function suggestedDepartment(): BelongsTo
+    public function creator(): BelongsTo
     {
-        return $this->belongsTo(Department::class, 'suggested_department_id');
+        return $this->belongsTo(User::class, 'created_by');
     }
 
     public function reviewer(): BelongsTo

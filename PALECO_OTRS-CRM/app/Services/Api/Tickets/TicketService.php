@@ -219,6 +219,7 @@ class TicketService
             
             // 1. Create the escalation record
             $escalation = $ticket->escalations()->create([
+                'created_by'              => $foreman->id,
                 'suggested_department_id' => $data['suggested_department_id'] ?? null,
                 'reason'                  => $data['reason'],
                 'pre_escalation_status'   => $ticket->status->value,
