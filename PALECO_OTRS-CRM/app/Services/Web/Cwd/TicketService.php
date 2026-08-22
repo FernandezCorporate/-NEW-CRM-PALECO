@@ -106,6 +106,18 @@ class TicketService
         ];
     }
 
+    public function getEscalationDetails(TicketEscalation $escalation)
+    {
+        $escalation->load(['ticket', 'creator', 'suggestedDepartment']);
+
+        $validDecision = EscalationStatus::cases();
+
+        return [
+            "escalation" => $escalation,
+            'validDecision' => $validDecision
+        ];
+    }
+
     // --- PRIVATE HELPER METHODS ---
 
     /*

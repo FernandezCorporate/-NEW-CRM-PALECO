@@ -153,7 +153,7 @@
 
                             <!-- Action -->
                             <td class="px-6 py-4 align-top text-center">
-                                <a href="#" class="inline-flex items-center justify-center px-3 py-1.5 border border-gray-300 shadow-sm text-[11px] font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#008f5d] transition-colors">
+                                <a href="{{ route('cwd.escalations.show', $escalation) }}" class="inline-flex items-center justify-center px-3 py-1.5 border border-gray-300 shadow-sm text-[11px] font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#008f5d] transition-colors">
                                     Review
                                 </a>
                             </td>

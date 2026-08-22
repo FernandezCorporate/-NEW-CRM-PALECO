@@ -20,4 +20,13 @@ class TicketEscalationController extends Controller
 
         return view('cwd.pages.escalationDashboard', $result);
     }
+
+    public function show(Request $request, TicketEscalation $escalation)
+    {
+        Gate::authorize('view', $escalation);
+
+        $result = $this->ticketService->getEscalationDetails($escalation);
+
+        return view('cwd.pages.escalationDetails', $result);
+    }
 }
