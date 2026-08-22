@@ -172,20 +172,19 @@ class TeamService
         $hasActiveTickets = $team->ticket()->exists();
         
         if ($hasActiveTickets) {
-            return ['success' => false, 'message' => 'Cannot archive team. They currently have active assigned service tickets.'];
+            return ['success' => false, 'message' => 'Cannot archive team. They already have linked tickets.'];
         }
         
         $team->delete();
-        return ['success' => true, 'message' => 'Team archived successfully.'];
+        return [
+            'success' => true, 
+            'message' => 'Team archived successfully.',
+            'team' => $team
+        ];
     }
 
-    public function restoreTeam(string $id): array 
+    public function restoreTeam(Team $team): array 
     {
-        $team = Team::withTrashed()->find($id);
-
-        if (!$team) {
-            return ['success' => false, 'message' => 'Team not found. It may have been permanently deleted or never existed.'];
-        }
 
         if (!$team->trashed()) {
             return ['success' => false, 'message' => 'This team is already active and cannot be restored.'];
@@ -198,7 +197,11 @@ class TeamService
         }
 
         $team->restore();
-        return ['success' => true, 'message' => 'Team restored successfully.'];
+        return [
+            'success' => true, 
+            'message' => 'Team restored successfully.',
+            'team' => $team
+        ];
     }
 
     public function forceDeleteTeam(Team $team): array

@@ -26,7 +26,7 @@ class TeamPolicy
     public function mobileRestoreTeam(User $user, Team $team): bool { return $user->role->slug_identifier === 'foreman' && $user->department_id === $team->department_id; }
     public function mobileDestroyTeam(User $user, Team $team): bool { return $user->role->slug_identifier === 'foreman' && $user->department_id === $team->department_id; }
     
-    public function mobileTeamOptions(User $user, Team $team): bool { return $user->role->slug_identifier === 'foreman' && $user->department_id === $team->department_id; }
+    public function mobileTeamOptions(User $user): bool { return $user->role->slug_identifier === 'foreman'; }
 
     /*
      * viewAny: Determines if the user can view the list of teams.

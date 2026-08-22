@@ -63,18 +63,18 @@ Route::middleware('auth:sanctum')->group(function () {
         });
 
         Route::prefix('teams')->group(function () {
-            Route::get('/team-options/{team?}', [TeamController::class, 'formOptions'])->whereUlid('team');
+            Route::get('/team-options/', [TeamController::class, 'formOptions']);
 
             Route::get('/', [TeamController::class, 'index'])->withTrashed(); // Documented
             Route::get('/{team}', [TeamController::class, 'show'])->withTrashed(); // Documented
 
             Route::post('/create', [TeamController::class, 'store']); // Documented
-            Route::put('/{team}/update', [TeamController::class, 'update'])->withTrashed();
+            Route::put('/{team}/update', [TeamController::class, 'update'])->withTrashed(); // Documented
 
-            Route::delete('/{team}/archive', [TeamController::class, 'archive'])->withTrashed();
+            Route::delete('/{team}/archive', [TeamController::class, 'archive'])->withTrashed(); // Documented
 
-            Route::patch('/{team}/restore', [TeamController::class, 'restore'])->whereUlid('team')->withTrashed();
-            Route::delete('/{team}/force-delete', [TeamController::class, 'destroy'])->whereUlid('team')->withTrashed();
+            Route::patch('/{team}/restore', [TeamController::class, 'restore'])->whereUlid('team')->withTrashed(); // Documented
+            Route::delete('/{team}/force-delete', [TeamController::class, 'destroy'])->whereUlid('team')->withTrashed(); // Documented
         });
     });
 

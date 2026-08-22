@@ -121,7 +121,7 @@ class TeamController extends Controller
         if ($team->trashed()) {
             return response()->json([
                 'success' => false,
-                'message' => 'Conflict: This team has already been archived by an administrator.'
+                'message' => 'Conflict: This team has already been archived by an admin or another foreman.'
             ], 409); 
         }
 
@@ -138,7 +138,8 @@ class TeamController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => $result['message']
+            'message' => $result['message'],
+            'data' => new TeamResource($result['team'])
         ], 200);
     }
 
@@ -146,7 +147,7 @@ class TeamController extends Controller
     {
         Gate::authorize('mobileRestoreTeam', $team);
 
-        $result = $this->teamService->restoreTeam($team->id);
+        $result = $this->teamService->restoreTeam($team);
 
         if (!$result['success']) {
             return response()->json([
@@ -157,7 +158,8 @@ class TeamController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => $result['message']
+            'message' => $result['message'],
+            'data' => new TeamResource($result['team'])
         ], 200);
     }
 
@@ -186,15 +188,9 @@ class TeamController extends Controller
      * Retrieves the necessary dependencies (personnel and roles) to populate the mobile UI dropdowns.
      * Can optionally accept a Team model to validate edit-mode authorization.
      */
-    public function formOptions(Request $request, ?Team $team = null)
+    public function formOptions(Request $request)
     {
-        // 1. Contextual Authorization
-        if ($team) {
-            Gate::authorize('mobileTeamOptions', $team);
-        } else {
-            Gate::authorize('create', Team::class);
-        }
-
+        Gate::authorize('mobileTeamOptions', Team::class);
         // 2. Fetch lightweight structured data from the service
         $options = $this->teamService->getFormOptions();
 
