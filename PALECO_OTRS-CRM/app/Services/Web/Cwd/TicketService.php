@@ -8,9 +8,11 @@ use Illuminate\Http\Request;
 
 use App\Enums\TicketStatus;
 use App\Enums\ComplaintSources;
+use App\Enums\EscalationStatus;
 use App\Models\Department;
 use App\Models\Ticket;
 use App\Models\TicketCategory;
+use App\Models\TicketEscalation;
 
 /*
  * Encapsulates the core backend processing for Service Tickets.
@@ -79,6 +81,29 @@ class TicketService
 
             return $ticket;
         });
+    }
+
+    public function getEscalationList(Request $request)
+    {
+        $escalations = TicketEscalation::with(['ticket', 'creator', 'suggestedDepartment'])
+            ->search($request->search)
+            ->filterByStatus($request->status)
+            ->paginate(10)
+            ->withQueryString();
+
+        $statusMetrics = [
+            'pending' => TicketEscalation::query()->where('status', EscalationStatus::PENDING)->count(),
+            'denied' => TicketEscalation::query()->where('status', EscalationStatus::REJECTED)->count(),
+            'escalated' => TicketEscalation::query()->where('status', EscalationStatus::APPROVED)->count() 
+        ];
+
+        $statuses = EscalationStatus::cases();
+
+        return [
+            "escalations" => $escalations,
+            "statusMetrics" => $statusMetrics,
+            "statuses" => $statuses
+        ];
     }
 
     // --- PRIVATE HELPER METHODS ---

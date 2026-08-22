@@ -47,4 +47,36 @@ class TicketEscalation extends Model
     {
         return $this->belongsTo(User::class, 'reviewed_by');
     }
+
+    public function suggestedDepartment(): BelongsTo
+    {
+        return $this->belongsTo(Department::class, 'suggested_department_id');
+    }
+
+    public function scopeSearch($query, $search)
+    {
+        if (empty($search)) return $query;
+
+        return $query->where(function ($query) use ($search) {
+            $query->where('ticket_id', 'like', "%{$search}%")
+              ->orWhereHas('ticket', function ($ticketQuery) use ($search) {
+                  $ticketQuery->where('ticket_number', 'like', "%{$search}%");
+              })
+              ->orWhereHas('creator', function ($creatorQuery) use ($search) {
+                  $creatorQuery->where('first_name', 'like', "%{$search}%")
+                               ->orWhere('last_name', 'like', "%{$search}%");
+              })
+              ->orWhereHas('suggestedDepartment', function ($deptQuery) use ($search) {
+                  $deptQuery->where('dept_name', 'like', "%{$search}%");
+              });
+        });
+    }
+
+    public function scopeFilterByStatus($query, $filter)
+    {
+        // Intercept 'all' and return the un-filtered query
+        if (empty($filter) || $filter === 'all') return $query;
+
+        return $query->where('status', $filter);
+    }
 }

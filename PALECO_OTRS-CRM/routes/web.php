@@ -14,7 +14,7 @@ use App\Http\Controllers\Web\Admin\UserController;
 
 use App\Http\Controllers\Web\Cwd\CwdDashboardController;
 use App\Http\Controllers\Web\Cwd\TicketController;
-
+use App\Http\Controllers\Web\Cwd\TicketEscalationController;
 use App\Http\Middleware\CheckIfActive;
 
 /*
@@ -160,6 +160,10 @@ Route::middleware(['auth', CheckIfActive::class])->group(function() {
             Route::get('/', [TicketController::class, 'index'])->name('cwd.tickets');
             Route::get('/create', [TicketController::class, 'ticketForm'])->name('cwd.tickets.createForm');
             Route::post('/', [TicketController::class, 'store'])->name('cwd.tickets.store');
+        });
+
+        Route::prefix('escalations')->group(function () {
+            Route::get('/', [TicketEscalationController::class, 'index'])->name('cwd.escalations');
         });
     });
 
