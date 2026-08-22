@@ -4,9 +4,13 @@ namespace App\Services\Web\Cwd;
 
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Http\Request;
 
 use App\Enums\TicketStatus;
+use App\Enums\ComplaintSources;
+use App\Models\Department;
 use App\Models\Ticket;
+use App\Models\TicketCategory;
 
 /*
  * Encapsulates the core backend processing for Service Tickets.
@@ -20,6 +24,37 @@ class TicketService
      * Safely executes automated row tracking and ticket assignments inside a singular atomic transaction block.
      * Generates a sequential ID, creates the master record, and stamps the initial lifecycle log.
      */
+
+    public function getTicketList(Request $request)
+    {
+        $tickets = Ticket::with(['category', 'department', 'creator'])
+            ->search($request->search)
+            ->filterByCategory($request->filter)
+            ->sort($request->sort)
+            ->paginate(10)
+            ->withQueryString();
+        
+        $categories = TicketCategory::orderBy('category_name')->get();
+
+        return [
+            "tickets" => $tickets,
+            "categories" => $categories
+        ];
+    }
+
+    public function loadTicketForm()
+    {
+        $sources = ComplaintSources::cases();
+        $categories = TicketCategory::orderBy('category_name')->get();
+        $departments = Department::orderBy('dept_name')->get();
+
+        return [
+            "sources" => $sources,
+            "categories" => $categories,
+            "departments" => $departments
+        ];
+    }
+
     public function createCwdTicket(array $validatedData): Ticket
     {
         return DB::transaction(function () use ($validatedData) {

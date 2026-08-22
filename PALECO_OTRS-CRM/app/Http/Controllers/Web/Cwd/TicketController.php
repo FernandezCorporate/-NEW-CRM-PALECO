@@ -22,6 +22,8 @@ use App\Enums\ComplaintSources;
  */
 class TicketController extends Controller
 {
+    public function __construct(protected TicketService $ticketService) { }
+
     // --- VIEW METHODS ---
 
     /*
@@ -32,16 +34,9 @@ class TicketController extends Controller
     {
         Gate::authorize('viewAny', Ticket::class);
 
-        $tickets = Ticket::with(['category', 'department', 'creator'])
-            ->search($request->search)
-            ->filterByCategory($request->filter)
-            ->sort($request->sort)
-            ->paginate(10)
-            ->withQueryString();
-        
-        $categories = TicketCategory::orderBy('category_name')->get();
+        $result = $this->ticketService->getTicketList($request);
     
-        return view('cwd.pages.ticketManagement', compact('tickets', 'categories'));
+        return view('cwd.pages.ticketManagement', $result);
     }
 
     // --- FORM METHODS ---
@@ -49,15 +44,13 @@ class TicketController extends Controller
     /*
      * Renders the dynamic Ticket Creation Form, populating necessary dropdowns.
      */
-    public function ticketForm(?Ticket $ticket = null)
+    public function ticketForm()
     {
         Gate::authorize('ticketForm', $ticket ?? Ticket::class);
 
-        $sources = ComplaintSources::cases();
-        $categories = TicketCategory::orderBy('category_name')->get();
-        $departments = Department::orderBy('dept_name')->get();
+        $result = $this->ticketService->loadTicketForm();
 
-        return view('cwd.forms.ticketForm', compact('ticket', 'sources', 'categories', 'departments'));
+        return view('cwd.forms.ticketForm', $result);
     }
 
     // --- MUTATING METHODS ---
