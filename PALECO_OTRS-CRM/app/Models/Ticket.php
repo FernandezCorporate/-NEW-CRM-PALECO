@@ -250,12 +250,15 @@ class Ticket extends Model
 
                 if ($eventName === 'updated' && $this->isDirty('status')) {
                     
+                    // 1. Check for Rejections first (Intercepts reverting to ANY previous state)
+                    if ($this->getOriginal('status') === TicketStatus::PENDING_ESCALATION && $this->status !== TicketStatus::ESCALATED) {
+                        return "The escalation request was rejected. Ticket {$this->ticket_number} has been returned to its previous state.";
+                    }
+
+                    // 2. Then proceed with normal state-specific logs
                     if ($this->status === TicketStatus::IN_PROGRESS) {
                         if ($this->getOriginal('status') === TicketStatus::RESOLVED) {
                             return "The accomplishment report was rejected. Ticket {$this->ticket_number} has been returned to In Progress.";
-                        }
-                        if ($this->getOriginal('status') === TicketStatus::PENDING_ESCALATION) {
-                            return "The escalation request was rejected. Ticket {$this->ticket_number} has been returned to its previous state.";
                         }
                         return "Work has started on Ticket {$this->ticket_number}.";
                     }

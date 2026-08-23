@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Web\Cwd;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Web\Cwd\TicketEscalation\EscalationDecisionRequest;
 use App\Models\TicketEscalation;
 use App\Services\Web\Cwd\TicketService;
 use Illuminate\Http\Request;
@@ -28,5 +29,20 @@ class TicketEscalationController extends Controller
         $result = $this->ticketService->getEscalationDetails($escalation);
 
         return view('cwd.pages.escalationDetails', $result);
+    }
+
+    public function decide( EscalationDecisionRequest $request, TicketEscalation $escalation)
+    {
+        Gate::authorize('decide', $escalation);
+
+        $result = $this->ticketService->verifyEscalation($request->validated(), $escalation);
+
+        // Safely bounce back if the Race Condition check failed in the service
+        if (!$result['success']) {
+            return back()->with('error', $result['message']);
+        }
+
+        // Standard success flow
+        return redirect()->route('cwd.escalations')->with('success', 'Escalation processed successfully.');
     }
 }

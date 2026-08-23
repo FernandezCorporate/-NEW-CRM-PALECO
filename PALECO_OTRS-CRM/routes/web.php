@@ -165,6 +165,7 @@ Route::middleware(['auth', CheckIfActive::class])->group(function() {
         Route::prefix('escalations')->group(function () {
             Route::get('/', [TicketEscalationController::class, 'index'])->name('cwd.escalations');
             Route::get('/{escalation}', [TicketEscalationController::class, 'show'])->name('cwd.escalations.show')->whereUlid('escalation');
+            Route::post('/{escalation}/decide', [TicketEscalationController::class, 'decide'])->name('cwd.escalations.decide');
         });
     });
 

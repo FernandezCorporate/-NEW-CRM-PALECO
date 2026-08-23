@@ -110,12 +110,151 @@ class TicketService
     {
         $escalation->load(['ticket', 'creator', 'suggestedDepartment']);
 
-        $validDecision = EscalationStatus::cases();
+        $approveValue = EscalationStatus::APPROVED;
+        $rejectValue = EscalationStatus::REJECTED;
+
+        // Exclude the department currently handling the parent ticket
+        $departments = Department::query()
+            ->where('id', '!=', $escalation->ticket->department_id)
+            ->get();
 
         return [
             "escalation" => $escalation,
-            'validDecision' => $validDecision
+            "approveValue" => $approveValue,
+            "rejectValue" => $rejectValue,
+            "departments" => $departments
         ];
+    }
+
+    public function verifyEscalation(array $validatedData, TicketEscalation $escalation)
+    {
+        return DB::transaction(function () use ($validatedData, $escalation) {
+            
+            // 1. Lock the exact escalation record
+            $lockedEscalation = TicketEscalation::where('id', $escalation->id)
+                ->lockForUpdate()
+                ->first();
+
+            // Race Condition Check
+            if ($lockedEscalation->status !== EscalationStatus::PENDING) {
+                return ['success' => false, 'message' => 'This escalation has already been processed by another officer.'];
+            }
+
+            $isApproved = $validatedData['status'] === EscalationStatus::APPROVED->value;
+
+            // 2. Commit Escalation Decision Updates
+            $lockedEscalation->update([
+                'status' => $validatedData['status'],
+                'reviewed_by' => Auth::id(),
+                'reviewed_at' => now(),
+                'rejection_reason' => $isApproved ? null : $validatedData['rejection_reason'],
+            ]);
+
+            // 3. Lock Parent Ticket dynamically via its relationship
+            $parentTicket = $lockedEscalation->ticket()->lockForUpdate()->first();
+
+            if ($isApproved) {
+                // Track the old status before changing it
+                $oldParentStatus = $parentTicket->status;
+                
+                // Update the parent ticket's status field
+                // Note: Change TicketStatus::ESCALATED to match whatever your actual Enum name is
+                $parentTicket->update([
+                    'status' => TicketStatus::ESCALATED
+                ]);
+                
+                // 4. Log the parent ticket's milestone with the actual state change
+                $parentTicket->statusLog()->create([
+                    'changed_by' => Auth::id(),
+                    'old_status' => $oldParentStatus,
+                    'new_status' => TicketStatus::ESCALATED, 
+                ]);
+
+                // 5. Spawn child ticket (Inheriting all original form data from the parent)
+                $childTicket = Ticket::create([
+                    // System & Hierarchy
+                    'ticket_number'         => $this->generateChildTicketNumber($parentTicket),
+                    'parent_ticket_id'      => $parentTicket->getKey(),
+                    'department_id'         => $validatedData['department_id'], 
+                    
+                    // Inherited Consumer & Intake Data
+                    'consumer_id'           => $parentTicket->consumer_id,
+                    'complaint_source'      => $parentTicket->complaint_source, 
+                    'complaint_description' => $parentTicket->complaint_description,
+                    
+                    // Inherited Categorization (Including Custom Options)
+                    'category_id'           => $parentTicket->category_id,
+                    'other_category'        => $parentTicket->other_category,
+                    'other_category_name'   => $parentTicket->other_category_name,
+                    
+                    // Inherited Geographical Location
+                    'purok'                 => $parentTicket->purok,
+                    'street'                => $parentTicket->street,
+                    'barangay'              => $parentTicket->barangay,
+                    'landmark'              => $parentTicket->landmark,
+                    
+                    // New Ticket Metadata
+                    'subject'               => $this->generateChildTicketSubject($parentTicket),
+                    'status'                => TicketStatus::OPEN,
+                    'created_by'            => Auth::id(), 
+                    'reported_at'           => now(),
+                ]);
+
+                // 6. Stamp initial log for child ticket
+                $childTicket->statusLog()->create([
+                    'changed_by' => Auth::id(),
+                    'old_status' => null,
+                    'new_status' => TicketStatus::OPEN,
+                ]);
+
+            } else {
+                // Rejected Flow: Revert parent ticket
+                $oldStatus = $parentTicket->status;
+                
+                $parentTicket->update([
+                    'status' => $lockedEscalation->pre_escalation_status
+                ]);
+
+                $parentTicket->statusLog()->create([
+                    'changed_by' => Auth::id(),
+                    'old_status' => $oldStatus,
+                    'new_status' => $lockedEscalation->pre_escalation_status,
+                ]);
+            }
+
+            return ['success' => true];
+        });
+    }
+
+    private function generateChildTicketSubject(Ticket $parentTicket): string
+    {
+        return 'Escalated: ' . $parentTicket->subject;
+    }
+
+    /*
+     * Generates a hierarchical suffix for escalated child tickets (e.g., TKT-260823-001-1).
+     * Leverages row locking to prevent sequence collisions if multiple escalations happen simultaneously.
+     */
+    private function generateChildTicketNumber(Ticket $parentTicket): string
+    {
+        $baseNumber = $parentTicket->ticket_number;
+
+        // Find the latest child ticket for this specific parent
+        $latestChild = Ticket::where('ticket_number', 'like', "{$baseNumber}-%")
+            ->lockForUpdate()
+            ->orderBy('ticket_number', 'desc')
+            ->first();
+
+        $nextSequence = 1;
+
+        if ($latestChild) {
+            // Extract the current suffix (everything after the last dash) and increment
+            $parts = explode('-', $latestChild->ticket_number);
+            $lastAssignedDigits = (int) end($parts);
+            $nextSequence = $lastAssignedDigits + 1;
+        }
+
+        return sprintf("%s-%d", $baseNumber, $nextSequence);
     }
 
     // --- PRIVATE HELPER METHODS ---
