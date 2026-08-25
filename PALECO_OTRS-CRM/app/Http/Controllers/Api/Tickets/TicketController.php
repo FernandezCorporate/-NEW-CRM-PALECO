@@ -89,7 +89,7 @@ class TicketController extends Controller
         return response()->json([
             'success' => true,
             'status'  => 200,
-            'message' => "Assignment and escalation history for {$ticket->ticket_numberp} has been retrieved.",
+            'message' => "Assignment and escalation history for {$ticket->ticket_number} has been retrieved.",
             'data'    => new TicketHistoryResource($result)
         ]);
     }
