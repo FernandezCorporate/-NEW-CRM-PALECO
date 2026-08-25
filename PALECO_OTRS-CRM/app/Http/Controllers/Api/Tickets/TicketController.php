@@ -11,6 +11,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use App\Enums\TicketStatus;
+use App\Http\Resources\Api\TicketHistoryResource;
 
 class TicketController extends Controller
 {
@@ -76,6 +77,20 @@ class TicketController extends Controller
             'status'  => 200,
             'message' => "Work has started on ticket {$updatedTicket->ticket_number}.",
             'data'    => new TicketResource($updatedTicket)
+        ]);
+    }
+
+    public function history(Request $request, Ticket $ticket): JsonResponse
+    {
+        Gate::authorize('viewHistory', $ticket);
+
+        $result = $this->ticketService->viewTicketHistory($ticket);
+
+        return response()->json([
+            'success' => true,
+            'status'  => 200,
+            'message' => "Assignment and escalation history for {$ticket->ticket_number} has been retrieved.",
+            'data'    => new TicketHistoryResource($result)
         ]);
     }
 }

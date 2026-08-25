@@ -287,4 +287,17 @@ class TicketService
 
         return $accomplishments;
     }
+
+    public function viewTicketHistory(Ticket $ticket)
+    {
+        $ticketHistory = $ticket->load([
+            'assignments.team', 
+            'assignments.assigner.role',
+            'escalations.suggestedDepartment',
+            'escalations.creator.role',
+            'escalations.reviewer'
+        ]);
+
+        return $ticketHistory;
+    }
 }

@@ -44,6 +44,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
         Route::get('/{ticket}/accomplishments', [TicketAccomplishmentController::class, 'index']); // Docuemented
         Route::get('/{ticket}/accomplishments/{accomplishment}', [TicketAccomplishmentController::class, 'show']); // Documented
+        Route::get('/{ticket}/history', [TicketController::class, 'history']);
     });
 
     // --- FOREMAN SPECIFIC ENDPOINTS ---
