@@ -11,6 +11,7 @@ use App\Http\Controllers\Web\Admin\DepartmentController;
 use App\Http\Controllers\Web\Admin\TeamController;
 use App\Http\Controllers\Web\Admin\TicketCategoryController;
 use App\Http\Controllers\Web\Admin\UserController;
+use App\Http\Controllers\Web\Admin\SystemMonitoringController;
 
 use App\Http\Controllers\Web\Cwd\CwdDashboardController;
 use App\Http\Controllers\Web\Cwd\TicketController;
@@ -146,6 +147,10 @@ Route::middleware(['auth', CheckIfActive::class])->group(function() {
 
             Route::get('/{category}/delete', [TicketCategoryController::class, 'deleteConfirm'])->name('admin.ticketCategories.forceDeleteConfirm')->whereNumber('category')->withTrashed();
             Route::delete('/{category}/force-delete', [TicketCategoryController::class, 'destroy'])->name('admin.ticketCategories.destroy')->whereNumber('category')->withTrashed();
+        });
+
+        Route::prefix('system-monitoring')->group(function() {
+            Route::get('/', [SystemMonitoringController::class, 'index'])->name('admin.monitoring.index');
         });
     });
 

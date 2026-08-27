@@ -8,6 +8,8 @@ use App\Models\User;
 use Illuminate\Auth\Access\Response;
 use Spatie\Activitylog\Facades\Activity;
 use Spatie\Activitylog\Contracts\Activity as ActivityContract;
+use Spatie\Activitylog\Models\Activity as ActivityModel;
+use App\Policies\ActivityPolicy;
 
 /*
  * Bootstraps core application services and global configurations.
@@ -43,6 +45,8 @@ class AppServiceProvider extends ServiceProvider
                 ? Response::allow()
                 : Response::denyAsNotFound();
         });
+
+        Gate::policy(ActivityModel::class, ActivityPolicy::class);
 
         /*
          * Mobile API Gates
