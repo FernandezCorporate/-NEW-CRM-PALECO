@@ -7,17 +7,28 @@
     
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
-<body class="flex m-0 font-sans bg-slate-50 min-h-screen">
+<body class="app-shell flex m-0 font-sans min-h-screen">
 
-    <aside class="w-64 bg-[#063321] border-r border-[#0a4d32] h-screen flex flex-col justify-between box-border sticky top-0 text-slate-300">
+    <header class="mobile-app-bar md:hidden">
+        <button type="button" data-sidebar-toggle class="mobile-menu-button" aria-label="Open navigation" aria-controls="app-sidebar" aria-expanded="false">
+            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" /></svg>
+        </button>
+        <div class="flex items-center gap-2.5">
+            <img src="{{ asset('images/paleco-logo.png') }}" alt="" class="h-8 w-8">
+            <div><strong class="block text-sm leading-none text-slate-900">PALECO</strong><span class="text-[10px] font-semibold uppercase tracking-[.13em] text-emerald-700">Service Desk</span></div>
+        </div>
+    </header>
+    <button type="button" data-sidebar-overlay class="sidebar-overlay md:hidden" aria-label="Close navigation"></button>
+
+    <aside id="app-sidebar" class="app-sidebar sidebar-surface w-72 md:w-64 border-r border-white/10 h-screen flex flex-col justify-between box-border text-slate-300 md:sticky md:top-0">
         
         <div class="flex flex-col h-full overflow-y-auto overflow-x-hidden">
             
             <div class="px-6 py-6 border-b border-white/10 mb-6">
                 <div class="flex items-center gap-3">
-                    <img src="{{ asset('images/paleco-logo.png') }}" alt="PALECO Logo" class="w-8 h-8 drop-shadow-md">
+                    <img src="{{ asset('images/paleco-logo.png') }}" alt="PALECO Logo" class="w-10 h-10 drop-shadow-md">
                     <div>
-                        <h2 class="text-sm font-bold text-white tracking-wider leading-tight">PALECO CWD</h2>
+                        <h2 class="text-base font-bold text-white tracking-wide leading-tight">PALECO</h2>
                         <p class="text-[10px] text-emerald-400 font-light mt-0.5 uppercase tracking-wide">
                             {{ auth()->user() ? Str::headline(auth()->user()->role->role_name) : 'Portal' }} Console
                         </p>
@@ -32,7 +43,7 @@
                     <ul class="list-none p-0 m-0 space-y-1">
                         <li>
                             <a href="{{ route('cwd.dashboard') }}" 
-                               class="flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors {{ request()->routeIs('dashboard') ? 'bg-[#00a86b] text-white shadow-md' : 'text-slate-300 hover:bg-white/5 hover:text-white' }}">
+                               class="flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-xl transition-all {{ request()->routeIs('cwd.dashboard') ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-950/20' : 'text-slate-300 hover:bg-white/10 hover:text-white' }}">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path>
                                 </svg>
@@ -45,13 +56,13 @@
                 <!-- Update: Evaluating relational slug instead of enum value -->
                 @if(auth()->check() && auth()->user()->role->slug_identifier === 'cwd_officer')
                     <div>
-                        <h3 class="px-2 text-[10px] font-bold text-white/40 uppercase tracking-widest mb-2">Administration</h3>
+                        <h3 class="px-2 text-[10px] font-bold text-white/40 uppercase tracking-widest mb-2">Service Desk</h3>
                         <ul class="list-none p-0 m-0 space-y-1">
                             <li>
                                 <a href="{{ route('cwd.tickets') }}" 
-                                   class="flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors {{ request()->routeIs('cwd.userManagement') ? 'bg-[#00a86b] text-white shadow-md' : 'text-slate-300 hover:bg-white/5 hover:text-white' }}">
+                                   class="flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-xl transition-all {{ request()->routeIs('cwd.tickets*') ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-950/20' : 'text-slate-300 hover:bg-white/10 hover:text-white' }}">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"></path>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M6 3h12a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V5a2 2 0 012-2zm3 5h6m-6 4h6m-6 4h4"></path>
                                     </svg>
                                     Tickets
                                 </a>
@@ -59,9 +70,9 @@
 
                             <li>
                                 <a href="{{ route('cwd.escalations') }}" 
-                                   class="flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors {{ request()->routeIs('cwd.userManagement') ? 'bg-[#00a86b] text-white shadow-md' : 'text-slate-300 hover:bg-white/5 hover:text-white' }}">
+                                   class="flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-xl transition-all {{ request()->routeIs('cwd.escalations*') ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-950/20' : 'text-slate-300 hover:bg-white/10 hover:text-white' }}">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"></path>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 7h7m0 0v7m0-7l-8 8-4-4-5 5"></path>
                                     </svg>
                                     Escalations
                                 </a>
@@ -101,7 +112,7 @@
         </div>
     </aside>
 
-    <main class="flex-1 p-8 overflow-y-auto bg-slate-50">
+    <main class="workspace-surface app-main flex-1 px-5 pb-8 pt-24 md:p-8 lg:p-10 overflow-y-auto">
         @yield('content')
     </main>
 

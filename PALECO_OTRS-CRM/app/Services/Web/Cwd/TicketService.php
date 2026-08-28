@@ -29,9 +29,12 @@ class TicketService
 
     public function getTicketList(Request $request)
     {
+        $status = TicketStatus::tryFrom((string) $request->status);
+
         $tickets = Ticket::with(['category', 'department', 'creator', 'parentTicket'])
             ->search($request->search)
             ->filterByCategory($request->filter)
+            ->when($status, fn ($query) => $query->where('status', $status))
             ->sort($request->sort)
             ->paginate(10)
             ->withQueryString();
@@ -40,7 +43,8 @@ class TicketService
 
         return [
             "tickets" => $tickets,
-            "categories" => $categories
+            "categories" => $categories,
+            "statuses" => TicketStatus::cases(),
         ];
     }
 

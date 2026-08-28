@@ -7,14 +7,14 @@
     
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
-<body class="h-full flex items-center justify-center p-4 md:p-6 select-none">
+<body class="auth-shell h-full flex items-center justify-center p-4 md:p-6 select-none">
 
-    <div class="w-full max-w-5xl bg-white rounded-xl shadow-2xl flex flex-col md:flex-row overflow-hidden border border-slate-200" style="min-height: 580px;">
+    <div class="w-full max-w-5xl bg-white rounded-[1.75rem] shadow-2xl shadow-slate-900/10 flex flex-col md:flex-row overflow-hidden border border-white" style="min-height: 580px;">
         
-        <div class="w-full md:w-[45%] bg-[#063321] text-white p-8 flex flex-col justify-between relative overflow-hidden">
+        <div class="sidebar-surface w-full md:w-[45%] text-white p-8 md:p-10 flex flex-col justify-between relative overflow-hidden">
             <div>
                 <div class="flex items-center gap-2">
-                    <h1 class="text-lg font-bold tracking-wide">PALECO CRM-CWD</h1>
+                    <h1 class="text-2xl font-bold tracking-tight">PALECO CRM-CWD</h1>
                 </div>
                 <p class="text-xs text-emerald-300 font-light mt-0.5">Consumer Welfare Desk Portal</p>
 

@@ -232,7 +232,7 @@
                 </p>
 
                 <!-- Statistics Grid -->
-                <div class="grid grid-cols-3 gap-3 mb-5">
+                <div class="grid grid-cols-2 gap-3 mb-5">
                     <!-- Foremen -->
                     <div class="bg-slate-50 border border-slate-100 rounded-lg p-3 text-center flex flex-col justify-center">
                         <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Foremen</span>

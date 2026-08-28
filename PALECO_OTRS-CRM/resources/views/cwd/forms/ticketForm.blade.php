@@ -85,7 +85,7 @@
                 <div class="space-y-5">
                     <h3 class="text-sm font-bold text-gray-900 border-b border-gray-200 pb-2">Geographical Incident Location</h3>
                     
-                    <div class="grid grid-cols-2 gap-4">
+                    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                         <div>
                             <label for="purok" class="block text-xs font-semibold text-gray-600 mb-1.5">Purok</label>
                             <input type="text" name="purok" id="purok" value="{{ old('purok') }}" class="w-full rounded-md border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-[#008f5d] focus:ring-1 focus:ring-[#008f5d] outline-none transition-colors" placeholder="e.g., Ipil-Ipil">

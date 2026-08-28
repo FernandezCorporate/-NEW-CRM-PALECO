@@ -51,6 +51,18 @@
     /* The magic bullet: Runs the animation when display becomes block */
     animation: dropdownFadeIn 0.15s ease-out forwards !important;
     transform-origin: top;
+    z-index: 80 !important;
+}
+
+/* Keep an open filter above tables and other animated page sections. */
+.ts-wrapper.dropdown-active {
+    position: relative;
+    z-index: 70;
+}
+
+.workspace-surface > *:has(.ts-wrapper.dropdown-active) {
+    position: relative;
+    z-index: 60;
 }
 
 /* Dropdown Options */

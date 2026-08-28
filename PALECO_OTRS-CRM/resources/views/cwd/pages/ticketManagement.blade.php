@@ -45,6 +45,15 @@
                     <option value="other" {{ request('filter') == 'other' ? 'selected' : '' }}>Custom/Other Categories</option>
                 </select>
 
+                <select name="status" class="ts-filter-dropdown hidden">
+                    <option value="all" {{ request('status', 'all') === 'all' ? 'selected' : '' }}>All Statuses</option>
+                    @foreach($statuses as $status)
+                        <option value="{{ $status->value }}" {{ request('status') === $status->value ? 'selected' : '' }}>
+                            {{ $status->label() }}
+                        </option>
+                    @endforeach
+                </select>
+
                 <select name="sort" class="ts-filter-dropdown hidden">
                     <option value="newest" {{ request('sort') == 'newest' ? 'selected' : '' }}>Newest First</option>
                     <option value="oldest" {{ request('sort') == 'oldest' ? 'selected' : '' }}>Oldest First</option>

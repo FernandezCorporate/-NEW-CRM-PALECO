@@ -7,17 +7,28 @@
     
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
-<body class="flex m-0 font-sans bg-slate-50 h-screen overflow-hidden">
+<body class="app-shell flex m-0 font-sans h-screen overflow-hidden">
 
-    <aside class="w-64 bg-[#063321] border-r border-[#0a4d32] h-full flex flex-col justify-between shrink-0 box-border text-slate-300">
+    <header class="mobile-app-bar md:hidden">
+        <button type="button" data-sidebar-toggle class="mobile-menu-button" aria-label="Open navigation" aria-controls="app-sidebar" aria-expanded="false">
+            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" /></svg>
+        </button>
+        <div class="flex items-center gap-2.5">
+            <img src="{{ asset('images/paleco-logo.png') }}" alt="" class="h-8 w-8">
+            <div><strong class="block text-sm leading-none text-slate-900">PALECO</strong><span class="text-[10px] font-semibold uppercase tracking-[.13em] text-emerald-700">Control Center</span></div>
+        </div>
+    </header>
+    <button type="button" data-sidebar-overlay class="sidebar-overlay md:hidden" aria-label="Close navigation"></button>
+
+    <aside id="app-sidebar" class="app-sidebar sidebar-surface w-72 md:w-64 border-r border-white/10 h-full flex flex-col justify-between shrink-0 box-border text-slate-300">
         
         <div class="flex flex-col flex-1 overflow-y-auto overflow-x-hidden">
             
             <div class="px-6 py-6 border-b border-white/10 mb-6">
                 <div class="flex items-center gap-3">
-                    <img src="{{ asset('images/paleco-logo.png') }}" alt="PALECO Logo" class="w-8 h-8 drop-shadow-md">
+                    <img src="{{ asset('images/paleco-logo.png') }}" alt="PALECO Logo" class="w-10 h-10 drop-shadow-md">
                     <div>
-                        <h2 class="text-sm font-bold text-white tracking-wider leading-tight">PALECO CWD</h2>
+                        <h2 class="text-base font-bold text-white tracking-wide leading-tight">PALECO</h2>
                         <p class="text-[10px] text-emerald-400 font-light mt-0.5 uppercase tracking-wide">
                             {{ auth()->user() ? Str::headline(auth()->user()->role->role_name) : 'Portal' }} Console
                         </p>
@@ -32,7 +43,7 @@
                     <ul class="list-none p-0 m-0 space-y-1">
                         <li>
                             <a href="{{ route('admin.dashboard') }}" 
-                                class="flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors {{ request()->routeIs('dashboard') ? 'bg-[#00a86b] text-white shadow-md' : 'text-slate-300 hover:bg-white/5 hover:text-white' }}">
+                                class="flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-xl transition-all {{ request()->routeIs('admin.dashboard') ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-950/20' : 'text-slate-300 hover:bg-white/10 hover:text-white' }}">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
                                 Dashboard
                             </a>
@@ -47,7 +58,7 @@
                         <ul class="list-none p-0 m-0 space-y-1 mb-3">
                             <li>
                                 <a href="{{ route('admin.users') }}" 
-                                class="flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors {{ request()->routeIs('admin.users') ? 'bg-[#00a86b] text-white shadow-md' : 'text-slate-300 hover:bg-white/5 hover:text-white' }}">
+                                class="flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-xl transition-all {{ request()->routeIs('admin.users*') ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-950/20' : 'text-slate-300 hover:bg-white/10 hover:text-white' }}">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"></path></svg>
                                     Users
                                 </a>
@@ -57,7 +68,7 @@
                         <ul class="list-none p-0 m-0 space-y-1 mb-3">
                             <li>
                                 <a href="{{ route('admin.departments') }}" 
-                                class="flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors {{ request()->routeIs('admin.departments') ? 'bg-[#00a86b] text-white shadow-md' : 'text-slate-300 hover:bg-white/5 hover:text-white' }}">
+                                class="flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-xl transition-all {{ request()->routeIs('admin.departments*') ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-950/20' : 'text-slate-300 hover:bg-white/10 hover:text-white' }}">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://w3.org"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
                                     Departments
                                 </a>
@@ -66,7 +77,7 @@
 
                         <ul class="list-none p-0 m-0 space-y-1 mb-3"> 
                             <li> 
-                                <a href="{{ route('admin.teams') }}" class="flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors {{ request()->routeIs('admin.teams') ? 'bg-[#00a86b] text-white shadow-md' : 'text-slate-300 hover:bg-white/5 hover:text-white' }}"> 
+                                <a href="{{ route('admin.teams') }}" class="flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-xl transition-all {{ request()->routeIs('admin.teams*') ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-950/20' : 'text-slate-300 hover:bg-white/10 hover:text-white' }}">
                                 <!-- Updated to a multi-user / team icon -->
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://w3.org">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94-3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z" />
@@ -79,7 +90,7 @@
 
                         <ul class="list-none p-0 m-0 space-y-1 mb-3">
                             <li>
-                                <a href="{{ route('admin.ticketCategories') }}" class="flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors {{ request()->routeIs('admin.ticket-categories') ? 'bg-[#00a86b] text-white shadow-md' : 'text-slate-300 hover:bg-white/5 hover:text-white' }}">
+                                <a href="{{ route('admin.ticketCategories') }}" class="flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-xl transition-all {{ request()->routeIs('admin.ticketCategories*') ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-950/20' : 'text-slate-300 hover:bg-white/10 hover:text-white' }}">
                                     <!-- Ticket / Tag Icon -->
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://w3.org">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581a1.5 1.5 0 002.122 0l4.318-4.318a1.5 1.5 0 000-2.122L11.16 3.659A2.25 2.25 0 009.568 3z" />
@@ -92,7 +103,7 @@
 
                         <ul class="list-none p-0 m-0 space-y-1 mb-3">
                             <li>
-                                <a href="{{ route('admin.monitoring.index') }}" class="flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors {{ request()->routeIs('admin.monitoring.index') ? 'bg-[#00a86b] text-white shadow-md' : 'text-slate-300 hover:bg-white/5 hover:text-white' }}">
+                                <a href="{{ route('admin.monitoring.index') }}" class="flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-xl transition-all {{ request()->routeIs('admin.monitoring.*') ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-950/20' : 'text-slate-300 hover:bg-white/10 hover:text-white' }}">
                                     <!-- Ticket / Tag Icon -->
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://w3.org">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581a1.5 1.5 0 002.122 0l4.318-4.318a1.5 1.5 0 000-2.122L11.16 3.659A2.25 2.25 0 009.568 3z" />
@@ -132,7 +143,7 @@
         </div>
     </aside>
 
-    <main class="flex-1 h-full overflow-y-auto p-8 bg-slate-50">
+    <main class="workspace-surface app-main flex-1 h-full overflow-y-auto px-5 pb-8 pt-24 md:p-8 lg:p-10">
         @yield('content')
     </main>
 
