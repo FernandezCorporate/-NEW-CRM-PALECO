@@ -74,7 +74,7 @@
                         <th class="px-6 py-4 w-48">Nature of Complaint</th>
                         <th class="px-6 py-4 w-40 text-center">Assigned Dept</th>
                         <th class="px-6 py-4 w-32 text-center">Status</th>
-                        <th class="px-6 py-4">Complaint Description</th>
+                        <th class="px-6 py-4 w-40 text-center">Hierarchy</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-100">
@@ -139,14 +139,17 @@
                                 </span>
                             </td>
 
-                            <!-- Description / Remarks -->
-                            <td class="px-6 py-4 align-top">
-                                <div class="text-sm text-gray-700 leading-relaxed line-clamp-2">
-                                    {{ $ticket->complaint_description }}
-                                </div>
-                                <div class="text-[10px] text-gray-400 mt-1 uppercase tracking-wider">
-                                    Logged at {{ $ticket->reported_at->format('H:i') }}
-                                </div>
+                            <!-- Hierarchy (Parent/Child) -->
+                            <td class="px-6 py-4 align-top text-center">
+                                @if(is_null($ticket->parent_ticket_id))
+                                    <div class="text-xs font-bold uppercase tracking-wider text-gray-500">Parent</div>
+                                    <div class="font-bold text-gray-300 text-xs mt-0.5">—</div>
+                                @else
+                                    <div class="text-xs font-bold uppercase tracking-wider text-indigo-600">Child</div>
+                                    <div class="font-bold text-[#008f5d] text-xs mt-0.5">
+                                        {{ $ticket->parentTicket->ticket_number ?? 'Unknown' }}
+                                    </div>
+                                @endif
                             </td>
                 
                         </tr>

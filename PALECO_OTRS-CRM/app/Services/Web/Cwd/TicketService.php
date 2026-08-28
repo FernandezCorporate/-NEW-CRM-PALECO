@@ -29,7 +29,7 @@ class TicketService
 
     public function getTicketList(Request $request)
     {
-        $tickets = Ticket::with(['category', 'department', 'creator'])
+        $tickets = Ticket::with(['category', 'department', 'creator', 'parentTicket'])
             ->search($request->search)
             ->filterByCategory($request->filter)
             ->sort($request->sort)
