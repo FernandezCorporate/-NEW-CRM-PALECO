@@ -83,7 +83,9 @@
                             
                             <!-- Ticket ID -->
                             <td class="px-6 py-4 align-top">
-                                <div class="font-bold text-[#008f5d] text-sm">{{ $ticket->ticket_number }}</div>
+                                <a href="{{ route('cwd.tickets.show', $ticket) }}" class="font-bold text-[#008f5d] text-sm hover:underline hover:text-emerald-700 transition-colors block">
+                                    {{ $ticket->ticket_number }}
+                                </a>
                                 <div class="text-[11px] text-gray-400 mt-0.5">{{ $ticket->reported_at->format('M d, Y') }}</div>
                             </td>
 

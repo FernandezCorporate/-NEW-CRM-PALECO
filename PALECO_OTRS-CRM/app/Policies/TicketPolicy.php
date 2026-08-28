@@ -9,6 +9,7 @@ use App\Enums\TicketStatus;
 class TicketPolicy
 {
     public function viewAny(User $user): bool { return in_array($user->role->slug_identifier, ['cwd_officer', 'admin'], true); }
+    public function webView(User $user, Ticket $ticket): bool { return in_array($user->role->slug_identifier, ['cwd_officer', 'admin'], true); }
     public function ticketForm(User $user): bool { return $user->role->slug_identifier === 'cwd_officer'; }
 
     public function viewInbox(User $user): bool { return in_array($user->role->slug_identifier, ['foreman', 'field_personnel']); }

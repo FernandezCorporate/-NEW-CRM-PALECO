@@ -163,6 +163,7 @@ Route::middleware(['auth', CheckIfActive::class])->group(function() {
 
         Route::prefix('tickets')->group(function() {
             Route::get('/', [TicketController::class, 'index'])->name('cwd.tickets');
+            Route::get('/{ticket}', [TicketController::class, 'show'])->name('cwd.tickets.show')->whereUlid('ticket');
             Route::get('/create', [TicketController::class, 'ticketForm'])->name('cwd.tickets.createForm');
             Route::post('/', [TicketController::class, 'store'])->name('cwd.tickets.store');
         });

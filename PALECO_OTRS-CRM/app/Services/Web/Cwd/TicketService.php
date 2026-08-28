@@ -44,6 +44,34 @@ class TicketService
         ];
     }
 
+    public function getTicketDetails(Ticket $ticket): array
+    {
+        $ticket->load([
+            // Core & Routing
+            'creator',
+            'department.foremen',
+            'team.members',
+            'category',
+            
+            // Hierarchy
+            'parentTicket.department',
+            'childTickets.department',
+            
+            // History Modules
+            'statusLog.updater',
+            'assignments.team',
+            'assignments.assigner',
+            'escalations.suggestedDepartment',
+            'escalations.creator',
+            'escalations.reviewer',
+            'accomplishments.accomplishedBy',
+            'accomplishments.approvedBy',
+            'accomplishments.rejectedBy'
+        ]);
+
+        return compact('ticket');
+    }
+
     public function loadTicketForm()
     {
         $sources = ComplaintSources::cases();

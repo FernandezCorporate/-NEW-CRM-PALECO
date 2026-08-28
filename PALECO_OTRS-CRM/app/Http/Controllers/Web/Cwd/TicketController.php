@@ -39,6 +39,20 @@ class TicketController extends Controller
         return view('cwd.pages.ticketManagement', $result);
     }
 
+    // --- VIEW METHODS ---
+
+    /*
+     * Renders the comprehensive Ticket Details page with loaded relationship histories.
+     */
+    public function show(Ticket $ticket)
+    {
+        Gate::authorize('webView', $ticket);
+
+        $result = $this->ticketService->getTicketDetails($ticket);
+
+        return view('cwd.pages.ticketDetails', $result);
+    }
+
     // --- FORM METHODS ---
 
     /*
