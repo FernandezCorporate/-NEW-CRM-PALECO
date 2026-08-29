@@ -164,6 +164,21 @@ class Ticket extends Model
         return $query->where('category_id', $filter);
     }
 
+    public function scopeFilterByStatus($query, $status)
+    {
+        if (empty($status)) {
+            return $query;
+        }
+
+        $validStatuses = array_column(TicketStatus::cases(), 'value');
+        
+        if (in_array($status, $validStatuses)) {
+            return $query->where('status', $status);
+        }
+
+        return $query;
+    }
+
     public function scopeSort($query, $sort)
     {
         return match ($sort) {

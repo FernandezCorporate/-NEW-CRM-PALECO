@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services\Web;
+namespace App\Services\Web\Dashboard;
 
 use App\Enums\TicketStatus;
 use App\Models\Department;
@@ -14,10 +14,7 @@ class DashboardService
 {
     public function ticketOverview(): array
     {
-        $statusCounts = Ticket::query()
-            ->selectRaw('status, COUNT(*) as total')
-            ->groupBy('status')
-            ->pluck('total', 'status');
+        $statusCounts = Ticket::toBase()->pluck('status')->countBy();
 
         $statuses = collect(TicketStatus::cases())->map(fn (TicketStatus $status) => [
             'key' => $status->value,
@@ -35,31 +32,19 @@ class DashboardService
             ];
         })->values()->all();
 
-        $categories = TicketCategory::query()
-            ->withCount('ticket')
-            ->orderByDesc('ticket_count')
-            ->limit(5)
-            ->get()
-            ->map(fn (TicketCategory $category) => [
-                'label' => $category->category_name,
-                'total' => (int) $category->ticket_count,
-            ])->values()->all();
-
         return [
-            'total' => array_sum(array_column($statuses, 'total')),
+            'total' => collect($statuses)->sum('total'),
             'statuses' => $statuses,
             'trend' => $trend,
-            'trend_max' => max(1, ...array_column($trend, 'total')),
-            'categories' => $categories,
-            'category_max' => max(1, ...array_column($categories ?: [['total' => 0]], 'total')),
+            'trend_max' => max(1, collect($trend)->max('total')),
         ];
     }
 
     public function adminSummary(): array
     {
         return [
-            'users_total' => User::query()->count(),
-            'users_active' => User::query()->where('is_active', true)->count(),
+            'users_total' => User::query()->toBase()->count(),
+            'users_active' => User::query()->where('is_active', true)->toBase()->count(),
             'departments_active' => Department::query()->count(),
             'departments_archived' => Department::onlyTrashed()->count(),
             'tickets_total' => Ticket::query()->count(),
