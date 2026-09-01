@@ -195,6 +195,7 @@ class TicketService
             'accomplishedBy',
             'rejectedBy',
             'approvedBy',
+            'photos'
         ]);
     }
 
@@ -242,7 +243,7 @@ class TicketService
                     'changed_by' => $foreman->id,
                 ]);
             }
-            return $accomplishment->fresh(['accomplishedBy', 'rejectedBy', 'approvedBy']);
+            return $accomplishment->fresh(['accomplishedBy', 'rejectedBy', 'approvedBy', 'photos']);
         });
     }
 
@@ -314,7 +315,7 @@ class TicketService
     public function getAccomplishments(Ticket $ticket)
     {
         $accomplishments = $ticket->accomplishments()
-            ->with(['accomplishedBy', 'rejectedBy', 'approvedBy'])
+            ->with(['accomplishedBy', 'rejectedBy', 'approvedBy', 'photos'])
             ->latest('accomplished_at')
             ->get();
 

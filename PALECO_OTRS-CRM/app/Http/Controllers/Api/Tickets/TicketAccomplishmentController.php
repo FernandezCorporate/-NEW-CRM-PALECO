@@ -73,7 +73,7 @@ class TicketAccomplishmentController extends Controller
             'success' => true,
             'status'  => 201,
             'message' => "Accomplishment report for ticket {$ticket->ticket_number} has been submitted.",
-            'data'    => new TicketAccomplishmentResource($accomplishmentReport->load('accomplishedBy')) 
+            'data'    => new TicketAccomplishmentResource($accomplishmentReport->load('accomplishedBy', 'photos')) 
         ]);
     }
 
