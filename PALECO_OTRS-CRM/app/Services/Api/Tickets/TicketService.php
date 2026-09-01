@@ -15,6 +15,7 @@ use App\Enums\TicketAccomplishmentStatus;
 use App\Models\TicketAccomplishment;
 use App\Models\TicketEscalation;
 use App\Enums\EscalationStatus;
+use Illuminate\Support\Facades\Storage;
 
 /*
  * Encapsulates the core ticket retrieval and operational logic for the mobile API.
@@ -127,31 +128,63 @@ class TicketService
 
     public function accomplishTicket(Ticket $ticket, User $worker, array $accomplishmentDetails): TicketAccomplishment
     {
-        return DB::transaction(function () use ($ticket, $worker, $accomplishmentDetails) {
+        // Initialize variables outside the transaction so the catch block can access them
+        $signaturePath = null;
+        $photoPaths = [];
+
+        try {
+            return DB::transaction(function () use ($ticket, $worker, $accomplishmentDetails, &$signaturePath, &$photoPaths) {
+                
+                // 1. Physically store the files and track their paths in the external variables
+                $signaturePath = $accomplishmentDetails['signature']->store("accomplishments/{$ticket->system_id}/signature", 'public');
+                
+                foreach ($accomplishmentDetails['photos'] as $photo) {
+                    $photoPaths[] = $photo->store("accomplishments/{$ticket->system_id}/photos", 'public');
+                }
+
+                // 2. Map and insert database records
+                $report = TicketAccomplishment::create([
+                    'ticket_id'          => $ticket->system_id,
+                    'accomplished_by_id' => $worker->id, 
+                    'remarks'            => $accomplishmentDetails['remarks'],
+                    'consumer_name'      => $accomplishmentDetails['consumer_name'] ?? null,
+                    'signature_path'     => $signaturePath,
+                    'status'             => TicketAccomplishmentStatus::PENDING,
+                    'accomplished_at'    => now(), 
+                ]);
+
+                // Map the simple array of paths into the associative array createMany expects
+                $photoRecords = array_map(fn($path) => ['file_path' => $path], $photoPaths);
+                $report->photos()->createMany($photoRecords);
+
+                // 3. Status transitions
+                TicketStatusLog::create([
+                    'ticket_id'  => $ticket->system_id,
+                    'old_status' => $ticket->status, 
+                    'new_status' => TicketStatus::RESOLVED,
+                    'changed_by' => $worker->id,
+                ]);
+
+                $ticket->update([
+                    'status'      => TicketStatus::RESOLVED,
+                    'resolved_at' => now(),
+                ]);
+
+                return $report;
+            });
+
+        } catch (\Exception $e) {
+            // 4. The Failsafe: Erase the physical files if the database transaction fails
+            if ($signaturePath) {
+                Storage::disk('public')->delete($signaturePath);
+            }
+            if (!empty($photoPaths)) {
+                Storage::disk('public')->delete($photoPaths);
+            }
             
-            $report = TicketAccomplishment::create([
-                'ticket_id' => $ticket->system_id,
-                'accomplished_by_id' => $worker->id, 
-                'remarks' => $accomplishmentDetails['remarks'],
-                'consumer_name' => $accomplishmentDetails['consumer_name'] ?? null,
-                'status' => TicketAccomplishmentStatus::PENDING,
-                'accomplished_at' => now(), 
-            ]);
-
-            TicketStatusLog::create([
-                'ticket_id'  => $ticket->system_id,
-                'old_status' => $ticket->status, 
-                'new_status' => TicketStatus::RESOLVED,
-                'changed_by' => $worker->id,
-            ]);
-
-            $ticket->update([
-                'status' => TicketStatus::RESOLVED,
-                'resolved_at' => now(),
-            ]);
-
-            return $report;
-        });
+            // Re-throw the error so the controller handles the failure properly
+            throw $e;
+        }
     }
 
     // --- QUERY METHODS ---
