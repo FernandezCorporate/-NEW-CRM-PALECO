@@ -12,6 +12,7 @@ use App\Http\Controllers\Web\Admin\TeamController;
 use App\Http\Controllers\Web\Admin\TicketCategoryController;
 use App\Http\Controllers\Web\Admin\UserController;
 use App\Http\Controllers\Web\Admin\SystemMonitoringController;
+use App\Http\Controllers\Web\Cwd\TicketAccomplishmentController;
 
 use App\Http\Controllers\Web\Cwd\CwdDashboardController;
 use App\Http\Controllers\Web\Cwd\TicketController;
@@ -166,6 +167,7 @@ Route::middleware(['auth', CheckIfActive::class])->group(function() {
             Route::get('/{ticket}', [TicketController::class, 'show'])->name('cwd.tickets.show')->whereUlid('ticket');
             Route::get('/create', [TicketController::class, 'ticketForm'])->name('cwd.tickets.createForm');
             Route::post('/', [TicketController::class, 'store'])->name('cwd.tickets.store');
+            Route::get('/{ticket}/accomplishments/{accomplishment}', [TicketAccomplishmentController::class, 'show'])->name('cwd.tickets.accomplishments.show')->whereUlid('ticket')->whereNumber('accomplishment');
         });
 
         Route::prefix('escalations')->group(function () {

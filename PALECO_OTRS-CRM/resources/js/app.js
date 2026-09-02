@@ -5,6 +5,7 @@ import './tomSelect-input_with_autoSuggest';
 import './teamInlines';
 import './disableDeptForFieldPerson';
 import './ticket-form';
+import './lightbox';
 import TomSelect from 'tom-select';
 
 

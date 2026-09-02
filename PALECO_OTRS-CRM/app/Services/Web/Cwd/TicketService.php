@@ -11,6 +11,7 @@ use App\Enums\ComplaintSources;
 use App\Enums\EscalationStatus;
 use App\Models\Department;
 use App\Models\Ticket;
+use App\Models\TicketAccomplishment;
 use App\Models\TicketCategory;
 use App\Models\TicketEscalation;
 
@@ -255,6 +256,11 @@ class TicketService
 
             return ['success' => true];
         });
+    }
+
+    public function getAccomplishmentDetails(TicketAccomplishment $accomplishment)
+    {
+        return $accomplishment->load(['accomplishedBy', 'approvedBy', 'rejectedBy', 'photos']);
     }
 
     private function generateChildTicketSubject(Ticket $parentTicket): string

@@ -330,16 +330,18 @@
                     </thead>
                     <tbody class="divide-y divide-gray-50">
                         @forelse($ticket->accomplishments as $acc)
-                            <tr class="hover:bg-gray-50 transition-colors">
-                                <td class="px-5 py-3 text-gray-500 whitespace-nowrap align-top">{{ $acc->accomplished_at->format('M d, y H:i') }}</td>
-                                <td class="px-5 py-3 font-medium text-gray-800 align-top">{{ $acc->accomplishedBy->fullName ?? 'Unknown User' }}</td>
+                            <!-- Added cursor-pointer and onclick routing -->
+                            <tr class="hover:bg-gray-100 transition-colors cursor-pointer group" 
+                                onclick="window.location='{{ route('cwd.tickets.accomplishments.show', ['ticket' => $ticket, 'accomplishment' => $acc]) }}'">
+                                
+                                <td class="px-5 py-3 text-gray-500 whitespace-nowrap align-top group-hover:text-gray-700">{{ $acc->accomplished_at->format('M d, y H:i') }}</td>
+                                <td class="px-5 py-3 font-medium text-gray-800 align-top group-hover:text-indigo-600 transition-colors">{{ $acc->accomplishedBy->fullName ?? 'Unknown User' }}</td>
                                 <td class="px-5 py-3 text-center align-top">
                                     <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider
                                         {{ $acc->status->value === 'approved' ? 'bg-emerald-100 text-emerald-700' : ($acc->status->value === 'rejected' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700') }}">
                                         {{ $acc->status->name }}
                                     </span>
                                 </td>
-                                <!-- Removed line-clamp on TD, added a div block for proper text wrapping without visual clipping -->
                                 <td class="px-5 py-3 text-gray-600 align-top">
                                     <div class="whitespace-normal min-w-[150px]">
                                         {{ $acc->remarks }}
