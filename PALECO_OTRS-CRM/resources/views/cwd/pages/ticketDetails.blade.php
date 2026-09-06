@@ -1,5 +1,7 @@
 @extends('cwd.base.base')
 
+@section('workspace-kind', 'detail')
+
 @section('title', 'Ticket Details - ' . $ticket->ticket_number)
 
 @section('content')
@@ -7,11 +9,11 @@
     <!-- Header Section -->
     <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
         <div class="flex items-center gap-4">
-            <a href="{{ route('cwd.tickets') }}" class="p-2 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors text-gray-500">
+            <a href="{{ route('cwd.tickets') }}" aria-label="Back to tickets" class="min-h-11 min-w-11 inline-flex items-center justify-center p-2 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors text-gray-500">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
             </a>
             <div>
-                <h1 class="text-2xl font-bold text-gray-900 flex items-center gap-2">
+                <h1 class="text-2xl font-bold text-gray-900 flex flex-wrap items-center gap-2">
                     {{ $ticket->ticket_number }}
                     @if($ticket->parent_ticket_id)
                         <span class="text-xs font-semibold bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded uppercase tracking-wide">Child Ticket</span>
@@ -42,10 +44,10 @@
     </div>
 
     <!-- Top Block: Info & Routing -->
-    <div class="grid grid-cols-1 xl:grid-cols-3 gap-6 mb-6 items-stretch">
+    <div class="grid grid-cols-1 xl:grid-cols-3 gap-6 mb-6 items-start">
         
         <!-- Consumer Issue Details -->
-        <div class="xl:col-span-2 bg-white border border-gray-200 rounded-xl shadow-sm p-6 h-full">
+        <div class="xl:col-span-2 bg-white border border-gray-200 rounded-xl shadow-sm p-6">
             <h2 class="text-lg font-bold text-gray-900 mb-6">Complaint & Issue Details</h2>
             
             <div class="grid grid-cols-1 md:grid-cols-2 gap-y-6 gap-x-8">
@@ -84,7 +86,7 @@
                     <span class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Created By</span>
                     <div class="flex items-center gap-2 text-gray-800 text-sm">
                         <svg class="w-4 h-4 text-gray-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
-                        {{ $ticket->creator->fullName ?? 'System' }}
+                        {{ $ticket->creator->full_name ?? 'System' }}
                     </div>
                 </div>
             </div>
@@ -200,163 +202,91 @@
         </div>
     </div>
 
-    <!-- Bottom Section: History Mini-Tables -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        
-        <!-- 6.1 Status Log -->
-        <div class="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
-            <div class="px-5 py-4 border-b border-gray-100 bg-gray-50">
-                <h3 class="font-bold text-gray-800 text-sm">Status Timeline</h3>
-            </div>
-            <div class="p-0 max-h-80 overflow-y-auto">
-                <table class="w-full text-left text-sm">
-                    <thead class="bg-white sticky top-0 border-b border-gray-100 shadow-sm text-xs text-gray-400 uppercase">
-                        <tr>
-                            <th class="px-5 py-3 font-semibold">Date</th>
-                            <th class="px-5 py-3 font-semibold">Status Change</th>
-                            <th class="px-5 py-3 font-semibold">Updated By</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-50">
-                        @forelse($ticket->statusLog as $log)
-                            <tr class="hover:bg-gray-50 transition-colors">
-                                <td class="px-5 py-3 text-gray-500 whitespace-nowrap">{{ $log->created_at->format('M d, y H:i') }}</td>
-                                <td class="px-5 py-3 font-medium text-gray-800">
-                                    @if($log->old_status)
-                                        <span class="text-gray-400 line-through mr-1">{{ $log->old_status->label() }}</span> &rarr;
-                                    @endif
-                                    <span class="text-[#008f5d] ml-1">{{ $log->new_status->label() }}</span>
-                                </td>
-                                <td class="px-5 py-3 text-gray-600">{{ $log->updater->fullName ?? 'System' }}</td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="3" class="px-5 py-8 text-center text-gray-400 italic text-sm">No status changes recorded.</td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </div>
-        </div>
+    <section id="ticket-history" class="ticket-history" aria-labelledby="ticket-history-title">
+        <header class="ticket-history-intro">
+            <p class="eyebrow">Ticket record</p>
+            <h2 id="ticket-history-title">Activity & service history</h2>
+            <p>Follow status changes, team handovers, escalations, and submitted field reports.</p>
+        </header>
+        <nav class="ticket-history-nav" aria-label="Jump to ticket history section">
+            <a href="#status-history">Status changes <span>{{ $ticket->statusLog->count() }}</span></a>
+            <a href="#assignment-history">Team assignments <span>{{ $ticket->assignments->count() }}</span></a>
+            <a href="#escalation-history">Escalations <span>{{ $ticket->escalations->count() }}</span></a>
+            <a href="#accomplishment-history">Field reports <span>{{ $ticket->accomplishments->count() }}</span></a>
+        </nav>
 
-        <!-- 6.2 Assignment History -->
-        <div class="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
-            <div class="px-5 py-4 border-b border-gray-100 bg-gray-50">
-                <h3 class="font-bold text-gray-800 text-sm">Team Assignments</h3>
-            </div>
-            <div class="p-0 max-h-80 overflow-y-auto">
-                <table class="w-full text-left text-sm">
-                    <thead class="bg-white sticky top-0 border-b border-gray-100 shadow-sm text-xs text-gray-400 uppercase">
-                        <tr>
-                            <th class="px-5 py-3 font-semibold">Date Assigned</th>
-                            <th class="px-5 py-3 font-semibold">Team</th>
-                            <th class="px-5 py-3 font-semibold">Assigned By</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-50">
-                        @forelse($ticket->assignments as $assignment)
-                            <tr class="hover:bg-gray-50 transition-colors">
-                                <td class="px-5 py-3 text-gray-500 whitespace-nowrap">
-                                    {{ $assignment->created_at->format('M d, y H:i') }}
-                                    @if($assignment->unassigned_at)
-                                        <div class="text-[10px] text-red-400">Unassigned: {{ $assignment->unassigned_at->format('M d, y H:i') }}</div>
-                                    @endif
-                                </td>
-                                <td class="px-5 py-3 font-medium text-gray-800">{{ $assignment->team->team_name ?? 'Unknown Team' }}</td>
-                                <td class="px-5 py-3 text-gray-600">{{ $assignment->assigner->fullName ?? 'Unknown User' }}</td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="3" class="px-5 py-8 text-center text-gray-400 italic text-sm">No assignments recorded.</td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </div>
-        </div>
+        <x-ticket-history-table id="status-history" title="Status changes"
+            description="How this ticket progressed through the service workflow."
+            :count="$ticket->statusLog->count()" :columns="['Recorded', 'Status transition', 'Updated by']">
+            @forelse($ticket->statusLog as $log)
+                <tr>
+                    <td class="history-date"><time datetime="{{ $log->created_at->toIso8601String() }}">{{ $log->created_at->format('M d, Y') }}<small>{{ $log->created_at->format('h:i A') }}</small></time></td>
+                    <td>
+                        <div class="history-transition">
+                            @if($log->old_status)
+                                <span class="history-previous">{{ $log->old_status->label() }}</span>
+                                <span aria-hidden="true" class="history-arrow">→</span><span class="sr-only"> changed to </span>
+                            @endif
+                            <span class="history-status" data-status="{{ $log->new_status->value }}">{{ $log->new_status->label() }}</span>
+                        </div>
+                    </td>
+                    <td>{{ $log->updater->full_name ?? 'System' }}</td>
+                </tr>
+            @empty
+                <tr><td colspan="3" class="history-empty"><strong>No status changes yet</strong><span>Status updates will appear here as the ticket progresses.</span></td></tr>
+            @endforelse
+        </x-ticket-history-table>
 
-        <!-- 6.3 Escalation History -->
-        <div class="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
-            <div class="px-5 py-4 border-b border-gray-100 bg-gray-50">
-                <h3 class="font-bold text-gray-800 text-sm">Escalation Requests</h3>
-            </div>
-            <div class="p-0 max-h-80 overflow-y-auto">
-                <table class="w-full text-left text-sm">
-                    <thead class="bg-white sticky top-0 border-b border-gray-100 shadow-sm text-xs text-gray-400 uppercase">
-                        <tr>
-                            <th class="px-5 py-3 font-semibold">Date Requested</th>
-                            <th class="px-5 py-3 font-semibold">Requested By</th>
-                            <th class="px-5 py-3 font-semibold text-center">Status</th>
-                            <th class="px-5 py-3 font-semibold">Target Dept</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-50">
-                        @forelse($ticket->escalations as $escalation)
-                            <tr class="hover:bg-gray-50 transition-colors">
-                                <td class="px-5 py-3 text-gray-500 whitespace-nowrap">{{ $escalation->created_at->format('M d, y H:i') }}</td>
-                                <td class="px-5 py-3 font-medium text-gray-800">{{ $escalation->creator->fullName ?? 'Unknown User' }}</td>
-                                <td class="px-5 py-3 text-center">
-                                    <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider
-                                        {{ $escalation->status->value === 'approved' ? 'bg-emerald-100 text-emerald-700' : ($escalation->status->value === 'rejected' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700') }}">
-                                        {{ $escalation->status->name }}
-                                    </span>
-                                </td>
-                                <td class="px-5 py-3 text-gray-600">{{ $escalation->suggestedDepartment->dept_name ?? 'Not Specified' }}</td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="4" class="px-5 py-8 text-center text-gray-400 italic text-sm">No escalation requests recorded.</td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </div>
-        </div>
+        <x-ticket-history-table id="assignment-history" title="Team assignments"
+            description="Assignment and release dates for the teams that handled this ticket."
+            :count="$ticket->assignments->count()" :columns="['Assigned', 'Team', 'Assigned by', 'Released']">
+            @forelse($ticket->assignments as $assignment)
+                <tr>
+                    <td class="history-date"><time datetime="{{ $assignment->created_at->toIso8601String() }}">{{ $assignment->created_at->format('M d, Y') }}<small>{{ $assignment->created_at->format('h:i A') }}</small></time></td>
+                    <td><strong>{{ $assignment->team->team_name ?? 'Unknown team' }}</strong></td>
+                    <td>{{ $assignment->assigner->full_name ?? 'Unknown user' }}</td>
+                    <td class="history-date">
+                        @if($assignment->unassigned_at)
+                            <time datetime="{{ $assignment->unassigned_at->toIso8601String() }}">{{ $assignment->unassigned_at->format('M d, Y') }}<small>{{ $assignment->unassigned_at->format('h:i A') }}</small></time>
+                        @else
+                            <span class="history-status" data-status="assigned">Not released</span>
+                        @endif
+                    </td>
+                </tr>
+            @empty
+                <tr><td colspan="4" class="history-empty"><strong>No team assignments yet</strong><span>Team handovers will appear here once an assignment is recorded.</span></td></tr>
+            @endforelse
+        </x-ticket-history-table>
 
-        <!-- 6.4 Accomplishment History (FIXED) -->
-        <div class="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
-            <div class="px-5 py-4 border-b border-gray-100 bg-gray-50">
-                <h3 class="font-bold text-gray-800 text-sm">Field Accomplishments</h3>
-            </div>
-            <div class="p-0 max-h-80 overflow-y-auto">
-                <table class="w-full text-left text-sm">
-                    <thead class="bg-white sticky top-0 border-b border-gray-100 shadow-sm text-xs text-gray-400 uppercase">
-                        <tr>
-                            <th class="px-5 py-3 font-semibold">Date Submitted</th>
-                            <th class="px-5 py-3 font-semibold">Field Worker</th>
-                            <th class="px-5 py-3 font-semibold text-center">Status</th>
-                            <th class="px-5 py-3 font-semibold">Remarks</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-50">
-                        @forelse($ticket->accomplishments as $acc)
-                            <!-- Added cursor-pointer and onclick routing -->
-                            <tr class="hover:bg-gray-100 transition-colors cursor-pointer group" 
-                                onclick="window.location='{{ route('cwd.tickets.accomplishments.show', ['ticket' => $ticket, 'accomplishment' => $acc]) }}'">
-                                
-                                <td class="px-5 py-3 text-gray-500 whitespace-nowrap align-top group-hover:text-gray-700">{{ $acc->accomplished_at->format('M d, y H:i') }}</td>
-                                <td class="px-5 py-3 font-medium text-gray-800 align-top group-hover:text-indigo-600 transition-colors">{{ $acc->accomplishedBy->fullName ?? 'Unknown User' }}</td>
-                                <td class="px-5 py-3 text-center align-top">
-                                    <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider
-                                        {{ $acc->status->value === 'approved' ? 'bg-emerald-100 text-emerald-700' : ($acc->status->value === 'rejected' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700') }}">
-                                        {{ $acc->status->name }}
-                                    </span>
-                                </td>
-                                <td class="px-5 py-3 text-gray-600 align-top">
-                                    <div class="whitespace-normal min-w-[150px]">
-                                        {{ $acc->remarks }}
-                                    </div>
-                                </td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="4" class="px-5 py-8 text-center text-gray-400 italic text-sm">No accomplishments recorded.</td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </div>
-        </div>
+        <x-ticket-history-table id="escalation-history" title="Escalation requests"
+            description="Requests to route this ticket to another department."
+            :count="$ticket->escalations->count()" :columns="['Requested', 'Requested by', 'Target department', 'Decision']">
+            @forelse($ticket->escalations as $escalation)
+                <tr>
+                    <td class="history-date"><time datetime="{{ $escalation->created_at->toIso8601String() }}">{{ $escalation->created_at->format('M d, Y') }}<small>{{ $escalation->created_at->format('h:i A') }}</small></time></td>
+                    <td>{{ $escalation->creator->full_name ?? 'Unknown user' }}</td>
+                    <td>{{ $escalation->suggestedDepartment->dept_name ?? 'Not specified' }}</td>
+                    <td><span class="history-status" data-status="{{ $escalation->status->value }}">{{ $escalation->status->label() }}</span></td>
+                </tr>
+            @empty
+                <tr><td colspan="4" class="history-empty"><strong>No escalation requests</strong><span>Requests and their decisions will be listed here.</span></td></tr>
+            @endforelse
+        </x-ticket-history-table>
 
-    </div>
+        <x-ticket-history-table id="accomplishment-history" title="Field accomplishments"
+            description="Submitted work, review outcomes, and the supporting field reports."
+            :count="$ticket->accomplishments->count()" :columns="['Accomplished', 'Field worker', 'Review status', 'Remarks', 'Report']">
+            @forelse($ticket->accomplishments as $acc)
+                <tr>
+                    <td class="history-date"><time datetime="{{ $acc->accomplished_at->toIso8601String() }}">{{ $acc->accomplished_at->format('M d, Y') }}<small>{{ $acc->accomplished_at->format('h:i A') }}</small></time></td>
+                    <td>{{ $acc->accomplishedBy->full_name ?? 'Unknown user' }}</td>
+                    <td><span class="history-status" data-status="{{ $acc->status->value }}">{{ $acc->status->label() }}</span></td>
+                    <td class="history-remarks">{{ $acc->remarks ?: 'No remarks provided.' }}</td>
+                    <td><a class="history-report-link" href="{{ route('cwd.tickets.accomplishments.show', ['ticket' => $ticket, 'accomplishment' => $acc]) }}">View report<span class="sr-only"> by {{ $acc->accomplishedBy->full_name ?? 'unknown user' }} on {{ $acc->accomplished_at->format('M d, Y h:i A') }}</span><span aria-hidden="true"> ↗</span></a></td>
+                </tr>
+            @empty
+                <tr><td colspan="5" class="history-empty"><strong>No field reports submitted</strong><span>Completed work and supporting reports will appear here.</span></td></tr>
+            @endforelse
+        </x-ticket-history-table>
+    </section>
 @endsection

@@ -21,6 +21,13 @@
         </a>
     </div>
 
+    <nav class="record-tabs" aria-label="Filter tickets by status">
+        <a href="{{ route('cwd.tickets', request()->except(['status', 'page'])) }}" @if(!request('status') || request('status') === 'all') aria-current="page" @endif>All tickets</a>
+        @foreach($statuses as $status)
+            <a href="{{ route('cwd.tickets', array_merge(request()->except('page'), ['status' => $status->value])) }}" @if(request('status') === $status->value) aria-current="page" @endif>{{ $status->label() }}</a>
+        @endforeach
+    </nav>
+
     <!-- Search & Filter Controls -->
     <div class="mb-6">
         <form action="{{ route('cwd.tickets') }}" method="GET" class="flex flex-col lg:flex-row gap-4 items-center w-full">
@@ -45,21 +52,17 @@
                     <option value="other" {{ request('filter') == 'other' ? 'selected' : '' }}>Custom/Other Categories</option>
                 </select>
 
-                <select name="status" class="ts-filter-dropdown hidden">
-                    <option value="all" {{ request('status', 'all') === 'all' ? 'selected' : '' }}>All Statuses</option>
-                    @foreach($statuses as $status)
-                        <option value="{{ $status->value }}" {{ request('status') === $status->value ? 'selected' : '' }}>
-                            {{ $status->label() }}
-                        </option>
-                    @endforeach
-                </select>
+                <input type="hidden" name="status" value="{{ request('status', 'all') }}">
 
                 <select name="sort" class="ts-filter-dropdown hidden">
                     <option value="newest" {{ request('sort') == 'newest' ? 'selected' : '' }}>Newest First</option>
                     <option value="oldest" {{ request('sort') == 'oldest' ? 'selected' : '' }}>Oldest First</option>
                     <option value="status" {{ request('sort') == 'status' ? 'selected' : '' }}>Sort by Status</option>
                 </select>
-                <noscript><button type="submit" class="bg-gray-500 text-white px-4 py-2 rounded-md">Apply</button></noscript>
+                <button type="submit" class="queue-search" data-loading-text="Searching...">Search</button>
+                @if(request()->filled('search') || request()->filled('filter') || request()->filled('status'))
+                    <a href="{{ route('cwd.tickets') }}" class="queue-clear">Clear filters</a>
+                @endif
             </div>
         </form>
     </div>
@@ -69,12 +72,12 @@
         
         <!-- Table Header Section -->
         <div class="px-6 py-5 border-b border-gray-200">
-            <h2 class="text-lg font-bold text-gray-900">Active Tickets</h2>
-            <p class="text-xs text-gray-500 mt-1">Open tickets in the system queue</p>
+            <h2 class="text-lg font-bold text-gray-900">Ticket queue <span class="record-count">{{ number_format($tickets->total()) }}</span></h2>
+            <p class="text-xs text-gray-500 mt-1">Service requests matching your current filters</p>
         </div>
 
         <div class="overflow-x-auto">
-            <table class="w-full text-left border-collapse min-w-[1000px]">
+            <table class="ticket-queue w-full text-left border-collapse min-w-[1000px]">
                 <thead>
                     <tr class="bg-gray-50 border-b border-gray-200 text-[11px] font-bold text-gray-500 uppercase tracking-wider">
                         <th class="px-6 py-4 w-40">Ticket ID</th>

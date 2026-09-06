@@ -1,14 +1,17 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-preferences-key="paleco-preferences-cwd-{{ auth()->id() }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>@yield('title', 'Admin Dashboard') - {{ config('app.name') }}</title>
+    <title>@yield('title', 'Dashboard') | PALECO CWD</title>
+    <link rel="icon" type="image/png" href="{{ asset('images/paleco-logo.png') }}">
+    <link rel="apple-touch-icon" href="{{ asset('images/paleco-logo.png') }}">
     
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
-<body class="app-shell flex m-0 font-sans min-h-screen">
+<body class="app-shell refined-shell flex m-0 font-sans min-h-screen">
 
+    <a href="#main-content" class="skip-link">Skip to content</a>
     <header class="mobile-app-bar md:hidden">
         <button type="button" data-sidebar-toggle class="mobile-menu-button" aria-label="Open navigation" aria-controls="app-sidebar" aria-expanded="false">
             <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" /></svg>
@@ -80,6 +83,7 @@
                         </ul>
                     </div>
                 @endif
+                <x-settings-nav role="cwd" />
             </nav>
         </div>
 
@@ -112,7 +116,7 @@
         </div>
     </aside>
 
-    <main class="workspace-surface app-main flex-1 px-5 pb-8 pt-24 md:p-8 lg:p-10 overflow-y-auto">
+    <main data-workspace-kind="@yield('workspace-kind', 'list')" id="main-content" tabindex="-1" class="workspace-surface refined-workspace app-main flex-1 px-5 pb-8 pt-24 md:p-8 lg:p-10 overflow-y-auto">
         @yield('content')
     </main>
 

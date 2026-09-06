@@ -1,5 +1,7 @@
 @extends('cwd.base.base')
 
+@section('workspace-kind', 'detail')
+
 @section('title', 'Escalation Details')
 
 @section('content')

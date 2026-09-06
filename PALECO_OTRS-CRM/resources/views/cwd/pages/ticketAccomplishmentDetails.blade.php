@@ -1,5 +1,7 @@
 @extends('cwd.base.base')
 
+@section('workspace-kind', 'detail')
+
 @section('title', 'Accomplishment Details - ' . $ticket->ticket_number)
 
 @section('content')

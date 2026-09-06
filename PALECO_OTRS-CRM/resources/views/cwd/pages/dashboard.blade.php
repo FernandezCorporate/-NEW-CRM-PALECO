@@ -1,5 +1,7 @@
 @extends('cwd.base.base')
 
+@section('workspace-kind', 'dashboard')
+
 @section('title', 'CWD Dashboard')
 
 @section('content')
@@ -80,29 +82,45 @@
             </figure>
         </section>
 
-        <section class="grid gap-6 lg:grid-cols-[1.35fr_1fr]">
-            <div data-animate class="ui-reveal panel p-6 md:p-7">
-                <p class="eyebrow">Quick actions</p>
-                <h2 class="mt-1 text-xl font-bold text-slate-900">Keep requests moving</h2>
-                <div class="mt-6 grid gap-3 sm:grid-cols-2">
-                    <a href="{{ route('cwd.tickets') }}" class="quick-link">
-                        <span class="metric-icon !h-10 !w-10 bg-emerald-50 text-emerald-600"><svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 5h6m-6 4h6m-8 4h10m-10 4h6M6 3h12a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V5a2 2 0 012-2z" /></svg></span>
-                        <span><strong class="block text-sm text-slate-800">Manage tickets</strong><small class="text-slate-500">View all service requests</small></span>
-                    </a>
-                    <a href="{{ route('cwd.escalations') }}" class="quick-link">
-                        <span class="metric-icon !h-10 !w-10 bg-amber-50 text-amber-600"><svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 9v4m0 4h.01M10.3 4.4L2.8 17.2A2 2 0 004.5 20h15a2 2 0 001.7-2.8L13.7 4.4a2 2 0 00-3.4 0z" /></svg></span>
-                        <span><strong class="block text-sm text-slate-800">Review escalations</strong><small class="text-slate-500">Handle priority cases</small></span>
-                    </a>
-                </div>
-            </div>
+        <x-dashboard-operations :data="$overview['operations']" />
 
-            <aside data-animate class="ui-reveal panel overflow-hidden" style="--delay: 90ms">
-                <div class="bg-gradient-to-br from-emerald-900 to-emerald-700 p-6 text-white md:p-7">
-                    <p class="text-[11px] font-bold uppercase tracking-[.14em] text-emerald-200">Service reminder</p>
-                    <h2 class="mt-2 text-xl font-bold">Every ticket represents a member waiting for help.</h2>
-                    <p class="mt-3 text-sm leading-6 text-emerald-100">Keep details complete and statuses current so field teams can respond efficiently.</p>
+        <section class="cwd-action-panels grid gap-6 xl:grid-cols-2">
+            @php
+                $cwdControls = [
+                    ['tickets', 'Manage tickets', 'View all service requests', route('cwd.tickets'), 'bg-emerald-50 text-emerald-600', 'M9 5h6m-6 4h6m-8 4h10m-10 4h6M6 3h12v18H6z'],
+                    ['new-ticket', 'New ticket', 'Record a service complaint', route('cwd.tickets.createForm'), 'bg-teal-50 text-teal-600', 'M12 5v14m7-7H5'],
+                    ['open-tickets', 'Open tickets', 'Review unassigned requests', route('cwd.tickets', ['status' => 'open']), 'bg-sky-50 text-sky-600', 'M9 5h6m-6 4h6M5 3h14v18H5z'],
+                    ['in-progress', 'Work in progress', 'Follow ongoing field work', route('cwd.tickets', ['status' => 'in_progress']), 'bg-blue-50 text-blue-600', 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z'],
+                    ['escalations', 'Review escalations', 'View all escalation requests', route('cwd.escalations'), 'bg-amber-50 text-amber-600', 'M12 9v4m0 4h.01M12 3L2 21h20L12 3z'],
+                    ['pending-escalations', 'Pending reviews', 'Escalations awaiting a decision', route('cwd.escalations', ['status' => 'pending']), 'bg-orange-50 text-orange-600', 'M9 12l2 2 4-4M5 3h14v18H5z'],
+                ];
+            @endphp
+            <x-dashboard-controls :control-catalog="$cwdControls" :default-controls="['tickets', 'escalations']"
+                :storage-key="'paleco-cwd-controls-' . auth()->id()" title="Keep requests moving" eyebrow="Quick actions" />
+
+            <aside data-animate class="ui-reveal panel flex flex-col overflow-hidden" style="--delay: 90ms" aria-labelledby="cwd-queue-title">
+                <div class="bg-gradient-to-br from-emerald-900 to-emerald-700 px-6 py-5 text-white md:px-7">
+                    <p class="text-[11px] font-bold uppercase tracking-[.14em] text-emerald-200">Your next step</p>
+                    <h2 id="cwd-queue-title" class="mt-2 text-xl font-bold">Keep an eye on the queue</h2>
                 </div>
-                <div class="px-6 py-4 text-xs font-medium text-slate-500">{{ now()->format('l, F j, Y') }}</div>
+                <ul class="flex flex-1 flex-col divide-y divide-slate-100">
+                    @foreach ([
+                        ['Open tickets', $statusTotals['open'] ?? 0, 'Review newly logged requests', route('cwd.tickets', ['status' => 'open'])],
+                        ['Pending escalations', $overview['operations']['pending_escalations'], 'Review requests for rerouting', route('cwd.escalations', ['status' => 'pending'])],
+                        ['Assigned tickets', $statusTotals['assigned'] ?? 0, 'Follow up with assigned field teams', route('cwd.tickets', ['status' => 'assigned'])],
+                    ] as [$queueLabel, $queueCount, $queueHint, $queueUrl])
+                        <li class="flex flex-1">
+                            <a href="{{ $queueUrl }}" class="group flex w-full items-center gap-4 px-6 py-3 md:px-7 transition-colors hover:bg-emerald-50 focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-emerald-600">
+                                <span class="min-w-0 flex-1">
+                                    <span class="block text-sm font-semibold text-slate-800">{{ $queueLabel }}</span>
+                                    <span class="mt-1 block text-xs leading-5 text-slate-500">{{ $queueCount > 0 ? $queueHint : 'No requests in this queue' }}</span>
+                                </span>
+                                <strong class="text-xl font-bold tabular-nums {{ $queueCount > 0 ? 'text-emerald-700' : 'text-slate-400' }}">{{ number_format($queueCount) }}</strong>
+                                <svg aria-hidden="true" class="h-4 w-4 shrink-0 text-slate-400 group-hover:text-emerald-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m9 5 7 7-7 7" /></svg>
+                            </a>
+                        </li>
+                    @endforeach
+                </ul>
             </aside>
         </section>
     </div>

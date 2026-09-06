@@ -74,6 +74,7 @@ Route::middleware(['auth', CheckIfActive::class])->group(function() {
      * Explicitly protected by a specific gate ensuring only standard admins bypass.
      */
     Route::prefix('admin')->middleware('can:access-admin')->group(function() {
+        Route::view('/settings', 'shared.settings', ['layout' => 'admin.base.base'])->name('admin.settings');
         Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('admin.dashboard');
 
         Route::prefix('users')->group(function() {
@@ -160,6 +161,7 @@ Route::middleware(['auth', CheckIfActive::class])->group(function() {
      * Explicitly protected by a gate verifying CWD officer credentials.
      */
     Route::prefix('cwd')->middleware('can:access-cwd_officer')->group(function() {
+        Route::view('/settings', 'shared.settings', ['layout' => 'cwd.base.base'])->name('cwd.settings');
         Route::get('/dashboard', [CwdDashboardController::class, 'index'])->name('cwd.dashboard');
 
         Route::prefix('tickets')->group(function() {

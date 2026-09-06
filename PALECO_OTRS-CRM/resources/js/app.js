@@ -1,4 +1,5 @@
 import './togglePassword';
+import './preferences';
 import './toggleCardTable';
 import './preventDoubleSubmit';
 import './tomSelect-input_with_autoSuggest';
@@ -30,6 +31,22 @@ document.addEventListener("DOMContentLoaded", function() {
     });
 
     const controlsRoot = document.querySelector('[data-dashboard-controls]');
+
+    // Reflect anchor navigation, including deep links and browser Back/Forward.
+    const historyLinks = document.querySelectorAll('.ticket-history-nav a[href^="#"]');
+    const updateHistorySelection = () => {
+        historyLinks.forEach((link) => {
+            if (link.getAttribute('href') === window.location.hash) {
+                link.setAttribute('aria-current', 'location');
+            } else {
+                link.removeAttribute('aria-current');
+            }
+        });
+    };
+    if (historyLinks.length) {
+        updateHistorySelection();
+        window.addEventListener('hashchange', updateHistorySelection);
+    }
 
     if (controlsRoot) {
         const dialog = controlsRoot.querySelector('[data-controls-dialog]');
@@ -146,19 +163,38 @@ document.addEventListener("DOMContentLoaded", function() {
             parent.insertBefore(scroller, table);
             scroller.appendChild(table);
         }
+        const scroller = table.parentElement;
+        if (scroller?.matches('.overflow-x-auto, .system-table-scroll')) {
+            scroller.tabIndex = 0;
+            scroller.setAttribute('role', 'region');
+            scroller.setAttribute('aria-label', 'Records table. Scroll horizontally to view all columns.');
+        }
+    });
+
+    document.querySelectorAll('.workspace-surface form[method="GET"]').forEach((form) => {
+        form.classList.add('filter-toolbar');
+        form.querySelectorAll('input:not([type="hidden"]), select').forEach((field) => {
+            if (!field.labels?.length && !field.hasAttribute('aria-label')) {
+                const names = { search: 'Search records', filter: 'Filter records', sort: 'Sort records', status: 'Ticket status', category: 'Activity category', department: 'Department' };
+                field.setAttribute('aria-label', names[field.name] || field.name.replaceAll('_', ' '));
+            }
+        });
+    });
+
+    document.querySelectorAll('.workspace-surface a[title], .workspace-surface button[title]').forEach((control) => {
+        if (!control.textContent.trim() && !control.hasAttribute('aria-label')) {
+            control.setAttribute('aria-label', control.title);
+        }
     });
 
     document.querySelectorAll('.workspace-surface input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]), .workspace-surface textarea, .workspace-surface select').forEach((field) => {
+        // Tom Select owns its internal search input; style the outer control only.
+        if (field.closest('.ts-wrapper, .ts-dropdown')) return;
         field.classList.add('system-field');
     });
 
-    document.querySelectorAll('.workspace-surface > *').forEach((section, index) => {
-        if (!section.hasAttribute('data-animate') && index < 5) {
-            section.setAttribute('data-animate', '');
-            section.classList.add('ui-reveal');
-            section.style.setProperty('--delay', `${Math.min(index * 45, 135)}ms`);
-        }
-    });
+    // Operational forms and tables stay immediately visible; only explicitly
+    // marked dashboard sections participate in entrance motion.
 
     const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const animatedElements = document.querySelectorAll('[data-animate]');

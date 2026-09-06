@@ -1,5 +1,7 @@
 @extends('admin.base.base')
 
+@section('workspace-kind', 'detail')
+
 @section('title', 'Department Details')
 
 @section('content')

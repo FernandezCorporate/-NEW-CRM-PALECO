@@ -12,30 +12,17 @@
             <p class="text-sm text-slate-500 mt-1">Track all actions performed across every user level — Admin, CWD, Foreman, Field.</p>
         </div>
         
-        <a href="#" class="action-link inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 rounded-lg text-sm font-medium shadow-sm shadow-emerald-700/20 transition-all active:scale-[0.98]" data-loading-text="Exporting...">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
-            </svg>
-            Export Log (CSV)
-        </a>
-    </div>
-
-    <!-- Stat Cards Grid -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mb-8">
-        <!-- Total Events -->
-        <div class="bg-white border border-slate-200 rounded-xl p-5 shadow-sm flex flex-col justify-between">
-            <div class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Events (Total)</div>
-            <h3 class="text-3xl font-bold text-slate-800">{{ number_format($logs->total()) }}</h3>
-        </div>
-
-        <!-- Events Today -->
-        <div class="bg-white border border-slate-200 rounded-xl p-5 shadow-sm flex flex-col justify-between">
-            <div class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Events Today</div>
-            <h3 class="text-3xl font-bold text-slate-800">
-                {{ number_format($logs->where('created_at', '>=', today())->count()) }}
-            </h3>
+        <div class="text-right">
+            <button type="button" disabled class="unavailable-action" aria-describedby="export-note">Export CSV</button>
+            <p id="export-note" class="mt-1 text-xs text-slate-500">Export is not available yet.</p>
         </div>
     </div>
+
+    <p class="mb-5 text-sm text-slate-600">
+        <strong class="text-slate-800">{{ number_format($logs->total()) }}</strong> matching events
+        <span class="mx-2 text-slate-300" aria-hidden="true">/</span>
+        Showing {{ $logs->firstItem() ?? 0 }}–{{ $logs->lastItem() ?? 0 }}
+    </p>
 
     <!-- Controls Row -->
     <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-6">

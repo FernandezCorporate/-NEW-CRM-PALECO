@@ -21,66 +21,21 @@
         </a>
     </div>
 
-    <!-- Stat Cards Grid -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
-        
-        <!-- Admin Card -->
-        <div class="bg-white border border-slate-200 rounded-xl p-5 shadow-sm flex flex-col justify-between">
-            <div class="flex justify-between items-start mb-4">
-                <div class="text-emerald-600">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
-                </div>
-                <span class="bg-purple-100 text-purple-700 text-xs font-semibold px-2.5 py-1 rounded-full">Admin</span>
-            </div>
-            <div>
-                <h3 class="text-3xl font-bold text-slate-800">{{ $activeCounts->admin }}</h3>
-                <p class="text-sm text-slate-500 mt-0.5">active accounts</p>
-            </div>
-        </div>
-
-        <!-- CWD Officer Card -->
-        <div class="bg-white border border-slate-200 rounded-xl p-5 shadow-sm flex flex-col justify-between">
-            <div class="flex justify-between items-start mb-4">
-                <div class="text-emerald-600">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 18v-6a9 9 0 0 1 18 0v6M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"></path></svg>
-                </div>
-                <span class="bg-blue-100 text-blue-700 text-xs font-semibold px-2.5 py-1 rounded-full">CWD Officer</span>
-            </div>
-            <div>
-                <h3 class="text-3xl font-bold text-slate-800">{{ $activeCounts->cwd }}</h3>
-                <p class="text-sm text-slate-500 mt-0.5">active accounts</p>
-            </div>
-        </div>
-
-        <!-- Foreman Card -->
-        <div class="bg-white border border-slate-200 rounded-xl p-5 shadow-sm flex flex-col justify-between">
-            <div class="flex justify-between items-start mb-4">
-                <div class="text-emerald-600">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2 18h20M12 4a8 8 0 0 0-8 8v6h16v-6a8 8 0 0 0-8-8ZM12 4v4"></path></svg>
-                </div>
-                <span class="bg-amber-100 text-amber-700 text-xs font-semibold px-2.5 py-1 rounded-full">Foreman</span>
-            </div>
-            <div>
-                <h3 class="text-3xl font-bold text-slate-800">{{ $activeCounts->foreman }}</h3>
-                <p class="text-sm text-slate-500 mt-0.5">active accounts</p>
-            </div>
-        </div>
-
-        <!-- Field Personnel Card -->
-        <div class="bg-white border border-slate-200 rounded-xl p-5 shadow-sm flex flex-col justify-between">
-            <div class="flex justify-between items-start mb-4">
-                <div class="text-emerald-600">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path></svg>
-                </div>
-                <span class="bg-emerald-100 text-emerald-700 text-xs font-semibold px-2.5 py-1 rounded-full">Field Personnel</span>
-            </div>
-            <div>
-                <h3 class="text-3xl font-bold text-slate-800">{{ $activeCounts->field_personnel }}</h3>
-                <p class="text-sm text-slate-500 mt-0.5">active accounts</p>
-            </div>
-        </div>
-
-    </div>
+    <nav class="record-tabs" aria-label="Filter users by role">
+        <a href="{{ route('admin.users', array_merge(request()->except(['filter', 'page']), ['filter' => 'all'])) }}" @if(!request('filter') || request('filter') === 'all') aria-current="page" @endif>All users</a>
+        @foreach($roles as $role)
+            @php
+                $countKey = match($role->slug_identifier) {
+                    'admin' => 'admin', 'cwd_officer' => 'cwd',
+                    'foreman' => 'foreman', 'field_personnel' => 'field_personnel', default => null,
+                };
+            @endphp
+            <a href="{{ route('admin.users', array_merge(request()->except(['filter', 'page']), ['filter' => $role->slug_identifier])) }}" @if(request('filter') === $role->slug_identifier) aria-current="page" @endif>
+                {{ Str::headline($role->role_name) }}
+                @if($countKey)<span>{{ $activeCounts->{$countKey} }} active</span>@endif
+            </a>
+        @endforeach
+    </nav>
 
     <!-- Controls Row -->
 <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-6">
@@ -97,14 +52,7 @@
 
         <!-- Filters (Wrapped inside the form!) -->
         <div class="flex items-center gap-2">
-            <select name="filter" class="ts-filter-dropdown hidden">
-                <option value="all" {{ request('filter') === 'all' ? 'selected' : '' }}>All Roles</option>
-                @foreach($roles as $role)
-                    <option value="{{ $role->slug_identifier }}" {{ request('filter') === $role->slug_identifier ? 'selected' : '' }}>
-                        {{ Str::headline($role->role_name) }}
-                    </option>
-                @endforeach
-            </select>
+            <input type="hidden" name="filter" value="{{ request('filter', 'all') }}">
 
             <select name="sort" class="ts-filter-dropdown hidden">
                 <option value="newest" {{ request('sort') === 'newest' ? 'selected' : '' }}>Sort by Newest</option>
@@ -145,10 +93,7 @@
                                 <!-- User Info -->
                                 <div class="flex flex-col">
                                     <span class="font-medium text-slate-800">{{ $user->full_name }}</span>
-                                    <span class="text-xs text-slate-500 flex items-center gap-1 mt-0.5">
-                                        <svg class="w-3 h-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
-                                        {{ $user->email }}
-                                    </span>
+                                    <span class="text-xs text-slate-500 mt-0.5">{{ $user->username }}</span>
                                 </div>
                             </div>
                         </td>

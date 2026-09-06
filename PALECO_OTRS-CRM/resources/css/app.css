@@ -1,6 +1,9 @@
 @import 'tailwindcss';
 @import 'tom-select/dist/css/tom-select.default.css';
 @import './custom-tom-select.css';
+@import './workspace-refined.css';
+@import './preferences.css';
+@import './appearance.css';
 
 /* Stop scanning the vendor folder and scan your project views instead */
 @source '../views/**/*.blade.php';
@@ -324,7 +327,6 @@
 
 .workspace-surface > * {
     width: 100%;
-    max-width: 90rem;
     margin-inline: auto;
 }
 

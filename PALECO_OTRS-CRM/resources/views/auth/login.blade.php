@@ -3,11 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PALECO CRM-CWD - Sign in</title>
+    <title>{{ $role === 'admin' ? 'Administrator' : 'CWD Officer' }} Sign In | PALECO</title>
+    <link rel="icon" type="image/png" href="{{ asset('images/paleco-logo.png') }}">
+    <link rel="apple-touch-icon" href="{{ asset('images/paleco-logo.png') }}">
     
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
-<body class="auth-shell h-full flex items-center justify-center p-4 md:p-6 select-none">
+<body class="auth-shell auth-portal-lines h-full flex items-center justify-center p-4 md:p-6">
 
     <div class="w-full max-w-5xl bg-white rounded-[1.75rem] shadow-2xl shadow-slate-900/10 flex flex-col md:flex-row overflow-hidden border border-white" style="min-height: 580px;">
         
@@ -75,7 +77,7 @@
 
                 <div class="space-y-1.5">
                     <div class="flex justify-between items-end">
-                        <label for="password" class="text-xs font-semibold text-slate-700 tracking-wide">
+                        <label for="login-password" class="text-xs font-semibold text-slate-700 tracking-wide">
                             Password <span class="text-rose-500">*</span>
                         </label>
                         <span class="text-[10px] text-slate-400">Required</span>

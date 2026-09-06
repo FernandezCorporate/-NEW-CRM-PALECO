@@ -14,9 +14,23 @@
 }
 
 /* The Focus Ring (Matches focus:ring-emerald-500) */
-.ts-control.focus {
+.ts-wrapper.focus .ts-control,
+.ts-wrapper:focus-within .ts-control {
     border-color: #10b981 !important; 
     box-shadow: 0 0 0 1px #10b981 !important; 
+}
+
+/* The internal typing area is not a second form field. Keep one focus
+   indicator around the complete dropdown, never a pill around its text. */
+.ts-wrapper .ts-control > input,
+.workspace-surface .ts-wrapper .ts-control > input {
+    min-height: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    outline: none !important;
 }
 
 /* Adjust the placeholder text color */

@@ -3,10 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Select Portal - PALECO CRM-CWD</title>
+    <title>Select Portal | PALECO CRM-CWD</title>
+    <link rel="icon" type="image/png" href="{{ asset('images/paleco-logo.png') }}">
+    <link rel="apple-touch-icon" href="{{ asset('images/paleco-logo.png') }}">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
-<body class="auth-shell h-full flex items-center justify-center p-4 md:p-6 select-none">
+<body class="auth-shell auth-portal-lines h-full flex items-center justify-center p-4 md:p-6 select-none">
 
     <div class="w-full max-w-5xl bg-white rounded-[1.75rem] shadow-2xl shadow-slate-900/10 flex flex-col md:flex-row overflow-hidden border border-white" style="min-height: 580px;">
         

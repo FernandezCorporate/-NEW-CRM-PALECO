@@ -1,5 +1,7 @@
 @extends('admin.base.base')
 
+@section('workspace-kind', 'confirmation')
+
 @section('title', 'Reactivate User Account')
 
 @section('content')

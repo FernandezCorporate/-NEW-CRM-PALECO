@@ -23,41 +23,12 @@
         @endif
     </div>
 
-    <!-- Stat Cards Section -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <!-- Pending Review -->
-        <div class="bg-white rounded-lg border border-gray-200 p-6 shadow-sm flex flex-col justify-between">
-            <div class="flex justify-between items-start">
-                <div class="text-sm font-medium text-gray-500">Pending Review</div>
-                <div class="p-2 bg-amber-50 text-amber-600 rounded-md">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                </div>
-            </div>
-            <div class="mt-4 text-3xl font-bold text-gray-900">{{ $statusMetrics['pending'] }}</div>
-        </div>
-
-        <!-- Denied -->
-        <div class="bg-white rounded-lg border border-gray-200 p-6 shadow-sm flex flex-col justify-between">
-            <div class="flex justify-between items-start">
-                <div class="text-sm font-medium text-gray-500">Denied</div>
-                <div class="p-2 bg-red-50 text-red-600 rounded-md">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                </div>
-            </div>
-            <div class="mt-4 text-3xl font-bold text-gray-900">{{ $statusMetrics['denied'] }}</div>
-        </div>
-
-        <!-- Escalated -->
-        <div class="bg-white rounded-lg border border-gray-200 p-6 shadow-sm flex flex-col justify-between">
-            <div class="flex justify-between items-start">
-                <div class="text-sm font-medium text-gray-500">Escalated</div>
-                <div class="p-2 bg-blue-50 text-blue-600 rounded-md">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path></svg>
-                </div>
-            </div>
-            <div class="mt-4 text-3xl font-bold text-gray-900">{{ $statusMetrics['escalated'] }}</div>
-        </div>
-    </div>
+    <nav class="record-tabs" aria-label="Filter escalation requests">
+        <a href="{{ request()->fullUrlWithQuery(['status' => 'all', 'page' => null]) }}" @if(request('status', 'all') === 'all') aria-current="page" @endif>All requests</a>
+        @foreach($statuses as $statusEnum)
+            <a href="{{ request()->fullUrlWithQuery(['status' => $statusEnum->value, 'page' => null]) }}" @if(request('status') === $statusEnum->value) aria-current="page" @endif>{{ $statusEnum->label() }}</a>
+        @endforeach
+    </nav>
 
     <!-- Search & Filter Controls -->
     <div class="mb-6">
@@ -71,17 +42,11 @@
             </div>
 
         <div class="flex items-center gap-3 w-full lg:w-auto shrink-0">
-                <select name="status" class="ts-filter-dropdown hidden min-w-[200px]">
-                    <!-- Using 'all' prevents Tom Select from treating this as an empty placeholder -->
-                    <option value="all" {{ request('status', 'all') === 'all' ? 'selected' : '' }}>All Statuses</option>
-                    
-                    @foreach($statuses as $statusEnum)
-                        <option value="{{ $statusEnum->value }}" {{ request('status') === $statusEnum->value ? 'selected' : '' }}>
-                            {{ $statusEnum->label() }}
-                        </option>
-                    @endforeach
-                </select>
-                <noscript><button type="submit" class="bg-[#008f5d] text-white px-4 py-2.5 rounded-md text-sm font-medium transition-colors">Apply</button></noscript>
+                <input type="hidden" name="status" value="{{ request('status', 'all') }}">
+                <button type="submit" class="queue-search" data-loading-text="Searching...">Search</button>
+                @if(request()->filled('search') || request()->filled('status'))
+                    <a href="{{ request()->url() }}" class="queue-clear">Clear filters</a>
+                @endif
             </div>
         </form>
     </div>

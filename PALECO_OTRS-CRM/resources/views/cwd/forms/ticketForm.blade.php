@@ -1,12 +1,15 @@
 @extends('cwd.base.base')
 
+@section('workspace-kind', 'form')
+@section('title', 'New Ticket')
+
 @section('content')
 <div class="max-w-5xl mx-auto my-6 p-6 sm:p-10 bg-white rounded-lg border border-gray-200">
     
     <!-- Header -->
     <div class="mb-8">
-        <h1 class="text-2xl font-bold text-gray-900">Create New Service Complaint Ticket</h1>
-        <p class="text-sm text-gray-500 mt-1">Consumer Welfare Desk Processing Module</p>
+        <h1 class="text-2xl font-bold text-gray-900">New service ticket</h1>
+        <p class="text-sm text-gray-500 mt-1">Record the complaint, choose the responsible department, and confirm the incident location.</p>
     </div>
 
     <!-- Reused Shared System Prompts Alerts -->
@@ -83,7 +86,7 @@
             <div class="space-y-6">
                 
                 <div class="space-y-5">
-                    <h3 class="text-sm font-bold text-gray-900 border-b border-gray-200 pb-2">Geographical Incident Location</h3>
+                    <h3 class="text-sm font-bold text-gray-900 border-b border-gray-200 pb-2">Incident location</h3>
                     
                     <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                         <div>

@@ -1,5 +1,7 @@
 @extends('admin.base.base')
 
+@section('workspace-kind', 'form')
+
 @section('title', isset($category) ? 'Edit Category' : 'Create New Category')
 
 @section('content')
