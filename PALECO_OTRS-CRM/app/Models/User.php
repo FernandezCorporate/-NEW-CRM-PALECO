@@ -101,6 +101,11 @@ class User extends Authenticatable
         return $this->hasMany(TicketEscalation::class, 'created_by');
     }
 
+    public function ticketRemarks(): HasMany
+    {
+        return $this->hasMany(TicketRemark::class, 'user_id', 'id');
+    }
+
     // --- ACCESSORS ---
 
     /*

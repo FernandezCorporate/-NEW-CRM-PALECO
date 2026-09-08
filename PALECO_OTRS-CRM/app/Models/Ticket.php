@@ -20,6 +20,7 @@ use App\Models\Department;
 use App\Models\TicketCategory;
 use App\Models\TicketStatusLog;
 use App\Models\User;
+use App\Models\TicketRemark;
 
 /*
  * Represents a core service ticket or complaint logged into the system.
@@ -119,6 +120,11 @@ class Ticket extends Model
     public function escalations(): HasMany
     {
         return $this->hasMany(TicketEscalation::class, 'ticket_id', 'system_id');
+    }
+
+    public function remarks(): HasMany
+    {
+        return $this->hasMany(TicketRemark::class, 'ticket_id', 'system_id');
     }
 
     // --- ACCESSORS ---
