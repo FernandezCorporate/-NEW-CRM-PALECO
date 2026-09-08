@@ -13,6 +13,7 @@ use App\Http\Controllers\Web\Admin\TicketCategoryController;
 use App\Http\Controllers\Web\Admin\UserController;
 use App\Http\Controllers\Web\Admin\SystemMonitoringController;
 use App\Http\Controllers\Web\Cwd\TicketAccomplishmentController;
+use App\Http\Controllers\Web\Remarks\TicketRemarkController;
 
 use App\Http\Controllers\Web\Cwd\CwdDashboardController;
 use App\Http\Controllers\Web\Cwd\TicketController;
@@ -68,6 +69,14 @@ Route::middleware(['auth', CheckIfActive::class])->group(function() {
 
         return redirect()->route($dashboardRoute);
     })->name('dashboard');
+
+    /*
+     * Shared System Routes
+     * Authorized at the controller level via Policies rather than routing middleware.
+     */
+    Route::post('/tickets/{ticket}/remarks', [TicketRemarkController::class, 'store'])
+        ->name('shared.tickets.remarks.store')
+        ->whereUlid('ticket');
 
     /*
      * Administrator Domain

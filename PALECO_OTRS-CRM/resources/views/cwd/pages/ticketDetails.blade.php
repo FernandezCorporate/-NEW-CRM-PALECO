@@ -213,6 +213,9 @@
             <a href="#assignment-history">Team assignments <span>{{ $ticket->assignments->count() }}</span></a>
             <a href="#escalation-history">Escalations <span>{{ $ticket->escalations->count() }}</span></a>
             <a href="#accomplishment-history">Field reports <span>{{ $ticket->accomplishments->count() }}</span></a>
+            
+            <!-- Add this new link -->
+            <a href="#remark-history">Activity remarks <span>{{ $ticket->remarks->count() }}</span></a>
         </nav>
 
         <x-ticket-history-table id="status-history" title="Status changes"
@@ -288,5 +291,64 @@
                 <tr><td colspan="5" class="history-empty"><strong>No field reports submitted</strong><span>Completed work and supporting reports will appear here.</span></td></tr>
             @endforelse
         </x-ticket-history-table>
+
+<!-- Remarks & Communication Thread -->
+<div id="remark-history" class="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden mt-8">
+    <div class="px-6 py-4 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
+        <h3 class="font-bold text-gray-800 text-sm">Communication & Remarks</h3>
+        <span class="text-xs text-gray-500 font-medium">{{ $ticket->remarks->count() }} Entries</span>
+    </div>
+
+    <div class="p-6">
+        <!-- Post Remark Form -->
+        <form action="{{ route('shared.tickets.remarks.store', $ticket) }}" method="POST" class="mb-8">
+            @csrf
+            <div class="mb-3">
+                <textarea 
+                    name="body" 
+                    rows="3" 
+                    required 
+                    placeholder="Add an update, operational note, or dispatch instructions..." 
+                    class="w-full text-sm rounded-lg border-gray-300 focus:border-[#008f5d] focus:ring-1 focus:ring-[#008f5d] p-3 shadow-sm placeholder:text-gray-400"></textarea>
+                @error('body')
+                    <p class="text-xs text-red-500 mt-1">{{ $message }}</p>
+                @enderror
+            </div>
+
+            <div class="flex items-center justify-between">
+                <label class="flex items-center gap-2 cursor-pointer select-none">
+                    <input type="checkbox" name="is_internal" value="1" class="rounded border-gray-300 text-[#008f5d] focus:ring-[#008f5d]">
+                    <span class="text-xs font-semibold text-gray-600">Internal memo only (hide from field workers)</span>
+                </label>
+
+                <button type="submit" class="bg-[#008f5d] hover:bg-[#007a4f] text-white text-xs font-semibold px-4 py-2 rounded-lg transition-colors shadow-sm">
+                    Post Remark
+                </button>
+            </div>
+        </form>
+
+        <!-- Remarks Feed -->
+        <div class="space-y-4">
+            @forelse($ticket->remarks as $remark)
+                <div class="p-4 rounded-lg border {{ $remark->is_internal ? 'bg-amber-50/60 border-amber-200' : 'bg-gray-50 border-gray-100' }}">
+                    <div class="flex items-center justify-between mb-2">
+                        <div class="flex items-center gap-2">
+                            <span class="font-bold text-xs text-gray-900">{{ $remark->author->full_name ?? 'Unknown' }}</span>
+                            @if($remark->is_internal)
+                                <span class="bg-amber-100 text-amber-800 text-[10px] font-bold px-2 py-0.5 rounded border border-amber-200 uppercase">Internal</span>
+                            @endif
+                        </div>
+                        <span class="text-[11px] text-gray-400">{{ $remark->created_at->format('M d, Y h:i A') }}</span>
+                    </div>
+                    <p class="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">{{ $remark->body }}</p>
+                </div>
+            @empty
+                <div class="text-center py-6 text-gray-400 text-xs italic">
+                    No remarks recorded for this ticket yet.
+                </div>
+            @endforelse
+        </div>
+    </div>
+</div>
     </section>
 @endsection
