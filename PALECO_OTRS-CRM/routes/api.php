@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\Tickets\TicketAssignmentController;
 use App\Http\Controllers\Api\Tickets\TicketController;
 use App\Http\Controllers\Api\Tickets\TicketEscalationController;
 use App\Http\Controllers\Api\Dashboard\DashboardController;
+use App\Http\Controllers\Api\Remarks\TicketRemarkController;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -44,7 +45,10 @@ Route::middleware('auth:sanctum')->group(function () {
 
         Route::get('/{ticket}/accomplishments', [TicketAccomplishmentController::class, 'index']); // Docuemented
         Route::get('/{ticket}/accomplishments/{accomplishment}', [TicketAccomplishmentController::class, 'show']); // Documented
-        Route::get('/{ticket}/history', [TicketController::class, 'history']);
+        Route::get('/{ticket}/history', [TicketController::class, 'history']); // Documented
+
+        Route::get('/{ticket}/remarks', [TicketRemarkController::class, 'index'])->whereUlid('ticket'); // Documented
+        Route::post('/{ticket}/remarks', [TicketRemarkController::class, 'store'])->whereUlid('ticket'); // Documented
     });
 
     // --- FOREMAN SPECIFIC ENDPOINTS ---
