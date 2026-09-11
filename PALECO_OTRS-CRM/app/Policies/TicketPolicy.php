@@ -33,15 +33,5 @@ class TicketPolicy
     public function verify(User $user, Ticket $ticket): bool { return $user->role->slug_identifier === 'foreman' && $user->department_id === $ticket->department_id; }
     public function escalate(User $user, Ticket $ticket): bool { return $user->role->slug_identifier === 'foreman' && $user->department_id === $ticket->department_id;}
     
-    public function viewHistory(User $user, Ticket $ticket): bool {  
-        if ($user->role->slug_identifier === 'foreman') {
-            return $user->department_id === $ticket->department_id;
-        }
-        
-        if ($user->role->slug_identifier === 'field_personnel') {
-            return $user->teams()->where('teams.id', $ticket->team_id)->exists();
-        }
-
-        return false;
-    }
+    public function viewHistory(User $user, Ticket $ticket): bool { return $user->role->slug_identifier === 'foreman' && $user->department_id === $ticket->department_id;}
 }

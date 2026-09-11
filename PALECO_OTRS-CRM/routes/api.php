@@ -45,7 +45,6 @@ Route::middleware('auth:sanctum')->group(function () {
 
         Route::get('/{ticket}/accomplishments', [TicketAccomplishmentController::class, 'index']); // Docuemented
         Route::get('/{ticket}/accomplishments/{accomplishment}', [TicketAccomplishmentController::class, 'show']); // Documented
-        Route::get('/{ticket}/history', [TicketController::class, 'history']); // Documented
 
         Route::get('/{ticket}/remarks', [TicketRemarkController::class, 'index'])->whereUlid('ticket'); // Documented
         Route::post('/{ticket}/remarks', [TicketRemarkController::class, 'store'])->whereUlid('ticket'); // Documented
@@ -65,6 +64,8 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::post('/{ticket}/escalate', [TicketEscalationController::class, 'escalate']); // Documented
 
             Route::post('/{ticket}/accomplishments/{accomplishment}/verify', [TicketAccomplishmentController::class, 'verify']); // Documented
+
+            Route::get('/{ticket}/history', [TicketController::class, 'history'])->whereUlid('ticket'); // Documented
         });
 
         Route::prefix('teams')->group(function () {
