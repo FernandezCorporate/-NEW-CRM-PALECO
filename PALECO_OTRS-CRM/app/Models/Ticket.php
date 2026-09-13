@@ -21,6 +21,7 @@ use App\Models\TicketCategory;
 use App\Models\TicketStatusLog;
 use App\Models\User;
 use App\Models\TicketRemark;
+use App\Models\Consumer;
 
 /*
  * Represents a core service ticket or complaint logged into the system.
@@ -125,6 +126,11 @@ class Ticket extends Model
     public function remarks(): HasMany
     {
         return $this->hasMany(TicketRemark::class, 'ticket_id', 'system_id');
+    }
+
+    public function consumer(): BelongsTo
+    {
+        return $this->belongsTo(Consumer::class, 'consumer_id', 'id');
     }
 
     // --- ACCESSORS ---
