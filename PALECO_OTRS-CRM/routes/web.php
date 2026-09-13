@@ -14,6 +14,7 @@ use App\Http\Controllers\Web\Admin\UserController;
 use App\Http\Controllers\Web\Admin\SystemMonitoringController;
 use App\Http\Controllers\Web\Cwd\TicketAccomplishmentController;
 use App\Http\Controllers\Web\Remarks\TicketRemarkController;
+use App\Http\Controllers\Web\Cwd\ConsumerController;
 
 use App\Http\Controllers\Web\Cwd\CwdDashboardController;
 use App\Http\Controllers\Web\Cwd\TicketController;
@@ -172,6 +173,7 @@ Route::middleware(['auth', CheckIfActive::class])->group(function() {
     Route::prefix('cwd')->middleware('can:access-cwd_officer')->group(function() {
         Route::view('/settings', 'shared.settings', ['layout' => 'cwd.base.base'])->name('cwd.settings');
         Route::get('/dashboard', [CwdDashboardController::class, 'index'])->name('cwd.dashboard');
+        Route::get('/consumers/verify/{accountCode}', [ConsumerController::class, 'verify'])->name('cwd.consumers.verify');
 
         Route::prefix('tickets')->group(function() {
             Route::get('/', [TicketController::class, 'index'])->name('cwd.tickets');

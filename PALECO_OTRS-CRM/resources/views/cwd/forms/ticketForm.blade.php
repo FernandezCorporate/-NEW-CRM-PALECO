@@ -132,7 +132,14 @@
 
                 <div id="account_code_container" class="{{ old('link_consumer') ? 'block' : 'hidden' }} max-w-md ml-7 mt-3">
                     <label for="account_code" class="block text-sm font-semibold text-gray-700 mb-1.5">Account Code <span class="text-red-500">*</span></label>
-                    <input type="text" name="account_code" id="account_code" value="{{ old('account_code') }}" class="w-full rounded-md border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-[#008f5d] focus:ring-1 focus:ring-[#008f5d] outline-none transition-colors" placeholder="e.g., 02-0504-8538">
+                    <div class="flex gap-2">
+                        <input type="text" name="account_code" id="account_code" value="{{ old('account_code') }}" class="w-full rounded-md border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-[#008f5d] focus:ring-1 focus:ring-[#008f5d] outline-none transition-colors" placeholder="e.g., 02-0504-8538">
+                        <button type="button" id="verify_consumer_btn" class="px-4 py-2 bg-gray-100 border border-gray-300 text-gray-700 text-sm font-semibold rounded-md hover:bg-gray-200 transition-colors shrink-0">Verify</button>
+                    </div>
+
+                    <!-- Dynamic Preview Box -->
+                    <div id="consumer_preview" class="hidden mt-3 p-3 rounded-md border text-sm"></div>
+
                     <p class="mt-1.5 text-xs text-gray-500">The system will verify this exact code against the external database before registering the ticket.</p>
                 </div>
             </div>
