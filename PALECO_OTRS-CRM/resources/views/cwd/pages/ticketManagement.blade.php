@@ -105,7 +105,7 @@
                             <td class="px-6 py-4 align-top">
                                 <div class="text-sm text-gray-800 font-medium">{{ $ticket->complaint_source->label() }}</div>
                                 @if($ticket->consumer_id)
-                                    <div class="text-xs text-gray-500 mt-0.5">Acc: {{ $ticket->consumer_id }}</div>
+                                    <div class="text-xs text-gray-500 mt-0.5">Acc: {{ $ticket->consumer->acct_code }}</div>
                                 @endif
                             </td>
 

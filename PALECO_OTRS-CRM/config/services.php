@@ -35,4 +35,8 @@ return [
         ],
     ],
 
+    'paleco' => [
+        'key' => env('PALECO_API_KEY'),
+    ],
+
 ];

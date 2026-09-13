@@ -30,7 +30,6 @@
                     <!-- Applied Custom Tom Select Pattern -->
                     <select name="complaint_source" id="complaint_source" class="tom-select-sync" data-autosubmit="false" autocomplete="off" placeholder="Select intake channel">
                         
-                        <!-- Empty option for native placeholder -->
                         <option value=""></option>
                         
                         @foreach($sources as $source)
@@ -116,6 +115,28 @@
                 </div>
 
             </div>
+
+            <!-- CRM Integration: Consumer Link -->
+            <div class="col-span-1 lg:col-span-2 pt-6 mt-2 border-t border-gray-200">
+                <h3 class="text-sm font-bold text-gray-900 mb-4">CRM Integration</h3>
+                
+                <div class="flex items-start mb-4">
+                    <div class="flex h-5 items-center">
+                        <input id="link_consumer" name="link_consumer" type="checkbox" value="1" {{ old('link_consumer') ? 'checked' : '' }} class="h-4 w-4 rounded border-gray-300 text-[#008f5d] focus:ring-[#008f5d]">
+                    </div>
+                    <div class="ml-3 text-sm">
+                        <label for="link_consumer" class="font-semibold text-gray-700 select-none cursor-pointer">Link to an existing consumer account</label>
+                        <p class="text-gray-500">Enable this to query the cooperative's billing system and attach the consumer's official profile to this ticket.</p>
+                    </div>
+                </div>
+
+                <div id="account_code_container" class="{{ old('link_consumer') ? 'block' : 'hidden' }} max-w-md ml-7 mt-3">
+                    <label for="account_code" class="block text-sm font-semibold text-gray-700 mb-1.5">Account Code <span class="text-red-500">*</span></label>
+                    <input type="text" name="account_code" id="account_code" value="{{ old('account_code') }}" class="w-full rounded-md border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-[#008f5d] focus:ring-1 focus:ring-[#008f5d] outline-none transition-colors" placeholder="e.g., 02-0504-8538">
+                    <p class="mt-1.5 text-xs text-gray-500">The system will verify this exact code against the external database before registering the ticket.</p>
+                </div>
+            </div>
+
         </div>
 
         <!-- Actions -->

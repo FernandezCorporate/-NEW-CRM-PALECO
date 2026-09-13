@@ -9,71 +9,57 @@ use App\Enums\ComplaintSources;
 
 /*
  * Validates incoming HTTP requests for logging a new service ticket.
- * Manages complex validation logic regarding dynamic categories and strict location checks.
+ * Manages complex validation logic regarding dynamic categories, strict location checks, and CRM linking.
  */
 class StoreTicketRequest extends FormRequest
 {
-    /*
-     * Determines if the user is authorized to make this request.
-     * Strictly verifies the user role belongs to a CWD Officer.
-     */
     public function authorize(): bool
     {
         return $this->user()->role->slug_identifier === 'cwd_officer';
     }
 
-    /*
-     * Formats specific inputs to resolve UI quirks before validation begins.
-     * Nullifies the standard category ID if the user explicitly checks the "Other" flag.
-     */
     protected function prepareForValidation(): void
     {
-        // Quirks Conversion: Force category_id to null immediately if other_category is true
         $isOtherChecked = $this->boolean('other_category');
+        $isLinkConsumer = $this->boolean('link_consumer');
 
         $this->merge([
             'other_category' => $isOtherChecked,
-            'category_id' => $isOtherChecked ? null : $this->input('category_id'),
+            'category_id'    => $isOtherChecked ? null : $this->input('category_id'),
+            'link_consumer'  => $isLinkConsumer,
         ]);
     }
 
-    /*
-     * Defines the strict validation rules for creating a ticket.
-     * Enforces conditional validation depending on the selected categorization path.
-     */
     public function rules(): array
     {
         return [
-            'complaint_source' => ['required', new Enum(ComplaintSources::class)],
+            'complaint_source'      => ['required', new Enum(ComplaintSources::class)],
             'complaint_description' => ['required', 'string', 'min:5'],
             
-            // Unique Address Rule: Only barangay is strictly required
-            'purok' => ['nullable', 'string', 'max:255'],
-            'street' => ['nullable', 'string', 'max:255'],
-            'barangay' => ['required', 'string', 'max:255'],
-            'landmark' => ['nullable', 'string', 'max:255'],
+            // Unique Address Rule
+            'purok'                 => ['nullable', 'string', 'max:255'],
+            'street'                => ['nullable', 'string', 'max:255'],
+            'barangay'              => ['required', 'string', 'max:255'],
+            'landmark'              => ['nullable', 'string', 'max:255'],
             
-            'department_id' => ['required', 'exists:departments,id'],
-            'other_category' => ['boolean'],
-
+            'department_id'         => ['required', 'exists:departments,id'],
+            
             // Dynamic Category Processing Requirements
-            'category_id' => [
-                'required_if:other_category,false', 
+            'other_category'        => ['boolean'],
+            'category_id'           => ['required_if:other_category,false', 'nullable', 'exists:ticket_categories,id'],
+            'other_category_name'   => ['required_if:other_category,true', 'nullable', 'string', 'max:255'],
+
+            // Consumer Linking Requirements
+            'link_consumer'         => ['boolean'],
+            'account_code'          => [
+                'required_if:link_consumer,true', 
                 'nullable', 
-                'exists:ticket_categories,id'
-            ],
-            'other_category_name' => [
-                'required_if:other_category,true', 
-                'nullable', 
-                'string', 
-                'max:255'
+                'string',
+                'regex:/^\d{2}-\d{4}-\d{4}$/' 
             ],
         ];
     }
 
-    /*
-     * Provides user-friendly error messages for validation failures.
-     */
     public function messages(): array
     {
         return [
@@ -108,6 +94,9 @@ class StoreTicketRequest extends FormRequest
             'other_category_name.required_if' => 'You selected "Other Category". Please write a name for the custom category.',
             'other_category_name.string'      => 'The custom category name must be a valid text string.',
             'other_category_name.max'         => 'The custom category name cannot exceed 255 characters.',
+
+            'account_code.required_if'        => 'Please provide an account code to link this ticket to a consumer.',
+            'account_code.regex'              => 'The account code must follow the standard format (e.g., 02-0504-8538).',
         ];
     }
 }

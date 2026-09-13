@@ -7,6 +7,7 @@ import './teamInlines';
 import './disableDeptForFieldPerson';
 import './ticket-form';
 import './lightbox';
+import './consumerLinkToggle';
 import TomSelect from 'tom-select';
 
 

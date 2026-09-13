@@ -14,6 +14,7 @@ use App\Models\Ticket;
 use App\Models\TicketAccomplishment;
 use App\Models\TicketCategory;
 use App\Models\TicketEscalation;
+use App\Services\External\ConsumerService;
 
 /*
  * Encapsulates the core backend processing for Service Tickets.
@@ -21,6 +22,9 @@ use App\Models\TicketEscalation;
  */
 class TicketService
 {
+    // Inject the ConsumerService for external API resolution
+    public function __construct(protected ConsumerService $consumerService) {}
+
     // --- CORE PROCESSES ---
 
     /*
@@ -30,7 +34,6 @@ class TicketService
 
     public function getTicketList(Request $request)
     {
-
         $tickets = Ticket::with(['category', 'department', 'creator', 'parentTicket'])
             ->search($request->search)
             ->filterByCategory($request->filter)
@@ -56,6 +59,7 @@ class TicketService
             'department.foremen',
             'team.members',
             'category',
+            'consumer', // Loads the cached consumer record
             
             // Hierarchy
             'parentTicket.department',
@@ -91,6 +95,13 @@ class TicketService
 
     public function createCwdTicket(array $validatedData): Ticket
     {
+        // Resolve Consumer ID outside the transaction to prevent locking the database during HTTP calls
+        if (!empty($validatedData['link_consumer']) && !empty($validatedData['account_code'])) {
+            $validatedData['consumer_id'] = $this->consumerService->resolveConsumerId($validatedData['account_code']);
+        } else {
+            $validatedData['consumer_id'] = null;
+        }
+
         return DB::transaction(function () use ($validatedData) {
             
             // 1. Generate non-conflicting chronological number via sequential row locking patterns
@@ -190,7 +201,6 @@ class TicketService
                 $oldParentStatus = $parentTicket->status;
                 
                 // Update the parent ticket's status field
-                // Note: Change TicketStatus::ESCALATED to match whatever your actual Enum name is
                 $parentTicket->update([
                     'status' => TicketStatus::ESCALATED
                 ]);
@@ -210,7 +220,7 @@ class TicketService
                     'department_id'         => $validatedData['department_id'], 
                     
                     // Inherited Consumer & Intake Data
-                    'consumer_id'           => $parentTicket->consumer_id,
+                    'consumer_id'           => $parentTicket->consumer_id, // Inherits the linked consumer[cite: 28]
                     'complaint_source'      => $parentTicket->complaint_source, 
                     'complaint_description' => $parentTicket->complaint_description,
                     
