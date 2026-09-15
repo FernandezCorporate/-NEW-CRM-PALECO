@@ -10,7 +10,6 @@ import './lightbox';
 import './consumerLinkToggle';
 import TomSelect from 'tom-select';
 
-
 document.addEventListener("DOMContentLoaded", function() {
     const sidebarToggle = document.querySelector('[data-sidebar-toggle]');
     const sidebarOverlay = document.querySelector('[data-sidebar-overlay]');
@@ -93,14 +92,14 @@ document.addEventListener("DOMContentLoaded", function() {
 
             if (announce && feedback) {
                 feedback.textContent = selection.length
-                    ? `${selection.length} dashboard ${selection.length === 1 ? 'control' : 'controls'} saved.`
+                    ? `${selection.length} dashboard${selection.length === 1 ? 'control' : 'controls'} saved.`
                     : 'Dashboard controls cleared.';
             }
         };
 
         const updateChoiceState = () => {
             const selectedCount = choices.filter((choice) => choice.checked).length;
-            if (count) count.textContent = `${selectedCount} of ${maximumControls} selected`;
+            if (count) count.textContent = `${selectedCount} of${maximumControls} selected`;
 
             choices.forEach((choice) => {
                 choice.disabled = !choice.checked && selectedCount >= maximumControls;
@@ -194,26 +193,44 @@ document.addEventListener("DOMContentLoaded", function() {
         field.classList.add('system-field');
     });
 
-    // Operational forms and tables stay immediately visible; only explicitly
-    // marked dashboard sections participate in entrance motion.
+    // ---------------------------------------------------------
+    // UPDATED: Livewire-Aware Animation Observer
+    // ---------------------------------------------------------
+    function applyAnimations() {
+        const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        // Only target elements that haven't animated yet, or elements Livewire just reset
+        const animatedElements = document.querySelectorAll('[data-animate]:not(.is-visible)');
 
-    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const animatedElements = document.querySelectorAll('[data-animate]');
+        if (reduceMotion || !('IntersectionObserver' in window)) {
+            animatedElements.forEach((element) => element.classList.add('is-visible'));
+        } else {
+            const observer = new IntersectionObserver((entries, obs) => {
+                entries.forEach((entry) => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('is-visible');
+                        obs.unobserve(entry.target); // Stop observing once it's visible
+                    }
+                });
+            }, { threshold: 0.14 });
 
-    if (reduceMotion || !('IntersectionObserver' in window)) {
-        animatedElements.forEach((element) => element.classList.add('is-visible'));
-    } else {
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach((entry) => {
-                if (entry.isIntersecting) {
-                    entry.target.classList.add('is-visible');
-                    observer.unobserve(entry.target);
-                }
-            });
-        }, { threshold: 0.14 });
-
-        animatedElements.forEach((element) => observer.observe(element));
+            animatedElements.forEach((element) => observer.observe(element));
+        }
     }
+
+    // 1. Run on initial page load
+    applyAnimations();
+
+    // 2. Hook into Livewire to re-run animations after a real-time broadcast morphs the DOM
+    document.addEventListener('livewire:initialized', () => {
+        Livewire.hook('commit', ({ succeed }) => {
+            succeed(() => {
+                // requestAnimationFrame ensures the DOM has finished painting before we observe
+                requestAnimationFrame(() => {
+                    applyAnimations();
+                });
+            });
+        });
+    });
 
     // Target our specific filter dropdowns
     document.querySelectorAll('.ts-filter-dropdown').forEach(function(selectElement) {
@@ -233,3 +250,11 @@ document.addEventListener("DOMContentLoaded", function() {
         });
     });
 });
+
+/**
+ * Echo exposes an expressive API for subscribing to channels and listening
+ * for events that are broadcast by Laravel. Echo and event broadcasting
+ * allow your team to quickly build robust real-time web applications.
+ */
+
+import './echo';

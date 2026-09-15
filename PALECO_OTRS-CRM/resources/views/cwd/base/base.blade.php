@@ -8,6 +8,8 @@
     <link rel="apple-touch-icon" href="{{ asset('images/paleco-logo.png') }}">
     
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    <!-- Added: Livewire Styles -->
+    @livewireStyles
 </head>
 <body class="app-shell refined-shell flex m-0 font-sans min-h-screen">
 
@@ -56,7 +58,6 @@
                     </ul>
                 </div>
 
-                <!-- Update: Evaluating relational slug instead of enum value -->
                 @if(auth()->check() && auth()->user()->role->slug_identifier === 'cwd_officer')
                     <div>
                         <h3 class="px-2 text-[10px] font-bold text-white/40 uppercase tracking-widest mb-2">Service Desk</h3>
@@ -120,5 +121,7 @@
         @yield('content')
     </main>
 
+    <!-- Added: Livewire Scripts -->
+    @livewireScripts
 </body>
 </html>

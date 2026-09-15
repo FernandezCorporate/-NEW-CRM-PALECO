@@ -169,16 +169,21 @@
         background: #f3fbf7;
     }
 
-    .ui-reveal {
-        opacity: 0;
-        transform: translateY(14px);
-        transition: opacity .55s ease, transform .55s cubic-bezier(.2, .7, .2, 1);
-        transition-delay: var(--delay, 0ms);
+    @keyframes ui-reveal-fade {
+        0% {
+            opacity: 0;
+            transform: translateY(14px);
+        }
+        100% {
+            opacity: 1;
+            transform: translateY(0);
+        }
     }
 
-    .ui-reveal.is-visible {
-        opacity: 1;
-        transform: translateY(0);
+    .ui-reveal {
+        animation: ui-reveal-fade 0.55s cubic-bezier(.2, .7, .2, 1) forwards;
+        animation-delay: var(--delay, 0ms);
+        opacity: 0;
     }
 
     .chart-columns {
@@ -201,6 +206,11 @@
         justify-content: center;
     }
 
+    @keyframes scale-y-up {
+        from { transform: scaleY(0); }
+        to { transform: scaleY(1); }
+    }
+
     .chart-column-fill {
         width: min(2rem, 72%);
         height: var(--chart-height);
@@ -210,12 +220,8 @@
         box-shadow: 0 8px 18px rgb(5 150 105 / 18%);
         transform: scaleY(0);
         transform-origin: bottom;
-        transition: transform .75s cubic-bezier(.2, .8, .2, 1);
-        transition-delay: var(--bar-delay, 0ms);
-    }
-
-    .is-visible .chart-column-fill {
-        transform: scaleY(1);
+        animation: scale-y-up .75s cubic-bezier(.2, .8, .2, 1) forwards;
+        animation-delay: var(--bar-delay, 0ms);
     }
 
     .chart-value {
@@ -224,6 +230,11 @@
         font-size: .7rem;
         font-weight: 800;
         color: #334155;
+    }
+
+    @keyframes expand-row-width {
+        from { width: 0; }
+        to { width: var(--chart-width); }
     }
 
     .chart-row-track {
@@ -238,23 +249,20 @@
         height: 100%;
         border-radius: inherit;
         background: linear-gradient(90deg, #10b981, #34d399);
-        transition: width .8s cubic-bezier(.2, .8, .2, 1);
-        transition-delay: var(--bar-delay, 0ms);
+        animation: expand-row-width .8s cubic-bezier(.2, .8, .2, 1) forwards;
+        animation-delay: var(--bar-delay, 0ms);
     }
 
-    .is-visible .chart-row-fill {
-        width: var(--chart-width);
+    @keyframes expand-segment-width {
+        from { width: 0; }
+        to { width: var(--segment-width); }
     }
 
     .status-segment {
         width: 0;
         min-width: 0;
-        transition: width .85s cubic-bezier(.2, .8, .2, 1);
-        transition-delay: var(--segment-delay, 0ms);
-    }
-
-    .is-visible .status-segment {
-        width: var(--segment-width);
+        animation: expand-segment-width .85s cubic-bezier(.2, .8, .2, 1) forwards;
+        animation-delay: var(--segment-delay, 0ms);
     }
 
     @keyframes soft-pulse {
@@ -312,10 +320,10 @@
         animation-duration: .01ms !important;
     }
 
-    .ui-reveal { opacity: 1; transform: none; }
-    .chart-column-fill { transform: scaleY(1); }
-    .chart-row-fill { width: var(--chart-width); }
-    .status-segment { width: var(--segment-width); }
+    .ui-reveal { opacity: 1; transform: none; animation: none; }
+    .chart-column-fill { transform: scaleY(1); animation: none; }
+    .chart-row-fill { width: var(--chart-width); animation: none; }
+    .status-segment { width: var(--segment-width); animation: none; }
 }
 
 /* Shared operational workspace treatment for Admin and CWD screens. */

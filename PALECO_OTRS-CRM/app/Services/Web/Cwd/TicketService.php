@@ -15,6 +15,7 @@ use App\Models\TicketAccomplishment;
 use App\Models\TicketCategory;
 use App\Models\TicketEscalation;
 use App\Services\External\ConsumerService;
+use App\Events\TicketCreated;
 
 /*
  * Encapsulates the core backend processing for Service Tickets.
@@ -37,10 +38,9 @@ class TicketService
         $tickets = Ticket::with(['category', 'department', 'creator', 'parentTicket'])
             ->search($request->search)
             ->filterByCategory($request->filter)
-            ->filterByStatus($request->status)
+            ->filterByStatus($request->status === 'all' ? null : $request->status)
             ->sort($request->sort)
-            ->paginate(10)
-            ->withQueryString();
+            ->paginate(10);
         
         $categories = TicketCategory::orderBy('category_name')->get();
 
@@ -121,6 +121,8 @@ class TicketService
                 'old_status' => null,
                 'new_status' => TicketStatus::OPEN,
             ]);
+
+            TicketCreated::dispatch($ticket->load(['category', 'department']));
 
             return $ticket;
         });
