@@ -1,0 +1,21 @@
+@layer base {
+    :root {
+        --paleco-950: #062d21;
+        --paleco-900: #073b2a;
+        --paleco-700: #08794e;
+        --paleco-600: #09975d;
+        --paleco-500: #12ad6b;
+    }
+    body {
+        color: #17221d;
+        background-color: #f5f7f6;
+        -webkit-font-smoothing: antialiased;
+    }
+    ::selection {
+        color: white;
+        background: var(--paleco-600);
+    }
+    button, a, input, select, textarea {
+        outline-color: var(--paleco-500);
+    }
+}

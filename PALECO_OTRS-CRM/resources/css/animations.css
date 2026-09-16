@@ -1,0 +1,24 @@
+@layer components {
+    @keyframes ui-reveal-fade { 0% { opacity: 0; transform: translateY(14px); } 100% { opacity: 1; transform: translateY(0); } }
+    .ui-reveal { animation: ui-reveal-fade 0.55s cubic-bezier(.2, .7, .2, 1) forwards; animation-delay: var(--delay, 0ms); opacity: 0; }
+    
+    @keyframes scale-y-up { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+    .chart-column-fill { animation: scale-y-up .75s cubic-bezier(.2, .8, .2, 1) forwards; animation-delay: var(--bar-delay, 0ms); }
+    
+    @keyframes expand-row-width { from { width: 0; } to { width: var(--chart-width); } }
+    .chart-row-fill { animation: expand-row-width .8s cubic-bezier(.2, .8, .2, 1) forwards; animation-delay: var(--bar-delay, 0ms); }
+    
+    @keyframes expand-segment-width { from { width: 0; } to { width: var(--segment-width); } }
+    .status-segment { animation: expand-segment-width .85s cubic-bezier(.2, .8, .2, 1) forwards; animation-delay: var(--segment-delay, 0ms); }
+    
+    @keyframes soft-pulse { 0%, 100% { box-shadow: 0 0 0 0 rgb(16 185 129 / 0%); } 50% { box-shadow: 0 0 0 5px rgb(16 185 129 / 10%); } }
+    .status-live { animation: soft-pulse 2.8s ease-in-out 2; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; }
+    .ui-reveal { opacity: 1; transform: none; animation: none; }
+    .chart-column-fill { transform: scaleY(1); animation: none; }
+    .chart-row-fill { width: var(--chart-width); animation: none; }
+    .status-segment { width: var(--segment-width); animation: none; }
+}
