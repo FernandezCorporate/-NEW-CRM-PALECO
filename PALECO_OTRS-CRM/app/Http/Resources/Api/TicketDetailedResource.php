@@ -27,6 +27,16 @@ class TicketDetailedResource extends JsonResource
                 ];
             }),
 
+            'consumer' => $this->consumer ? [
+                            'id'           => $this->consumer->id,
+                            'acct_no'      => $this->consumer->acct_no,
+                            'acct_code'    => $this->consumer->acct_code,
+                            'name'         => $this->consumer->name,
+                            'address'      => $this->consumer->address,
+                            'status'       => $this->consumer->status,
+                            'meter_serial' => $this->consumer->meter_serial,
+                        ] : null,
+
             // Grouped Complaint Data
             'complaint'           => [
                 'source'        => $this->complaint_source?->value ?? $this->complaint_source,

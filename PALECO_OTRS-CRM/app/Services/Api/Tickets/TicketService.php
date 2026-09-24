@@ -276,7 +276,8 @@ class TicketService
             'creator.role',
             'team.members',
             'statusLog.updater',
-            'childTickets'
+            'childTickets',
+            'consumer'
         ])->loadCount('childTickets');
     }
 
