@@ -33,11 +33,11 @@ class UserSeeder extends Seeder
             'password' => 'password',
         ]);
 
-        // 3. Foreman Account (Mobile App Target)
+        // 3. Supervisor Account (Mobile App Target)
         User::create([
             'username' => 'mycka',
             'first_name' => 'mycka',
-            'last_name' => 'foreman',
+            'last_name' => 'supervisor',
             'contact' => '09123456789',
             'role_id' => 3,
             'password' => 'password',

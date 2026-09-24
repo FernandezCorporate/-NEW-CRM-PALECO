@@ -19,7 +19,7 @@ class RoleSeeder extends Seeder
         $roles = [
             ['role_name' => 'Admin', 'slug_identifier' => 'admin'],
             ['role_name' => 'CWD Officer', 'slug_identifier' => 'cwd_officer'],
-            ['role_name' => 'Foreman', 'slug_identifier' => 'foreman'],
+            ['role_name' => 'Supervisor', 'slug_identifier' => 'supervisor'],
             ['role_name' => 'Field Personnel', 'slug_identifier' => 'field_personnel'],
         ];
 
