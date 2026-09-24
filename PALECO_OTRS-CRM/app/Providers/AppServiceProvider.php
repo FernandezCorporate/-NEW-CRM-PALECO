@@ -52,8 +52,8 @@ class AppServiceProvider extends ServiceProvider
          * Mobile API Gates
          * Secures endpoints for the Flutter application based on field roles.
          */
-        Gate::define('access-foreman', function (User $user) {
-            return $user->role->slug_identifier === 'foreman'
+        Gate::define('access-supervisor', function (User $user) {
+            return $user->role->slug_identifier === 'supervisor'
                 ? Response::allow()
                 : Response::denyAsNotFound();
         });

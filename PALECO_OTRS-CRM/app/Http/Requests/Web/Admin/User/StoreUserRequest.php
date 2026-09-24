@@ -55,7 +55,7 @@ class StoreUserRequest extends FormRequest
             'department_id' => [
                 Rule::requiredIf(function () {
                     $role = AccountRole::find($this->input('role_id'));
-                    return $role && $role->slug_identifier === 'foreman';
+                    return $role && $role->slug_identifier === 'supervisor';
                 }),
                 'nullable', 
                 'integer', 

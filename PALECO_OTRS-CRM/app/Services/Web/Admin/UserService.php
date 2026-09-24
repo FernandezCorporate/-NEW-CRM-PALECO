@@ -21,7 +21,7 @@ class UserService
         $activeCounts = (object) [
             'admin' => $rawCounts->get($roles->where('slug_identifier', 'admin')->first()?->id) ?? 0,
             'cwd'   => $rawCounts->get($roles->where('slug_identifier', 'cwd_officer')->first()?->id) ?? 0,
-            'foreman' => $rawCounts->get($roles->where('slug_identifier', 'foreman')->first()?->id) ?? 0,
+            'supervisor' => $rawCounts->get($roles->where('slug_identifier', 'supervisor')->first()?->id) ?? 0,
             'field_personnel' => $rawCounts->get($roles->where('slug_identifier', 'field_personnel')->first()?->id) ?? 0,
         ];
 

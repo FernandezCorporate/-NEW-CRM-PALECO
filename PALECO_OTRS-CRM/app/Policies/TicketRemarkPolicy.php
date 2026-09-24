@@ -19,7 +19,7 @@ class TicketRemarkPolicy
     // Mobile app permissions
     public function mobileCreate(User $user, Ticket $ticket): bool 
     {
-        if ($user->role->slug_identifier === 'foreman') {
+        if ($user->role->slug_identifier === 'supervisor') {
             return $user->department_id === $ticket->department_id;
         }
 
@@ -35,6 +35,6 @@ class TicketRemarkPolicy
      * create       => CWD Officer only; allows adding a chronological communication remark to a ticket.
      * 
      * Mobile app
-     * mobileCreate => Foreman (if assigned to the same department) and Field Personnel (if assigned to the same team); allows adding a chronological communication remark to a ticket.
+     * mobileCreate => Supervisor (if assigned to the same department) and Field Personnel (if assigned to the same team); allows adding a chronological communication remark to a ticket.
      */
 }

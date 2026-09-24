@@ -35,8 +35,8 @@ class UserPolicy
     public function reactivate(User $user, User $targetUser): bool { return $user->role->slug_identifier === 'admin' && $targetUser->role->slug_identifier !== 'admin'; }
 
     // Mobile app permissions
-    public function viewProfile(User $user, User $targetUser): bool { return $user->is($targetUser) && in_array($user->role->slug_identifier, ['admin', 'cwd_officer', 'foreman', 'field_personnel']); }
-    public function viewSupervisorDashboard(User $user): bool { return $user->role->slug_identifier === 'foreman'; }
+    public function viewProfile(User $user, User $targetUser): bool { return $user->is($targetUser) && in_array($user->role->slug_identifier, ['admin', 'cwd_officer', 'supervisor', 'field_personnel']); }
+    public function viewSupervisorDashboard(User $user): bool { return $user->role->slug_identifier === 'supervisor'; }
 
     /*
      * Web-app

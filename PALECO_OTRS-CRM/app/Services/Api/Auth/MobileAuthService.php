@@ -57,7 +57,7 @@ class MobileAuthService
 
         // Role Gatekeeping: Reject web portals (Admin, CWD)
         $userRoleSlug = $user->role->slug_identifier;
-        $allowedMobileRoles = ['foreman', 'field_personnel'];
+        $allowedMobileRoles = ['supervisor', 'field_personnel'];
         
         if (!in_array($userRoleSlug, $allowedMobileRoles)) {
             LoginEvents::dispatch(NonModelActions::LOGIN_FAILED, $user);

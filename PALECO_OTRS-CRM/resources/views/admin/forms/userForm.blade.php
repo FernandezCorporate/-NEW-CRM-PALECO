@@ -118,8 +118,7 @@
                     </select>
 
                     <p id="dept-team-message" class="mt-1 text-xs text-emerald-600 font-medium hidden">
-                        Only foremen can be directly assigned to a department.<br>
-                        Field personnel departments are defined by team assignment.
+                        Only supervisors can be directly assigned to a department.
                     </p>
                     @error('department_id') <p class="mt-1 text-xs text-rose-500">{{ $message }}</p> @enderror
                 </div>

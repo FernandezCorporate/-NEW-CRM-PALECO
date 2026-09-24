@@ -27,7 +27,7 @@
             @php
                 $countKey = match($role->slug_identifier) {
                     'admin' => 'admin', 'cwd_officer' => 'cwd',
-                    'foreman' => 'foreman', 'field_personnel' => 'field_personnel', default => null,
+                    'supervisor' => 'supervisor', 'field_personnel' => 'field_personnel', default => null,
                 };
             @endphp
             <a href="{{ route('admin.users', array_merge(request()->except(['filter', 'page']), ['filter' => $role->slug_identifier])) }}" @if(request('filter') === $role->slug_identifier) aria-current="page" @endif>

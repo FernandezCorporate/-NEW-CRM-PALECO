@@ -37,7 +37,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user/profile', [ProfileController::class, 'show']);    
     
     // Both roles can index and view. The service layer and policies automatically filter 
-    // the data (Foreman = Department, Field = Team).
+    // the data (Supervisor = Department, Field = Team).
     Route::prefix('tickets')->group(function () {
         Route::get('/', [TicketController::class, 'index']);    // Documented
         Route::get('/{ticket}', [TicketController::class, 'show'])->whereUlid('ticket');    // Documented
@@ -50,8 +50,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/{ticket}/remarks', [TicketRemarkController::class, 'store'])->whereUlid('ticket'); // Documented
     });
 
-    // --- FOREMAN SPECIFIC ENDPOINTS ---
-    Route::middleware('can:access-foreman')->group(function () {
+    // --- SUPERVISOR SPECIFIC ENDPOINTS ---
+    Route::middleware('can:access-supervisor')->group(function () {
 
         Route::get('/dashboard', [DashboardController::class, 'supervisorIndex']); // Documented
 

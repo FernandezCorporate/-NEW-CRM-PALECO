@@ -56,7 +56,7 @@ class UpdateUserRequest extends FormRequest
             'department_id' => [
                 Rule::requiredIf(function () use ($userModel) {
                     // Check the user's existing immutable role in the database
-                    return $userModel && $userModel->role->slug_identifier === 'foreman';
+                    return $userModel && $userModel->role->slug_identifier === 'supervisor';
                 }),
                 'nullable', 
                 'integer', 

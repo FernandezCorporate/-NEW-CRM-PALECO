@@ -29,7 +29,7 @@ class TicketService
             ->with('category')
             ->withCount('childTickets');
 
-        if ($user->role->slug_identifier === 'foreman') {
+        if ($user->role->slug_identifier === 'supervisor') {
             $query->where('department_id', $user->department_id);
         } elseif ($user->role->slug_identifier === 'field_personnel') {
             $teamIds = $user->teams()->pluck('teams.id');
@@ -48,7 +48,7 @@ class TicketService
     {
         $baseQuery = Ticket::query();
 
-        if ($user->role->slug_identifier === 'foreman') {
+        if ($user->role->slug_identifier === 'supervisor') {
             $baseQuery->where('department_id', $user->department_id);
         } elseif ($user->role->slug_identifier === 'field_personnel') {
             $teamIds = $user->teams()->pluck('teams.id');
@@ -199,16 +199,16 @@ class TicketService
         ]);
     }
 
-    public function verifyAccomplishment(Ticket $ticket, TicketAccomplishment $accomplishment, array $data, User $foreman): TicketAccomplishment
+    public function verifyAccomplishment(Ticket $ticket, TicketAccomplishment $accomplishment, array $data, User $supervisor): TicketAccomplishment
     {
-        return DB::transaction(function () use ($ticket, $accomplishment, $data, $foreman) {
+        return DB::transaction(function () use ($ticket, $accomplishment, $data, $supervisor) {
             
             $oldTicketStatus = $ticket->status;
 
             if ($data['status'] === TicketAccomplishmentStatus::APPROVED->value) {
                 $accomplishment->update([
                     'status' => TicketAccomplishmentStatus::APPROVED,
-                    'approved_by_id' => $foreman->id,
+                    'approved_by_id' => $supervisor->id,
                 ]);
 
                 $ticket->update([
@@ -220,7 +220,7 @@ class TicketService
                     'ticket_id'  => $ticket->system_id,
                     'old_status' => $oldTicketStatus, 
                     'new_status' => TicketStatus::CLOSED,
-                    'changed_by' => $foreman->id,
+                    'changed_by' => $supervisor->id,
                 ]);
             } 
             
@@ -228,7 +228,7 @@ class TicketService
                 $accomplishment->update([
                     'status' => TicketAccomplishmentStatus::REJECTED,
                     'rejection_reason' => $data['rejection_reason'],
-                    'rejected_by_id' => $foreman->id,
+                    'rejected_by_id' => $supervisor->id,
                 ]);
 
                 $ticket->update([
@@ -240,20 +240,20 @@ class TicketService
                     'ticket_id'  => $ticket->system_id,
                     'old_status' => $oldTicketStatus, 
                     'new_status' => TicketStatus::IN_PROGRESS,
-                    'changed_by' => $foreman->id,
+                    'changed_by' => $supervisor->id,
                 ]);
             }
             return $accomplishment->fresh(['accomplishedBy', 'rejectedBy', 'approvedBy', 'photos']);
         });
     }
 
-    public function requestEscalation(Ticket $ticket, array $data, User $foreman): TicketEscalation
+    public function requestEscalation(Ticket $ticket, array $data, User $supervisor): TicketEscalation
     {
-        return DB::transaction(function () use ($ticket, $data, $foreman) {
+        return DB::transaction(function () use ($ticket, $data, $supervisor) {
             
             // 1. Create the escalation record
             $escalation = $ticket->escalations()->create([
-                'created_by'              => $foreman->id,
+                'created_by'              => $supervisor->id,
                 'suggested_department_id' => $data['suggested_department_id'] ?? null,
                 'reason'                  => $data['reason'],
                 'pre_escalation_status'   => $ticket->status->value,
@@ -280,10 +280,10 @@ class TicketService
         ])->loadCount('childTickets');
     }
 
-    public function getAssignOptions(User $foreman, Ticket $ticket)
+    public function getAssignOptions(User $supervisor, Ticket $ticket)
     {
         $teams = Team::query()
-            ->where('department_id', $foreman->department_id)
+            ->where('department_id', $supervisor->department_id)
             ->withCount([
                 'members', 
                 'ticket' => function ($query) use ($ticket) {
@@ -301,12 +301,12 @@ class TicketService
         return $teams;
     }
 
-    public function getEscalationOptions(User $foreman)
+    public function getEscalationOptions(User $supervisor)
     {
         $departments  = Department::query()->get();
 
-        $departments->each(function ($department) use ($foreman) {
-            $department->is_current = $department->id === $foreman->department_id;
+        $departments->each(function ($department) use ($supervisor) {
+            $department->is_current = $department->id === $supervisor->department_id;
         });
 
         return $departments;

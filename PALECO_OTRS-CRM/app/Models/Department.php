@@ -46,7 +46,7 @@ class Department extends Model
     public function supervisors(): HasMany
     {
         return $this->hasMany(User::class, 'department_id')
-                    ->whereHas('role', fn($q) => $q->where('slug_identifier', 'foreman'));
+                    ->whereHas('role', fn($q) => $q->where('slug_identifier', 'supervisor'));
     }
 
     /*

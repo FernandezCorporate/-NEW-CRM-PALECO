@@ -10,7 +10,7 @@ class TeamPolicy
     public function viewAny(User $user): bool { return $user->role->slug_identifier === 'admin'; }
     public function view(User $user): bool { return $user->role->slug_identifier === 'admin'; }
     public function teamForm(User $user): bool { return $user->role->slug_identifier === 'admin'; }
-    public function create(User $user): bool { return in_array($user->role->slug_identifier, ['admin', 'foreman']); }
+    public function create(User $user): bool { return in_array($user->role->slug_identifier, ['admin', 'supervisor']); }
     public function update(User $user): bool { return $user->role->slug_identifier === 'admin'; }
     public function deleteConfirm(User $user): bool { return $user->role->slug_identifier === 'admin'; }
     public function archive(User $user): bool { return $user->role->slug_identifier === 'admin'; }
@@ -19,14 +19,14 @@ class TeamPolicy
     public function forceDelete(User $user): bool { return $user->role->slug_identifier === 'admin'; }
 
 
-    public function viewAnyDepartmentTeams(User $user): bool { return $user->role->slug_identifier === 'foreman'; }
-    public function viewDepartmentTeams(User $user, Team $team): bool { return $user->role->slug_identifier === 'foreman' && $user->department_id === $team->department_id; }
-    public function mobileUpdateTeam(User $user, Team $team): bool { return $user->role->slug_identifier === 'foreman' && $user->department_id === $team->department_id; }
-    public function mobileArchiveTeam(User $user, Team $team): bool { return $user->role->slug_identifier === 'foreman' && $user->department_id === $team->department_id; }
-    public function mobileRestoreTeam(User $user, Team $team): bool { return $user->role->slug_identifier === 'foreman' && $user->department_id === $team->department_id; }
-    public function mobileDestroyTeam(User $user, Team $team): bool { return $user->role->slug_identifier === 'foreman' && $user->department_id === $team->department_id; }
+    public function viewAnyDepartmentTeams(User $user): bool { return $user->role->slug_identifier === 'supervisor'; }
+    public function viewDepartmentTeams(User $user, Team $team): bool { return $user->role->slug_identifier === 'supervisor' && $user->department_id === $team->department_id; }
+    public function mobileUpdateTeam(User $user, Team $team): bool { return $user->role->slug_identifier === 'supervisor' && $user->department_id === $team->department_id; }
+    public function mobileArchiveTeam(User $user, Team $team): bool { return $user->role->slug_identifier === 'supervisor' && $user->department_id === $team->department_id; }
+    public function mobileRestoreTeam(User $user, Team $team): bool { return $user->role->slug_identifier === 'supervisor' && $user->department_id === $team->department_id; }
+    public function mobileDestroyTeam(User $user, Team $team): bool { return $user->role->slug_identifier === 'supervisor' && $user->department_id === $team->department_id; }
     
-    public function mobileTeamOptions(User $user): bool { return $user->role->slug_identifier === 'foreman'; }
+    public function mobileTeamOptions(User $user): bool { return $user->role->slug_identifier === 'supervisor'; }
 
     /*
      * viewAny: Determines if the user can view the list of teams.

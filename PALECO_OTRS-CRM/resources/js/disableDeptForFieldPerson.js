@@ -11,7 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const selectedOption = roleSelect.options[roleSelect.selectedIndex];
             const roleSlug = selectedOption ? selectedOption.getAttribute('data-slug') : '';
             
-            if (roleSlug !== 'foreman') {
+            if (roleSlug !== 'supervisor') {
                 if (tsInstance) {
                     tsInstance.clear();
                     tsInstance.disable();
