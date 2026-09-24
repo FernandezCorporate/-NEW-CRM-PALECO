@@ -12,7 +12,7 @@
             ['Closed today', $data['closed_today'], 'Based on closure date'],
             ['Unresolved tickets', $data['active'], 'Excludes resolved and closed'],
             ['Without a team', $data['without_team'], 'Unresolved tickets only'],
-            ['Escalation reviews', $data['pending_escalations'], 'Pending decisions'],
+            ['Endorsement reviews', $data['pending_endorsements'], 'Pending decisions'],
             ['Report reviews', $data['pending_reports'], 'Pending accomplishments'],
         ] as [$label, $value, $hint])
             <div>

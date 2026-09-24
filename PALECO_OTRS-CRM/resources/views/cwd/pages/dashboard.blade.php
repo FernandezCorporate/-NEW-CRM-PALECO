@@ -27,11 +27,11 @@
                     ['new-ticket', 'New ticket', 'Record a service complaint', route('cwd.tickets.createForm'), 'bg-teal-50 text-teal-600', 'M12 5v14m7-7H5'],
                     ['open-tickets', 'Open tickets', 'Review unassigned requests', route('cwd.tickets', ['status' => 'open']), 'bg-sky-50 text-sky-600', 'M9 5h6m-6 4h6M5 3h14v18H5z'],
                     ['in-progress', 'Work in progress', 'Follow ongoing field work', route('cwd.tickets', ['status' => 'in_progress']), 'bg-blue-50 text-blue-600', 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z'],
-                    ['escalations', 'Review escalations', 'View all escalation requests', route('cwd.escalations'), 'bg-amber-50 text-amber-600', 'M12 9v4m0 4h.01M12 3L2 21h20L12 3z'],
-                    ['pending-escalations', 'Pending reviews', 'Escalations awaiting a decision', route('cwd.escalations', ['status' => 'pending']), 'bg-orange-50 text-orange-600', 'M9 12l2 2 4-4M5 3h14v18H5z'],
+                    ['endorsements', 'Review endorsements', 'View all endorsement requests', route('cwd.endorsements'), 'bg-amber-50 text-amber-600', 'M12 9v4m0 4h.01M12 3L2 21h20L12 3z'],
+                    ['pending-endorsements', 'Pending reviews', 'Endorsements awaiting a decision', route('cwd.endorsements', ['status' => 'pending']), 'bg-orange-50 text-orange-600', 'M9 12l2 2 4-4M5 3h14v18H5z'],
                 ];
             @endphp
-            <x-dashboard-controls :control-catalog="$cwdControls" :default-controls="['tickets', 'escalations']"
+            <x-dashboard-controls :control-catalog="$cwdControls" :default-controls="['tickets', 'endorsements']"
                 :storage-key="'paleco-cwd-controls-' . auth()->id()" title="Keep requests moving" eyebrow="Quick actions" />
 
             <aside data-animate class="ui-reveal panel flex flex-col overflow-hidden" style="--delay: 90ms" aria-labelledby="cwd-queue-title">
@@ -43,7 +43,7 @@
                     @php $statusTotals = collect($overview['statuses'] ?? [])->pluck('total', 'key'); @endphp
                     @foreach ([
                         ['Open tickets', $statusTotals['open'] ?? 0, 'Review newly logged requests', route('cwd.tickets', ['status' => 'open'])],
-                        ['Pending escalations', $overview['operations']['pending_escalations'] ?? 0, 'Review requests for rerouting', route('cwd.escalations', ['status' => 'pending'])],
+                        ['Pending endorsements', $overview['operations']['pending_endorsements'] ?? 0, 'Review requests for rerouting', route('cwd.endorsements', ['status' => 'pending'])],
                         ['Assigned tickets', $statusTotals['assigned'] ?? 0, 'Follow up with assigned field teams', route('cwd.tickets', ['status' => 'assigned'])],
                     ] as [$queueLabel, $queueCount, $queueHint, $queueUrl])
                         <li class="flex flex-1">

@@ -18,7 +18,7 @@ use App\Http\Controllers\Web\Cwd\ConsumerController;
 
 use App\Http\Controllers\Web\Cwd\CwdDashboardController;
 use App\Http\Controllers\Web\Cwd\TicketController;
-use App\Http\Controllers\Web\Cwd\TicketEscalationController;
+use App\Http\Controllers\Web\Cwd\TicketEndorsementController;
 use App\Http\Middleware\CheckIfActive;
 
 /*
@@ -183,10 +183,10 @@ Route::middleware(['auth', CheckIfActive::class])->group(function() {
             Route::get('/{ticket}/accomplishments/{accomplishment}', [TicketAccomplishmentController::class, 'show'])->name('cwd.tickets.accomplishments.show')->whereUlid('ticket')->whereNumber('accomplishment');
         });
 
-        Route::prefix('escalations')->group(function () {
-            Route::get('/', [TicketEscalationController::class, 'index'])->name('cwd.escalations');
-            Route::get('/{escalation}', [TicketEscalationController::class, 'show'])->name('cwd.escalations.show')->whereUlid('escalation');
-            Route::post('/{escalation}/decide', [TicketEscalationController::class, 'decide'])->name('cwd.escalations.decide');
+        Route::prefix('endorsements')->group(function () {
+            Route::get('/', [TicketEndorsementController::class, 'index'])->name('cwd.endorsements');
+            Route::get('/{endorsement}', [TicketEndorsementController::class, 'show'])->name('cwd.endorsements.show')->whereUlid('endorsement');
+            Route::post('/{endorsement}/decide', [TicketEndorsementController::class, 'decide'])->name('cwd.endorsements.decide');
         });
     });
 

@@ -2,12 +2,12 @@
 
 namespace App\Models;
 
-use App\Enums\EscalationStatus;
+use App\Enums\EndorsementStatus;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class TicketEscalation extends Model
+class TicketEndorsement extends Model
 {
     use HasUlids;
 
@@ -16,7 +16,7 @@ class TicketEscalation extends Model
         'suggested_department_id',
         'reason',
         'status',
-        'pre_escalation_status',
+        'pre_endorsement_status',
         'rejection_reason',
         'reviewed_by',
         'created_by',
@@ -26,7 +26,7 @@ class TicketEscalation extends Model
     protected function casts(): array
     {
         return [
-            'status' => EscalationStatus::class,
+            'status' => EndorsementStatus::class,
             'reviewed_at' => 'datetime',
         ];
     }

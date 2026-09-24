@@ -6,7 +6,7 @@ use App\Enums\TicketStatus;
 use App\Models\Department;
 use App\Models\Team;
 use App\Models\Ticket;
-use App\Models\TicketEscalation;
+use App\Models\TicketEndorsement;
 use App\Models\TicketAccomplishment;
 use App\Models\User;
 use Carbon\Carbon;
@@ -68,7 +68,7 @@ class DashboardService
             'closed_today' => Ticket::query()->whereBetween('closed_at', [$now->copy()->startOfDay(), $now])->count(),
             'active' => (clone $active)->count(),
             'without_team' => (clone $active)->whereNull('team_id')->count(),
-            'pending_escalations' => TicketEscalation::query()->where('status', 'pending')->whereHas('ticket')->count(),
+            'pending_endorsements' => TicketEndorsement::query()->where('status', 'pending')->whereHas('ticket')->count(),
             'pending_reports' => TicketAccomplishment::query()->where('status', 'pending')->whereHas('ticket')->count(),
             'aging' => [
                 ['label' => 'Less than 24 hours', 'total' => (clone $active)->where('created_at', '>', $now->copy()->subDay())->count()],

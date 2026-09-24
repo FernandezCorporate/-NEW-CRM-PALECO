@@ -76,7 +76,7 @@
 }
 .history-status:is([data-status="approved"], [data-status="resolved"], [data-status="closed"]) { background: #e5f5eb; color: #166534; }
 .history-status:is([data-status="open"], [data-status="assigned"], [data-status="in_progress"]) { background: #edf4ff; color: #1e40af; }
-.history-status:is([data-status="pending"], [data-status="pending_escalation"]) { background: #fff3d6; color: #92400e; }
+.history-status:is([data-status="pending"], [data-status="pending_endorsement"]) { background: #fff3d6; color: #92400e; }
 .history-status[data-status="rejected"] { background: #fff0f0; color: #b91c1c; }
 .history-report-link { display: inline-flex; align-items: center; min-height: 2.75rem; gap: .35rem; white-space: nowrap; color: #08794e; font-weight: 600; text-decoration: underline; text-underline-offset: 4px; }
 .history-report-link:hover { color: #064e3b; }

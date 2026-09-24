@@ -144,7 +144,7 @@
             </div>
         </div>
 
-        <!-- Recipients & Escalation Tree -->
+        <!-- Recipients & Endorsement Tree -->
         <div class="flex flex-col gap-6 h-full">
             
             <!-- Recipients Block -->
@@ -198,11 +198,11 @@
                 </div>
             </div>
 
-            <!-- Escalation Tree -->
+            <!-- Endorsement Tree -->
             <div class="bg-white border border-gray-200 rounded-xl shadow-sm p-6 shrink-0">
                 <h2 class="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
                     <svg class="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"></path></svg>
-                    Escalation Tree
+                    Endorsement Tree
                 </h2>
 
                 <div class="space-y-4">
@@ -218,7 +218,7 @@
 
                         @if($ticket->childTickets->isNotEmpty())
                             <div>
-                                <span class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">Escalated To (Child Tickets)</span>
+                                <span class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">Endorsed To (Child Tickets)</span>
                                 <div class="space-y-2 pl-4 border-l-2 border-gray-200 ml-2">
                                     @foreach($ticket->childTickets as $child)
                                         <a href="{{ route('cwd.tickets.show', $child) }}" class="block p-3 bg-gray-50 border border-gray-200 rounded-lg hover:border-indigo-300 hover:shadow-sm transition-all group">
@@ -241,7 +241,7 @@
                         </div>
                         
                         <div>
-                            <span class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">Escalated Ticket</span>
+                            <span class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">Endorsed Ticket</span>
                             <div class="p-3 bg-emerald-50 border-l-4 border-emerald-500 rounded-r-lg pl-4 ml-2">
                                 <div class="font-bold text-emerald-800 text-sm">{{ $ticket->ticket_number }} (Current)</div>
                                 <div class="text-xs text-emerald-600 mt-0.5">{{ $ticket->department->dept_name ?? 'Unassigned' }}</div>
@@ -258,12 +258,12 @@
         <header class="ticket-history-intro">
             <p class="eyebrow">Ticket record</p>
             <h2 id="ticket-history-title">Activity & service history</h2>
-            <p>Follow status changes, team handovers, escalations, and submitted field reports.</p>
+            <p>Follow status changes, team handovers, endorsements, and submitted field reports.</p>
         </header>
         <nav class="ticket-history-nav" aria-label="Jump to ticket history section">
             <a href="#status-history">Status changes <span>{{ $ticket->statusLog->count() }}</span></a>
             <a href="#assignment-history">Team assignments <span>{{ $ticket->assignments->count() }}</span></a>
-            <a href="#escalation-history">Escalations <span>{{ $ticket->escalations->count() }}</span></a>
+            <a href="#endorsement-history">Endorsements <span>{{ $ticket->endorsements->count() }}</span></a>
             <a href="#accomplishment-history">Field reports <span>{{ $ticket->accomplishments->count() }}</span></a>
             
             <a href="#remark-history">Activity remarks <span>{{ $ticket->remarks->count() }}</span></a>
@@ -312,18 +312,18 @@
             @endforelse
         </x-ticket-history-table>
 
-        <x-ticket-history-table id="escalation-history" title="Escalation requests"
+        <x-ticket-history-table id="endorsement-history" title="Endorsement requests"
             description="Requests to route this ticket to another department."
-            :count="$ticket->escalations->count()" :columns="['Requested', 'Requested by', 'Target department', 'Decision']">
-            @forelse($ticket->escalations as $escalation)
+            :count="$ticket->endorsements->count()" :columns="['Requested', 'Requested by', 'Target department', 'Decision']">
+            @forelse($ticket->endorsements as $endorsement)
                 <tr>
-                    <td class="history-date"><time datetime="{{ $escalation->created_at->toIso8601String() }}">{{ $escalation->created_at->format('M d, Y') }}<small>{{ $escalation->created_at->format('h:i A') }}</small></time></td>
-                    <td>{{ $escalation->creator->full_name ?? 'Unknown user' }}</td>
-                    <td>{{ $escalation->suggestedDepartment->dept_name ?? 'Not specified' }}</td>
-                    <td><span class="history-status" data-status="{{ $escalation->status->value }}">{{ $escalation->status->label() }}</span></td>
+                    <td class="history-date"><time datetime="{{ $endorsement->created_at->toIso8601String() }}">{{ $endorsement->created_at->format('M d, Y') }}<small>{{ $endorsement->created_at->format('h:i A') }}</small></time></td>
+                    <td>{{ $endorsement->creator->full_name ?? 'Unknown user' }}</td>
+                    <td>{{ $endorsement->suggestedDepartment->dept_name ?? 'Not specified' }}</td>
+                    <td><span class="history-status" data-status="{{ $endorsement->status->value }}">{{ $endorsement->status->label() }}</span></td>
                 </tr>
             @empty
-                <tr><td colspan="4" class="history-empty"><strong>No escalation requests</strong><span>Requests and their decisions will be listed here.</span></td></tr>
+                <tr><td colspan="4" class="history-empty"><strong>No endorsement requests</strong><span>Requests and their decisions will be listed here.</span></td></tr>
             @endforelse
         </x-ticket-history-table>
 

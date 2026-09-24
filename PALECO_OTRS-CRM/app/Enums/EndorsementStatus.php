@@ -2,7 +2,7 @@
 
 namespace App\Enums;
 
-enum EscalationStatus: string
+enum EndorsementStatus: string
 {
     case PENDING = 'pending';
     case APPROVED = 'approved';

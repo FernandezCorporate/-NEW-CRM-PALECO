@@ -74,7 +74,8 @@ return new class extends Migration
             $table->foreign('assigned_by')->references('id')->on('users')->cascadeOnDelete();
         });
 
-        Schema::create('ticket_escalations', function (Blueprint $table) {
+        // --- UPDATED TABLE ---
+        Schema::create('ticket_endorsements', function (Blueprint $table) {
             $table->ulid('id')->primary();
             
             $table->char('ticket_id', 26);
@@ -87,7 +88,7 @@ return new class extends Migration
             
             $table->text('reason');
             $table->string('status')->default('pending');
-            $table->string('pre_escalation_status');
+            $table->string('pre_endorsement_status'); // UPDATED COLUMN
             
             $table->text('rejection_reason')->nullable();
             $table->char('reviewed_by', 26)->nullable();
@@ -145,7 +146,7 @@ return new class extends Migration
         Schema::dropIfExists('ticket_remarks');
         Schema::dropIfExists('accomplishment_photos');
         Schema::dropIfExists('ticket_accomplishments');
-        Schema::dropIfExists('ticket_escalations');
+        Schema::dropIfExists('ticket_endorsements'); // UPDATED
         Schema::dropIfExists('ticket_assignments');
         Schema::dropIfExists('ticket_status_logs');
         Schema::dropIfExists('tickets');

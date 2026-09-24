@@ -13,8 +13,8 @@ use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use App\Enums\TicketAccomplishmentStatus;
 use App\Models\TicketAccomplishment;
-use App\Models\TicketEscalation;
-use App\Enums\EscalationStatus;
+use App\Models\TicketEndorsement;
+use App\Enums\EndorsementStatus;
 use Illuminate\Support\Facades\Storage;
 
 /*
@@ -62,8 +62,8 @@ class TicketService
             'in_progress' => (clone $baseQuery)->where('status', TicketStatus::IN_PROGRESS)->count(),
             'resolved' => (clone $baseQuery)->where('status', TicketStatus::RESOLVED)->count(),
             'closed' => (clone $baseQuery)->where('status', TicketStatus::CLOSED)->count(),
-            'pending_escalation' => (clone $baseQuery)->where('status', TicketStatus::PENDING_ESCALATION)->count(),
-            'escalated' => (clone $baseQuery)->where('status', TicketStatus::ESCALATED)->count(),
+            'pending_endorsement' => (clone $baseQuery)->where('status', TicketStatus::PENDING_ENDORSEMENT)->count(),
+            'endorsed' => (clone $baseQuery)->where('status', TicketStatus::ENDORSED)->count(),
         ];
     }
 
@@ -128,21 +128,18 @@ class TicketService
 
     public function accomplishTicket(Ticket $ticket, User $worker, array $accomplishmentDetails): TicketAccomplishment
     {
-        // Initialize variables outside the transaction so the catch block can access them
         $signaturePath = null;
         $photoPaths = [];
 
         try {
             return DB::transaction(function () use ($ticket, $worker, $accomplishmentDetails, &$signaturePath, &$photoPaths) {
                 
-                // 1. Physically store the files and track their paths in the external variables
                 $signaturePath = $accomplishmentDetails['signature']->store("accomplishments/{$ticket->system_id}/signature", 'public');
                 
                 foreach ($accomplishmentDetails['photos'] as $photo) {
                     $photoPaths[] = $photo->store("accomplishments/{$ticket->system_id}/photos", 'public');
                 }
 
-                // 2. Map and insert database records
                 $report = TicketAccomplishment::create([
                     'ticket_id'          => $ticket->system_id,
                     'accomplished_by_id' => $worker->id, 
@@ -153,11 +150,9 @@ class TicketService
                     'accomplished_at'    => now(), 
                 ]);
 
-                // Map the simple array of paths into the associative array createMany expects
                 $photoRecords = array_map(fn($path) => ['file_path' => $path], $photoPaths);
                 $report->photos()->createMany($photoRecords);
 
-                // 3. Status transitions
                 TicketStatusLog::create([
                     'ticket_id'  => $ticket->system_id,
                     'old_status' => $ticket->status, 
@@ -174,7 +169,6 @@ class TicketService
             });
 
         } catch (\Exception $e) {
-            // 4. The Failsafe: Erase the physical files if the database transaction fails
             if ($signaturePath) {
                 Storage::disk('public')->delete($signaturePath);
             }
@@ -182,7 +176,6 @@ class TicketService
                 Storage::disk('public')->delete($photoPaths);
             }
             
-            // Re-throw the error so the controller handles the failure properly
             throw $e;
         }
     }
@@ -247,25 +240,23 @@ class TicketService
         });
     }
 
-    public function requestEscalation(Ticket $ticket, array $data, User $supervisor): TicketEscalation
+    public function requestEndorsement(Ticket $ticket, array $data, User $supervisor): TicketEndorsement
     {
         return DB::transaction(function () use ($ticket, $data, $supervisor) {
             
-            // 1. Create the escalation record
-            $escalation = $ticket->escalations()->create([
+            $endorsement = $ticket->endorsements()->create([
                 'created_by'              => $supervisor->id,
                 'suggested_department_id' => $data['suggested_department_id'] ?? null,
                 'reason'                  => $data['reason'],
-                'pre_escalation_status'   => $ticket->status->value,
-                'status'                  => EscalationStatus::PENDING,
+                'pre_endorsement_status'  => $ticket->status->value,
+                'status'                  => EndorsementStatus::PENDING,
             ]);
 
-            // 2. Freeze the parent ticket
             $ticket->update([
-                'status' => TicketStatus::PENDING_ESCALATION,
+                'status' => TicketStatus::PENDING_ENDORSEMENT,
             ]);
 
-            return $escalation;
+            return $endorsement;
         });
     }
 
@@ -302,9 +293,9 @@ class TicketService
         return $teams;
     }
 
-    public function getEscalationOptions(User $supervisor)
+    public function getEndorsementOptions(User $supervisor)
     {
-        $departments  = Department::query()->get();
+        $departments = Department::query()->get();
 
         $departments->each(function ($department) use ($supervisor) {
             $department->is_current = $department->id === $supervisor->department_id;
@@ -328,9 +319,9 @@ class TicketService
         $ticketHistory = $ticket->load([
             'assignments.team', 
             'assignments.assigner.role',
-            'escalations.suggestedDepartment',
-            'escalations.creator.role',
-            'escalations.reviewer'
+            'endorsements.suggestedDepartment',
+            'endorsements.creator.role',
+            'endorsements.reviewer'
         ]);
 
         return $ticketHistory;

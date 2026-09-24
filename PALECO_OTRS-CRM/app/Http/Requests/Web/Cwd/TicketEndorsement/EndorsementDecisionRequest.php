@@ -1,12 +1,12 @@
 <?php
 
-namespace App\Http\Requests\Web\Cwd\TicketEscalation;
+namespace App\Http\Requests\Web\Cwd\TicketEndorsement;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
-use App\Enums\EscalationStatus;
+use App\Enums\EndorsementStatus;
 
-class EscalationDecisionRequest extends FormRequest
+class EndorsementDecisionRequest extends FormRequest
 {
     public function authorize(): bool
     {
@@ -15,12 +15,12 @@ class EscalationDecisionRequest extends FormRequest
 
     public function rules(): array
     {
-        $isRejected = $this->input('status') === EscalationStatus::REJECTED->value;
-        $isApproved = $this->input('status') === EscalationStatus::APPROVED->value;
+        $isRejected = $this->input('status') === EndorsementStatus::REJECTED->value;
+        $isApproved = $this->input('status') === EndorsementStatus::APPROVED->value;
 
-        // Fetch the escalation object injected into the route
-        $escalation = $this->route('escalation');
-        $currentDepartmentId = $escalation->ticket->department_id;
+        // Fetch the endorsement object injected into the route
+        $endorsement = $this->route('endorsement');
+        $currentDepartmentId = $endorsement->ticket->department_id;
 
         return [
             'department_id' => [
@@ -30,7 +30,7 @@ class EscalationDecisionRequest extends FormRequest
             ],
             'status' => [
                 'required',
-                Rule::enum(EscalationStatus::class)
+                Rule::enum(EndorsementStatus::class)
             ],
             'rejection_reason' => [
                 $isRejected ? 'required' : 'nullable',
@@ -45,8 +45,8 @@ class EscalationDecisionRequest extends FormRequest
     {
         return [
             'department_id.not_in' => 'The ticket is already assigned to this department. Please select a different target department.',
-            'department_id.required' => 'You must select a target department to approve and dispatch this escalation.',
-            'rejection_reason.required' => 'A CWD Note is required when rejecting an escalation.'
+            'department_id.required' => 'You must select a target department to approve and dispatch this endorsement.',
+            'rejection_reason.required' => 'A CWD Note is required when rejecting an endorsement.'
         ];
     }
 }

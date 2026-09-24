@@ -73,12 +73,12 @@
                             </li>
 
                             <li>
-                                <a href="{{ route('cwd.escalations') }}" 
-                                   class="flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-xl transition-all {{ request()->routeIs('cwd.escalations*') ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-950/20' : 'text-slate-300 hover:bg-white/10 hover:text-white' }}">
+                                <a href="{{ route('cwd.endorsements') }}" 
+                                   class="flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-xl transition-all {{ request()->routeIs('cwd.endorsements*') ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-950/20' : 'text-slate-300 hover:bg-white/10 hover:text-white' }}">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 7h7m0 0v7m0-7l-8 8-4-4-5 5"></path>
                                     </svg>
-                                    Escalations
+                                    Endorsements
                                 </a>
                             </li>
                         </ul>

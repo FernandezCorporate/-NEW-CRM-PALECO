@@ -96,9 +96,9 @@ class User extends Authenticatable
         return $this->hasMany(TicketStatusLog::class, 'changed_by');
     }
 
-    public function escalations(): HasMany
+    public function endorsements(): HasMany
     {
-        return $this->hasMany(TicketEscalation::class, 'created_by');
+        return $this->hasMany(TicketEndorsement::class, 'created_by');
     }
 
     public function ticketRemarks(): HasMany

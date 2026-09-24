@@ -31,7 +31,7 @@ class TicketPolicy
     public function start(User $user, Ticket $ticket): bool { return $user->role->slug_identifier === 'field_personnel' && $user->teams()->where('teams.id', $ticket->team_id)->exists(); }
     public function accomplish(User $user, Ticket $ticket): bool { return $user->role->slug_identifier === 'field_personnel' && $user->teams()->where('teams.id', $ticket->team_id)->exists(); }
     public function verify(User $user, Ticket $ticket): bool { return $user->role->slug_identifier === 'supervisor' && $user->department_id === $ticket->department_id; }
-    public function escalate(User $user, Ticket $ticket): bool { return $user->role->slug_identifier === 'supervisor' && $user->department_id === $ticket->department_id;}
+    public function endorse(User $user, Ticket $ticket): bool { return $user->role->slug_identifier === 'supervisor' && $user->department_id === $ticket->department_id;}
     
     public function viewHistory(User $user, Ticket $ticket): bool { return $user->role->slug_identifier === 'supervisor' && $user->department_id === $ticket->department_id;}
 }

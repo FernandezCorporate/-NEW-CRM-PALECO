@@ -40,7 +40,7 @@ class TicketAssignmentController extends Controller
         if (!in_array($ticket->status, $allowedStatuses, true)) {
             return response()->json([
                 'success' => false,
-                'message' => 'Tickets that are resolved, closed, or locked in an escalation workflow cannot be reassigned.'
+                'message' => 'Tickets that are resolved, closed, or has a pending endorsement cannot be reassigned.'
             ], 422);
         }
         // ------------------------------------------------------------

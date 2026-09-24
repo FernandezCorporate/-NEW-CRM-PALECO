@@ -20,7 +20,7 @@ class DashboardServices
             'needs_assignment'     => ['status' => TicketStatus::OPEN, 'order' => 'reported_at', 'unassigned' => true],
             'in_progress'          => ['status' => TicketStatus::IN_PROGRESS, 'order' => 'started_at'],
             'pending_verification' => ['status' => TicketStatus::RESOLVED, 'order' => 'resolved_at'],
-            'escalation_review'    => ['status' => TicketStatus::PENDING_ESCALATION, 'order' => 'updated_at'],
+            'endorsement_review'   => ['status' => TicketStatus::PENDING_ENDORSEMENT, 'order' => 'updated_at'],
         ];
 
         $accordions = [];

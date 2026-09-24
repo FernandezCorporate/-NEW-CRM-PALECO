@@ -6,7 +6,7 @@ use App\Http\Controllers\Api\Teams\TeamController;
 use App\Http\Controllers\Api\Tickets\TicketAccomplishmentController;
 use App\Http\Controllers\Api\Tickets\TicketAssignmentController;
 use App\Http\Controllers\Api\Tickets\TicketController;
-use App\Http\Controllers\Api\Tickets\TicketEscalationController;
+use App\Http\Controllers\Api\Tickets\TicketEndorsementController;
 use App\Http\Controllers\Api\Dashboard\DashboardController;
 use App\Http\Controllers\Api\Remarks\TicketRemarkController;
 
@@ -60,8 +60,8 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::get('/{ticket}/assign-options', [TicketAssignmentController::class, 'assignOptions']);   // Documented
             Route::post('/{ticket}/assign', [TicketAssignmentController::class, 'assign']); // Documented
 
-            Route::get('/{ticket}/escalate-options', [TicketEscalationController::class, 'escalateOptions']); // Documented
-            Route::post('/{ticket}/escalate', [TicketEscalationController::class, 'escalate']); // Documented
+            Route::get('/{ticket}/endorse-options', [TicketEndorsementController::class, 'endorsementOptions']); // Documented
+            Route::post('/{ticket}/endorse', [TicketEndorsementController::class, 'endorse']); // Documented
 
             Route::post('/{ticket}/accomplishments/{accomplishment}/verify', [TicketAccomplishmentController::class, 'verify']); // Documented
 

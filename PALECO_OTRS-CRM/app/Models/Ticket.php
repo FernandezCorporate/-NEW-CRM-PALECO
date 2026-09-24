@@ -22,6 +22,10 @@ use App\Models\TicketStatusLog;
 use App\Models\User;
 use App\Models\TicketRemark;
 use App\Models\Consumer;
+use App\Models\TicketEndorsement;
+use App\Models\TicketAssignment;
+use App\Models\TicketAccomplishment;
+use App\Models\Team;
 
 /*
  * Represents a core service ticket or complaint logged into the system.
@@ -118,9 +122,9 @@ class Ticket extends Model
         return $this->hasMany(TicketAccomplishment::class, 'ticket_id', 'system_id');
     }
 
-    public function escalations(): HasMany
+    public function endorsements(): HasMany
     {
-        return $this->hasMany(TicketEscalation::class, 'ticket_id', 'system_id');
+        return $this->hasMany(TicketEndorsement::class, 'ticket_id', 'system_id');
     }
 
     public function remarks(): HasMany
@@ -274,8 +278,8 @@ class Ticket extends Model
                 
                 if ($eventName === 'updated' && $this->isDirty('team_id')) {
                     $action = $this->getOriginal('team_id') === null ? 'assigned' : 'reassigned';
-                    // Do not log team changes if the ticket is being escalated/unassigned
-                    if ($this->status !== TicketStatus::PENDING_ESCALATION) {
+                    // Do not log team changes if the ticket is being endorsed/unassigned
+                    if ($this->status !== TicketStatus::PENDING_ENDORSEMENT) {
                         return "Ticket {$this->ticket_number} has been {$action} to a field team.";
                     }
                 }
@@ -283,8 +287,8 @@ class Ticket extends Model
                 if ($eventName === 'updated' && $this->isDirty('status')) {
                     
                     // 1. Check for Rejections first (Intercepts reverting to ANY previous state)
-                    if ($this->getOriginal('status') === TicketStatus::PENDING_ESCALATION && $this->status !== TicketStatus::ESCALATED) {
-                        return "The escalation request was rejected. Ticket {$this->ticket_number} has been returned to its previous state.";
+                    if ($this->getOriginal('status') === TicketStatus::PENDING_ENDORSEMENT && $this->status !== TicketStatus::ENDORSED) {
+                        return "The endorsement request was rejected. Ticket {$this->ticket_number} has been returned to its previous state.";
                     }
 
                     // 2. Then proceed with normal state-specific logs
@@ -295,12 +299,12 @@ class Ticket extends Model
                         return "Work has started on Ticket {$this->ticket_number}.";
                     }
 
-                    if ($this->status === TicketStatus::PENDING_ESCALATION) {
-                        return "An escalation request was submitted. Ticket {$this->ticket_number} is pending management review.";
+                    if ($this->status === TicketStatus::PENDING_ENDORSEMENT) {
+                        return "An endorsement request was submitted. Ticket {$this->ticket_number} is pending management review.";
                     }
 
-                    if ($this->status === TicketStatus::ESCALATED) {
-                        return "The escalation request was approved. Ticket {$this->ticket_number} has been routed to a new department.";
+                    if ($this->status === TicketStatus::ENDORSED) {
+                        return "The endorsement request was approved. Ticket {$this->ticket_number} has been routed to a new department.";
                     }
 
                     if ($this->status === TicketStatus::RESOLVED) {

@@ -8,12 +8,12 @@ use Illuminate\Http\Request;
 
 use App\Enums\TicketStatus;
 use App\Enums\ComplaintSources;
-use App\Enums\EscalationStatus;
+use App\Enums\EndorsementStatus;
 use App\Models\Department;
 use App\Models\Ticket;
 use App\Models\TicketAccomplishment;
 use App\Models\TicketCategory;
-use App\Models\TicketEscalation;
+use App\Models\TicketEndorsement;
 use App\Services\External\ConsumerService;
 use App\Events\TicketCreated;
 
@@ -23,15 +23,9 @@ use App\Events\TicketCreated;
  */
 class TicketService
 {
-    // Inject the ConsumerService for external API resolution
     public function __construct(protected ConsumerService $consumerService) {}
 
     // --- CORE PROCESSES ---
-
-    /*
-     * Safely executes automated row tracking and ticket assignments inside a singular atomic transaction block.
-     * Generates a sequential ID, creates the master record, and stamps the initial lifecycle log.
-     */
 
     public function getTicketList(Request $request)
     {
@@ -59,7 +53,7 @@ class TicketService
             'department.supervisors',
             'team.members',
             'category',
-            'consumer', // Loads the cached consumer record
+            'consumer',
             
             // Hierarchy
             'parentTicket.department',
@@ -69,9 +63,9 @@ class TicketService
             'statusLog.updater',
             'assignments.team',
             'assignments.assigner',
-            'escalations.suggestedDepartment',
-            'escalations.creator',
-            'escalations.reviewer',
+            'endorsements.suggestedDepartment',
+            'endorsements.creator',
+            'endorsements.reviewer',
             'accomplishments.accomplishedBy',
             'accomplishments.approvedBy',
             'accomplishments.rejectedBy'
@@ -95,7 +89,6 @@ class TicketService
 
     public function createCwdTicket(array $validatedData): Ticket
     {
-        // Resolve Consumer ID outside the transaction to prevent locking the database during HTTP calls
         if (!empty($validatedData['link_consumer']) && !empty($validatedData['account_code'])) {
             $validatedData['consumer_id'] = $this->consumerService->resolveConsumerId($validatedData['account_code']);
         } else {
@@ -103,11 +96,8 @@ class TicketService
         }
 
         return DB::transaction(function () use ($validatedData) {
-            
-            // 1. Generate non-conflicting chronological number via sequential row locking patterns
             $ticketNumber = $this->generateSequentialNumber();
 
-            // 2. Instantiate master repository layout
             $ticket = Ticket::create(array_merge($validatedData, [
                 'ticket_number' => $ticketNumber,
                 'status' => TicketStatus::OPEN,
@@ -115,7 +105,6 @@ class TicketService
                 'reported_at' => now(),
             ]));
 
-            // 3. Populate matching relative entry tracking inside historic lifecycle modules
             $ticket->statusLog()->create([
                 'changed_by' => Auth::id(),
                 'old_status' => null,
@@ -128,67 +117,66 @@ class TicketService
         });
     }
 
-    public function getEscalationList(Request $request)
+    public function getEndorsementList(Request $request)
     {
-        $escalations = TicketEscalation::with(['ticket', 'creator', 'suggestedDepartment'])
+        $endorsements = TicketEndorsement::with(['ticket', 'creator', 'suggestedDepartment'])
             ->search($request->search)
             ->filterByStatus($request->status)
             ->paginate(10)
             ->withQueryString();
 
         $statusMetrics = [
-            'pending' => TicketEscalation::query()->where('status', EscalationStatus::PENDING)->count(),
-            'denied' => TicketEscalation::query()->where('status', EscalationStatus::REJECTED)->count(),
-            'escalated' => TicketEscalation::query()->where('status', EscalationStatus::APPROVED)->count() 
+            'pending' => TicketEndorsement::query()->where('status', EndorsementStatus::PENDING)->count(),
+            'denied' => TicketEndorsement::query()->where('status', EndorsementStatus::REJECTED)->count(),
+            'endorsed' => TicketEndorsement::query()->where('status', EndorsementStatus::APPROVED)->count() 
         ];
 
-        $statuses = EscalationStatus::cases();
+        $statuses = EndorsementStatus::cases();
 
         return [
-            "escalations" => $escalations,
+            "endorsements" => $endorsements,
             "statusMetrics" => $statusMetrics,
             "statuses" => $statuses
         ];
     }
 
-    public function getEscalationDetails(TicketEscalation $escalation)
+    public function getEndorsementDetails(TicketEndorsement $endorsement)
     {
-        $escalation->load(['ticket', 'creator', 'suggestedDepartment']);
+        $endorsement->load(['ticket', 'creator', 'suggestedDepartment']);
 
-        $approveValue = EscalationStatus::APPROVED;
-        $rejectValue = EscalationStatus::REJECTED;
+        $approveValue = EndorsementStatus::APPROVED;
+        $rejectValue = EndorsementStatus::REJECTED;
 
-        // Exclude the department currently handling the parent ticket
         $departments = Department::query()
-            ->where('id', '!=', $escalation->ticket->department_id)
+            ->where('id', '!=', $endorsement->ticket->department_id)
             ->get();
 
         return [
-            "escalation" => $escalation,
+            "endorsement" => $endorsement,
             "approveValue" => $approveValue,
             "rejectValue" => $rejectValue,
             "departments" => $departments
         ];
     }
 
-    public function verifyEscalation(array $validatedData, TicketEscalation $escalation)
+    public function verifyEndorsement(array $validatedData, TicketEndorsement $endorsement)
     {
-        return DB::transaction(function () use ($validatedData, $escalation) {
+        return DB::transaction(function () use ($validatedData, $endorsement) {
             
-            // 1. Lock the exact escalation record
-            $lockedEscalation = TicketEscalation::where('id', $escalation->id)
+            // 1. Lock the exact endorsement record
+            $lockedEndorsement = TicketEndorsement::where('id', $endorsement->id)
                 ->lockForUpdate()
                 ->first();
 
             // Race Condition Check
-            if ($lockedEscalation->status !== EscalationStatus::PENDING) {
-                return ['success' => false, 'message' => 'This escalation has already been processed by another officer.'];
+            if ($lockedEndorsement->status !== EndorsementStatus::PENDING) {
+                return ['success' => false, 'message' => 'This endorsement has already been processed by another officer.'];
             }
 
-            $isApproved = $validatedData['status'] === EscalationStatus::APPROVED->value;
+            $isApproved = $validatedData['status'] === EndorsementStatus::APPROVED->value;
 
-            // 2. Commit Escalation Decision Updates
-            $lockedEscalation->update([
+            // 2. Commit Endorsement Decision Updates
+            $lockedEndorsement->update([
                 'status' => $validatedData['status'],
                 'reviewed_by' => Auth::id(),
                 'reviewed_at' => now(),
@@ -196,22 +184,21 @@ class TicketService
             ]);
 
             // 3. Lock Parent Ticket dynamically via its relationship
-            $parentTicket = $lockedEscalation->ticket()->lockForUpdate()->first();
+            $parentTicket = $lockedEndorsement->ticket()->lockForUpdate()->first();
 
             if ($isApproved) {
-                // Track the old status before changing it
                 $oldParentStatus = $parentTicket->status;
                 
                 // Update the parent ticket's status field
                 $parentTicket->update([
-                    'status' => TicketStatus::ESCALATED
+                    'status' => TicketStatus::ENDORSED
                 ]);
                 
                 // 4. Log the parent ticket's milestone with the actual state change
                 $parentTicket->statusLog()->create([
                     'changed_by' => Auth::id(),
                     'old_status' => $oldParentStatus,
-                    'new_status' => TicketStatus::ESCALATED, 
+                    'new_status' => TicketStatus::ENDORSED, 
                 ]);
 
                 // 5. Spawn child ticket (Inheriting all original form data from the parent)
@@ -222,7 +209,7 @@ class TicketService
                     'department_id'         => $validatedData['department_id'], 
                     
                     // Inherited Consumer & Intake Data
-                    'consumer_id'           => $parentTicket->consumer_id, // Inherits the linked consumer[cite: 28]
+                    'consumer_id'           => $parentTicket->consumer_id,
                     'complaint_source'      => $parentTicket->complaint_source, 
                     'complaint_description' => $parentTicket->complaint_description,
                     
@@ -256,13 +243,13 @@ class TicketService
                 $oldStatus = $parentTicket->status;
                 
                 $parentTicket->update([
-                    'status' => $lockedEscalation->pre_escalation_status
+                    'status' => $lockedEndorsement->pre_endorsement_status
                 ]);
 
                 $parentTicket->statusLog()->create([
                     'changed_by' => Auth::id(),
                     'old_status' => $oldStatus,
-                    'new_status' => $lockedEscalation->pre_escalation_status,
+                    'new_status' => $lockedEndorsement->pre_endorsement_status,
                 ]);
             }
 
@@ -277,18 +264,13 @@ class TicketService
 
     private function generateChildTicketSubject(Ticket $parentTicket): string
     {
-        return 'Escalated: ' . $parentTicket->subject;
+        return 'Endorsed: ' . $parentTicket->subject;
     }
 
-    /*
-     * Generates a hierarchical suffix for escalated child tickets (e.g., TKT-260823-001-1).
-     * Leverages row locking to prevent sequence collisions if multiple escalations happen simultaneously.
-     */
     private function generateChildTicketNumber(Ticket $parentTicket): string
     {
         $baseNumber = $parentTicket->ticket_number;
 
-        // Find the latest child ticket for this specific parent
         $latestChild = Ticket::where('ticket_number', 'like', "{$baseNumber}-%")
             ->lockForUpdate()
             ->orderBy('ticket_number', 'desc')
@@ -297,7 +279,6 @@ class TicketService
         $nextSequence = 1;
 
         if ($latestChild) {
-            // Extract the current suffix (everything after the last dash) and increment
             $parts = explode('-', $latestChild->ticket_number);
             $lastAssignedDigits = (int) end($parts);
             $nextSequence = $lastAssignedDigits + 1;
@@ -306,17 +287,10 @@ class TicketService
         return sprintf("%s-%d", $baseNumber, $nextSequence);
     }
 
-    // --- PRIVATE HELPER METHODS ---
-
-    /*
-     * Computes safe, human-readable sequential indexing numbers.
-     * Leverages explicit row locking (`lockForUpdate`) to completely prevent sequence overlap during concurrent submissions.
-     */
     private function generateSequentialNumber(): string
     {
-        $dateCode = now()->format('ymd'); // Format: YYMMDD
+        $dateCode = now()->format('ymd');
         
-        // Block consecutive simultaneous threads using safe explicit exclusive row locking patterns
         $latestMatch = Ticket::where('ticket_number', 'like', "TKT-{$dateCode}-%")
             ->lockForUpdate()
             ->orderBy('ticket_number', 'desc')

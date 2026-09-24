@@ -6,7 +6,7 @@
         @foreach ([
             ['Open tickets', $statusTotals['open'] ?? 0, 'Awaiting assignment or action', route('cwd.tickets', ['status' => 'open']), 'bg-emerald-50 text-emerald-600', 'M6 3h12a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V5a2 2 0 012-2zm3 5h6m-6 4h6m-6 4h4'],
             ['In progress', $statusTotals['in_progress'] ?? 0, 'Currently handled by field teams', route('cwd.tickets', ['status' => 'in_progress']), 'bg-blue-50 text-blue-600', 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z'],
-            ['Escalations', ($statusTotals['pending_escalation'] ?? 0) + ($statusTotals['escalated'] ?? 0), 'Cases requiring added attention', route('cwd.escalations'), 'bg-amber-50 text-amber-600', 'M13 7h8m0 0v8m0-8l-8 8-4-4-6 6'],
+            ['Endorsements', ($statusTotals['pending_endorsement'] ?? 0) + ($statusTotals['endorsed'] ?? 0), 'Cases requiring added attention', route('cwd.endorsements'), 'bg-amber-50 text-amber-600', 'M13 7h8m0 0v8m0-8l-8 8-4-4-6 6'],
         ] as $index => [$label, $value, $description, $url, $tone, $iconPath])
             <a href="{{ $url }}" data-animate class="ui-reveal metric-card group block" style="--delay: {{ $index * 70 }}ms">
                 <div class="flex items-start justify-between gap-4">
