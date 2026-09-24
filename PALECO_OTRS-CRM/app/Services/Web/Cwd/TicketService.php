@@ -56,7 +56,7 @@ class TicketService
         $ticket->load([
             // Core & Routing
             'creator',
-            'department.foremen',
+            'department.supervisors',
             'team.members',
             'category',
             'consumer', // Loads the cached consumer record

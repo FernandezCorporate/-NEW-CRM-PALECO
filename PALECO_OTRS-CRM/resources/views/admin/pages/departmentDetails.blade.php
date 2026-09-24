@@ -124,12 +124,12 @@
     <!-- Middle Section: Two-Column Layout for Tables -->
     <div class="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-8">
         
-        <!-- Foremen Table -->
+        <!-- Supervisor Table -->
         <div class="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden flex flex-col h-full">
             <div class="px-6 py-5 border-b border-slate-200 bg-slate-50 flex justify-between items-center">
-                <h3 class="text-lg font-bold text-slate-800">Assigned Foremen</h3>
+                <h3 class="text-lg font-bold text-slate-800">Assigned Supervisors</h3>
                 <span class="bg-emerald-100 text-emerald-700 text-xs font-bold px-2.5 py-1 rounded-full">
-                    {{ $foremanCount }} {{ Str::plural('Foreman', $foremanCount) }}
+                    {{ $supervisorCount }} {{ Str::plural('Supervisor', $supervisorCount) }}
                 </span>
             </div>
 
@@ -137,25 +137,25 @@
                 <table class="w-full text-left border-collapse">
                     <thead>
                         <tr class="bg-white border-b border-slate-200 text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                            <th class="px-6 py-4">Foreman Name</th>
+                            <th class="px-6 py-4">Supervisor Name</th>
                             <th class="px-6 py-4">Contact Number</th>
                             <th class="px-6 py-4 text-right">Actions</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100">
-                        @forelse ($assignedForeman as $foreman)
+                        @forelse ($assignedSupervisor as $supervisor)
                             <tr class="hover:bg-slate-50/75 transition-colors group">
                                 <td class="px-6 py-4">
                                     <div class="flex flex-col">
-                                        <span class="font-medium text-slate-800">{{ $foreman->full_name }}</span>
-                                        <span class="text-xs text-slate-400 mt-0.5">{{ $foreman->username }}</span>
+                                        <span class="font-medium text-slate-800">{{ $supervisor->full_name }}</span>
+                                        <span class="text-xs text-slate-400 mt-0.5">{{ $supervisor->username }}</span>
                                     </div>
                                 </td>
                                 <td class="px-6 py-4 text-sm text-slate-600">
-                                    {{ $foreman->contact ?? '—' }}
+                                    {{ $supervisor->contact ?? '—' }}
                                 </td>
                                 <td class="px-6 py-4 text-right">
-                                    <a href="{{ route('admin.users.show', ['user' => $foreman]) }}" class="inline-flex p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="View Foreman Details">
+                                    <a href="{{ route('admin.users.show', ['user' => $supervisor]) }}" class="inline-flex p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="View Supervisor Details">
                                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
                                     </a>
                                 </td>
@@ -166,8 +166,8 @@
                                     <div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-slate-50 mb-3">
                                         <svg class="w-6 h-6 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
                                     </div>
-                                    <h3 class="text-sm font-semibold text-slate-800">No foremen assigned</h3>
-                                    <p class="text-xs text-slate-500 mt-1">There are no active foremen linked to this department.</p>
+                                    <h3 class="text-sm font-semibold text-slate-800">No Supervisor assigned</h3>
+                                    <p class="text-xs text-slate-500 mt-1">There are no active Supervisor linked to this department.</p>
                                 </td>
                             </tr>
                         @endforelse
@@ -175,10 +175,10 @@
                 </table>
             </div>
             
-            <!-- Foremen Pagination -->
-            @if($assignedForeman->hasPages())
+            <!-- Supervisor Pagination -->
+            @if($assignedSupervisor->hasPages())
                 <div class="px-6 py-4 border-t border-slate-100 bg-white">
-                    {{ $assignedForeman->onEachSide(0)->links() }}
+                    {{ $assignedSupervisor->onEachSide(0)->links() }}
                 </div>
             @endif
         </div>

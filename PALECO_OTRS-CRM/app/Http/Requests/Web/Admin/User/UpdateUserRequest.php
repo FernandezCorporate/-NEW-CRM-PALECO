@@ -99,7 +99,7 @@ class UpdateUserRequest extends FormRequest
             'contact.string'      => 'The contact number must be a valid text string.',
             'contact.regex'       => 'The contact number must be a valid Philippine mobile number starting with 09 or +639.',
             
-            'department_id.requiredIf' => 'A department must be assigned since the user\'s role is Foreman.',
+            'department_id.requiredIf' => 'A department must be assigned since the user\'s role is Supervisor.',
             'department_id.integer'    => 'The department ID must be a valid integer.',
             'department_id.exists'     => 'The selected department does not exist.',
         ];

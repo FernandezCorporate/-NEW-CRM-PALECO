@@ -60,12 +60,12 @@
             <div class="px-6 py-6 border-b border-gray-100">
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-y-6 gap-x-8 ml-11">
                     
-                    <!-- Foreman -->
+                    <!-- Supervisor -->
                     <div>
-                        <h3 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Foreman</h3>
+                        <h3 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Supervisor</h3>
                         <div class="flex items-center gap-2 text-sm text-gray-900">
                             <svg class="w-4 h-4 text-gray-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
-                            {{ $escalation->creator->full_name ?? 'Unknown Foreman' }}
+                            {{ $escalation->creator->full_name ?? 'Unknown Supervisor' }}
                         </div>
                     </div>
 
@@ -93,7 +93,7 @@
             <!-- 3. Justification Section -->
             <div class="px-6 py-6">
                 <div class="ml-11">
-                    <h3 class="text-sm font-bold text-gray-900 mb-3">Foreman's Justification</h3>
+                    <h3 class="text-sm font-bold text-gray-900 mb-3">Supervisor's Justification</h3>
                     <div class="p-4 bg-gray-50 border border-gray-200 rounded-md text-sm text-gray-800 leading-relaxed shadow-inner">
                         {{ $escalation->reason ?? 'No detailed justification provided.' }}
                     </div>

@@ -76,7 +76,7 @@
             <thead>
                 <tr class="bg-slate-50 border-b border-slate-200 text-xs font-semibold text-slate-500 uppercase tracking-wider">
                     <th class="px-6 py-4">Department Name</th>
-                    <th class="px-6 py-4">Active Foremen</th>
+                    <th class="px-6 py-4">Active Supervisors</th>
                     <th class="px-6 py-4">Active Teams</th>
                     <th class="px-6 py-4">Assigned Tickets</th>
                     <th class="px-6 py-4">Date Created</th>
@@ -88,8 +88,8 @@
                     <tr class="hover:bg-slate-50 transition-colors">
                         <td class="px-6 py-4 font-medium text-slate-800">{{ $department->dept_name }}</td>
                         <td class="px-6 py-4 text-slate-500 text-sm">
-                            <div class="truncate max-w-md" title="{{ $department->active_foremen_count }}">
-                                {{ $department->active_foremen_count ?? 0 }}
+                            <div class="truncate max-w-md" title="{{ $department->active_supervisors_count }}">
+                                {{ $department->active_supervisors_count ?? 0 }}
                             </div>
                         </td>
                         <td class="px-6 py-4 text-slate-500 text-sm">
@@ -233,10 +233,10 @@
 
                 <!-- Statistics Grid -->
                 <div class="grid grid-cols-2 gap-3 mb-5">
-                    <!-- Foremen -->
+                    <!-- Supervisors -->
                     <div class="bg-slate-50 border border-slate-100 rounded-lg p-3 text-center flex flex-col justify-center">
-                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Foremen</span>
-                        <span class="text-lg font-bold text-slate-700">{{ $department->active_foremen_count ?? 0 }}</span>
+                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Supervisors</span>
+                        <span class="text-lg font-bold text-slate-700">{{ $department->active_supervisors_count ?? 0 }}</span>
                     </div>
                     <!-- Teams -->
                     <div class="bg-slate-50 border border-slate-100 rounded-lg p-3 text-center flex flex-col justify-center">

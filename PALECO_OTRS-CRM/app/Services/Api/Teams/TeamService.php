@@ -42,7 +42,7 @@ class TeamService
     }
 
     /*
-     * Retrieves a single team's details for a Foreman's department.
+     * Retrieves a single team's details for a Supervisor's department.
      * Works seamlessly for both active and archived teams.
      */
     public function deptTeamDetails(User $user, Team $team): Team

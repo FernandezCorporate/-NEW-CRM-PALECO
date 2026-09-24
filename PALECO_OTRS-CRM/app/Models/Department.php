@@ -41,9 +41,9 @@ class Department extends Model
     // --- RELATIONSHIPS ---
 
     /*
-     * Retrieves all foremen directly assigned to this department.
+     * Retrieves all supervisors directly assigned to this department.
      */
-    public function foremen(): HasMany
+    public function supervisors(): HasMany
     {
         return $this->hasMany(User::class, 'department_id')
                     ->whereHas('role', fn($q) => $q->where('slug_identifier', 'foreman'));

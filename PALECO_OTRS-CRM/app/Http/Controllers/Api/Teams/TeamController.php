@@ -20,7 +20,7 @@ class TeamController extends Controller
     public function __construct(protected TeamService $teamService) {}
 
     /*
-     * Fetches a list of teams belonging to the authenticated Foreman's department.
+     * Fetches a list of teams belonging to the authenticated Supervisor's department.
      */
     public function index(Request $request)
     {
@@ -59,7 +59,7 @@ class TeamController extends Controller
         // 1. Extract the core team data safely without the members array
         $teamDetails = $request->safe()->except('members');
         
-        // 2. Securely inject the foreman's department directly from their auth token
+        // 2. Securely inject the supervisor's department directly from their auth token
         $teamDetails['department_id'] = $request->user()->department_id;
 
         // 3. Hand off to the service (this reuses the exact same logic as your web admin service)
@@ -84,13 +84,13 @@ class TeamController extends Controller
                 'message' => 'Conflict: This team has been archived by an administrator and can no longer be modified.'
             ], 409); // 409 Conflict or 403 Forbidden
         }
-        // 1. Policy Authorization (Ensures the foreman owns the team's department)
+        // 1. Policy Authorization (Ensures the supervisor owns the team's department)
         Gate::authorize('mobileUpdateTeam', $team);
 
         // 2. Extract safe core team data
         $teamDetails = $request->safe()->except('members');
 
-        // 3. Force the department ID to match the foreman's secure token
+        // 3. Force the department ID to match the supervisor's secure token
         $teamDetails['department_id'] = $request->user()->department_id;
 
         // 4. Hand off to the Service
@@ -121,7 +121,7 @@ class TeamController extends Controller
         if ($team->trashed()) {
             return response()->json([
                 'success' => false,
-                'message' => 'Conflict: This team has already been archived by an admin or another foreman.'
+                'message' => 'Conflict: This team has already been archived by an admin or another supervisor.'
             ], 409); 
         }
 

@@ -46,7 +46,7 @@ class TicketAssignment extends Model
     }
 
     /*
-     * Retrieves the Foreman or CWD Officer who dispatched the ticket.
+     * Retrieves the CWD Officer who dispatched the ticket.
      */
     public function assigner(): BelongsTo
     {

@@ -5,7 +5,7 @@ namespace App\Http\Requests\Api\Tickets;
 use Illuminate\Foundation\Http\FormRequest;
 
 /*
- * Validates the payload when a Foreman assigns or reassigns a ticket to a team.
+ * Validates the payload when a supervisor assigns or reassigns a ticket to a team.
  */
 class AssignTicketRequest extends FormRequest
 {

@@ -39,7 +39,7 @@ class TicketController extends Controller
 
     public function show(Request $request, Ticket $ticket): JsonResponse
     {
-        // 1. Policy Gate (Automatically checks if Foreman owns department or Field owns team)
+        // 1. Policy Gate (Automatically checks if Supervisor owns department or Field owns team)
         Gate::authorize('view', $ticket);
 
         // 2. Fetch eager-loaded ticket via Service

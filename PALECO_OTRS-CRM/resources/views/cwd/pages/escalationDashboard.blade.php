@@ -10,7 +10,7 @@
     <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
         <div>
             <h1 class="text-3xl font-bold text-gray-900">Escalation Requests</h1>
-            <p class="text-sm text-gray-500 mt-1">Review and act on escalations submitted by foremen on active tickets</p>
+            <p class="text-sm text-gray-500 mt-1">Review and act on escalations submitted by supervisors on active tickets</p>
         </div>
         
         @if($statusMetrics['pending'] > 0)
@@ -58,7 +58,7 @@
                 <thead>
                     <tr class="bg-gray-50 border-b border-gray-200 text-[11px] font-bold text-gray-500 uppercase tracking-wider">
                         <th class="px-6 py-4 w-[22%]">Ticket</th>
-                        <th class="px-6 py-4 w-[23%]">Foreman</th>
+                        <th class="px-6 py-4 w-[23%]">Supervisor</th>
                         <th class="px-6 py-4 w-[18%] text-center">Target Dept</th>
                         <th class="px-6 py-4 w-[17%]">Requested</th>
                         <th class="px-6 py-4 w-[10%] text-center">Status</th>
@@ -77,7 +77,7 @@
                                 </div>
                             </td>
 
-                            <!-- Foreman Info -->
+                            <!-- Supervisor Info -->
                             <td class="px-6 py-4 align-top">
                                 <div class="text-sm text-gray-800 font-medium flex items-center gap-2">
                                     <svg class="w-4 h-4 text-amber-500 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z"></path></svg>

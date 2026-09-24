@@ -39,7 +39,7 @@ class StoreUserRequest extends FormRequest
 
     /*
      * Defines the strict validation rules for creating a user account.
-     * Conditionally requires a department ID if the assigned role is a Foreman.
+     * Conditionally requires a department ID if the assigned role is a Supervisor.
      */
     public function rules(): array
     {
@@ -103,7 +103,7 @@ class StoreUserRequest extends FormRequest
             'role_id.integer'     => 'The selected role must be a valid integer.',
             'role_id.exists'      => 'The selected account role does not exist.',
             
-            'department_id.required' => 'A department must be assigned when the user\'s role is set to Foreman.',
+            'department_id.required' => 'A department must be assigned when the user\'s role is set to Supervisor.',
             'department_id.integer'    => 'The department ID must be a valid integer.',
             'department_id.exists'     => 'The selected department does not exist.',
             

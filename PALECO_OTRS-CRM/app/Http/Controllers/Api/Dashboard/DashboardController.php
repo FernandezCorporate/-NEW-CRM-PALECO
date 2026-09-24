@@ -8,24 +8,24 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Gate;
 use App\Models\User;
 use App\Services\Api\Dashboard\DashboardServices;
-use App\Http\Resources\Api\ForemanDashboardResource;
+use App\Http\Resources\Api\SupervisorDashboardResource;
 
 class DashboardController extends Controller
 {
     public function __construct(protected DashboardServices $dashboardServices) {}
 
-    public function foremanIndex(Request $request): JsonResponse
+    public function supervisorIndex(Request $request): JsonResponse
     {
         // 1. Policy Gate
-        Gate::authorize('viewForemanDashboard', User::class);
+        Gate::authorize('viewSupervisorDashboard', User::class);
 
         // 2. Delegate to Service
-        $data = $this->dashboardServices->getForemanDashboardData($request->user());
+        $data = $this->dashboardServices->getSupervisorDashboardData($request->user());
 
         // 3. Format Response via Resource
         return response()->json([
             'success' => true,
-            'data'    => new ForemanDashboardResource($data)
+            'data'    => new SupervisorDashboardResource($data)
         ]);
     }
 }

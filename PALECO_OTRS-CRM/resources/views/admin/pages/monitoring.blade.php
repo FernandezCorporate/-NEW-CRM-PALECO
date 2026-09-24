@@ -9,7 +9,7 @@
     <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
         <div>
             <h1 class="text-2xl font-bold text-slate-800">System Monitoring & Audit Log</h1>
-            <p class="text-sm text-slate-500 mt-1">Track all actions performed across every user level — Admin, CWD, Foreman, Field.</p>
+            <p class="text-sm text-slate-500 mt-1">Track all actions performed across every user level — Admin, CWD, Supervisor, Field Personnel.</p>
         </div>
         
         <div class="text-right">

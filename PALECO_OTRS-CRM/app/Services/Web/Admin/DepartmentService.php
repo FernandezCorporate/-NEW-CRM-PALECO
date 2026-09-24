@@ -11,7 +11,7 @@ class DepartmentService
     public function getDashboardDepartments(array $filters)
     {
         $query = Department::query()->withCount([
-            'foremen as active_foremen_count',
+            'supervisors as active_supervisors_count',
             'teams as active_team_count',
             'tickets as assigned_ticket_count'
         ]);
@@ -36,8 +36,8 @@ class DepartmentService
             ->whereHas('teams', fn($q) => $q->where('department_id', $dept->id))
             ->count();
 
-        $foremanQuery = $dept->foremen()->where('is_active', true);
-        $assignedForeman = $foremanQuery->paginate(5, ['*'], 'page_foreman')->withQueryString();
+        $supervisorQuery = $dept->supervisors()->where('is_active', true);
+        $assignedSupervisor = $supervisorQuery->paginate(5, ['*'], 'page_supervisor')->withQueryString();
 
         $assignedTickets = $dept->tickets()->latest('reported_at')->paginate(5, ['*'], 'page_tickets')->withQueryString();
         
@@ -45,8 +45,8 @@ class DepartmentService
             'assignedTickets' => $assignedTickets,
             'assignedTeams' => $assignedTeams,
             'personnelCount' => $personnelCount,
-            'foremanCount' => $foremanQuery->count(),
-            'assignedForeman' => $assignedForeman
+            'supervisorCount' => $supervisorQuery->count(),
+            'assignedSupervisor' => $assignedSupervisor
         ];
     }
 
@@ -77,7 +77,7 @@ class DepartmentService
 
     public function archiveDepartment(Department $dept): array
     {
-        if ($dept->teams()->exists() || $dept->foremen()->exists() || $dept->tickets()->exists()) {
+        if ($dept->teams()->exists() || $dept->supervisors()->exists() || $dept->tickets()->exists()) {
             return [
                 'success' => false, 
                 'message' => 'Cannot archive this department. It contains active teams, personnel, or history.'
@@ -141,7 +141,7 @@ class DepartmentService
             ];
         }
 
-        if ($dept->tickets()->exists() || $dept->teams()->exists() || $dept->foremen()->exists()) {
+        if ($dept->tickets()->exists() || $dept->teams()->exists() || $dept->supervisors()->exists()) {
             return [
                 'success' => false, 
                 'message' => 'Cannot permanently delete this department. It contains historical data.'

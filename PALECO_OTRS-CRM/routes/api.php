@@ -53,7 +53,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // --- FOREMAN SPECIFIC ENDPOINTS ---
     Route::middleware('can:access-foreman')->group(function () {
 
-        Route::get('/foreman-dashboard', [DashboardController::class, 'foremanIndex']); // Documented
+        Route::get('/dashboard', [DashboardController::class, 'supervisorIndex']); // Documented
 
         Route::prefix('tickets')->group(function () {
 

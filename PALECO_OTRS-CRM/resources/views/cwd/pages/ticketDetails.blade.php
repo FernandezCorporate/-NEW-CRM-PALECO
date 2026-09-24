@@ -152,21 +152,21 @@
                 <h2 class="text-lg font-bold text-gray-900 mb-4">Assigned Personnel</h2>
                 
                 <div class="space-y-3">
-                    <!-- Foremen List -->
-                    @if($ticket->department && $ticket->department->foremen->isNotEmpty())
-                        @foreach($ticket->department->foremen as $foreman)
+                    <!-- Supervisors List -->
+                    @if($ticket->department && $ticket->department->supervisors->isNotEmpty())
+                        @foreach($ticket->department->supervisors as $supervisor)
                             <div class="flex items-center gap-3 p-3 bg-gray-50 border border-gray-100 rounded-lg">
                                 <div class="w-8 h-8 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center font-bold text-xs shrink-0">
-                                    {{ $foreman->avatar_initials }}
+                                    {{ $supervisor->avatar_initials }}
                                 </div>
                                 <div class="flex flex-col">
-                                    <span class="font-bold text-gray-800 text-sm">{{ $foreman->full_name }}</span>
-                                    <span class="text-[10px] text-gray-500 uppercase tracking-wide">Foreman • {{ $ticket->department->dept_name }}</span>
+                                    <span class="font-bold text-gray-800 text-sm">{{ $supervisor->full_name }}</span>
+                                    <span class="text-[10px] text-gray-500 uppercase tracking-wide">Supervisor • {{ $ticket->department->dept_name }}</span>
                                 </div>
                             </div>
                         @endforeach
                     @else
-                        <div class="p-3 bg-gray-50 border border-gray-100 rounded-lg text-sm text-gray-500 italic text-center">No foremen assigned to this department.</div>
+                        <div class="p-3 bg-gray-50 border border-gray-100 rounded-lg text-sm text-gray-500 italic text-center">No supervisors assigned to this department.</div>
                     @endif
 
                     <!-- Field Team List -->

@@ -10,7 +10,7 @@ class DashboardServices
 {
     // --- QUERY METHODS ---
 
-    public function getForemanDashboardData(User $user): array
+    public function getSupervisorDashboardData(User $user): array
     {
         $baseQuery = Ticket::where('department_id', $user->department_id);
         $relations = ['category', 'team', 'creator'];
