@@ -45,7 +45,7 @@ class DashboardService
     public function operationsSnapshot(): array
     {
         $now = Carbon::now();
-        $active = Ticket::query()->whereNotIn('status', ['resolved', 'closed']);
+        $active = Ticket::query()->whereIn('status', ['open', 'assigned', 'in_progress']);
         $departmentCounts = (clone $active)->selectRaw('department_id, COUNT(*) as total')
             ->groupBy('department_id')->get();
         $departments = Department::withTrashed()->whereIn('id', $departmentCounts->pluck('department_id')->filter())
@@ -67,7 +67,7 @@ class DashboardService
             'received_today' => Ticket::query()->whereBetween('created_at', [$now->copy()->startOfDay(), $now])->count(),
             'closed_today' => Ticket::query()->whereBetween('closed_at', [$now->copy()->startOfDay(), $now])->count(),
             'active' => (clone $active)->count(),
-            'without_team' => (clone $active)->whereNull('team_id')->count(),
+            'without_team' => Ticket::query()->where('status', TicketStatus::OPEN)->count(),
             'pending_endorsements' => TicketEndorsement::query()->where('status', 'pending')->whereHas('ticket')->count(),
             'pending_reports' => TicketAccomplishment::query()->where('status', 'pending')->whereHas('ticket')->count(),
             'aging' => [
