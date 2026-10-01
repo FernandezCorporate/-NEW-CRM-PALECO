@@ -103,7 +103,7 @@
             <div class="bg-white border border-gray-200 rounded-xl shadow-sm p-6">
                 <h2 class="text-lg font-bold text-gray-900 mb-6">Complaint & Issue Details</h2>
                 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-y-6 gap-x-8">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-y-6 gap-x-8">
                     <!-- Location -->
                     <div>
                         <span class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Incident Address</span>
@@ -118,14 +118,19 @@
                         <div class="text-sm text-gray-700">{{ $ticket->landmark ?? 'No landmark provided' }}</div>
                     </div>
 
+                    <div>
+                        <span class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Consumer contact</span>
+                        <div class="text-sm text-gray-700">{{ $ticket->consumer_contact ?? 'No contact provided' }}</div>
+                    </div>
+
                     <!-- Complaint -->
-                    <div class="md:col-span-2">
+                    <div class="md:col-span-3">
                         <span class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Detailed Description</span>
                         <div class="text-sm text-gray-800 bg-gray-50 p-4 rounded-lg border border-gray-100 leading-relaxed whitespace-pre-wrap">{{ $ticket->complaint_description }}</div>
                     </div>
 
                     <!-- Timestamps -->
-                    <div>
+                    <div class="md:col-span-2">
                         <span class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Date Logged</span>
                         <div class="flex items-center gap-2 text-gray-800 text-sm">
                             <svg class="w-4 h-4 text-gray-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
@@ -133,7 +138,7 @@
                         </div>
                     </div>
 
-                    <div>
+                    <div class="md:col-span-1">
                         <span class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Created By</span>
                         <div class="flex items-center gap-2 text-gray-800 text-sm">
                             <svg class="w-4 h-4 text-gray-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>

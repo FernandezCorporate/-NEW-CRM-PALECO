@@ -15,7 +15,7 @@ class StoreTicketRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()->role->slug_identifier === 'cwd_officer';
+        return true;
     }
 
     protected function prepareForValidation(): void
@@ -33,6 +33,7 @@ class StoreTicketRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'consumer_contact'       => ['required', 'string', 'regex:/^(09|\+639)\d{9}$/'],
             'complaint_source'      => ['required', new Enum(ComplaintSources::class)],
             'complaint_description' => ['required', 'string', 'min:5'],
             
@@ -65,6 +66,7 @@ class StoreTicketRequest extends FormRequest
         return [
             'complaint_source.required'       => 'Please indicate the source of the complaint.',
             'complaint_source.Illuminate\Validation\Rules\Enum' => 'The selected complaint source is invalid.',
+            'consumer_contact.regex' => 'The contact number must be a valid 11-digit mobile number (e.g., 09123456789).',
             
             'complaint_description.required'  => 'You must provide a clear description of the utility complaint details.',
             'complaint_description.string'    => 'The complaint description must be a valid text string.',

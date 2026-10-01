@@ -210,6 +210,7 @@ class TicketService
                     
                     // Inherited Consumer & Intake Data
                     'consumer_id'           => $parentTicket->consumer_id,
+                    'consumer_contact'      => $parentTicket->consumer_contact,
                     'complaint_source'      => $parentTicket->complaint_source, 
                     'complaint_description' => $parentTicket->complaint_description,
                     

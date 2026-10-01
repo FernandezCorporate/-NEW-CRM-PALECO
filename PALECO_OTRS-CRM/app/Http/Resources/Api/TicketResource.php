@@ -19,6 +19,7 @@ class TicketResource extends JsonResource
         return [
             'id'                  => $this->system_id,
             'ticket_number'       => $this->ticket_number,
+            'consumer_contact'      => $this->consumer_contact,
             'complaint_source'    => $this->complaint_source?->value ?? $this->complaint_source,
 
             'ticket_subject'      => $this->subject,

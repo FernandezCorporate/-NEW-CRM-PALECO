@@ -40,6 +40,7 @@ class TicketDetailedResource extends JsonResource
             // Grouped Complaint Data
             'complaint'           => [
                 'source'        => $this->complaint_source?->value ?? $this->complaint_source,
+                'consumer_contact' => $this->consumer_contact,
                 'category_name' => $this->other_category 
                                         ? $this->other_category_name 
                                         : $this->category?->category_name,

@@ -23,6 +23,7 @@ return new class extends Migration
             $table->foreignUlid('parent_ticket_id')->nullable()->constrained('tickets', 'system_id')->nullOnDelete();
             $table->foreignUlid('consumer_id')->nullable()->constrained('consumers', 'id')->nullOnDelete();
 
+            $table->string('consumer_contact')->nullable();
             $table->string('complaint_source');
             $table->text('complaint_description')->nullable();
             
@@ -146,7 +147,7 @@ return new class extends Migration
         Schema::dropIfExists('ticket_remarks');
         Schema::dropIfExists('accomplishment_photos');
         Schema::dropIfExists('ticket_accomplishments');
-        Schema::dropIfExists('ticket_endorsements'); // UPDATED
+        Schema::dropIfExists('ticket_endorsements'); 
         Schema::dropIfExists('ticket_assignments');
         Schema::dropIfExists('ticket_status_logs');
         Schema::dropIfExists('tickets');

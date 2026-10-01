@@ -41,6 +41,7 @@ class Ticket extends Model
         'ticket_number',
         'parent_ticket_id',
         'consumer_id',
+        'consumer_contact',
         'complaint_source',
         'complaint_description',
         'category_id',
@@ -262,6 +263,7 @@ class Ticket extends Model
             ->useLogName('Tickets')
             ->logOnly([
                 'ticket_number',
+                'consumer_contact',
                 'complaint_source',
                 'category_id',
                 'other_category',

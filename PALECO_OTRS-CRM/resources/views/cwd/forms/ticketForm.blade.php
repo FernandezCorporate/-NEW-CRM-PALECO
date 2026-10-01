@@ -40,6 +40,11 @@
                     </select>
                 </div>
 
+                <div>
+                    <label for="consumer_contact" class="block text-sm font-semibold text-gray-700 mb-1.5">Consumer Contact <span class="text-red-500">*</span></label>
+                    <input type="text" name="consumer_contact" id="consumer_contact" value="{{ old('consumer_contact') }}" class="w-full rounded-md border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-[#008f5d] focus:ring-1 focus:ring-[#008f5d] outline-none transition-colors" placeholder="e.g., 09123456789">
+                </div>
+
                 <!-- Category Grouping -->
                 <div class="space-y-5 pt-2">
                     <div class="flex items-center">
