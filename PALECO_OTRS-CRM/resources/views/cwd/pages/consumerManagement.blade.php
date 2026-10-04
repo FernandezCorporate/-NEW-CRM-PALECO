@@ -38,18 +38,19 @@
     <!-- Figma 3-Column Card Grid -->
     <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 mb-6">
         @forelse($consumers as $consumer)
+        <a href="{{ route('cwd.consumers.show', $consumer->id) }}" >
             <div class="bg-white border border-gray-200 rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow flex flex-col h-full">
                 
                 <!-- Card Header -->
-                <div class="flex justify-between items-start mb-4">
-                    <h3 class="text-lg font-bold text-gray-900 leading-tight pr-2">{{ $consumer->name }}</h3>
-                    
-                    @if($consumer->status === 'A')
-                        <span class="inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 tracking-wide shrink-0">Active</span>
-                    @else
-                        <span class="inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200 tracking-wide shrink-0">Suspended</span>
-                    @endif
-                </div>
+                    <div class="flex justify-between items-start mb-4">
+                        <h3 class="text-lg font-bold text-gray-900 leading-tight pr-2">{{ $consumer->name }}</h3>
+                        
+                        @if($consumer->status === 'A')
+                            <span class="inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 tracking-wide shrink-0">Active</span>
+                        @else
+                            <span class="inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200 tracking-wide shrink-0">Suspended</span>
+                        @endif
+                    </div>
 
                 <!-- Card Body -->
                 <div class="space-y-3 mb-6 flex-grow">
@@ -76,6 +77,7 @@
                     <span class="text-sm text-gray-500">Open tickets: <strong class="text-gray-900 ml-1">{{ $consumer->open_tickets_count ?? 0 }}</strong></span>
                 </div>
             </div>
+        </a>
         @empty
             <div class="col-span-1 md:col-span-2 xl:col-span-3 py-16 text-center border-2 border-dashed border-gray-200 rounded-xl bg-gray-50">
                 <div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-white border border-gray-200 mb-3 shadow-sm">

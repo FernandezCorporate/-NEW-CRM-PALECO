@@ -28,4 +28,11 @@ class ConsumerController extends Controller
         $data = $service->getConsumerList($request);
         return view('cwd.pages.consumerManagement', $data);
     }
+
+    public function show(Request $request, Consumer $consumer, WebConsumerService $service)
+    {
+        Gate::authorize('view', $consumer);
+        $data = $service->getConsumerDetails($request, $consumer);
+        return view('cwd.pages.consumerDetails', $data);
+    }
 }

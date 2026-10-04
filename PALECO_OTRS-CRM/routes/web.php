@@ -177,6 +177,7 @@ Route::middleware(['auth', CheckIfActive::class])->group(function() {
 
         Route::prefix('consumers')->group(function() {
             Route::get('/', [ConsumerController::class, 'index'])->name('cwd.consumers');
+            Route::get('/{consumer}', [ConsumerController::class, 'show'])->name('cwd.consumers.show')->whereUlid('consumer');
         });
 
         Route::prefix('tickets')->group(function() {
