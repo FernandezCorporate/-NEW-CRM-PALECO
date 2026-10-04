@@ -175,6 +175,10 @@ Route::middleware(['auth', CheckIfActive::class])->group(function() {
         Route::get('/dashboard', [CwdDashboardController::class, 'index'])->name('cwd.dashboard');
         Route::get('/consumers/verify/{accountCode}', [ConsumerController::class, 'verify'])->name('cwd.consumers.verify');
 
+        Route::prefix('consumers')->group(function() {
+            Route::get('/', [ConsumerController::class, 'index'])->name('cwd.consumers');
+        });
+
         Route::prefix('tickets')->group(function() {
             Route::get('/', [TicketController::class, 'index'])->name('cwd.tickets');
             Route::get('/{ticket}', [TicketController::class, 'show'])->name('cwd.tickets.show')->whereUlid('ticket');
