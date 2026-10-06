@@ -2,15 +2,22 @@
 
 namespace App\Services\Web\Admin;
 
-use Illuminate\Support\Facades\DB;
-
 use App\Models\Department;
 use App\Models\Team;
 use App\Models\TeamRole;
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
 
+/*
+ * Encapsulates backend business logic and roster syncing for operational Teams in the web app.
+ */
 class TeamService
 {
+    // --- QUERY METHODS ---
+
+    /*
+     * Retrieves paginated teams with member counts, assigned tickets, and department metadata.
+     */
     public function getDashboardTeams(array $filters): array
     {
         $departments = Department::whereNull('deleted_at')->orderBy('dept_name')->pluck('dept_name', 'id');
@@ -29,17 +36,21 @@ class TeamService
         return compact('teams', 'departments');
     }
 
+    /*
+     * Retrieves detailed team information, paginated roster with role titles, and assigned tickets.
+     */
     public function getTeamDetails(Team $team): array
     {
         $members = $team->members()
             ->withPivot('team_role_id', 'created_at')
             ->paginate(5, ['*'], 'page_members')
             ->withQueryString();
-            
+
         $teamRoles = TeamRole::pluck('role_name', 'id');
 
         $members->getCollection()->transform(function ($member) use ($teamRoles) {
             $member->assigned_role_name = $teamRoles[$member->pivot->team_role_id] ?? 'Unknown Role';
+
             return $member;
         });
 
@@ -51,28 +62,36 @@ class TeamService
         return compact('members', 'assignedTickets');
     }
 
+    /*
+     * Retrieves department listings, active field personnel, and team roles to populate team forms.
+     */
     public function getFormData(): array
     {
         $depts = Department::orderBy('dept_name')->pluck('dept_name', 'id');
-        
+
         $personnel = User::query()
-            ->whereHas('role', fn($q) => $q->where('slug_identifier', 'field_personnel'))
+            ->whereHas('role', fn ($q) => $q->where('slug_identifier', 'field_personnel'))
             ->where('is_active', true)
             ->orderBy('first_name', 'asc')
             ->select(['id', 'first_name', 'middle_name', 'last_name', 'name_ext'])
             ->get();
-            
+
         $memberRoles = TeamRole::orderBy('role_name')->get();
 
         return compact('depts', 'personnel', 'memberRoles');
     }
 
+    // --- MUTATING METHODS ---
+
+    /*
+     * Creates a new operational team record and synchronizes assigned roster members.
+     */
     public function createTeam(array $teamDetails, array $assignedMembers): void
     {
         DB::transaction(function () use ($teamDetails, $assignedMembers) {
             $team = Team::create($teamDetails);
 
-            if (!empty($assignedMembers)) {
+            if (! empty($assignedMembers)) {
                 $formattedMembers = collect($assignedMembers)->mapWithKeys(function ($member) {
                     return [$member['user_id'] => ['team_role_id' => $member['team_role_id']]];
                 });
@@ -81,6 +100,9 @@ class TeamService
         });
     }
 
+    /*
+     * Updates an operational team and its membership roster using optimistic concurrency control.
+     */
     public function updateTeam(Team $team, array $teamDetails, array $assignedMembers): array
     {
         $originalUpdatedAt = $teamDetails['original_updated_at'];
@@ -92,27 +114,27 @@ class TeamService
             if ((string) $lockedTeam->updated_at !== $originalUpdatedAt) {
                 return ['success' => false, 'message' => 'Conflict: This team was modified by another user while you were editing.'];
             }
-            
+
             $oldRoster = $lockedTeam->members()->get()->mapWithKeys(function ($m) {
                 return [$m->id => (int) $m->pivot->team_role_id];
             })->toArray();
-            
+
             $newRoster = collect($assignedMembers)->mapWithKeys(function ($member) {
                 return [$member['user_id'] => (int) $member['team_role_id']];
             })->toArray();
 
             ksort($oldRoster);
             ksort($newRoster);
-            
+
             $membersChanged = ($oldRoster !== $newRoster);
 
             $lockedTeam->fill($teamDetails);
             $isTeamDirty = $lockedTeam->isDirty();
 
             if ($isTeamDirty) {
-                $lockedTeam->save(); 
+                $lockedTeam->save();
             } elseif ($membersChanged) {
-                $lockedTeam->touch(); 
+                $lockedTeam->touch();
             }
 
             if ($membersChanged) {
@@ -121,43 +143,52 @@ class TeamService
                 });
 
                 $lockedTeam->members()->sync($formattedMembers);
-                
+
                 activity()
                     ->useLog('Teams')
                     ->performedOn($lockedTeam)
                     ->event('roster_updated')
                     ->withProperties([
-                        'old' => ['member_ids' => array_keys($oldRoster)], 
-                        'attributes' => ['member_ids' => array_keys($newRoster)]
+                        'old' => ['member_ids' => array_keys($oldRoster)],
+                        'attributes' => ['member_ids' => array_keys($newRoster)],
                     ])
                     ->log("{$lockedTeam->team_name} roster has been modified");
             }
-            
+
             return ['success' => true, 'changed' => $isTeamDirty || $membersChanged];
         });
     }
 
+    // --- DESTRUCTIVE & STATE METHODS ---
+
+    /*
+     * Soft-deletes (archives) a team if no active service tickets are currently assigned.
+     */
     public function archiveTeam(Team $team): array
     {
         $hasActiveTickets = $team->ticket()->exists();
-        
+
         if ($hasActiveTickets) {
             return ['success' => false, 'message' => 'Cannot archive team. They currently have active assigned service tickets.'];
         }
-        
+
         $team->delete();
+
         return ['success' => true, 'message' => 'Team archived successfully.'];
     }
 
-    public function restoreTeam(string $id): array 
+    /*
+     * Restores an archived team back to active operations.
+     */
+    public function restoreTeam(string $id): array
     {
-        $team = Team::withTrashed()->find($id); 
-        
-        if (!$team) {
+        $team = Team::withTrashed()->find($id);
+
+        if (! $team) {
             return ['success' => false, 'message' => 'Team no longer exists. It may have been permanently deleted.'];
         }
 
-        if (!$team->trashed()) {
+        if (! $team->trashed()) {
             return ['success' => false, 'message' => 'Team is already active.'];
         }
 
@@ -168,27 +199,31 @@ class TeamService
         }
 
         $team->restore();
+
         return ['success' => true, 'message' => 'Team restored successfully.'];
     }
 
+    /*
+     * Permanently purges a team record from the database.
+     */
     public function forceDeleteTeam(string $id): array
     {
         $team = Team::withTrashed()->find($id);
-        
-        if (!$team) {
+
+        if (! $team) {
             return ['success' => true, 'message' => 'Team has already been permanently deleted.'];
         }
 
-        if (!$team->trashed()) {
+        if (! $team->trashed()) {
             return ['success' => false, 'message' => 'Cannot permanently delete this team because it was recently restored.'];
         }
-        
+
         if ($team->ticket()->exists()) {
             return ['success' => false, 'message' => "Cannot permanently delete {$team->team_name} because it is currently assigned to existing service tickets."];
         }
-        
+
         $team->forceDelete();
-        
+
         return ['success' => true, 'message' => 'Team permanently deleted.'];
     }
 }

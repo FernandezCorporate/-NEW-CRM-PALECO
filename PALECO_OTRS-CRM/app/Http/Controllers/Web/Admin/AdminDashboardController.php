@@ -3,23 +3,29 @@
 namespace App\Http\Controllers\Web\Admin;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
 use App\Services\Web\Dashboard\DashboardService;
+use Illuminate\View\View;
 
 /*
  * Handles the primary landing interface for administrators.
- * Serves as the entry point into the administrative backend.
+ * Serves as the executive overview into system accounts, teams, and complaint workloads.
  */
 class AdminDashboardController extends Controller
 {
+    public function __construct(
+        protected DashboardService $dashboardService
+    ) {}
+
+    // --- VIEW METHODS ---
+
     /*
-     * Renders the main administrator dashboard view.
+     * Renders the main administrator dashboard view with metrics and workload summaries.
      */
-    public function index(DashboardService $dashboard)
+    public function index(): View
     {
         return view('admin.pages.dashboard', [
-            'overview' => $dashboard->ticketOverview(),
-            'summary' => $dashboard->adminSummary(),
+            'overview' => $this->dashboardService->ticketOverview(),
+            'summary' => $this->dashboardService->adminSummary(),
         ]);
     }
 }

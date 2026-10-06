@@ -6,13 +6,21 @@ use App\Enums\TicketStatus;
 use App\Models\Department;
 use App\Models\Team;
 use App\Models\Ticket;
-use App\Models\TicketEndorsement;
 use App\Models\TicketAccomplishment;
+use App\Models\TicketEndorsement;
 use App\Models\User;
 use Carbon\Carbon;
 
+/*
+ * Aggregates operational statistics, complaint trends, and administrative KPIs for the web dashboards.
+ */
 class DashboardService
 {
+    // --- QUERY & AGGREGATION METHODS ---
+
+    /*
+     * Compiles high-level ticket status distribution, operational snapshots, and 7-day trend metrics.
+     */
     public function ticketOverview(): array
     {
         $statusCounts = Ticket::toBase()->pluck('status')->countBy();
@@ -42,6 +50,9 @@ class DashboardService
         ];
     }
 
+    /*
+     * Computes today's operational throughput, department workloads, aging buckets, and queues.
+     */
     public function operationsSnapshot(): array
     {
         $now = Carbon::now();
@@ -55,7 +66,7 @@ class DashboardService
 
             return [
                 'label' => $department
-                    ? $department->dept_name . ($department->trashed() ? ' (archived)' : '')
+                    ? $department->dept_name.($department->trashed() ? ' (archived)' : '')
                     : 'No department',
                 'total' => (int) $row->total,
             ];
@@ -81,6 +92,9 @@ class DashboardService
         ];
     }
 
+    /*
+     * Summarizes system-wide user counts, departments, teams, and total ticket volumes for administrators.
+     */
     public function adminSummary(): array
     {
         return [

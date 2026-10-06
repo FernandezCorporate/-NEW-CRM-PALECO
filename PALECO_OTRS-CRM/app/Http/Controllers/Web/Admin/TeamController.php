@@ -3,15 +3,12 @@
 namespace App\Http\Controllers\Web\Admin;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Gate;
-
 use App\Http\Requests\Web\Admin\Team\StoreTeamRequest;
 use App\Http\Requests\Web\Admin\Team\UpdateTeamRequest;
-
-use App\Services\Web\Admin\TeamService;
-
 use App\Models\Team;
+use App\Services\Web\Admin\TeamService;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 
 /*
  * Manages the lifecycle and web interfaces for operational Teams.
@@ -62,7 +59,7 @@ class TeamController extends Controller
         }
 
         Gate::authorize('teamForm', $team ?? Team::class);
-        
+
         $formData = $this->teamService->getFormData();
 
         return view('admin.forms.teamForm', array_merge(['team' => $team], $formData));
@@ -103,15 +100,15 @@ class TeamController extends Controller
             $request->validated('members', [])
         );
 
-        if (!$result['success']) {
+        if (! $result['success']) {
             return redirect()->back()->with('error', $result['message'])->withInput();
         }
 
-        $redirectRoute = $request->query('source') === 'details' 
-            ? route('admin.teams.show', $team) 
+        $redirectRoute = $request->query('source') === 'details'
+            ? route('admin.teams.show', $team)
             : route('admin.teams');
 
-        if (!$result['changed']) {
+        if (! $result['changed']) {
             return redirect($redirectRoute)->with('info', 'No changes were made to the team.');
         }
 
@@ -126,19 +123,20 @@ class TeamController extends Controller
     public function deleteConfirm(Request $request, Team $team)
     {
         $isForceDelete = $request->routeIs('admin.teams.forceDeleteConfirm');
-        
+
         // State Guards
-        if ($isForceDelete && !$team->trashed()) {
+        if ($isForceDelete && ! $team->trashed()) {
             return redirect()->route('admin.teams')->with('error', 'This team was restored by another administrator and must be archived before permanent deletion.');
         }
 
-        if (!$isForceDelete && $team->trashed()) {
+        if (! $isForceDelete && $team->trashed()) {
             return redirect()->route('admin.teams')->with('info', 'This team has already been archived.');
         }
 
         Gate::authorize('deleteConfirm', clone $team);
 
         $title = $isForceDelete ? 'Permanently Delete Team' : 'Archive Team';
+
         return view('admin.prompts.teamDeleteConfirm', compact('team', 'title', 'isForceDelete'));
     }
 
@@ -152,13 +150,13 @@ class TeamController extends Controller
         }
 
         Gate::authorize('archive', $team);
-        
+
         $result = $this->teamService->archiveTeam($team);
-        
-        if (!$result['success']) {
+
+        if (! $result['success']) {
             return redirect()->route('admin.teams')->with('error', $result['message']);
         }
-        
+
         return redirect()->route('admin.teams')->with('success', $result['message']);
     }
 
@@ -171,7 +169,7 @@ class TeamController extends Controller
 
         $result = $this->teamService->restoreTeam($id);
 
-        if (!$result['success']) {
+        if (! $result['success']) {
             return redirect()->route('admin.teams')->with('error', $result['message']);
         }
 
@@ -184,10 +182,10 @@ class TeamController extends Controller
     public function destroy(string $id)
     {
         Gate::authorize('forceDelete', Team::class);
-        
+
         $result = $this->teamService->forceDeleteTeam($id);
 
-        if (!$result['success']) {
+        if (! $result['success']) {
             return redirect()->route('admin.teams')->with('error', $result['message']);
         }
 

@@ -2,13 +2,21 @@
 
 namespace App\Services\Web\Admin;
 
-use Illuminate\Support\Facades\DB;
 use App\Models\AccountRole;
 use App\Models\TeamRole;
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
 
+/**
+ * Service handling administration-level User queries, mutations, and status transitions.
+ */
 class UserService
 {
+    // --- QUERY METHODS ---
+
+    /**
+     * Retrieve users matching filters along with role distribution counts.
+     */
     public function getDashboardUsers(array $filters): array
     {
         $roles = AccountRole::orderBy('role_name')->get();
@@ -20,7 +28,7 @@ class UserService
 
         $activeCounts = (object) [
             'admin' => $rawCounts->get($roles->where('slug_identifier', 'admin')->first()?->id) ?? 0,
-            'cwd'   => $rawCounts->get($roles->where('slug_identifier', 'cwd_officer')->first()?->id) ?? 0,
+            'cwd' => $rawCounts->get($roles->where('slug_identifier', 'cwd_officer')->first()?->id) ?? 0,
             'supervisor' => $rawCounts->get($roles->where('slug_identifier', 'supervisor')->first()?->id) ?? 0,
             'field_personnel' => $rawCounts->get($roles->where('slug_identifier', 'field_personnel')->first()?->id) ?? 0,
         ];
@@ -35,6 +43,9 @@ class UserService
         return compact('users', 'roles', 'activeCounts');
     }
 
+    /**
+     * Retrieve user profile details and their assigned teams with pivot metadata.
+     */
     public function getUserDetails(User $user): array
     {
         $user->load('department');
@@ -43,24 +54,30 @@ class UserService
             ->with('department')
             ->withPivot('team_role_id', 'created_at')
             ->paginate(5);
-            
+
         $teamRoles = TeamRole::pluck('role_name', 'id');
 
         $assignedTeams->getCollection()->transform(function ($team) use ($teamRoles) {
             $team->assigned_role_name = $teamRoles[$team->pivot->team_role_id] ?? 'Unknown Role';
+
             return $team;
         });
 
         return compact('assignedTeams');
     }
 
+    // --- MUTATING METHODS ---
+
+    /**
+     * Create or update a user record while handling concurrency locks and role constraints.
+     */
     public function processAndSaveUser(array $data, ?User $user = null): array
     {
         $originalUpdatedAt = $data['original_updated_at'] ?? null;
         unset($data['original_updated_at']);
 
         $role = $user ? $user->role : AccountRole::find($data['role_id']);
-        
+
         if ($role && $role->slug_identifier === 'field_personnel') {
             $data['department_id'] = null;
         }
@@ -74,24 +91,33 @@ class UserService
                 }
 
                 $lockedUser->fill($data);
-                
-                if ($lockedUser->isClean()) return ['success' => true, 'changed' => false];
-                
-                $lockedUser->save(); 
+
+                if ($lockedUser->isClean()) {
+                    return ['success' => true, 'changed' => false];
+                }
+
+                $lockedUser->save();
+
                 return ['success' => true, 'changed' => true];
             });
         }
 
         User::create($data);
-        return ['success' => true, 'changed' => true]; 
+
+        return ['success' => true, 'changed' => true];
     }
 
+    // --- DESTRUCTIVE & STATE METHODS ---
+
+    /**
+     * Toggle the active status of a user and invalidate tokens/memberships if deactivated.
+     */
     public function toggleUserStatus(User $user, bool $isActive): void
     {
         DB::transaction(function () use ($user, $isActive) {
             $user->is_active = $isActive;
-            
-            if (!$isActive) {
+
+            if (! $isActive) {
                 $user->tokens()->delete();
 
                 if ($user->role->slug_identifier === 'field_personnel') {

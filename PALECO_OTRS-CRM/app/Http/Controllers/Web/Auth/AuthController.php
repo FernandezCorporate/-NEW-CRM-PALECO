@@ -3,11 +3,9 @@
 namespace App\Http\Controllers\Web\Auth;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request; 
-
 use App\Http\Requests\Web\Auth\LoginRequest;
-
 use App\Services\Web\Auth\AuthService;
+use Illuminate\Http\Request;
 
 /*
  * Manages the web-based authentication lifecycle.
@@ -32,7 +30,7 @@ class AuthController extends Controller
     {
         $allowedPortals = ['admin', 'cwd_officer'];
 
-        if (!in_array($role, $allowedPortals)) {
+        if (! in_array($role, $allowedPortals)) {
             return redirect()->route('portal')->withErrors(['error' => 'Invalid portal selection.']);
         }
 
@@ -48,13 +46,13 @@ class AuthController extends Controller
     public function login(LoginRequest $request, $role, AuthService $authService)
     {
         $result = $authService->processLogin(
-            $request->validated(), 
-            $request->ip(), 
-            $role, 
+            $request->validated(),
+            $request->ip(),
+            $role,
             $request
         );
 
-        if (!$result['success']) {
+        if (! $result['success']) {
             return back()->withErrors(['error' => $result['message']])->onlyInput('username');
         }
 
@@ -67,6 +65,7 @@ class AuthController extends Controller
     public function logout(Request $request, AuthService $authService)
     {
         $authService->terminateSession($request);
+
         return redirect('/portal');
     }
 }

@@ -2,18 +2,26 @@
 
 namespace App\Services\Web\Cwd;
 
-use Illuminate\Http\Request;
+use App\Enums\ComplaintSources;
 use App\Enums\TicketStatus;
 use App\Models\Consumer;
-use App\Enums\ComplaintSources;
+use Illuminate\Http\Request;
 
+/*
+ * Manages utility consumer search, ticket history aggregation, and account metric computation.
+ */
 class ConsumerService
 {
-    public function getConsumerList(Request $request)
+    // --- QUERY METHODS ---
+
+    /*
+     * Retrieves a paginated list of consumers with count of currently active service tickets.
+     */
+    public function getConsumerList(Request $request): array
     {
         $consumers = Consumer::query()
             ->withCount(['tickets as open_tickets_count' => function ($query) {
-                $query->whereNotIn('status', [TicketStatus::RESOLVED, TicketStatus::CLOSED]);
+                $query->whereIn('status', [TicketStatus::OPEN, TicketStatus::ASSIGNED, TicketStatus::IN_PROGRESS]);
             }])
             ->search($request->search)
             ->paginate(12);
@@ -21,6 +29,9 @@ class ConsumerService
         return compact('consumers');
     }
 
+    /*
+     * Compiles detailed consumer profile data, historical complaints, and communication source statistics.
+     */
     public function getConsumerDetails(Request $request, Consumer $consumer): array
     {
         $consumer->loadCount(['tickets as open_tickets_count' => function ($query) {

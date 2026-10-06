@@ -5,54 +5,113 @@ namespace App\Policies;
 use App\Models\User;
 
 /*
- * Defines RBAC (Role-based access controls) for each available action on a user resource.
- * Implemented as gate checks at the start of every CRUD method on the UserController.
+ * Defines role-based access controls for managing user accounts across web and mobile surfaces.
  */
 class UserPolicy
 {
+    // --- WEB ADMINISTRATOR PERMISSIONS ---
 
-    // Web-app permissions
-    public function viewAny(User $user): bool { return $user->role->slug_identifier === 'admin'; }
+    /*
+     * Determine whether the user can browse user account listings.
+     */
+    public function viewAny(User $user): bool
+    {
+        return $user->role->slug_identifier === 'admin';
+    }
+
+    /*
+     * Determine whether the user can access user account creation or modification forms.
+     */
     public function userForm(User $user, ?User $targetUser = null): bool
     {
         if ($user->role->slug_identifier !== 'admin') {
             return false;
         }
 
-        // If a target user is passed (Editing), ensure they are not an Admin
         if ($targetUser && $targetUser->exists) {
             return $targetUser->role->slug_identifier !== 'admin' || $user->is($targetUser);
         }
 
         return true;
     }
-    public function view(User $user): bool { return $user->role->slug_identifier === 'admin'; }
-    public function create(User $user): bool { return $user->role->slug_identifier === 'admin'; }
-    public function update(User $user, User $targetUser): bool { return $user->role->slug_identifier === 'admin' && ($targetUser->role->slug_identifier !== 'admin' || $user->is($targetUser)); }
-    public function deactivateConfirm(User $user, User $targetUser): bool { return $user->role->slug_identifier === 'admin' && $targetUser->role->slug_identifier !== 'admin'; }
-    public function deactivate(User $user, User $targetUser): bool { return $user->role->slug_identifier === 'admin' && $targetUser->role->slug_identifier !== 'admin'; }
-    public function reactivateConfirm(User $user, User $targetUser): bool { return $user->role->slug_identifier === 'admin' && $targetUser->role->slug_identifier !== 'admin'; }
-    public function reactivate(User $user, User $targetUser): bool { return $user->role->slug_identifier === 'admin' && $targetUser->role->slug_identifier !== 'admin'; }
-
-    // Mobile app permissions
-    public function viewProfile(User $user, User $targetUser): bool { return $user->is($targetUser) && in_array($user->role->slug_identifier, ['admin', 'cwd_officer', 'supervisor', 'field_personnel']); }
-    public function viewSupervisorDashboard(User $user): bool { return $user->role->slug_identifier === 'supervisor'; }
 
     /*
-     * Web-app
-     * viewAny           => Admin only; view all user accounts.
-     * userForm          => Admin only; dynamically applied for a create or update form. 
-     *                   => If used to check edit form permissions, prevents editing other admin account records unless the admin account is the current user.
-     * view              => Admin only; view specific account details.
-     * create            => Admin only; add a new user account.
-     * update            => Admin only; prevents editing other admin account records unless the admin account is the current user.
-     * deactivateConfirm => Admin only but not allowed if target user is Admin; access the deactivate confirmation prompt
-     * deactivate        => Admin only but not allowed if target user is Admin; perform account deactivation
-     * reactivateConfirm => Admin only but not allowed if target user is Admin; acccess the reactivate confirmation prompt
-     * reactivate        => Admin only but not allowed if target user is Admin; perform account reactivation
-     * 
-     * Mobile app
-     * viewProfile:      => Allows a user account to retrieve their own account information only.
-     *                   => Also checks if the reqeusting user's role is valid.
+     * Determine whether the user can view a specific user account's profile details.
      */
+    public function view(User $user): bool
+    {
+        return $user->role->slug_identifier === 'admin';
+    }
+
+    /*
+     * Determine whether the user can create new user accounts.
+     */
+    public function create(User $user): bool
+    {
+        return $user->role->slug_identifier === 'admin';
+    }
+
+    /*
+     * Determine whether the user can update an existing user account profile.
+     */
+    public function update(User $user, User $targetUser): bool
+    {
+        return $user->role->slug_identifier === 'admin'
+            && ($targetUser->role->slug_identifier !== 'admin' || $user->is($targetUser));
+    }
+
+    /*
+     * Determine whether the user can access the deactivation confirmation prompt.
+     */
+    public function deactivateConfirm(User $user, User $targetUser): bool
+    {
+        return $user->role->slug_identifier === 'admin'
+            && $targetUser->role->slug_identifier !== 'admin';
+    }
+
+    /*
+     * Determine whether the user can deactivate a user account.
+     */
+    public function deactivate(User $user, User $targetUser): bool
+    {
+        return $user->role->slug_identifier === 'admin'
+            && $targetUser->role->slug_identifier !== 'admin';
+    }
+
+    /*
+     * Determine whether the user can access the reactivation confirmation prompt.
+     */
+    public function reactivateConfirm(User $user, User $targetUser): bool
+    {
+        return $user->role->slug_identifier === 'admin'
+            && $targetUser->role->slug_identifier !== 'admin';
+    }
+
+    /*
+     * Determine whether the user can reactivate an inactive user account.
+     */
+    public function reactivate(User $user, User $targetUser): bool
+    {
+        return $user->role->slug_identifier === 'admin'
+            && $targetUser->role->slug_identifier !== 'admin';
+    }
+
+    // --- MOBILE APP PERMISSIONS ---
+
+    /*
+     * Determine whether the user can retrieve their own profile information.
+     */
+    public function viewProfile(User $user, User $targetUser): bool
+    {
+        return $user->is($targetUser)
+            && in_array($user->role->slug_identifier, ['admin', 'cwd_officer', 'supervisor', 'field_personnel'], true);
+    }
+
+    /*
+     * Determine whether the user has supervisor privileges to access the mobile dashboard.
+     */
+    public function viewSupervisorDashboard(User $user): bool
+    {
+        return $user->role->slug_identifier === 'supervisor';
+    }
 }

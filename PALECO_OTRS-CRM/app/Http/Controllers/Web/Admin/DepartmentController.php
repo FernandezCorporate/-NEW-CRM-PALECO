@@ -3,15 +3,12 @@
 namespace App\Http\Controllers\Web\Admin;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Gate;
-
 use App\Http\Requests\Web\Admin\Department\StoreDepartmentRequest;
 use App\Http\Requests\Web\Admin\Department\UpdateDepartmentRequest;
-
-use App\Services\Web\Admin\DepartmentService;
-
 use App\Models\Department;
+use App\Services\Web\Admin\DepartmentService;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 
 /*
  * Manages the lifecycle and web interfaces for system Departments.
@@ -35,7 +32,7 @@ class DepartmentController extends Controller
         Gate::authorize('viewAny', Department::class);
 
         $departments = $this->departmentService->getDashboardDepartments($request->all());
-        
+
         session()->put('department_list_url', $request->fullUrl());
 
         return view('admin.pages.departmentManagement', compact('departments'));
@@ -65,6 +62,7 @@ class DepartmentController extends Controller
         }
 
         Gate::authorize('departmentForm', $dept ?? Department::class);
+
         return view('admin.forms.departmentForm', compact('dept'));
     }
 
@@ -95,16 +93,16 @@ class DepartmentController extends Controller
         Gate::authorize('update', $dept);
 
         $result = $this->departmentService->updateDepartment($dept, $request->validated());
-        
-        if (!$result['success']) {
+
+        if (! $result['success']) {
             return redirect()->back()->with('error', $result['message'])->withInput();
         }
 
-        $redirectRoute = $request->query('source') === 'details' 
-            ? route('admin.departments.show', $dept) 
+        $redirectRoute = $request->query('source') === 'details'
+            ? route('admin.departments.show', $dept)
             : route('admin.departments');
 
-        if (!$result['changed']) {
+        if (! $result['changed']) {
             return redirect($redirectRoute)->with('info', 'No changes were made to the department.');
         }
 
@@ -121,17 +119,18 @@ class DepartmentController extends Controller
         $isForceDelete = $request->routeIs('admin.departments.forceDeleteConfirm');
 
         // State Guards: Prevent loading the prompt if the state already shifted
-        if ($isForceDelete && !$dept->trashed()) {
+        if ($isForceDelete && ! $dept->trashed()) {
             return redirect()->route('admin.departments')->with('error', 'This department was restored by another administrator and must be archived before permanent deletion.');
         }
 
-        if (!$isForceDelete && $dept->trashed()) {
+        if (! $isForceDelete && $dept->trashed()) {
             return redirect()->route('admin.departments')->with('info', 'This department has already been archived.');
         }
 
         Gate::authorize('deleteConfirm', $dept);
 
         $title = $isForceDelete ? 'Permanently Delete Department' : 'Archive Department';
+
         return view('admin.prompts.departmentDeleteConfirm', compact('dept', 'title', 'isForceDelete'));
     }
 
@@ -145,10 +144,10 @@ class DepartmentController extends Controller
         }
 
         Gate::authorize('archive', $dept);
-        
+
         $result = $this->departmentService->archiveDepartment($dept);
-        
-        if (!$result['success']) {
+
+        if (! $result['success']) {
             return redirect()->route('admin.departments')->with('error', $result['message']);
         }
 
@@ -158,13 +157,13 @@ class DepartmentController extends Controller
     /*
      * Recovers a previously archived department back to active status.
      */
-    public function restore($id) 
+    public function restore($id)
     {
         Gate::authorize('restore', Department::class);
 
         $result = $this->departmentService->restoreDepartment($id);
 
-        if (!$result['success']) {
+        if (! $result['success']) {
             return redirect()->route('admin.departments')->with('error', $result['message']);
         }
 
@@ -178,13 +177,13 @@ class DepartmentController extends Controller
     public function destroy($id)
     {
         Gate::authorize('forceDelete', Department::class);
-        
+
         $result = $this->departmentService->permanentlyDeleteDepartment($id);
 
-        if (!$result['success']) {
+        if (! $result['success']) {
             return redirect()->route('admin.departments')->with('error', $result['message']);
         }
-        
+
         return redirect()->route('admin.departments')->with('success', $result['message']);
     }
 }

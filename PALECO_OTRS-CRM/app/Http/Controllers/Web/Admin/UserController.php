@@ -3,17 +3,14 @@
 namespace App\Http\Controllers\Web\Admin;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Gate;
-
 use App\Http\Requests\Web\Admin\User\StoreUserRequest;
 use App\Http\Requests\Web\Admin\User\UpdateUserRequest;
-
-use App\Services\Web\Admin\UserService;
-
 use App\Models\AccountRole;
 use App\Models\Department;
 use App\Models\User;
+use App\Services\Web\Admin\UserService;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 
 /*
  * Manages the lifecycle and web interfaces for system User Accounts.
@@ -90,37 +87,39 @@ class UserController extends Controller
 
         $result = $this->userService->processAndSaveUser($request->validated(), $user);
 
-        if (!$result['success']) {
+        if (! $result['success']) {
             return redirect()->back()->with('error', $result['message'])->withInput();
         }
 
-        if (!$result['changed']) {
+        if (! $result['changed']) {
             return redirect()->route('admin.users')->with('info', 'No changes were made to the user.');
         }
 
         return redirect()->route('admin.users')->with('success', 'User updated successfully.');
     }
-    
+
     // --- DESTRUCTIVE & STATE METHODS ---
 
     public function deactivateConfirm(User $user)
     {
-        if (!$user->is_active) {
+        if (! $user->is_active) {
             return redirect()->route('admin.users')->with('info', 'This account is already deactivated.');
         }
 
         Gate::authorize('deactivateConfirm', $user);
+
         return view('admin.prompts.userDeactivateConfirm', ['userAccount' => $user]);
     }
 
     public function deactivate(User $user)
     {
-        if (!$user->is_active) {
+        if (! $user->is_active) {
             return redirect()->route('admin.users')->with('info', 'This account has already been deactivated by another administrator.');
         }
 
         Gate::authorize('deactivate', $user);
         $this->userService->toggleUserStatus($user, false);
+
         return redirect()->route('admin.users')->with('success', 'Account deactivated successfully.');
     }
 
@@ -131,6 +130,7 @@ class UserController extends Controller
         }
 
         Gate::authorize('reactivateConfirm', $user);
+
         return view('admin.prompts.userReactivateConfirm', ['userAccount' => $user]);
     }
 
@@ -142,6 +142,7 @@ class UserController extends Controller
 
         Gate::authorize('reactivate', $user);
         $this->userService->toggleUserStatus($user, true);
+
         return redirect()->route('admin.users')->with('success', 'Account reactivated successfully.');
     }
 }

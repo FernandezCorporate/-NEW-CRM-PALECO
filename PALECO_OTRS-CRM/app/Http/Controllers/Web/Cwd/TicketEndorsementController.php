@@ -6,23 +6,38 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Web\Cwd\TicketEndorsement\EndorsementDecisionRequest;
 use App\Models\TicketEndorsement;
 use App\Services\Web\Cwd\TicketService;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\View\View;
 
+/*
+ * Manages the review, presentation, and decision processing for cross-department ticket endorsements.
+ */
 class TicketEndorsementController extends Controller
 {
-    public function __construct(protected TicketService $ticketService) { }
+    public function __construct(
+        protected TicketService $ticketService
+    ) {}
 
-    public function index(Request $request)
+    // --- VIEW METHODS ---
+
+    /*
+     * Renders the CWD endorsement queue showing tickets awaiting department transfer approval.
+     */
+    public function index(Request $request): View
     {
         Gate::authorize('viewAny', TicketEndorsement::class);
-        
+
         $result = $this->ticketService->getEndorsementList($request);
 
         return view('cwd.pages.endorsementDashboard', $result);
     }
 
-    public function show(Request $request, TicketEndorsement $endorsement)
+    /*
+     * Renders comprehensive endorsement details including originating reasons and target departments.
+     */
+    public function show(Request $request, TicketEndorsement $endorsement): View
     {
         Gate::authorize('view', $endorsement);
 
@@ -31,18 +46,21 @@ class TicketEndorsementController extends Controller
         return view('cwd.pages.endorsementDetails', $result);
     }
 
-    public function decide(EndorsementDecisionRequest $request, TicketEndorsement $endorsement)
+    // --- MUTATING METHODS ---
+
+    /*
+     * Evaluates an endorsement decision (accepting reroutes the ticket, rejecting returns it).
+     */
+    public function decide(EndorsementDecisionRequest $request, TicketEndorsement $endorsement): RedirectResponse
     {
         Gate::authorize('decide', $endorsement);
 
         $result = $this->ticketService->verifyEndorsement($request->validated(), $endorsement);
 
-        // Safely bounce back if the Race Condition check failed in the service
-        if (!$result['success']) {
+        if (! $result['success']) {
             return back()->with('error', $result['message']);
         }
 
-        // Standard success flow
         return redirect()->route('cwd.endorsements')->with('success', 'Endorsement processed successfully.');
     }
 }

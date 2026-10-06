@@ -3,36 +3,63 @@
 namespace App\Http\Controllers\Web\Cwd;
 
 use App\Http\Controllers\Controller;
+use App\Models\Consumer;
 use App\Services\External\ConsumerService as ExternalConsumerService;
 use App\Services\Web\Cwd\ConsumerService as WebConsumerService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use App\Models\Consumer;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\View\View;
 
+/*
+ * Manages the retrieval, live verification, and customer profile views for utility consumers.
+ */
 class ConsumerController extends Controller
 {
-    public function verify(string $accountCode, ExternalConsumerService $service)
-    {
-        // Retrieves the array without touching the database
-        $consumerData = $service->verifyAccount($accountCode);
-        
-        return response()->json([
-            'success' => true,
-            'consumer' => $consumerData
-        ]);
-    }
+    public function __construct(
+        protected WebConsumerService $consumerService,
+        protected ExternalConsumerService $externalConsumerService
+    ) {}
 
-    public function index(Request $request, WebConsumerService $service)
+    // --- VIEW METHODS ---
+
+    /*
+     * Renders the paginated list of consumers with linked ticket counts.
+     */
+    public function index(Request $request): View
     {
         Gate::authorize('viewAny', Consumer::class);
-        $data = $service->getConsumerList($request);
+
+        $data = $this->consumerService->getConsumerList($request);
+
         return view('cwd.pages.consumerManagement', $data);
     }
 
-    public function show(Request $request, Consumer $consumer, WebConsumerService $service)
+    /*
+     * Renders detailed historical complaint metrics and account profile for a consumer.
+     */
+    public function show(Request $request, Consumer $consumer): View
     {
         Gate::authorize('view', $consumer);
-        $data = $service->getConsumerDetails($request, $consumer);
+
+        $data = $this->consumerService->getConsumerDetails($request, $consumer);
+
         return view('cwd.pages.consumerDetails', $data);
+    }
+
+    // --- AJAX / VERIFICATION METHODS ---
+
+    /*
+     * Performs a live lookup against the external billing API for account validation without persisting to DB.
+     */
+    public function verify(string $accountCode): JsonResponse
+    {
+        $consumerData = $this->externalConsumerService->verifyAccount($accountCode);
+
+        return response()->json([
+            'success' => true,
+            'consumer' => $consumerData,
+            'data' => $consumerData,
+        ]);
     }
 }

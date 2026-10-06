@@ -1,25 +1,22 @@
 <?php
 
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Route;
-use Illuminate\Http\Request;
-
-use App\Http\Controllers\Web\Auth\AuthController;
-
 use App\Http\Controllers\Web\Admin\AdminDashboardController;
 use App\Http\Controllers\Web\Admin\DepartmentController;
+use App\Http\Controllers\Web\Admin\SystemMonitoringController;
 use App\Http\Controllers\Web\Admin\TeamController;
 use App\Http\Controllers\Web\Admin\TicketCategoryController;
 use App\Http\Controllers\Web\Admin\UserController;
-use App\Http\Controllers\Web\Admin\SystemMonitoringController;
-use App\Http\Controllers\Web\Cwd\TicketAccomplishmentController;
-use App\Http\Controllers\Web\Remarks\TicketRemarkController;
+use App\Http\Controllers\Web\Auth\AuthController;
 use App\Http\Controllers\Web\Cwd\ConsumerController;
-
 use App\Http\Controllers\Web\Cwd\CwdDashboardController;
+use App\Http\Controllers\Web\Cwd\TicketAccomplishmentController;
 use App\Http\Controllers\Web\Cwd\TicketController;
 use App\Http\Controllers\Web\Cwd\TicketEndorsementController;
+use App\Http\Controllers\Web\Remarks\TicketRemarkController;
 use App\Http\Middleware\CheckIfActive;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
@@ -32,13 +29,13 @@ use App\Http\Middleware\CheckIfActive;
  * Unauthenticated Guest Portal
  * Handles login presentation and post-submission verification.
  */
-Route::middleware('guest')->group(function() {
+Route::middleware('guest')->group(function () {
     Route::get('/portal', [AuthController::class, 'showRoleSelection'])->name('portal');
-    
+
     Route::get('/login/{role}', [AuthController::class, 'showLoginForm'])->name('portal.login');
     Route::post('/login/{role}', [AuthController::class, 'login'])->name('attemptLogin');
 
-    Route::get('/login', function() {
+    Route::get('/login', function () {
         return redirect()->route('portal');
     })->name('login');
 });
@@ -47,8 +44,8 @@ Route::middleware('guest')->group(function() {
  * Authenticated Web Portal
  * Protected domains requiring active sessions. Handles smart-routing and core module operations.
  */
-Route::middleware(['auth', CheckIfActive::class])->group(function() {
-    
+Route::middleware(['auth', CheckIfActive::class])->group(function () {
+
     /*
      * Root Routing Gatekeeper
      * Automatically redirects validated users to their respective workspace depending on role logic.
@@ -60,11 +57,11 @@ Route::middleware(['auth', CheckIfActive::class])->group(function() {
             default => null,
         };
 
-        if (!$dashboardRoute) {
+        if (! $dashboardRoute) {
             Auth::logout();
             $request->session()->invalidate();
             $request->session()->regenerateToken();
-            
+
             return redirect()->route('portal')->withErrors(['error' => 'Access Denied: Your account role does not have web portal privileges.']);
         }
 
@@ -83,11 +80,11 @@ Route::middleware(['auth', CheckIfActive::class])->group(function() {
      * Administrator Domain
      * Explicitly protected by a specific gate ensuring only standard admins bypass.
      */
-    Route::prefix('admin')->middleware('can:access-admin')->group(function() {
+    Route::prefix('admin')->middleware('can:access-admin')->group(function () {
         Route::view('/settings', 'shared.settings', ['layout' => 'admin.base.base'])->name('admin.settings');
         Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('admin.dashboard');
 
-        Route::prefix('users')->group(function() {
+        Route::prefix('users')->group(function () {
             Route::get('/', [UserController::class, 'index'])->name('admin.users');
             Route::get('/{user}', [UserController::class, 'show'])->name('admin.users.show')->whereUlid('user')->withTrashed();
 
@@ -101,13 +98,13 @@ Route::middleware(['auth', CheckIfActive::class])->group(function() {
             Route::patch('/{user}/deactivate', [UserController::class, 'deactivate'])->name('admin.users.deactivate')->whereUlid('user');
 
             Route::get('/{user}/reactivate', [UserController::class, 'reactivateConfirm'])->name('admin.users.reactivateConfirm')->whereUlid('user');
-            Route::patch('/{user}/reactivate', [UserController::class, 'reactivate'])->name('admin.users.reactivate')->whereUlid('user');          
+            Route::patch('/{user}/reactivate', [UserController::class, 'reactivate'])->name('admin.users.reactivate')->whereUlid('user');
         });
 
-        Route::prefix('departments')->group(function() {
+        Route::prefix('departments')->group(function () {
             Route::get('/', [DepartmentController::class, 'index'])->name('admin.departments');
             Route::get('/{dept}', [DepartmentController::class, 'show'])->name('admin.departments.show')->whereNumber('dept')->withTrashed();
-            
+
             Route::get('/create', [DepartmentController::class, 'departmentForm'])->name('admin.departments.createForm');
             Route::post('/', [DepartmentController::class, 'store'])->name('admin.departments.store');
 
@@ -123,15 +120,15 @@ Route::middleware(['auth', CheckIfActive::class])->group(function() {
             Route::delete('/{dept}/force-delete', [DepartmentController::class, 'destroy'])->name('admin.departments.destroy')->whereNumber('dept')->withTrashed();
         });
 
-        Route::prefix('teams')->group(function() {
+        Route::prefix('teams')->group(function () {
             Route::get('/', [TeamController::class, 'index'])->name('admin.teams');
             Route::get('/{team}', [TeamController::class, 'show'])->name('admin.teams.show')->whereUlid('team')->withTrashed();
 
             Route::get('/create', [TeamController::class, 'teamForm'])->name('admin.teams.createForm');
             Route::post('/', [TeamController::class, 'store'])->name('admin.teams.store');
 
-            Route::get('/teams/form/{team}', [TeamController::class, 'teamForm'])->name('admin.teams.editForm')->whereUlid('team')->withTrashed(); 
-            Route::put('/teams/{team}', [TeamController::class, 'update'])->name('admin.teams.update')->whereUlid('team')->withTrashed();
+            Route::get('/{team}/edit', [TeamController::class, 'teamForm'])->name('admin.teams.editForm')->whereUlid('team')->withTrashed();
+            Route::put('/{team}', [TeamController::class, 'update'])->name('admin.teams.update')->whereUlid('team')->withTrashed();
 
             Route::get('/{team}/archive', [TeamController::class, 'deleteConfirm'])->name('admin.teams.deleteConfirm')->whereUlid('team')->withTrashed();
             Route::delete('/{team}', [TeamController::class, 'archive'])->name('admin.teams.archive')->whereUlid('team')->withTrashed();
@@ -142,10 +139,10 @@ Route::middleware(['auth', CheckIfActive::class])->group(function() {
             Route::delete('/{team}/force-delete', [TeamController::class, 'destroy'])->name('admin.teams.destroy')->whereUlid('team')->withTrashed();
         });
 
-        Route::prefix('ticket-categories')->group(function() {
-            Route::get('/', [TicketCategoryController::class, 'viewAny'])->name('admin.ticketCategories');
+        Route::prefix('ticket-categories')->group(function () {
+            Route::get('/', [TicketCategoryController::class, 'index'])->name('admin.ticketCategories');
             Route::get('/{category}', [TicketCategoryController::class, 'show'])->name('admin.ticketCategories.show')->whereNumber('category')->withTrashed();
-            
+
             Route::get('/create', [TicketCategoryController::class, 'ticketCategoryForm'])->name('admin.ticketCategories.createForm');
             Route::post('/', [TicketCategoryController::class, 'store'])->name('admin.ticketCategories.store');
 
@@ -161,7 +158,7 @@ Route::middleware(['auth', CheckIfActive::class])->group(function() {
             Route::delete('/{category}/force-delete', [TicketCategoryController::class, 'destroy'])->name('admin.ticketCategories.destroy')->whereNumber('category')->withTrashed();
         });
 
-        Route::prefix('system-monitoring')->group(function() {
+        Route::prefix('system-monitoring')->group(function () {
             Route::get('/', [SystemMonitoringController::class, 'index'])->name('admin.monitoring.index');
         });
     });
@@ -170,17 +167,17 @@ Route::middleware(['auth', CheckIfActive::class])->group(function() {
      * CWD Officer Domain
      * Explicitly protected by a gate verifying CWD officer credentials.
      */
-    Route::prefix('cwd')->middleware('can:access-cwd_officer')->group(function() {
+    Route::prefix('cwd')->middleware('can:access-cwd_officer')->group(function () {
         Route::view('/settings', 'shared.settings', ['layout' => 'cwd.base.base'])->name('cwd.settings');
         Route::get('/dashboard', [CwdDashboardController::class, 'index'])->name('cwd.dashboard');
         Route::get('/consumers/verify/{accountCode}', [ConsumerController::class, 'verify'])->name('cwd.consumers.verify');
 
-        Route::prefix('consumers')->group(function() {
+        Route::prefix('consumers')->group(function () {
             Route::get('/', [ConsumerController::class, 'index'])->name('cwd.consumers');
             Route::get('/{consumer}', [ConsumerController::class, 'show'])->name('cwd.consumers.show')->whereUlid('consumer');
         });
 
-        Route::prefix('tickets')->group(function() {
+        Route::prefix('tickets')->group(function () {
             Route::get('/', [TicketController::class, 'index'])->name('cwd.tickets');
             Route::get('/{ticket}', [TicketController::class, 'show'])->name('cwd.tickets.show')->whereUlid('ticket');
             Route::get('/create', [TicketController::class, 'ticketForm'])->name('cwd.tickets.createForm');
