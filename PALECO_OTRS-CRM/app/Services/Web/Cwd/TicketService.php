@@ -263,6 +263,68 @@ class TicketService
         return $accomplishment->load(['accomplishedBy', 'approvedBy', 'rejectedBy', 'photos']);
     }
 
+    public function loadChildTicketForm(Ticket $parentTicket): array
+    {
+        $parentTicket->load(['category', 'department', 'consumer']);
+        $categories = TicketCategory::orderBy('category_name')->get();
+        $departments = Department::orderBy('dept_name')->get();
+
+        return [
+            'parentTicket' => $parentTicket,
+            'categories'   => $categories,
+            'departments'  => $departments,
+        ];
+    }
+
+    public function createManualChildTicket(Ticket $parentTicket, array $validatedData): Ticket
+    {
+        return DB::transaction(function () use ($parentTicket, $validatedData) {
+            $lockedParent = Ticket::where('system_id', $parentTicket->system_id)
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            $childTicket = Ticket::create([
+                'ticket_number'         => $this->generateChildTicketNumber($lockedParent),
+                'parent_ticket_id'      => $lockedParent->system_id,
+                'department_id'         => $validatedData['department_id'],
+
+                'consumer_id'           => $lockedParent->consumer_id,
+                'consumer_contact'      => $validatedData['consumer_contact'] ?? $lockedParent->consumer_contact,
+                'complaint_source'      => $lockedParent->complaint_source,
+                'complaint_description' => $validatedData['complaint_description'],
+
+                'category_id'           => $validatedData['category_id'] ?? null,
+                'other_category'        => $validatedData['other_category'] ?? false,
+                'other_category_name'   => $validatedData['other_category_name'] ?? null,
+
+                'purok'                 => $validatedData['purok'] ?? $lockedParent->purok,
+                'street'                => $validatedData['street'] ?? $lockedParent->street,
+                'barangay'              => $validatedData['barangay'] ?? $lockedParent->barangay,
+                'landmark'              => $validatedData['landmark'] ?? $lockedParent->landmark,
+
+                'status'                => TicketStatus::OPEN,
+                'created_by'            => Auth::id(),
+                'reported_at'           => now(),
+            ]);
+
+            $childTicket->statusLog()->create([
+                'changed_by' => Auth::id(),
+                'old_status' => null,
+                'new_status' => TicketStatus::OPEN,
+            ]);
+
+            $lockedParent->remarks()->create([
+                'user_id'     => Auth::id(),
+                'body'        => "Child Ticket {$childTicket->ticket_number} was created.",
+                'is_internal' => true,
+            ]);
+
+            TicketCreated::dispatch($childTicket->load(['category', 'department']));
+
+            return $childTicket;
+        });
+    }
+
     private function generateChildTicketSubject(Ticket $parentTicket): string
     {
         return 'Endorsed: ' . $parentTicket->subject;
@@ -272,20 +334,20 @@ class TicketService
     {
         $baseNumber = $parentTicket->ticket_number;
 
-        $latestChild = Ticket::where('ticket_number', 'like', "{$baseNumber}-%")
+        $existingChildren = Ticket::where('ticket_number', 'like', "{$baseNumber}-%")
             ->lockForUpdate()
-            ->orderBy('ticket_number', 'desc')
-            ->first();
+            ->pluck('ticket_number');
 
-        $nextSequence = 1;
-
-        if ($latestChild) {
-            $parts = explode('-', $latestChild->ticket_number);
-            $lastAssignedDigits = (int) end($parts);
-            $nextSequence = $lastAssignedDigits + 1;
+        $maxSequence = 0;
+        foreach ($existingChildren as $childNumber) {
+            $parts = explode('-', $childNumber);
+            $suffix = (int) end($parts);
+            if ($suffix > $maxSequence) {
+                $maxSequence = $suffix;
+            }
         }
 
-        return sprintf("%s-%d", $baseNumber, $nextSequence);
+        return sprintf("%s-%d", $baseNumber, $maxSequence + 1);
     }
 
     private function generateSequentialNumber(): string

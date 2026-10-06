@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 
 use App\Http\Requests\Web\Cwd\StoreTicketRequest;
+use App\Http\Requests\Web\Cwd\StoreChildTicketRequest;
 
 use App\Services\Web\Cwd\TicketService;
 
@@ -67,6 +68,15 @@ class TicketController extends Controller
         return view('cwd.forms.ticketForm', $result);
     }
 
+    public function childTicketForm(Ticket $ticket)
+    {
+        Gate::authorize('createChild', $ticket);
+
+        $result = $this->ticketService->loadChildTicketForm($ticket);
+
+        return view('cwd.forms.childTicketForm', $result);
+    }
+
     // --- MUTATING METHODS ---
 
     /*
@@ -78,5 +88,15 @@ class TicketController extends Controller
 
         return redirect()->route('cwd.tickets')
             ->with('success', "Service Ticket {$ticket->ticket_number} successfully registered and queued.");
+    }
+
+    public function storeChild(StoreChildTicketRequest $request, Ticket $ticket)
+    {
+        Gate::authorize('createChild', $ticket);
+
+        $childTicket = $this->ticketService->createManualChildTicket($ticket, $request->validated());
+
+        return redirect()->route('cwd.tickets.show', $childTicket)
+            ->with('success', "Child Ticket {$childTicket->ticket_number} successfully registered under parent ticket {$ticket->ticket_number}.");
     }
 }

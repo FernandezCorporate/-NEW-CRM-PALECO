@@ -40,6 +40,13 @@
                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
                 {{ $ticket->department->dept_name ?? 'Unassigned' }}
             </span>
+
+            @can('createChild', $ticket)
+                <a href="{{ route('cwd.tickets.children.createForm', $ticket) }}" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-sm transition-colors">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                    Create Child Ticket
+                </a>
+            @endcan
         </div>
     </div>
 
@@ -203,12 +210,20 @@
                 </div>
             </div>
 
-            <!-- Endorsement Tree -->
+            <!-- Ticket Hierarchy Tree -->
             <div class="bg-white border border-gray-200 rounded-xl shadow-sm p-6 shrink-0">
-                <h2 class="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-                    <svg class="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"></path></svg>
-                    Endorsement Tree
-                </h2>
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-lg font-bold text-gray-900 flex items-center gap-2">
+                        <svg class="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"></path></svg>
+                        Ticket Hierarchy
+                    </h2>
+                    @can('createChild', $ticket)
+                        <a href="{{ route('cwd.tickets.children.createForm', $ticket) }}" class="text-xs font-semibold text-indigo-600 hover:text-indigo-800 flex items-center gap-1 transition-colors">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                            New Child
+                        </a>
+                    @endcan
+                </div>
 
                 <div class="space-y-4">
                     @if(is_null($ticket->parent_ticket_id))
@@ -216,18 +231,24 @@
                         <div>
                             <span class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">Origin Ticket</span>
                             <div class="p-3 bg-emerald-50 border-l-4 border-emerald-500 rounded-r-lg">
-                                <div class="font-bold text-emerald-800 text-sm">{{ $ticket->ticket_number }} (Current)</div>
+                                <div class="flex items-center justify-between">
+                                    <span class="font-bold text-emerald-800 text-sm">{{ $ticket->ticket_number }} (Current)</span>
+                                    <span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700">{{ $ticket->status->label() }}</span>
+                                </div>
                                 <div class="text-xs text-emerald-600 mt-0.5">{{ $ticket->department->dept_name ?? 'Unassigned' }}</div>
                             </div>
                         </div>
 
                         @if($ticket->childTickets->isNotEmpty())
                             <div>
-                                <span class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">Endorsed To (Child Tickets)</span>
+                                <span class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">Child Tickets ({{ $ticket->childTickets->count() }})</span>
                                 <div class="space-y-2 pl-4 border-l-2 border-gray-200 ml-2">
                                     @foreach($ticket->childTickets as $child)
                                         <a href="{{ route('cwd.tickets.show', $child) }}" class="block p-3 bg-gray-50 border border-gray-200 rounded-lg hover:border-indigo-300 hover:shadow-sm transition-all group">
-                                            <div class="font-bold text-indigo-600 text-sm group-hover:text-indigo-700 transition-colors">{{ $child->ticket_number }}</div>
+                                            <div class="flex items-center justify-between">
+                                                <span class="font-bold text-indigo-600 text-sm group-hover:text-indigo-700 transition-colors">{{ $child->ticket_number }}</span>
+                                                <span class="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-gray-200 text-gray-700">{{ $child->status->label() }}</span>
+                                            </div>
                                             <div class="text-xs text-gray-500 mt-0.5">{{ $child->department->dept_name ?? 'Unassigned' }}</div>
                                         </a>
                                     @endforeach
@@ -238,23 +259,47 @@
                     @else
                         <!-- This ticket is a CHILD -->
                         <div>
-                            <span class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">Origin Ticket</span>
+                            <span class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">Origin / Parent Ticket</span>
                             <a href="{{ route('cwd.tickets.show', $ticket->parentTicket) }}" class="block p-3 bg-gray-50 border border-gray-200 rounded-lg hover:border-indigo-300 hover:shadow-sm transition-all group">
-                                <div class="font-bold text-indigo-600 text-sm group-hover:text-indigo-700 transition-colors">{{ $ticket->parentTicket->ticket_number }}</div>
+                                <div class="flex items-center justify-between">
+                                    <span class="font-bold text-indigo-600 text-sm group-hover:text-indigo-700 transition-colors">{{ $ticket->parentTicket->ticket_number }}</span>
+                                    <span class="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-gray-200 text-gray-700">{{ $ticket->parentTicket->status->label() }}</span>
+                                </div>
                                 <div class="text-xs text-gray-500 mt-0.5">{{ $ticket->parentTicket->department->dept_name ?? 'Unassigned' }}</div>
                             </a>
                         </div>
                         
                         <div>
-                            <span class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">Endorsed Ticket</span>
+                            <span class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">Current Child Ticket</span>
                             <div class="p-3 bg-emerald-50 border-l-4 border-emerald-500 rounded-r-lg pl-4 ml-2">
-                                <div class="font-bold text-emerald-800 text-sm">{{ $ticket->ticket_number }} (Current)</div>
+                                <div class="flex items-center justify-between">
+                                    <span class="font-bold text-emerald-800 text-sm">{{ $ticket->ticket_number }} (Current)</span>
+                                    <span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700">{{ $ticket->status->label() }}</span>
+                                </div>
                                 <div class="text-xs text-emerald-600 mt-0.5">{{ $ticket->department->dept_name ?? 'Unassigned' }}</div>
                             </div>
                         </div>
+
+                        @if($ticket->childTickets->isNotEmpty())
+                            <div>
+                                <span class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">Sub-Child Tickets ({{ $ticket->childTickets->count() }})</span>
+                                <div class="space-y-2 pl-4 border-l-2 border-gray-200 ml-2">
+                                    @foreach($ticket->childTickets as $subChild)
+                                        <a href="{{ route('cwd.tickets.show', $subChild) }}" class="block p-3 bg-gray-50 border border-gray-200 rounded-lg hover:border-indigo-300 hover:shadow-sm transition-all group">
+                                            <div class="flex items-center justify-between">
+                                                <span class="font-bold text-indigo-600 text-sm group-hover:text-indigo-700 transition-colors">{{ $subChild->ticket_number }}</span>
+                                                <span class="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-gray-200 text-gray-700">{{ $subChild->status->label() }}</span>
+                                            </div>
+                                            <div class="text-xs text-gray-500 mt-0.5">{{ $subChild->department->dept_name ?? 'Unassigned' }}</div>
+                                        </a>
+                                    @endforeach
+                                </div>
+                            </div>
+                        @endif
                     @endif
                 </div>
             </div>
+
 
         </div>
     </div>
