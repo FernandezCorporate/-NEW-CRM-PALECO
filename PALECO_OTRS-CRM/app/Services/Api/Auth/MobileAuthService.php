@@ -2,13 +2,12 @@
 
 namespace App\Services\Api\Auth;
 
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\RateLimiter;
-use Symfony\Component\HttpFoundation\Response;
-
 use App\Enums\NonModelActions;
 use App\Events\LoginEvents;
 use App\Models\User;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\RateLimiter;
+use Symfony\Component\HttpFoundation\Response;
 
 /*
  * Encapsulates the core mobile API authentication logic.
@@ -32,42 +31,46 @@ class MobileAuthService
             return ['success' => false, 'status' => Response::HTTP_LOCKED, 'message' => $lockoutMessage];
         }
 
-        $rateLimitKey = 'api-login:' . sha1($username . '|' . $ip);
-        
+        $rateLimitKey = 'api-login:'.sha1($username.'|'.$ip);
+
         // 2. Check Rate Limiter (5th Attempt triggers lockout)
         if (RateLimiter::tooManyAttempts($rateLimitKey, 4)) {
             $message = $this->handleRateLimitExceeded($user, $rateLimitKey);
+
             return ['success' => false, 'status' => Response::HTTP_TOO_MANY_REQUESTS, 'message' => $message];
         }
 
         // 3. Attempt Authentication (Stateless comparison)
-        if (!$user || !Hash::check($credentials['password'], $user->password)) {
+        if (! $user || ! Hash::check($credentials['password'], $user->password)) {
             RateLimiter::hit($rateLimitKey, 60);
             LoginEvents::dispatch(NonModelActions::LOGIN_FAILED, null);
+
             return ['success' => false, 'status' => Response::HTTP_UNAUTHORIZED, 'message' => 'The provided credentials do not match our records.'];
         }
 
         // 4. Post-Authentication Security Checks
         RateLimiter::clear($rateLimitKey);
-        
-        if (!$user->is_active) {
+
+        if (! $user->is_active) {
             LoginEvents::dispatch(NonModelActions::LOGIN_ACCOUNT_DEACTIVATED, $user);
+
             return ['success' => false, 'status' => Response::HTTP_FORBIDDEN, 'message' => 'User account is deactivated. Please contact the system administrator.'];
         }
 
         // Role Gatekeeping: Reject web portals (Admin, CWD)
         $userRoleSlug = $user->role->slug_identifier;
         $allowedMobileRoles = ['supervisor', 'field_personnel'];
-        
-        if (!in_array($userRoleSlug, $allowedMobileRoles)) {
+
+        if (! in_array($userRoleSlug, $allowedMobileRoles)) {
             LoginEvents::dispatch(NonModelActions::LOGIN_FAILED, $user);
+
             return ['success' => false, 'status' => Response::HTTP_FORBIDDEN, 'message' => 'Access Denied: Web-based accounts cannot access the mobile application.'];
         }
 
         // 5. Finalize Session and Log Success
         $user->updateQuietly(['last_login' => now()]);
         LoginEvents::dispatch(NonModelActions::LOGIN_SUCCESS, $user);
-        
+
         // 6. Delete previous tokens (Only one active token per mobile user)
         $user->tokens()->delete();
 
@@ -79,7 +82,7 @@ class MobileAuthService
             'status' => Response::HTTP_OK,
             'token' => $token,
             // Return the raw model instance loaded with necessary relations for the Resource mapping
-            'user' => $user->load(['role', 'department'])
+            'user' => $user->load(['role', 'department']),
         ];
     }
 
@@ -90,15 +93,19 @@ class MobileAuthService
      */
     private function handleDatabaseLockout(?User $user): ?string
     {
-        if (!$user || !$user->locked_until) return null;
+        if (! $user || ! $user->locked_until) {
+            return null;
+        }
 
         if ($user->locked_until > now()) {
             LoginEvents::dispatch(NonModelActions::LOGIN_FAILED, $user);
             $minutesLeft = max(1, ceil(now()->diffInMinutes($user->locked_until)));
+
             return "This account is temporarily locked. Please wait {$minutesLeft} minute(s).";
         }
 
         $user->updateQuietly(['locked_until' => null]);
+
         return null;
     }
 
@@ -107,17 +114,17 @@ class MobileAuthService
      */
     private function handleRateLimitExceeded(?User $user, string $rateLimitKey): string
     {
-        if ($user && !$user->locked_until) {
+        if ($user && ! $user->locked_until) {
             $user->updateQuietly(['locked_until' => now()->addMinutes(15)]);
             LoginEvents::dispatch(NonModelActions::LOGIN_FAILED, $user);
             $minutesLeft = max(1, ceil(now()->diffInMinutes($user->locked_until)));
-            
+
             return "This account is temporarily locked due to multiple failed attempts. Please wait {$minutesLeft} minute(s).";
         }
-        
+
         LoginEvents::dispatch(NonModelActions::LOGIN_FAILED, $user);
         $availableAgain = RateLimiter::availableIn($rateLimitKey);
-        
+
         return "Too many attempts. Try again after {$availableAgain} seconds.";
     }
 }

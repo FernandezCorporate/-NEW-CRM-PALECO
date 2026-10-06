@@ -3,13 +3,12 @@
 namespace App\Http\Controllers\Api\Auth;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
-use Symfony\Component\HttpFoundation\Response;
-
 use App\Http\Requests\Api\Auth\MobileLoginRequest;
 use App\Http\Resources\Api\UserResource;
 use App\Services\Api\Auth\MobileAuthService;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\Response;
 
 /*
  * Manages the API-based authentication lifecycle for the mobile application.
@@ -26,22 +25,28 @@ class AuthController extends Controller
     public function login(MobileLoginRequest $request, MobileAuthService $authService): JsonResponse
     {
         $result = $authService->processLogin(
-            $request->validated(), 
+            $request->validated(),
             $request->ip()
         );
 
-        if (!$result['success']) {
+        if (! $result['success']) {
             return response()->json([
-                'message' => $result['message']
+                'success' => false,
+                'message' => $result['message'],
             ], $result['status']);
         }
 
         return response()->json([
+            'success' => true,
             'message' => 'Authentication successful.',
             'access_token' => $result['token'],
             'token_type' => 'Bearer',
-            // Dynamically wraps the user model using the standardized UserResource
-            'user' => new UserResource($result['user'])
+            'data' => [
+                'access_token' => $result['token'],
+                'token_type' => 'Bearer',
+                'user' => new UserResource($result['user']),
+            ],
+            'user' => new UserResource($result['user']),
         ], Response::HTTP_OK);
     }
 
@@ -55,7 +60,8 @@ class AuthController extends Controller
         $request->user()->currentAccessToken()->delete();
 
         return response()->json([
-            'message' => 'Successfully logged out.'
+            'success' => true,
+            'message' => 'Successfully logged out.',
         ], Response::HTTP_OK);
     }
 }

@@ -23,7 +23,7 @@ class AssignTicketRequest extends FormRequest
     public function rules(): array
     {
         $ticket = $this->route('ticket');
-        $isReassignment = !is_null($ticket->team_id);
+        $isReassignment = ! is_null($ticket->team_id);
 
         return [
             'team_id' => ['required', 'string', 'exists:teams,id'],

@@ -8,18 +8,21 @@ use App\Services\Api\Profiles\ProfileService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
+use Symfony\Component\HttpFoundation\Response;
 
-use App\Policies\UserPolicy;
-
+/*
+ * Manages profile data retrieval for authenticated users within the mobile API.
+ */
 class ProfileController extends Controller
 {
-    /*
-     * Inject the ProfileService into the controller.
-     */
-    public function __construct(protected ProfileService $profileService) {}
+    public function __construct(
+        protected ProfileService $profileService
+    ) {}
+
+    // --- VIEW METHODS ---
 
     /*
-     * Fetch the authenticated user's profile details.
+     * Fetches the authenticated user's profile details.
      */
     public function show(Request $request): JsonResponse
     {
@@ -29,8 +32,7 @@ class ProfileController extends Controller
 
         return response()->json([
             'success' => true,
-            'status'  => 200,
-            'data'    => new UserResource($userModel)
-        ]);
+            'data' => new UserResource($userModel),
+        ], Response::HTTP_OK);
     }
 }

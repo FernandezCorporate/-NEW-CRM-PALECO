@@ -13,7 +13,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
 class TeamResource extends JsonResource
 {
     /*
-     * Statically cache the team roles to prevent N+1 database queries 
+     * Statically cache the team roles to prevent N+1 database queries
      * when iterating over hundreds of nested team members.
      */
     protected static array $roles = [];
@@ -25,38 +25,38 @@ class TeamResource extends JsonResource
         }
 
         return [
-            'id'              => $this->id,
-            'team_name'       => $this->team_name,
-            'team_desc'       => $this->team_desc, 
-            'shift_start'     => $this->shift_start->format('H:i'),
-            'shift_end'       => $this->shift_end->format('H:i'),
+            'id' => $this->id,
+            'team_name' => $this->team_name,
+            'team_desc' => $this->team_desc,
+            'shift_start' => $this->shift_start->format('H:i'),
+            'shift_end' => $this->shift_end->format('H:i'),
 
             // --- LIFECYCLE STATE ---
-            'deleted_at'      => $this->deleted_at ? $this->deleted_at->format('M d, Y h:i A') : null,
-            'is_archived'     => !is_null($this->deleted_at),
-            
+            'deleted_at' => $this->deleted_at ? $this->deleted_at->format('M d, Y h:i A') : null,
+            'is_archived' => ! is_null($this->deleted_at),
+
             'updated_at_value' => $this->updated_at ? $this->updated_at : null,
-            'updated_at_display'      => $this->updated_at ? $this->updated_at->format('M d, Y h:i A') : null,
-            'members_count'   => $this->members_count ?? 0,
-            
+            'updated_at_display' => $this->updated_at ? $this->updated_at->format('M d, Y h:i A') : null,
+            'members_count' => $this->members_count ?? 0,
+
             // --- WORKLOAD STATISTICS ---
-            'ticket_stats'    => [
-                'total'       => $this->tickets_total ?? 0,
-                'open'        => $this->tickets_open ?? 0,
-                'assigned'    => $this->tickets_assigned ?? 0,
+            'ticket_stats' => [
+                'total' => $this->tickets_total ?? 0,
+                'open' => $this->tickets_open ?? 0,
+                'assigned' => $this->tickets_assigned ?? 0,
                 'in_progress' => $this->tickets_in_progress ?? 0,
-                'resolved'    => $this->tickets_resolved ?? 0,
-                'closed'      => $this->tickets_closed ?? 0,
+                'resolved' => $this->tickets_resolved ?? 0,
+                'closed' => $this->tickets_closed ?? 0,
             ],
-            
+
             // --- NESTED ROSTER ---
-            'members'         => $this->whenLoaded('members', function () {
+            'members' => $this->whenLoaded('members', function () {
                 return $this->members->map(function ($member) {
                     return [
-                        'id'           => $member->id,
-                        'full_name'    => $member->full_name,
+                        'id' => $member->id,
+                        'full_name' => $member->full_name,
                         'team_role_id' => $member->pivot->team_role_id ?? null,
-                        'role_name'    => self::$roles[$member->pivot->team_role_id] ?? 'Unknown Role',
+                        'role_name' => self::$roles[$member->pivot->team_role_id] ?? 'Unknown Role',
                     ];
                 });
             }),

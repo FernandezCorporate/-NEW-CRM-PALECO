@@ -17,21 +17,21 @@ class UserResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
-            'id'            => $this->id,
-            'username'      => $this->username,
-            'name'          => $this->full_name,
-            'first_name'    => $this->first_name,
-            'middle_name'   => $this->middle_name,
-            'last_name'     => $this->last_name,
+            'id' => $this->id,
+            'username' => $this->username,
+            'name' => $this->full_name,
+            'first_name' => $this->first_name,
+            'middle_name' => $this->middle_name,
+            'last_name' => $this->last_name,
             'full_name_ext' => $this->full_name,
-            'avatar'        => $this->avatar_initials,
-            'name_ext'      => $this->name_ext,
-            'email'         => $this->email,
-            'contact'       => $this->contact,
-            'role_slug'     => $this->role?->slug_identifier,
-            'role_name'     => $this->role?->role_name,
+            'avatar' => $this->avatar_initials,
+            'name_ext' => $this->name_ext,
+            'email' => $this->email,
+            'contact' => $this->contact,
+            'role_slug' => $this->role?->slug_identifier,
+            'role_name' => $this->role?->role_name,
             'department_id' => $this->department_id,
-            'department'    => $this->department?->dept_name,
+            'department' => $this->department?->dept_name,
         ];
     }
 }

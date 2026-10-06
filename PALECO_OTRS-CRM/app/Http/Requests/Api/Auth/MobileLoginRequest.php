@@ -15,7 +15,7 @@ class MobileLoginRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return true; 
+        return true;
     }
 
     /*
@@ -26,7 +26,7 @@ class MobileLoginRequest extends FormRequest
         return [
             'username' => ['required', 'string'],
             'password' => ['required', 'string'],
-            'device_name' => ['required', 'string'], 
+            'device_name' => ['required', 'string'],
         ];
     }
 
@@ -36,14 +36,14 @@ class MobileLoginRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'username.required'    => 'Please enter your username to continue.',
-            'username.string'      => 'The username format is invalid.',
-            
-            'password.required'    => 'Please enter your password to log in.',
-            'password.string'      => 'The password format is invalid.',
-            
+            'username.required' => 'Please enter your username to continue.',
+            'username.string' => 'The username format is invalid.',
+
+            'password.required' => 'Please enter your password to log in.',
+            'password.string' => 'The password format is invalid.',
+
             'device_name.required' => 'Device identification is required to establish a secure session.',
-            'device_name.string'   => 'The device name format is invalid.',
+            'device_name.string' => 'The device name format is invalid.',
         ];
     }
 }

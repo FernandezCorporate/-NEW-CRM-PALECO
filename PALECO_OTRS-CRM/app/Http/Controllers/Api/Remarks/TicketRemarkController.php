@@ -11,6 +11,7 @@ use App\Services\Api\Remarks\TicketRemarkService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
+use Symfony\Component\HttpFoundation\Response;
 
 /*
  * Manages the retrieval and creation of ticket remarks for the mobile application.
@@ -21,6 +22,8 @@ class TicketRemarkController extends Controller
         protected TicketRemarkService $remarkService
     ) {}
 
+    // --- VIEW METHODS ---
+
     /*
      * Retrieves the filtered timeline of remarks for a ticket.
      */
@@ -30,9 +33,11 @@ class TicketRemarkController extends Controller
 
         return response()->json([
             'success' => true,
-            'data'    => TicketRemarkResource::collection($remarks)
-        ], 200);
+            'data' => TicketRemarkResource::collection($remarks),
+        ], Response::HTTP_OK);
     }
+
+    // --- MUTATING METHODS ---
 
     /*
      * Validates and processes the creation of a new remark.
@@ -52,7 +57,7 @@ class TicketRemarkController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Remark posted successfully.',
-            'data'    => new TicketRemarkResource($remark)
-        ], 201);
+            'data' => new TicketRemarkResource($remark),
+        ], Response::HTTP_CREATED);
     }
 }

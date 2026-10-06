@@ -5,8 +5,14 @@ namespace App\Http\Resources\Api;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
+/*
+ * Transforms the TicketAccomplishment model into a standardized JSON payload including photos and verification status.
+ */
 class TicketAccomplishmentResource extends JsonResource
 {
+    /*
+     * Transform the resource into an array.
+     */
     public function toArray(Request $request): array
     {
         return [
@@ -14,24 +20,24 @@ class TicketAccomplishmentResource extends JsonResource
             'ticket_id' => $this->ticket_id,
             'remarks' => $this->remarks,
             'consumer_name' => $this->consumer_name,
-            
-            'signature_url' => $this->signature_path 
-                ? asset('storage/' . $this->signature_path) 
+
+            'signature_url' => $this->signature_path
+                ? asset('storage/'.$this->signature_path)
                 : null,
-                
+
             'photos' => $this->whenLoaded('photos', function () {
                 return $this->photos->map(function ($photo) {
                     return [
                         'id' => $photo->id,
-                        'url' => asset('storage/' . $photo->file_path),
+                        'url' => asset('storage/'.$photo->file_path),
                     ];
                 });
             }),
 
-            'status' => $this->status->value ?? $this->status, 
+            'status' => $this->status->value ?? $this->status,
             'rejection_reason' => $this->rejection_reason,
             'accomplished_at' => $this->accomplished_at?->format('M d, Y h:i A'),
-            
+
             'worker' => $this->whenLoaded('accomplishedBy', function () {
                 return [
                     'id' => $this->accomplishedBy->id,
