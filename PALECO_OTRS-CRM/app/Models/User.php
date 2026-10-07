@@ -14,19 +14,11 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Str;
-
 use Laravel\Sanctum\HasApiTokens;
-
 use Spatie\Activitylog\Models\Concerns\LogsActivity;
 use Spatie\Activitylog\Support\LogOptions;
 
-use App\Models\AccountRole;
-use App\Models\Department;
-use App\Models\Team;
-use App\Models\Ticket;
-use App\Models\TicketStatusLog;
-
-/*
+/**
  * Represents an authenticated individual within the system.
  * Manages credentials, roles, organizational assignments, and activity tracking.
  */
@@ -34,11 +26,11 @@ use App\Models\TicketStatusLog;
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
-    use HasFactory, Notifiable, HasUlids, LogsActivity, HasApiTokens;
+    use HasApiTokens, HasFactory, HasUlids, LogsActivity, Notifiable;
 
     // --- CASTS ---
 
-    /*
+    /**
      * Defines strict datatype conversions and secures the password format.
      */
     protected function casts(): array
@@ -48,13 +40,13 @@ class User extends Authenticatable
             'password' => 'hashed',
             'is_active' => 'boolean',
             'last_login' => 'datetime',
-            'locked_until' => 'datetime'
+            'locked_until' => 'datetime',
         ];
     }
 
     // --- RELATIONSHIPS ---
 
-    /*
+    /**
      * Retrieves the global access role assigned to this user account.
      */
     public function role(): BelongsTo
@@ -62,7 +54,7 @@ class User extends Authenticatable
         return $this->belongsTo(AccountRole::class, 'role_id');
     }
 
-    /*
+    /**
      * Retrieves the primary department this user operates under.
      */
     public function department(): BelongsTo
@@ -70,7 +62,7 @@ class User extends Authenticatable
         return $this->belongsTo(Department::class);
     }
 
-    /*
+    /**
      * Retrieves the operational teams this user is deployed to, including their pivot roles.
      */
     public function teams(): BelongsToMany
@@ -80,7 +72,7 @@ class User extends Authenticatable
             ->withTimestamps();
     }
 
-    /*
+    /**
      * Retrieves all service tickets originally authored by this user.
      */
     public function ticket(): HasMany
@@ -88,7 +80,7 @@ class User extends Authenticatable
         return $this->hasMany(Ticket::class);
     }
 
-    /*
+    /**
      * Retrieves all ticket status changes enacted by this user.
      */
     public function ticketStatus(): HasMany
@@ -96,19 +88,25 @@ class User extends Authenticatable
         return $this->hasMany(TicketStatusLog::class, 'changed_by');
     }
 
+    /**
+     * Retrieves all ticket endorsements submitted by this user.
+     */
     public function endorsements(): HasMany
     {
         return $this->hasMany(TicketEndorsement::class, 'created_by');
     }
 
+    /**
+     * Retrieves all ticket remarks posted by this user.
+     */
     public function ticketRemarks(): HasMany
     {
         return $this->hasMany(TicketRemark::class, 'user_id', 'id');
     }
 
-    // --- ACCESSORS ---
+    // --- ACCESSORS & MUTATORS ---
 
-    /*
+    /**
      * Concatenates and properly formats the user's full legal name.
      */
     protected function fullName(): Attribute
@@ -116,26 +114,26 @@ class User extends Authenticatable
         return Attribute::make(
             get: function () {
                 $firstName = Str::title($this->first_name);
-                $middleInitial = $this->middle_name ? strtoupper(substr($this->middle_name, 0, 1)) . '.' : '';
+                $middleInitial = $this->middle_name ? strtoupper(substr($this->middle_name, 0, 1)).'.' : '';
                 $lastName = Str::title($this->last_name);
-                $nameExt = $this->name_ext ? ', ' . strtoupper($this->name_ext) : '';
+                $nameExt = $this->name_ext ? ', '.strtoupper($this->name_ext) : '';
 
-                return implode(' ', array_filter([$firstName, $middleInitial, $lastName])) . $nameExt;
+                return implode(' ', array_filter([$firstName, $middleInitial, $lastName])).$nameExt;
             }
         );
     }
 
-    /*
+    /**
      * Extracts the first initials of the user's first and last name for frontend avatars.
      */
     protected function avatarInitials(): Attribute
     {
         return Attribute::make(
-            get: fn () => strtoupper(substr($this->first_name, 0, 1) . substr($this->last_name, 0, 1))
+            get: fn () => strtoupper(substr($this->first_name, 0, 1).substr($this->last_name, 0, 1))
         );
     }
 
-    /*
+    /**
      * Converts the boolean active state into a human-readable label.
      */
     protected function statusLabel(): Attribute
@@ -145,14 +143,16 @@ class User extends Authenticatable
         );
     }
 
-    // --- SCOPE FUNCTIONS ---
+    // --- SCOPES ---
 
-    /*
+    /**
      * Applies a multi-word search filter against names, emails, and usernames.
      */
     public function scopeSearch(Builder $query, ?string $term): Builder
     {
-        if (empty($term)) return $query;
+        if (empty($term)) {
+            return $query;
+        }
 
         $words = array_filter(explode(' ', $term));
 
@@ -161,27 +161,29 @@ class User extends Authenticatable
                 $searchWord = "%{$word}%";
                 $query->where(function ($subQuery) use ($searchWord) {
                     $subQuery->where('first_name', 'like', $searchWord)
-                          ->orWhere('middle_name', 'like', $searchWord)
-                          ->orWhere('last_name', 'like', $searchWord)
-                          ->orWhere('name_ext', 'like', $searchWord)
-                          ->orWhere('email', 'like', $searchWord)
-                          ->orWhere('username', 'like', $searchWord);
+                        ->orWhere('middle_name', 'like', $searchWord)
+                        ->orWhere('last_name', 'like', $searchWord)
+                        ->orWhere('name_ext', 'like', $searchWord)
+                        ->orWhere('email', 'like', $searchWord)
+                        ->orWhere('username', 'like', $searchWord);
                 });
             }
         });
     }
 
-    /*
+    /**
      * Applies a filter to restrict users based on their assigned role identifier.
      */
     public function scopeFilter(Builder $query, ?string $filter): Builder
     {
-        if (empty($filter) || $filter === 'all') return $query;
+        if (empty($filter) || $filter === 'all') {
+            return $query;
+        }
 
         return $query->whereHas('role', fn ($q) => $q->where('slug_identifier', $filter));
     }
 
-    /*
+    /**
      * Applies sorting rules to the query based on chronology or alphabetical names.
      */
     public function scopeSort(Builder $query, ?string $sort): Builder
@@ -196,25 +198,25 @@ class User extends Authenticatable
         };
     }
 
-    // --- ACTIVITY LOG ---
+    // --- ACTIVITY LOG CONFIGURATION ---
 
-    /*
+    /**
      * Configures the Spatie Activitylog options for this model.
-     * Records critical changes to account details and captures activation states.
      */
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
             ->useLogName('Users')
             ->logOnly([
-                'username', 'first_name', 'middle_name', 'last_name', 'name_ext', 
-                'email', 'contact', 'role_id', 'department_id', 'is_active'
+                'username', 'first_name', 'middle_name', 'last_name', 'name_ext',
+                'email', 'contact', 'role_id', 'department_id', 'is_active',
             ])
             ->logOnlyDirty()
-            ->setDescriptionForEvent(function(string $eventName) {
+            ->setDescriptionForEvent(function (string $eventName) {
                 if ($eventName === 'updated' && $this->wasChanged('is_active')) {
                     return $this->is_active ? "{$this->username} account has been reactivated" : "{$this->username} account has been deactivated";
                 }
+
                 return "{$this->username} account has been {$eventName}";
             });
     }

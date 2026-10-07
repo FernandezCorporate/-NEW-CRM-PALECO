@@ -8,10 +8,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-use App\Models\User;
-use App\Models\Ticket;
-
-/*
+/**
  * Represents a single chronological communication update on a ticket.
  */
 #[Fillable(['ticket_id', 'user_id', 'body', 'is_internal'])]
@@ -23,26 +20,31 @@ class TicketRemark extends Model
 
     // --- CASTS ---
 
-    /*
+    /**
      * Defines the data type conversions for specific attributes.
      */
     protected function casts(): array
     {
         return [
             'is_internal' => 'boolean',
-            'created_at'  => 'datetime',
-            'updated_at'  => 'datetime',
+            'created_at' => 'datetime',
+            'updated_at' => 'datetime',
         ];
     }
 
     // --- RELATIONSHIPS ---
 
+    /**
+     * The ticket this remark is attached to.
+     */
     public function ticket(): BelongsTo
     {
-        // Assumes your tickets table still uses system_id as its primary key
         return $this->belongsTo(Ticket::class, 'ticket_id', 'system_id');
     }
 
+    /**
+     * The user author who created the remark.
+     */
     public function author(): BelongsTo
     {
         return $this->belongsTo(User::class, 'user_id', 'id');

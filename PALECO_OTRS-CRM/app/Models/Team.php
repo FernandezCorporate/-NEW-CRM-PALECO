@@ -10,23 +10,23 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
-
 use Spatie\Activitylog\Models\Concerns\LogsActivity;
 use Spatie\Activitylog\Support\LogOptions;
 
-use App\Models\Department;
-use App\Models\Ticket;
-use App\Models\User;
-
-/*
+/**
  * Represents an operational unit or field team assigned to resolve tickets.
  * Teams exist within a department and contain multiple assigned users.
  */
 #[Fillable(['team_name', 'team_desc', 'shift_start', 'shift_end', 'department_id'])]
 class Team extends Model
 {
-    use HasUlids, SoftDeletes, LogsActivity;
+    use HasUlids, LogsActivity, SoftDeletes;
 
+    // --- CASTS ---
+
+    /**
+     * Defines attribute type casting.
+     */
     protected function casts(): array
     {
         return [
@@ -35,11 +35,19 @@ class Team extends Model
         ];
     }
 
+    // --- RELATIONSHIPS ---
+
+    /**
+     * The department this team belongs to.
+     */
     public function department(): BelongsTo
     {
         return $this->belongsTo(Department::class);
     }
 
+    /**
+     * The user members assigned to this team.
+     */
     public function members(): BelongsToMany
     {
         return $this->belongsToMany(User::class, 'team_members')
@@ -47,36 +55,55 @@ class Team extends Model
             ->withTimestamps();
     }
 
+    /**
+     * The service tickets assigned to this team.
+     */
     public function ticket(): HasMany
     {
         return $this->hasMany(Ticket::class);
     }
 
-    // --- STANDARD WEB SCOPE FUNCTIONS ---
+    // --- SCOPES (WEB) ---
 
+    /**
+     * Web scope: Search teams across words in name, description, and shifts.
+     */
     public function scopeSearch(Builder $query, ?string $term): Builder
     {
-        if (empty($term)) return $query;
+        if (empty($term)) {
+            return $query;
+        }
+
         $words = array_filter(explode(' ', $term));
+
         return $query->where(function ($query) use ($words) {
             foreach ($words as $word) {
                 $searchWord = "%{$word}%";
                 $query->where(function ($subQuery) use ($searchWord) {
                     $subQuery->where('team_name', 'like', $searchWord)
-                          ->orWhere('team_desc', 'like', $searchWord)
-                          ->orWhere('shift_start', 'like', $searchWord)
-                          ->orWhere('shift_end', 'like', $searchWord);
+                        ->orWhere('team_desc', 'like', $searchWord)
+                        ->orWhere('shift_start', 'like', $searchWord)
+                        ->orWhere('shift_end', 'like', $searchWord);
                 });
             }
         });
     }
 
+    /**
+     * Web scope: Filter teams by department ID.
+     */
     public function scopeFilter(Builder $query, ?string $filter): Builder
     {
-        if (empty($filter) || $filter === 'all') return $query;
+        if (empty($filter) || $filter === 'all') {
+            return $query;
+        }
+
         return $query->where('department_id', $filter);
     }
 
+    /**
+     * Web scope: Sort teams.
+     */
     public function scopeSort(Builder $query, ?string $sort): Builder
     {
         return match ($sort) {
@@ -87,38 +114,48 @@ class Team extends Model
         };
     }
 
-    // --- MOBILE API SCOPE FUNCTIONS ---
+    // --- SCOPES (API) ---
 
+    /**
+     * API scope: Search teams across words.
+     */
     public function scopeApiSearch(Builder $query, ?string $term): Builder
     {
-        if (empty($term)) return $query;
+        if (empty($term)) {
+            return $query;
+        }
+
         $words = array_filter(explode(' ', $term));
+
         return $query->where(function ($query) use ($words) {
             foreach ($words as $word) {
                 $searchWord = "%{$word}%";
                 $query->where(function ($subQuery) use ($searchWord) {
                     $subQuery->where('team_name', 'like', $searchWord)
-                          ->orWhere('team_desc', 'like', $searchWord)
-                          ->orWhere('shift_start', 'like', $searchWord)
-                          ->orWhere('shift_end', 'like', $searchWord);
+                        ->orWhere('team_desc', 'like', $searchWord)
+                        ->orWhere('shift_start', 'like', $searchWord)
+                        ->orWhere('shift_end', 'like', $searchWord);
                 });
             }
         });
     }
 
-    /*
-     * Dedicated API scope to filter teams by their lifecycle status.
+    /**
+     * API scope: Dedicated scope to filter teams by their lifecycle status.
      */
     public function scopeApiFilterStatus(Builder $query, ?string $status): Builder
     {
         return match ($status) {
-            'archive', 'archived' => $query->onlyTrashed(), // Supports ?filter=archive
-            'all'                 => $query->withTrashed(),   
-            'active'              => $query->whereNull('deleted_at'),
-            default               => $query->whereNull('deleted_at'), // Safely defaults to active
+            'archive', 'archived' => $query->onlyTrashed(),
+            'all' => $query->withTrashed(),
+            'active' => $query->whereNull('deleted_at'),
+            default => $query->whereNull('deleted_at'),
         };
     }
 
+    /**
+     * API scope: Sort teams.
+     */
     public function scopeApiSort(Builder $query, ?string $sort): Builder
     {
         return match ($sort) {
@@ -129,24 +166,28 @@ class Team extends Model
             'shift_startDESC' => $query->orderBy('shift_start', 'desc'),
             'shift_endASC' => $query->orderBy('shift_end', 'asc'),
             'shift_endDESC' => $query->orderBy('shift_end', 'desc'),
-            default => $query->latest(), 
+            default => $query->latest(),
         };
     }
 
-    // --- ACTIVITY LOG ---
+    // --- ACTIVITY LOG CONFIGURATION ---
 
+    /**
+     * Configures the Spatie Activitylog options for this model.
+     */
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
             ->useLogName('Teams')
             ->logOnly(['team_name', 'team_desc', 'shift_start', 'shift_end', 'department_id'])
             ->logOnlyDirty()
-            ->setDescriptionForEvent(function(string $eventName) {
-                $action = match($eventName) {
-                    'deleted'  => $this->isForceDeleting() ? 'permanently deleted' : 'archived',
+            ->setDescriptionForEvent(function (string $eventName) {
+                $action = match ($eventName) {
+                    'deleted' => $this->isForceDeleting() ? 'permanently deleted' : 'archived',
                     'restored' => 'restored',
-                    default    => $eventName,
+                    default => $eventName,
                 };
+
                 return "{$this->team_name} has been {$action}";
             });
     }

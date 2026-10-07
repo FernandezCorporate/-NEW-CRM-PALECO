@@ -4,13 +4,13 @@ namespace App\Http\Requests\Web\Auth;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-/*
+/**
  * Validates incoming authentication attempts.
  * Ensures the basic required fields for login are present and sanitized.
  */
 class LoginRequest extends FormRequest
 {
-    /*
+    /**
      * Determine if the user is authorized to make this request.
      */
     public function authorize(): bool
@@ -18,8 +18,8 @@ class LoginRequest extends FormRequest
         return true;
     }
 
-    /*
-     * Sanitizes the username input by trimming whitespace before validation.
+    /**
+     * Prepare the data for validation.
      */
     protected function prepareForValidation(): void
     {
@@ -28,8 +28,8 @@ class LoginRequest extends FormRequest
         ]);
     }
 
-    /*
-     * Defines the strict validation rules for the login form.
+    /**
+     * Get the validation rules that apply to the request.
      */
     public function rules(): array
     {
@@ -39,17 +39,17 @@ class LoginRequest extends FormRequest
         ];
     }
 
-    /*
-     * Provides user-friendly error messages for authentication inputs.
+    /**
+     * Get custom messages for validator errors.
      */
     public function messages(): array
     {
         return [
             'username.required' => 'Please enter your username to continue.',
-            'username.string'   => 'The username format is invalid.',
-            
+            'username.string' => 'The username format is invalid.',
+
             'password.required' => 'Please enter your password to log in.',
-            'password.string'   => 'The password format is invalid.',
+            'password.string' => 'The password format is invalid.',
         ];
     }
 }

@@ -2,9 +2,8 @@
 
 namespace App\Enums;
 
-/*
+/**
  * Defines acceptable inputs for the complaint_source field in the tickets table.
- * Avoids hard-coding options for frontend dropdown menus.
  */
 enum ComplaintSources: string
 {
@@ -14,18 +13,17 @@ enum ComplaintSources: string
     case ONLINE = 'online_platforms';
     case EMAIL = 'email';
 
-    /*
+    /**
      * Returns a properly formatted string matching the enum instance.
-     * Called in Blade views to display user-friendly labels.
      */
-    public function label() 
+    public function label(): string
     {
-        return match($this) {
+        return match ($this) {
             self::PHONE_CALL => 'Phone call',
             self::WALK_IN => 'Walk-in',
             self::SMS => 'SMS or Text message',
             self::ONLINE => 'Online platforms (Facebook, messenger, etc.)',
             self::EMAIL => 'Email',
-        };  
+        };
     }
 }

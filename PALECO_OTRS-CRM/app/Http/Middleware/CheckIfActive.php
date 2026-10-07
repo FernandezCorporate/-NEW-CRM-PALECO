@@ -5,21 +5,24 @@ namespace App\Http\Middleware;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Symfony\Component\HttpFoundation\Response;
 
+/**
+ * Middleware to verify whether an authenticated user account remains active.
+ * Immediately terminates the session if an account has been deactivated.
+ */
 class CheckIfActive
 {
-    public function handle(Request $request, Closure $next)
+    /**
+     * Handle an incoming request.
+     */
+    public function handle(Request $request, Closure $next): Response
     {
-        // 1. Check if the user is logged in
-        // 2. Check if their account was flipped to inactive
-        if (Auth::check() && !Auth::user()->is_active) {
-            
-            // Instantly destroy their web session
+        if (Auth::check() && ! Auth::user()->is_active) {
             Auth::logout();
             $request->session()->invalidate();
             $request->session()->regenerateToken();
 
-            // Kick them back to the login screen with a message
             return redirect()->route('portal')->with('error', 'Your account has been deactivated. Please contact the administrator.');
         }
 

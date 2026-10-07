@@ -2,6 +2,9 @@
 
 namespace App\Models;
 
+use App\Enums\ComplaintSources;
+use App\Enums\TicketStatus;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Model;
@@ -9,31 +12,16 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
-
 use Spatie\Activitylog\Models\Concerns\LogsActivity;
 use Spatie\Activitylog\Support\LogOptions;
 
-use App\Enums\ComplaintSources;
-use App\Enums\TicketStatus;
-
-use App\Models\Department;
-use App\Models\TicketCategory;
-use App\Models\TicketStatusLog;
-use App\Models\User;
-use App\Models\TicketRemark;
-use App\Models\Consumer;
-use App\Models\TicketEndorsement;
-use App\Models\TicketAssignment;
-use App\Models\TicketAccomplishment;
-use App\Models\Team;
-
-/*
+/**
  * Represents a core service ticket or complaint logged into the system.
  * Tracks location, categorization, assignments, and resolution states.
  */
 class Ticket extends Model
 {
-    use LogsActivity, SoftDeletes, HasUlids;
+    use HasUlids, LogsActivity, SoftDeletes;
 
     protected $primaryKey = 'system_id';
 
@@ -63,6 +51,9 @@ class Ticket extends Model
 
     // --- CASTS ---
 
+    /**
+     * Defines attribute type casting.
+     */
     protected function casts(): array
     {
         return [
@@ -78,101 +69,150 @@ class Ticket extends Model
 
     // --- RELATIONSHIPS ---
 
+    /**
+     * The department currently assigned to resolve this ticket.
+     */
     public function department(): BelongsTo
     {
         return $this->belongsTo(Department::class, 'department_id');
     }
 
+    /**
+     * The field team assigned to this ticket.
+     */
     public function team(): BelongsTo
     {
         return $this->belongsTo(Team::class, 'team_id');
     }
 
+    /**
+     * The category classification of the complaint.
+     */
     public function category(): BelongsTo
     {
         return $this->belongsTo(TicketCategory::class, 'category_id');
     }
 
+    /**
+     * Historical audit log of status changes for this ticket.
+     */
     public function statusLog(): HasMany
     {
         return $this->hasMany(TicketStatusLog::class, 'ticket_id', 'system_id');
     }
 
+    /**
+     * The user who logged or created this ticket.
+     */
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by', 'id');
     }
 
+    /**
+     * Child tickets spawned under this parent ticket.
+     */
     public function childTickets(): HasMany
     {
         return $this->hasMany(Ticket::class, 'parent_ticket_id', 'system_id');
     }
 
+    /**
+     * The parent ticket if this is an endorsed child ticket.
+     */
     public function parentTicket(): BelongsTo
     {
         return $this->belongsTo(Ticket::class, 'parent_ticket_id', 'system_id');
     }
 
+    /**
+     * Field team assignments recorded for this ticket.
+     */
     public function assignments(): HasMany
     {
         return $this->hasMany(TicketAssignment::class, 'ticket_id', 'system_id');
     }
 
+    /**
+     * Accomplishment reports submitted for this ticket.
+     */
     public function accomplishments(): HasMany
     {
         return $this->hasMany(TicketAccomplishment::class, 'ticket_id', 'system_id');
     }
 
+    /**
+     * Endorsement transfer requests initiated for this ticket.
+     */
     public function endorsements(): HasMany
     {
         return $this->hasMany(TicketEndorsement::class, 'ticket_id', 'system_id');
     }
 
+    /**
+     * Timeline communication remarks added to this ticket.
+     */
     public function remarks(): HasMany
     {
         return $this->hasMany(TicketRemark::class, 'ticket_id', 'system_id');
     }
 
+    /**
+     * The consumer linked to this ticket (if applicable).
+     */
     public function consumer(): BelongsTo
     {
         return $this->belongsTo(Consumer::class, 'consumer_id', 'id');
     }
 
-    // --- ACCESSORS ---
+    // --- ACCESSORS & MUTATORS ---
 
+    /**
+     * Dynamically computed ticket subject header combining category and location.
+     */
     protected function subject(): Attribute
     {
         return Attribute::make(
             get: function () {
-                $purok = $this->purok ? Str::upper($this->purok) . ' ' : '';
-                $street = $this->street ? Str::upper($this->street) . ' ' : '';
+                $purok = $this->purok ? Str::upper($this->purok).' ' : '';
+                $street = $this->street ? Str::upper($this->street).' ' : '';
                 $barangay = Str::upper($this->barangay);
-                
+
                 $completeAddress = trim(implode('', [$purok, $street, $barangay]));
                 $categoryName = $this->category ? $this->category->category_name : $this->other_category_name;
 
-                return ($categoryName ?? 'UNSPECIFIED') . ' @ ' . ($completeAddress ?? 'UNKNOWN');
+                return ($categoryName ?? 'UNSPECIFIED').' @ '.($completeAddress ?? 'UNKNOWN');
             }
         );
     }
 
-    // --- SCOPE FUNCTIONS ---
+    // --- SCOPES (WEB) ---
 
-    public function scopeSearch($query, $search)
+    /**
+     * Web scope: Search tickets by ticket number, description, barangay, or custom category.
+     */
+    public function scopeSearch(Builder $query, ?string $search): Builder
     {
-        if (empty($search)) return $query;
+        if (empty($search)) {
+            return $query;
+        }
 
         return $query->where(function ($q) use ($search) {
             $q->where('ticket_number', 'like', "%{$search}%")
-              ->orWhere('complaint_description', 'like', "%{$search}%")
-              ->orWhere('barangay', 'like', "%{$search}%")
-              ->orWhere('other_category_name', 'like', "%{$search}%");
+                ->orWhere('complaint_description', 'like', "%{$search}%")
+                ->orWhere('barangay', 'like', "%{$search}%")
+                ->orWhere('other_category_name', 'like', "%{$search}%");
         });
     }
 
-    public function scopeFilterByCategory($query, $filter)
+    /**
+     * Web scope: Filter tickets by category ID or custom 'other' classification.
+     */
+    public function scopeFilterByCategory(Builder $query, ?string $filter): Builder
     {
-        if (empty($filter) || $filter === 'all') return $query;
+        if (empty($filter) || $filter === 'all') {
+            return $query;
+        }
 
         if ($filter === 'other') {
             return $query->where('other_category', true);
@@ -181,14 +221,17 @@ class Ticket extends Model
         return $query->where('category_id', $filter);
     }
 
-    public function scopeFilterByStatus($query, $status)
+    /**
+     * Web scope: Filter tickets by status enum value.
+     */
+    public function scopeFilterByStatus(Builder $query, ?string $status): Builder
     {
         if (empty($status)) {
             return $query;
         }
 
         $validStatuses = array_column(TicketStatus::cases(), 'value');
-        
+
         if (in_array($status, $validStatuses)) {
             return $query->where('status', $status);
         }
@@ -196,7 +239,10 @@ class Ticket extends Model
         return $query;
     }
 
-    public function scopeSort($query, $sort)
+    /**
+     * Web scope: Sort tickets by date or status.
+     */
+    public function scopeSort(Builder $query, ?string $sort): Builder
     {
         return match ($sort) {
             'oldest' => $query->oldest(),
@@ -205,29 +251,39 @@ class Ticket extends Model
         };
     }
 
-    // --- MOBILE API SCOPE FUNCTIONS ---
+    // --- SCOPES (API) ---
 
-    public function scopeApiSearch($query, $search)
+    /**
+     * API scope: Multi-field search for mobile endpoints.
+     */
+    public function scopeApiSearch(Builder $query, ?string $search): Builder
     {
-        if (empty($search)) return $query;
+        if (empty($search)) {
+            return $query;
+        }
 
         return $query->where(function ($q) use ($search) {
             $q->where('ticket_number', 'like', "%{$search}%")
-              ->orWhere('complaint_source', 'like', "%{$search}%")
-              ->orWhere('purok', 'like', "%{$search}%")
-              ->orWhere('street', 'like', "%{$search}%")
-              ->orWhere('barangay', 'like', "%{$search}%")
-              ->orWhere('status', 'like', "%{$search}%")
-              ->orWhere('other_category_name', 'like', "%{$search}%")
-              ->orWhereHas('category', function ($catQuery) use ($search) {
-                  $catQuery->where('category_name', 'like', "%{$search}%");
-              });
+                ->orWhere('complaint_source', 'like', "%{$search}%")
+                ->orWhere('purok', 'like', "%{$search}%")
+                ->orWhere('street', 'like', "%{$search}%")
+                ->orWhere('barangay', 'like', "%{$search}%")
+                ->orWhere('status', 'like', "%{$search}%")
+                ->orWhere('other_category_name', 'like', "%{$search}%")
+                ->orWhereHas('category', function ($catQuery) use ($search) {
+                    $catQuery->where('category_name', 'like', "%{$search}%");
+                });
         });
     }
 
-    public function scopeApiFilterByCategoryName($query, $filter)
+    /**
+     * API scope: Filter tickets by category name or 'other'.
+     */
+    public function scopeApiFilterByCategoryName(Builder $query, ?string $filter): Builder
     {
-        if (empty($filter)) return $query;
+        if (empty($filter)) {
+            return $query;
+        }
 
         if (strtolower($filter) === 'other') {
             return $query->where('other_category', true);
@@ -238,25 +294,36 @@ class Ticket extends Model
         });
     }
 
-    public function scopeApiFilterByStatus($query, $status)
+    /**
+     * API scope: Filter tickets by status.
+     */
+    public function scopeApiFilterByStatus(Builder $query, ?string $status): Builder
     {
-        if (empty($status)) return $query;
+        if (empty($status)) {
+            return $query;
+        }
 
         return $query->where('status', $status);
     }
 
-    public function scopeApiSort($query, $sort)
+    /**
+     * API scope: Sort tickets.
+     */
+    public function scopeApiSort(Builder $query, ?string $sort): Builder
     {
         return match ($sort) {
-            'ticket_number_asc'  => $query->orderBy('ticket_number', 'asc'),
+            'ticket_number_asc' => $query->orderBy('ticket_number', 'asc'),
             'ticket_number_desc' => $query->orderBy('ticket_number', 'desc'),
-            'oldest'             => $query->oldest('created_at'),
-            default              => $query->latest('created_at'),
+            'oldest' => $query->oldest('created_at'),
+            default => $query->latest('created_at'),
         };
     }
 
-    // --- ACTIVITY LOG ---
+    // --- ACTIVITY LOG CONFIGURATION ---
 
+    /**
+     * Configures the Spatie Activitylog options for this model.
+     */
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
@@ -276,28 +343,26 @@ class Ticket extends Model
                 'closed_at',
             ])
             ->logOnlyDirty()
-            ->setDescriptionForEvent(function(string $eventName) {
-                
+            ->setDescriptionForEvent(function (string $eventName) {
+
                 if ($eventName === 'updated' && $this->isDirty('team_id')) {
                     $action = $this->getOriginal('team_id') === null ? 'assigned' : 'reassigned';
-                    // Do not log team changes if the ticket is being endorsed/unassigned
                     if ($this->status !== TicketStatus::PENDING_ENDORSEMENT) {
                         return "Ticket {$this->ticket_number} has been {$action} to a field team.";
                     }
                 }
 
                 if ($eventName === 'updated' && $this->isDirty('status')) {
-                    
-                    // 1. Check for Rejections first (Intercepts reverting to ANY previous state)
+
                     if ($this->getOriginal('status') === TicketStatus::PENDING_ENDORSEMENT && $this->status !== TicketStatus::ENDORSED) {
                         return "The endorsement request was rejected. Ticket {$this->ticket_number} has been returned to its previous state.";
                     }
 
-                    // 2. Then proceed with normal state-specific logs
                     if ($this->status === TicketStatus::IN_PROGRESS) {
                         if ($this->getOriginal('status') === TicketStatus::RESOLVED) {
                             return "The accomplishment report was rejected. Ticket {$this->ticket_number} has been returned to In Progress.";
                         }
+
                         return "Work has started on Ticket {$this->ticket_number}.";
                     }
 
@@ -318,14 +383,14 @@ class Ticket extends Model
                     }
                 }
 
-                $action = match($eventName) {
-                    'created'  => 'created',
-                    'updated'  => 'modified',
-                    'deleted'  => $this->isForceDeleting() ? 'permanently deleted' : 'archived',
+                $action = match ($eventName) {
+                    'created' => 'created',
+                    'updated' => 'modified',
+                    'deleted' => $this->isForceDeleting() ? 'permanently deleted' : 'archived',
                     'restored' => 'restored',
-                    default    => $eventName,
+                    default => $eventName,
                 };
-                
+
                 return "Ticket {$this->ticket_number} has been {$action}.";
             });
     }

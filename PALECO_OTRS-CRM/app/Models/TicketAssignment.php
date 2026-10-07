@@ -5,21 +5,25 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-/*
+/**
  * Tracks the historical routing of a ticket to specific field teams.
  * Essential for calculating Service Level Agreements (SLAs) and turnaround times.
  */
 class TicketAssignment extends Model
 {
-
     protected $fillable = [
         'ticket_id',
         'team_id',
         'assigned_by',
         'reason',
-        'unassigned_at'
+        'unassigned_at',
     ];
 
+    // --- CASTS ---
+
+    /**
+     * Defines attribute type casting.
+     */
     protected function casts(): array
     {
         return [
@@ -29,7 +33,7 @@ class TicketAssignment extends Model
 
     // --- RELATIONSHIPS ---
 
-    /*
+    /**
      * Retrieves the ticket associated with this assignment log.
      */
     public function ticket(): BelongsTo
@@ -37,7 +41,7 @@ class TicketAssignment extends Model
         return $this->belongsTo(Ticket::class, 'ticket_id', 'system_id');
     }
 
-    /*
+    /**
      * Retrieves the field team that was assigned the task.
      */
     public function team(): BelongsTo
@@ -45,8 +49,8 @@ class TicketAssignment extends Model
         return $this->belongsTo(Team::class, 'team_id');
     }
 
-    /*
-     * Retrieves the CWD Officer who dispatched the ticket.
+    /**
+     * Retrieves the user who dispatched the ticket.
      */
     public function assigner(): BelongsTo
     {

@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-/*
+/**
  * Defines the specific roles users can hold within a Team (e.g., Leader, Member).
  * Stored in the pivot table when a User is assigned to a Team.
  */

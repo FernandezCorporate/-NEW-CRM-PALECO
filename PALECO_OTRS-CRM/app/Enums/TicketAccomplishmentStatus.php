@@ -2,18 +2,24 @@
 
 namespace App\Enums;
 
+/**
+ * Defines the verification review states of a ticket accomplishment report.
+ */
 enum TicketAccomplishmentStatus: string
 {
-    case PENDING = 'pending';   // The accomplishment is awaiting Foreman review.
-    case APPROVED = 'approved'; // The accomplishment has been verified and accepted.
-    case REJECTED = 'rejected'; // The accomplishment was rejected by the Foreman.
+    case PENDING = 'pending';
+    case APPROVED = 'approved';
+    case REJECTED = 'rejected';
 
+    /**
+     * Returns the human-readable text presentation of the accomplishment status.
+     */
     public function label(): string
     {
-        return match($this) {
+        return match ($this) {
             self::PENDING => 'Pending',
             self::APPROVED => 'Approved',
-            self::REJECTED => 'Rejected'
+            self::REJECTED => 'Rejected',
         };
     }
 }

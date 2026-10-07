@@ -2,34 +2,33 @@
 
 namespace App\Enums;
 
-/*
+/**
  * Manages the complete lifecycle stages of service tickets.
  * Maps operational states from creation to final supervisor verification.
  */
 enum TicketStatus: string
 {
-    case OPEN = 'open';               // CWD created it, department assigned.
-    case ASSIGNED = 'assigned';       // Foreman assigned it to a specific field team.
-    case IN_PROGRESS = 'in_progress'; // Field personnel accepted it and are working.
-    case PENDING_ENDORSEMENT = 'pending_endorsement'; // Field personnel requested endorsement to CWD.
-    case ENDORSED = 'endorsed';     // CWD has endorsed the ticket.
-    case RESOLVED = 'resolved';       // Field personnel submitted proof of completion.
-    case CLOSED = 'closed';           // Foreman verified the proof and closed the ticket.
+    case OPEN = 'open';
+    case ASSIGNED = 'assigned';
+    case IN_PROGRESS = 'in_progress';
+    case PENDING_ENDORSEMENT = 'pending_endorsement';
+    case ENDORSED = 'endorsed';
+    case RESOLVED = 'resolved';
+    case CLOSED = 'closed';
 
-    /*
+    /**
      * Returns the human-readable text presentation of the status.
-     * Used on administrative data tables and worker mobile interfaces.
      */
     public function label(): string
     {
-        return match($this) {
+        return match ($this) {
             self::OPEN => 'Open',
             self::ASSIGNED => 'Assigned',
             self::IN_PROGRESS => 'In Progress',
             self::PENDING_ENDORSEMENT => 'Pending Endorsement',
             self::ENDORSED => 'Endorsed',
             self::RESOLVED => 'Resolved',
-            self::CLOSED => 'Closed'
+            self::CLOSED => 'Closed',
         };
     }
 }
