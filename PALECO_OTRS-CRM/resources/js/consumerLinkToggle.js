@@ -6,21 +6,26 @@ document.addEventListener('DOMContentLoaded', function() {
     const previewBox = document.getElementById('consumer_preview');
 
     if (linkCheckbox && accountContainer && accountInput) {
-        if (linkCheckbox.checked) accountInput.setAttribute('required', 'required');
-
-        linkCheckbox.addEventListener('change', function() {
-            if (this.checked) {
+        const toggleConsumerFields = (shouldFocus = false) => {
+            if (linkCheckbox.checked) {
                 accountContainer.classList.remove('hidden');
                 accountContainer.classList.add('block');
                 accountInput.setAttribute('required', 'required');
-                accountInput.focus();
+                if (shouldFocus) accountInput.focus();
             } else {
                 accountContainer.classList.remove('block');
                 accountContainer.classList.add('hidden');
                 accountInput.removeAttribute('required');
                 accountInput.value = ''; 
-                previewBox.classList.add('hidden');
+                previewBox?.classList.add('hidden');
             }
+        };
+
+        // Sync initial state on load
+        toggleConsumerFields(false);
+
+        linkCheckbox.addEventListener('change', function() {
+            toggleConsumerFields(true);
         });
 
         if (verifyBtn) {

@@ -39,14 +39,14 @@
             <div class="flex items-center gap-2">
                 
                 <!-- Status Filter (Active/Archived) -->
-                <select name="status" class="ts-filter-dropdown hidden">
+                <select name="status" class="ts-filter-dropdown border border-slate-300 rounded-lg text-sm bg-white px-3 py-2 text-slate-700">
                     <option value="active" {{ request('status') !== 'archived' ? 'selected' : '' }}>Active Teams</option>
                     <option value="archived" {{ request('status') === 'archived' ? 'selected' : '' }}>Archived Teams</option>
                 </select>
 
                 <!-- Department Filter (Click-only version) -->
                 <div class="w-56 text-sm"> 
-                    <select name="filter" class="ts-filter-dropdown hidden">
+                    <select name="filter" class="ts-filter-dropdown border border-slate-300 rounded-lg text-sm bg-white px-3 py-2 text-slate-700">
                         <option value="all" {{ request('filter') === 'all' || empty(request('filter')) ? 'selected' : '' }}>All Departments</option>
                         @foreach($departments as $id => $name)
                             <option value="{{ $id }}" {{ request('filter') == $id ? 'selected' : '' }}>{{ $name }}</option>
@@ -55,7 +55,7 @@
                 </div>
 
                 <!-- Sort Dropdown -->
-                <select name="sort" class="ts-filter-dropdown hidden">
+                <select name="sort" class="ts-filter-dropdown border border-slate-300 rounded-lg text-sm bg-white px-3 py-2 text-slate-700">
                     <option value="newest" {{ request('sort') === 'newest' ? 'selected' : '' }}>Sort by Newest</option>
                     <option value="oldest" {{ request('sort') === 'oldest' ? 'selected' : '' }}>Sort by Oldest</option>
                     <option value="team_nameASC" {{ request('sort') === 'team_nameASC' ? 'selected' : '' }}>Name (A-Z)</option>

@@ -19,14 +19,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     deptSelect.value = "";
                     deptSelect.disabled = true;
                 }
-                deptMessage.classList.remove('hidden');
+                deptMessage?.classList.remove('hidden');
             } else {
                 if (tsInstance) {
                     tsInstance.enable();
                 } else {
                     deptSelect.disabled = false;
                 }
-                deptMessage.classList.add('hidden');
+                deptMessage?.classList.add('hidden');
             }
         };
 

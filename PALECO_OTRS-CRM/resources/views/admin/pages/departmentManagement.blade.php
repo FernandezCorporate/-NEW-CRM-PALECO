@@ -41,12 +41,12 @@
 
             <!-- Filter and Sort Group -->
             <div class="flex items-center gap-2">
-                <select name="filter" class="ts-filter-dropdown hidden">
+                <select name="filter" class="ts-filter-dropdown border border-slate-300 rounded-lg text-sm bg-white px-3 py-2 text-slate-700">
                     <option value="active" {{ request('filter') === 'active' ? 'selected' : '' }}>Active Departments</option>
                     <option value="archived" {{ request('filter') === 'archived' ? 'selected' : '' }}>Archived Departments</option>
                 </select>
 
-                <select name="sort" class="ts-filter-dropdown hidden">
+                <select name="sort" class="ts-filter-dropdown border border-slate-300 rounded-lg text-sm bg-white px-3 py-2 text-slate-700">
                     <option value="newest" {{ request('sort') === 'newest' ? 'selected' : '' }}>Sort by Newest</option>
                     <option value="oldest" {{ request('sort') === 'oldest' ? 'selected' : '' }}>Sort by Oldest</option>
                     <option value="dept_nameASC" {{ request('sort') === 'dept_nameASC' ? 'selected' : '' }}>Name (A-Z)</option>

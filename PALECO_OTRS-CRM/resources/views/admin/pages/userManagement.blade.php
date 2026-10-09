@@ -54,7 +54,7 @@
         <div class="flex items-center gap-2">
             <input type="hidden" name="filter" value="{{ request('filter', 'all') }}">
 
-            <select name="sort" class="ts-filter-dropdown hidden">
+            <select name="sort" class="ts-filter-dropdown border border-slate-300 rounded-lg text-sm bg-white px-3 py-2 text-slate-700">
                 <option value="newest" {{ request('sort') === 'newest' ? 'selected' : '' }}>Sort by Newest</option>
                 <option value="oldest" {{ request('sort') === 'oldest' ? 'selected' : '' }}>Sort by Oldest</option>
                 <option value="first_nameASC" {{ request('sort') === 'first_nameASC' ? 'selected' : '' }}>First Name (A-Z)</option>

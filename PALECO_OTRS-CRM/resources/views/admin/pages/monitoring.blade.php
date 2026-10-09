@@ -39,7 +39,7 @@
 
             <!-- Category Filter -->
             <div class="flex items-center gap-2 ml-auto">
-                <select name="category" class="ts-filter-dropdown hidden">
+                <select name="category" class="ts-filter-dropdown border border-slate-300 rounded-lg text-sm bg-white px-3 py-2 text-slate-700">
                     <option value="All Categories" {{ request('category') === 'All Categories' || empty(request('category')) ? 'selected' : '' }}>All Categories</option>
                     <option value="login_success" {{ request('category') === 'login_success' ? 'selected' : '' }}>Authentication</option>
                     <option value="Tickets" {{ request('category') === 'Tickets' ? 'selected' : '' }}>Tickets</option>

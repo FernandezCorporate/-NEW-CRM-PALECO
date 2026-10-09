@@ -12,6 +12,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let tsInstances = [];
 
     function toggleEmptyState() {
+        if (!noMembersState) return;
         if (container.children.length === 0) {
             noMembersState.classList.remove('hidden');
         } else {
