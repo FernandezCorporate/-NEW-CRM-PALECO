@@ -1,4 +1,4 @@
-document.addEventListener("DOMContentLoaded", function() {
+const initHistoryTabs = () => {
     const historyLinks = document.querySelectorAll('.ticket-history-nav a[href^="#"]');
     const updateHistorySelection = () => {
         historyLinks.forEach((link) => {
@@ -13,4 +13,10 @@ document.addEventListener("DOMContentLoaded", function() {
         updateHistorySelection();
         window.addEventListener('hashchange', updateHistorySelection);
     }
-});
+};
+
+if (document.readyState === 'loading') {
+    document.addEventListener("DOMContentLoaded", initHistoryTabs);
+} else {
+    initHistoryTabs();
+}

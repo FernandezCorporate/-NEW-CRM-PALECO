@@ -1,7 +1,8 @@
 import TomSelect from 'tom-select';
 
-document.addEventListener("DOMContentLoaded", function() {
+const initTomSelectFilters = () => {
     document.querySelectorAll('.ts-filter-dropdown').forEach(function(selectElement) {
+        if (selectElement.tomselect) return;
         new TomSelect(selectElement, {
             controlInput: null,
             onChange: function(value) {
@@ -12,4 +13,10 @@ document.addEventListener("DOMContentLoaded", function() {
             }
         });
     });
-});
+};
+
+if (document.readyState === 'loading') {
+    document.addEventListener("DOMContentLoaded", initTomSelectFilters);
+} else {
+    initTomSelectFilters();
+}

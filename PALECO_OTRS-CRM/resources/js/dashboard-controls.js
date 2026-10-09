@@ -1,4 +1,4 @@
-document.addEventListener("DOMContentLoaded", function() {
+const initDashboardControls = () => {
     const controlsRoot = document.querySelector('[data-dashboard-controls]');
     if (!controlsRoot) return;
 
@@ -75,4 +75,10 @@ document.addEventListener("DOMContentLoaded", function() {
     });
 
     dialog?.addEventListener('click', (event) => { if (event.target === dialog) dialog.close(); });
-});
+};
+
+if (document.readyState === 'loading') {
+    document.addEventListener("DOMContentLoaded", initDashboardControls);
+} else {
+    initDashboardControls();
+}

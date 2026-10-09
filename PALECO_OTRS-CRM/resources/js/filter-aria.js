@@ -1,4 +1,4 @@
-document.addEventListener("DOMContentLoaded", function() {
+const initFilterAria = () => {
     document.querySelectorAll('.workspace-surface form[method="GET"]').forEach((form) => {
         form.classList.add('filter-toolbar');
         form.querySelectorAll('input:not([type="hidden"]), select').forEach((field) => {
@@ -8,4 +8,10 @@ document.addEventListener("DOMContentLoaded", function() {
             }
         });
     });
-});
+};
+
+if (document.readyState === 'loading') {
+    document.addEventListener("DOMContentLoaded", initFilterAria);
+} else {
+    initFilterAria();
+}

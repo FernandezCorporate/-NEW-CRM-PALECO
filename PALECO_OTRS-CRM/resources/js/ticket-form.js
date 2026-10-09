@@ -1,4 +1,4 @@
-document.addEventListener('DOMContentLoaded', () => {
+const initTicketCategoryToggle = () => {
     const otherCheckbox = document.getElementById('other_category');
     const categorySelect = document.getElementById('category_id');
     const customInput = document.getElementById('other_category_name');
@@ -6,6 +6,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const customLabel = document.getElementById('other_category_name_label');
 
     if (!otherCheckbox || !categorySelect || !customInput) return;
+    if (otherCheckbox.dataset.bound) return;
+    otherCheckbox.dataset.bound = 'true';
 
     const toggleCategoryFields = () => {
         // Retrieve Tom Select programmatic instance bound to the element node
@@ -51,4 +53,10 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Tiny macrotask execution delay ensures global Tom Select initializers finish binding instances
     setTimeout(toggleCategoryFields, 50);
-});
+};
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initTicketCategoryToggle);
+} else {
+    initTicketCategoryToggle();
+}
