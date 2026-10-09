@@ -64,14 +64,19 @@ const initConsumerLinkToggle = () => {
                         }
                     });
 
+                    if (response.redirected) {
+                        showPreview('error', 'Your session may have expired. Please refresh the page and log in.');
+                        return;
+                    }
+
                     const responseText = await response.text();
                     let data;
                     
                     try {
                         data = JSON.parse(responseText);
                     } catch (e) {
-                        console.error("Server HTML Error:", responseText);
-                        throw new Error("Server returned an invalid response format. Check console (F12).");
+                        console.error("Server Response Parse Error:", responseText);
+                        throw new Error("Unable to process server response. Please try again.");
                     }
 
                     if (response.ok && data.success) {

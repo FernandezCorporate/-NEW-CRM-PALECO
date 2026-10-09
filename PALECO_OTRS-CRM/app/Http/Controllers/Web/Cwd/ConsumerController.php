@@ -9,7 +9,9 @@ use App\Services\External\ConsumerService as ExternalConsumerService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
+use Throwable;
 
 /*
  * Manages the retrieval, live verification, and customer profile views for utility consumers.
@@ -54,12 +56,25 @@ class ConsumerController extends Controller
      */
     public function verify(string $accountCode): JsonResponse
     {
-        $consumerData = $this->externalConsumerService->verifyAccount($accountCode);
+        try {
+            $consumerData = $this->externalConsumerService->verifyAccount($accountCode);
 
-        return response()->json([
-            'success' => true,
-            'consumer' => $consumerData,
-            'data' => $consumerData,
-        ]);
+            return response()->json([
+                'success' => true,
+                'consumer' => $consumerData,
+                'data' => $consumerData,
+            ]);
+        } catch (ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->validator->errors()->first('account_code') ?? $e->getMessage(),
+                'errors' => $e->errors(),
+            ], 422);
+        } catch (Throwable $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unable to verify account code with billing service.',
+            ], 500);
+        }
     }
 }

@@ -85,8 +85,9 @@ class ConsumerService
                 ->get("https://api.paleco.net/api/v1/account/{$accountCode}");
 
             if ($response->failed() || ! $response->json('success')) {
+                $message = $response->json('message') ?? 'The provided account code could not be found in the billing system.';
                 throw ValidationException::withMessages([
-                    'account_code' => ['The provided account code could not be found in the billing system.'],
+                    'account_code' => [$message],
                 ]);
             }
 
