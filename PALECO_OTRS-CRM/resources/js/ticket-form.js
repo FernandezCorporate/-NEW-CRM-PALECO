@@ -20,14 +20,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 categorySelect.disabled = true;
                 categorySelect.value = '';
             }
-            categoryLabel.classList.add('text-gray-400');
-            categoryLabel.classList.remove('text-gray-700');
+            categoryLabel?.classList.add('text-gray-400');
+            categoryLabel?.classList.remove('text-gray-700');
 
             // Activate manual input elements
             customInput.disabled = false;
             customInput.classList.remove('bg-gray-100');
-            customLabel.classList.add('text-gray-700', 'font-bold');
-            customLabel.classList.remove('text-gray-400');
+            customLabel?.classList.add('text-gray-700', 'font-bold');
+            customLabel?.classList.remove('text-gray-400');
         } else {
             // Restore interactive select states
             if (tsInstance) {
@@ -35,15 +35,15 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 categorySelect.disabled = false;
             }
-            categoryLabel.classList.add('text-gray-700');
-            categoryLabel.classList.remove('text-gray-400');
+            categoryLabel?.classList.add('text-gray-700');
+            categoryLabel?.classList.remove('text-gray-400');
 
             // Deactivate manual inputs
             customInput.disabled = true;
             customInput.value = '';
             customInput.classList.add('bg-gray-100');
-            customLabel.classList.add('text-gray-400');
-            customLabel.classList.remove('text-gray-700', 'font-bold');
+            customLabel?.classList.add('text-gray-400');
+            customLabel?.classList.remove('text-gray-700', 'font-bold');
         }
     };
 
