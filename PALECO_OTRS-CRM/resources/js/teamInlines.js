@@ -1,12 +1,14 @@
 import TomSelect from 'tom-select';
 
-document.addEventListener('DOMContentLoaded', () => {
+const initTeamInlines = () => {
     const container = document.getElementById('team-members-container');
     const template = document.getElementById('member-row-template');
     const addBtn = document.getElementById('add-member-btn');
     const noMembersState = document.getElementById('no-members-state');
     
     if (!container || !template || !addBtn) return;
+    if (addBtn.dataset.bound) return;
+    addBtn.dataset.bound = 'true';
 
     let memberIndex = 0;
     let tsInstances = [];
@@ -48,7 +50,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const ts = new TomSelect(selectElement, {
             create: false,
             maxOptions: null,
-            // REMOVED: dropdownParent: 'body'
             onChange: function() {
                 syncDisabledOptions();
             }
@@ -74,7 +75,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // 1. Grab BOTH dropdowns from the cloned row
         const selectElement = clone.querySelector('.tom-select-dynamic');
-        const roleSelectElement = clone.querySelector('.tom-select-sync'); // NEW
+        const roleSelectElement = clone.querySelector('.tom-select-sync');
 
         container.appendChild(clone);
 
@@ -90,7 +91,7 @@ document.addEventListener('DOMContentLoaded', () => {
             tsInstances.push(ts);
         }
 
-        // 2. Initialize Role Selection (NEW)
+        // 2. Initialize Role Selection
         if (roleSelectElement) {
             new TomSelect(roleSelectElement, {
                 create: false,
@@ -117,7 +118,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 selectElement.tomselect.destroy();
             }
 
-            // Destroy Role Selection (NEW)
+            // Destroy Role Selection
             const roleSelectElement = row.querySelector('.tom-select-sync');
             if (roleSelectElement && roleSelectElement.tomselect) {
                 roleSelectElement.tomselect.destroy();
@@ -129,4 +130,10 @@ document.addEventListener('DOMContentLoaded', () => {
             syncDisabledOptions();
         }
     });
-});
+};
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initTeamInlines);
+} else {
+    initTeamInlines();
+}

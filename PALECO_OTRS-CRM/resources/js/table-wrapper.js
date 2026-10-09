@@ -1,4 +1,4 @@
-document.addEventListener("DOMContentLoaded", function() {
+const initTableWrapper = () => {
     document.querySelectorAll('.workspace-surface table').forEach((table) => {
         table.classList.add('system-table');
         const parent = table.parentElement;
@@ -15,4 +15,10 @@ document.addEventListener("DOMContentLoaded", function() {
             scroller.setAttribute('aria-label', 'Records table. Scroll horizontally to view all columns.');
         }
     });
-});
+};
+
+if (document.readyState === 'loading') {
+    document.addEventListener("DOMContentLoaded", initTableWrapper);
+} else {
+    initTableWrapper();
+}

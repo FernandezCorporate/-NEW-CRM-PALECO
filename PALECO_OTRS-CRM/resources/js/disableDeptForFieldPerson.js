@@ -1,10 +1,11 @@
-document.addEventListener('DOMContentLoaded', () => {
+const initDisableDeptForFieldPerson = () => {
     const roleSelect = document.getElementById('user-role-select');
     const deptSelect = document.getElementById('department-select');
     const deptMessage = document.getElementById('dept-team-message');
 
-    if (roleSelect && deptSelect) {
-        
+    if (roleSelect && deptSelect && !roleSelect.dataset.bound) {
+        roleSelect.dataset.bound = 'true';
+
         const toggleDepartmentInput = () => {
             const tsInstance = deptSelect.tomselect;
             
@@ -33,4 +34,10 @@ document.addEventListener('DOMContentLoaded', () => {
         roleSelect.addEventListener('change', toggleDepartmentInput);
         setTimeout(toggleDepartmentInput, 100); 
     }
-});
+};
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initDisableDeptForFieldPerson);
+} else {
+    initDisableDeptForFieldPerson();
+}

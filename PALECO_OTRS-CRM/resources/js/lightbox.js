@@ -1,4 +1,4 @@
-document.addEventListener('DOMContentLoaded', () => {
+const initLightbox = () => {
     const triggers = document.querySelectorAll('.js-lightbox-trigger');
     const lightbox = document.getElementById('image-lightbox');
     const lightboxImg = document.getElementById('lightbox-image');
@@ -6,6 +6,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Abort if the modal isn't on the current page
     if (!lightbox || !lightboxImg) return;
+    if (lightbox.dataset.bound) return;
+    lightbox.dataset.bound = 'true';
 
     // 1. Open Lightbox
     triggers.forEach(trigger => {
@@ -58,4 +60,10 @@ document.addEventListener('DOMContentLoaded', () => {
             closeLightbox();
         }
     });
-});
+};
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initLightbox);
+} else {
+    initLightbox();
+}

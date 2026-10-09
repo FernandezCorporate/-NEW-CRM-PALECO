@@ -1,5 +1,4 @@
-document.addEventListener('DOMContentLoaded', () => {
-    
+const initPreventDoubleSubmit = () => {
     // Universal function to handle loading state for both forms and links
     const applyLoadingState = (element) => {
         // Prevent double triggers
@@ -32,6 +31,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 1. Intercept ALL Forms
     document.querySelectorAll('form').forEach(form => {
+        if (form.dataset.submitBound) return;
+        form.dataset.submitBound = 'true';
         form.addEventListener('submit', function (e) {
             if (!this.checkValidity()) return;
             const submitBtn = this.querySelector('button[type="submit"], input[type="submit"]');
@@ -41,6 +42,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 2. Intercept ALL Action Links
     document.querySelectorAll('.action-link').forEach(link => {
+        if (link.dataset.linkBound) return;
+        link.dataset.linkBound = 'true';
         link.addEventListener('click', function (e) {
             if (this.target === '_blank' || e.ctrlKey || e.metaKey) return;
             applyLoadingState(this);
@@ -51,4 +54,10 @@ document.addEventListener('DOMContentLoaded', () => {
     window.addEventListener('pageshow', (event) => {
         if (event.persisted) window.location.reload();
     });
-});
+};
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initPreventDoubleSubmit);
+} else {
+    initPreventDoubleSubmit();
+}

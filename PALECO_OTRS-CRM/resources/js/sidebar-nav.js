@@ -1,6 +1,9 @@
-document.addEventListener("DOMContentLoaded", function() {
+const initSidebarNav = () => {
     const sidebarToggle = document.querySelector('[data-sidebar-toggle]');
     const sidebarOverlay = document.querySelector('[data-sidebar-overlay]');
+
+    if (!sidebarToggle || sidebarToggle.dataset.bound) return;
+    sidebarToggle.dataset.bound = 'true';
 
     const setSidebarOpen = (open) => {
         document.body.classList.toggle('sidebar-open', open);
@@ -11,4 +14,10 @@ document.addEventListener("DOMContentLoaded", function() {
     sidebarOverlay?.addEventListener('click', () => setSidebarOpen(false));
     document.addEventListener('keydown', (event) => { if (event.key === 'Escape') setSidebarOpen(false); });
     window.addEventListener('resize', () => { if (window.innerWidth >= 768) setSidebarOpen(false); });
-});
+};
+
+if (document.readyState === 'loading') {
+    document.addEventListener("DOMContentLoaded", initSidebarNav);
+} else {
+    initSidebarNav();
+}

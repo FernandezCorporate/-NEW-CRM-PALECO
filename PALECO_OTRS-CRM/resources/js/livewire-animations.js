@@ -1,4 +1,4 @@
-document.addEventListener("DOMContentLoaded", function() {
+const initLivewireAnimations = () => {
     function applyAnimations() {
         const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
         const animatedElements = document.querySelectorAll('[data-animate]:not(.is-visible)');
@@ -22,10 +22,18 @@ document.addEventListener("DOMContentLoaded", function() {
     applyAnimations();
 
     document.addEventListener('livewire:initialized', () => {
-        Livewire.hook('commit', ({ succeed }) => {
-            succeed(() => {
-                requestAnimationFrame(() => applyAnimations());
+        if (typeof Livewire !== 'undefined' && Livewire.hook) {
+            Livewire.hook('commit', ({ succeed }) => {
+                succeed(() => {
+                    requestAnimationFrame(() => applyAnimations());
+                });
             });
-        });
+        }
     });
-});
+};
+
+if (document.readyState === 'loading') {
+    document.addEventListener("DOMContentLoaded", initLivewireAnimations);
+} else {
+    initLivewireAnimations();
+}

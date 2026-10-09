@@ -1,4 +1,4 @@
-document.addEventListener('DOMContentLoaded', function() {
+const initConsumerLinkToggle = () => {
     const linkCheckbox = document.getElementById('link_consumer');
     const accountContainer = document.getElementById('account_code_container');
     const accountInput = document.getElementById('account_code');
@@ -17,7 +17,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 accountContainer.classList.add('hidden');
                 accountInput.removeAttribute('required');
                 accountInput.value = ''; 
-                previewBox?.classList.add('hidden');
+                if (previewBox) {
+                    previewBox.classList.add('hidden');
+                    previewBox.innerHTML = '';
+                }
             }
         };
 
@@ -28,8 +31,10 @@ document.addEventListener('DOMContentLoaded', function() {
             toggleConsumerFields(true);
         });
 
-        if (verifyBtn) {
-            verifyBtn.addEventListener('click', async function() {
+        if (verifyBtn && !verifyBtn.dataset.bound) {
+            verifyBtn.dataset.bound = 'true';
+
+            const runVerification = async function() {
                 // Auto-format spaces to dashes
                 let code = accountInput.value.trim().replace(/\s+/g, '-');
                 accountInput.value = code;
@@ -49,7 +54,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 verifyBtn.disabled = true;
                 verifyBtn.textContent = 'Verifying...';
-                previewBox.classList.add('hidden');
+                if (previewBox) previewBox.classList.add('hidden');
 
                 try {
                     const response = await fetch(`/cwd/consumers/verify/${encodeURIComponent(code)}`, {
@@ -92,10 +97,20 @@ document.addEventListener('DOMContentLoaded', function() {
                     verifyBtn.disabled = false;
                     verifyBtn.textContent = 'Verify';
                 }
+            };
+
+            verifyBtn.addEventListener('click', runVerification);
+
+            accountInput.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    runVerification();
+                }
             });
         }
 
         function showPreview(type, content) {
+            if (!previewBox) return;
             previewBox.classList.remove('hidden', 'bg-emerald-50', 'border-emerald-200', 'bg-red-50', 'border-red-200', 'text-red-700');
             
             if (type === 'success') {
@@ -107,4 +122,10 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
     }
-});
+};
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initConsumerLinkToggle);
+} else {
+    initConsumerLinkToggle();
+}
