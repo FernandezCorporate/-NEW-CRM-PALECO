@@ -3,9 +3,9 @@
 namespace App\Http\Controllers\Web\Cwd;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Web\Cwd\TicketEndorsement\EndorsementDecisionRequest;
+use App\Http\Requests\Tickets\EndorsementDecisionRequest;
 use App\Models\TicketEndorsement;
-use App\Services\Web\Cwd\TicketService;
+use App\Services\Tickets\TicketEndorsementService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -17,7 +17,7 @@ use Illuminate\View\View;
 class TicketEndorsementController extends Controller
 {
     public function __construct(
-        protected TicketService $ticketService
+        protected TicketEndorsementService $ticketEndorsementService
     ) {}
 
     // --- VIEW METHODS ---
@@ -29,7 +29,7 @@ class TicketEndorsementController extends Controller
     {
         Gate::authorize('viewAny', TicketEndorsement::class);
 
-        $result = $this->ticketService->getEndorsementList($request);
+        $result = $this->ticketEndorsementService->getEndorsementList($request);
 
         return view('cwd.pages.endorsementDashboard', $result);
     }
@@ -41,7 +41,7 @@ class TicketEndorsementController extends Controller
     {
         Gate::authorize('view', $endorsement);
 
-        $result = $this->ticketService->getEndorsementDetails($endorsement);
+        $result = $this->ticketEndorsementService->getEndorsementDetails($endorsement);
 
         return view('cwd.pages.endorsementDetails', $result);
     }
@@ -55,7 +55,7 @@ class TicketEndorsementController extends Controller
     {
         Gate::authorize('decide', $endorsement);
 
-        $result = $this->ticketService->verifyEndorsement($request->validated(), $endorsement);
+        $result = $this->ticketEndorsementService->verifyEndorsement($request->validated(), $endorsement);
 
         if (! $result['success']) {
             return back()->with('error', $result['message']);

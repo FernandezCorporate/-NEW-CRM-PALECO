@@ -2,13 +2,13 @@
 
 namespace App\Livewire\Cwd;
 
-use Livewire\Component;
-use Livewire\WithPagination;
-use Livewire\Attributes\Url;
-use Livewire\Attributes\On;
+use App\Enums\TicketStatus;
 use App\Models\Ticket;
 use App\Models\TicketCategory;
-use App\Enums\TicketStatus;
+use Livewire\Attributes\On;
+use Livewire\Attributes\Url;
+use Livewire\Component;
+use Livewire\WithPagination;
 
 class TicketTable extends Component
 {
@@ -16,10 +16,13 @@ class TicketTable extends Component
 
     #[Url]
     public string $search = '';
+
     #[Url]
     public string $filter = 'all';
+
     #[Url]
     public string $status = 'all';
+
     #[Url]
     public string $sort = 'newest';
 

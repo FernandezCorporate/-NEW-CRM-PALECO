@@ -31,30 +31,39 @@ class ConsumerService
     // --- MUTATING METHODS ---
 
     /**
-     * Resolve consumer ID for ticket submission pipeline (fetches and persists/updates consumer record in database).
+     * Resolve consumer ID for ticket submission pipeline.
+     * Refreshes consumer details if stale (> 7 days) and falls back to local record if external API is unreachable.
      */
     public function resolveConsumerId(string $accountCode): string
     {
         $consumer = Consumer::where('acct_code', $accountCode)->first();
 
-        if ($consumer) {
+        if ($consumer && $consumer->updated_at > now()->subDays(7)) {
             return $consumer->id;
         }
 
-        $data = $this->fetchFromApi($accountCode);
+        try {
+            $data = $this->fetchFromApi($accountCode);
 
-        $newConsumer = Consumer::updateOrCreate(
-            ['acct_code' => $data['acct_code']],
-            [
-                'acct_no' => $data['acct_no'],
-                'name' => $data['name'],
-                'address' => $data['address'],
-                'status' => $data['status'],
-                'meter_serial' => $data['meter_serial'],
-            ]
-        );
+            $syncedConsumer = Consumer::updateOrCreate(
+                ['acct_code' => $data['acct_code']],
+                [
+                    'acct_no' => $data['acct_no'],
+                    'name' => $data['name'],
+                    'address' => $data['address'],
+                    'status' => $data['status'],
+                    'meter_serial' => $data['meter_serial'],
+                ]
+            );
 
-        return $newConsumer->id;
+            return $syncedConsumer->id;
+        } catch (Exception $e) {
+            if ($consumer) {
+                return $consumer->id;
+            }
+
+            throw $e;
+        }
     }
 
     // --- PRIVATE HELPER METHODS ---

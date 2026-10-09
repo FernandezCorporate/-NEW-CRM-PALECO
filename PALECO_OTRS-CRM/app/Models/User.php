@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Concerns\Auditable;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Builder;
@@ -15,8 +16,6 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Str;
 use Laravel\Sanctum\HasApiTokens;
-use Spatie\Activitylog\Models\Concerns\LogsActivity;
-use Spatie\Activitylog\Support\LogOptions;
 
 /**
  * Represents an authenticated individual within the system.
@@ -26,7 +25,16 @@ use Spatie\Activitylog\Support\LogOptions;
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
-    use HasApiTokens, HasFactory, HasUlids, LogsActivity, Notifiable;
+    use Auditable, HasApiTokens, HasFactory, HasUlids, Notifiable;
+
+    protected string $activityLogName = 'Users';
+
+    protected string $activityTitleAttribute = 'username';
+
+    protected array $activityLogAttributes = [
+        'username', 'first_name', 'middle_name', 'last_name', 'name_ext',
+        'email', 'contact', 'role_id', 'department_id', 'is_active',
+    ];
 
     // --- CASTS ---
 
@@ -201,23 +209,16 @@ class User extends Authenticatable
     // --- ACTIVITY LOG CONFIGURATION ---
 
     /**
-     * Configures the Spatie Activitylog options for this model.
+     * Custom description handler for user-specific events (e.g. account activation state).
      */
-    public function getActivitylogOptions(): LogOptions
+    protected function getCustomActivityDescription(string $eventName): ?string
     {
-        return LogOptions::defaults()
-            ->useLogName('Users')
-            ->logOnly([
-                'username', 'first_name', 'middle_name', 'last_name', 'name_ext',
-                'email', 'contact', 'role_id', 'department_id', 'is_active',
-            ])
-            ->logOnlyDirty()
-            ->setDescriptionForEvent(function (string $eventName) {
-                if ($eventName === 'updated' && $this->wasChanged('is_active')) {
-                    return $this->is_active ? "{$this->username} account has been reactivated" : "{$this->username} account has been deactivated";
-                }
+        if ($eventName === 'updated' && $this->wasChanged('is_active')) {
+            return $this->is_active
+                ? "{$this->username} account has been reactivated"
+                : "{$this->username} account has been deactivated";
+        }
 
-                return "{$this->username} account has been {$eventName}";
-            });
+        return null;
     }
 }

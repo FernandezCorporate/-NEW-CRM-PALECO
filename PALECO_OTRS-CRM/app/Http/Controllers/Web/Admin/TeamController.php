@@ -3,10 +3,10 @@
 namespace App\Http\Controllers\Web\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Web\Admin\Team\StoreTeamRequest;
-use App\Http\Requests\Web\Admin\Team\UpdateTeamRequest;
+use App\Http\Requests\Teams\StoreTeamRequest;
+use App\Http\Requests\Teams\UpdateTeamRequest;
 use App\Models\Team;
-use App\Services\Web\Admin\TeamService;
+use App\Services\Teams\TeamService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 
@@ -163,11 +163,11 @@ class TeamController extends Controller
     /*
      * Recovers a previously archived team back to active status.
      */
-    public function restore(string $id)
+    public function restore(Team $team)
     {
         Gate::authorize('restore', Team::class);
 
-        $result = $this->teamService->restoreTeam($id);
+        $result = $this->teamService->restoreTeam($team);
 
         if (! $result['success']) {
             return redirect()->route('admin.teams')->with('error', $result['message']);
@@ -179,11 +179,11 @@ class TeamController extends Controller
     /*
      * Permanently eradicates the team record from the database, preventing orphaned tickets.
      */
-    public function destroy(string $id)
+    public function destroy(Team $team)
     {
         Gate::authorize('forceDelete', Team::class);
 
-        $result = $this->teamService->forceDeleteTeam($id);
+        $result = $this->teamService->forceDeleteTeam($team);
 
         if (! $result['success']) {
             return redirect()->route('admin.teams')->with('error', $result['message']);

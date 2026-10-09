@@ -3,10 +3,10 @@
 namespace App\Http\Controllers\Web\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Web\Admin\Department\StoreDepartmentRequest;
-use App\Http\Requests\Web\Admin\Department\UpdateDepartmentRequest;
+use App\Http\Requests\Departments\StoreDepartmentRequest;
+use App\Http\Requests\Departments\UpdateDepartmentRequest;
 use App\Models\Department;
-use App\Services\Web\Admin\DepartmentService;
+use App\Services\Departments\DepartmentService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 

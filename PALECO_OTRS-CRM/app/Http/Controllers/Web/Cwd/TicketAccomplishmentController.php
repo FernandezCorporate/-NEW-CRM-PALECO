@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Web\Cwd;
 use App\Http\Controllers\Controller;
 use App\Models\Ticket;
 use App\Models\TicketAccomplishment;
-use App\Services\Web\Cwd\TicketService;
+use App\Services\Tickets\TicketAccomplishmentService;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\View\View;
 
@@ -15,7 +15,7 @@ use Illuminate\View\View;
 class TicketAccomplishmentController extends Controller
 {
     public function __construct(
-        protected TicketService $ticketService
+        protected TicketAccomplishmentService $accomplishmentService
     ) {}
 
     // --- VIEW METHODS ---
@@ -31,7 +31,7 @@ class TicketAccomplishmentController extends Controller
             abort(404, 'This accomplishment report does not belong to the requested ticket.');
         }
 
-        $detailedAccomplishment = $this->ticketService->getAccomplishmentDetails($accomplishment);
+        $detailedAccomplishment = $this->accomplishmentService->getAccomplishmentDetails($accomplishment);
 
         return view('cwd.pages.ticketAccomplishmentDetails', [
             'ticket' => $ticket,

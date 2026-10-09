@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Concerns\Auditable;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
@@ -10,8 +11,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Spatie\Activitylog\Models\Concerns\LogsActivity;
-use Spatie\Activitylog\Support\LogOptions;
 
 /**
  * Represents an operational unit or field team assigned to resolve tickets.
@@ -20,7 +19,13 @@ use Spatie\Activitylog\Support\LogOptions;
 #[Fillable(['team_name', 'team_desc', 'shift_start', 'shift_end', 'department_id'])]
 class Team extends Model
 {
-    use HasUlids, LogsActivity, SoftDeletes;
+    use Auditable, HasUlids, SoftDeletes;
+
+    protected string $activityLogName = 'Teams';
+
+    protected string $activityTitleAttribute = 'team_name';
+
+    protected array $activityLogAttributes = ['team_name', 'team_desc', 'shift_start', 'shift_end', 'department_id'];
 
     // --- CASTS ---
 
@@ -168,27 +173,5 @@ class Team extends Model
             'shift_endDESC' => $query->orderBy('shift_end', 'desc'),
             default => $query->latest(),
         };
-    }
-
-    // --- ACTIVITY LOG CONFIGURATION ---
-
-    /**
-     * Configures the Spatie Activitylog options for this model.
-     */
-    public function getActivitylogOptions(): LogOptions
-    {
-        return LogOptions::defaults()
-            ->useLogName('Teams')
-            ->logOnly(['team_name', 'team_desc', 'shift_start', 'shift_end', 'department_id'])
-            ->logOnlyDirty()
-            ->setDescriptionForEvent(function (string $eventName) {
-                $action = match ($eventName) {
-                    'deleted' => $this->isForceDeleting() ? 'permanently deleted' : 'archived',
-                    'restored' => 'restored',
-                    default => $eventName,
-                };
-
-                return "{$this->team_name} has been {$action}";
-            });
     }
 }

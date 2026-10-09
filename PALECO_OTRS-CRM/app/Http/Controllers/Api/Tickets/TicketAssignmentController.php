@@ -3,11 +3,11 @@
 namespace App\Http\Controllers\Api\Tickets;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Api\Tickets\AssignTicketRequest;
+use App\Http\Requests\Tickets\AssignTicketRequest;
 use App\Http\Resources\Api\AssignOptionResource;
 use App\Http\Resources\Api\TicketResource;
 use App\Models\Ticket;
-use App\Services\Api\Tickets\TicketService;
+use App\Services\Tickets\TicketService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;

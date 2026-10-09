@@ -3,12 +3,12 @@
 namespace App\Http\Controllers\Web\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Web\Admin\User\StoreUserRequest;
-use App\Http\Requests\Web\Admin\User\UpdateUserRequest;
+use App\Http\Requests\Users\StoreUserRequest;
+use App\Http\Requests\Users\UpdateUserRequest;
 use App\Models\AccountRole;
 use App\Models\Department;
 use App\Models\User;
-use App\Services\Web\Admin\UserService;
+use App\Services\Users\UserService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 

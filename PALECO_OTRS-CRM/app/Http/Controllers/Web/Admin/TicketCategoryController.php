@@ -3,10 +3,10 @@
 namespace App\Http\Controllers\Web\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Web\Admin\TicketCategory\StoreTicketCategoryRequest;
-use App\Http\Requests\Web\Admin\TicketCategory\UpdateTicketCategoryRequest;
+use App\Http\Requests\Categories\StoreTicketCategoryRequest;
+use App\Http\Requests\Categories\UpdateTicketCategoryRequest;
 use App\Models\TicketCategory;
-use App\Services\Web\Admin\TicketCategoryService;
+use App\Services\Categories\TicketCategoryService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 

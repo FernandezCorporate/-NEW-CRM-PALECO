@@ -3,10 +3,10 @@
 namespace App\Http\Controllers\Web\Remarks;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Web\Remarks\StoreTicketRemarkRequest;
+use App\Http\Requests\Tickets\StoreTicketRemarkRequest;
 use App\Models\Ticket;
 use App\Models\TicketRemark;
-use App\Services\Web\Remarks\TicketRemarkService;
+use App\Services\Tickets\TicketRemarkService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Gate;
 

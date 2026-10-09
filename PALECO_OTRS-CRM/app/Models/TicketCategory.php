@@ -2,13 +2,12 @@
 
 namespace App\Models;
 
+use App\Concerns\Auditable;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Spatie\Activitylog\Models\Concerns\LogsActivity;
-use Spatie\Activitylog\Support\LogOptions;
 
 /**
  * Classifies the type of problem reported in a service ticket (e.g., Leak, Low Pressure).
@@ -17,7 +16,11 @@ use Spatie\Activitylog\Support\LogOptions;
 #[Fillable(['category_name', 'category_desc'])]
 class TicketCategory extends Model
 {
-    use LogsActivity, SoftDeletes;
+    use Auditable, SoftDeletes;
+
+    protected string $activityTitleAttribute = 'category_name';
+
+    protected array $activityLogAttributes = ['category_name', 'category_desc'];
 
     // --- CASTS ---
 
@@ -70,26 +73,5 @@ class TicketCategory extends Model
             'category_nameDESC' => $query->orderBy('category_name', 'desc'),
             default => $query->latest(),
         };
-    }
-
-    // --- ACTIVITY LOG CONFIGURATION ---
-
-    /**
-     * Configures the Spatie Activitylog options for this model.
-     */
-    public function getActivitylogOptions(): LogOptions
-    {
-        return LogOptions::defaults()
-            ->useLogName('TicketCategory')
-            ->logOnly(['category_name', 'category_desc'])
-            ->setDescriptionForEvent(function (string $eventName) {
-                $action = match ($eventName) {
-                    'deleted' => $this->isForceDeleting() ? 'permanently deleted' : 'archived',
-                    'restored' => 'restored',
-                    default => $eventName,
-                };
-
-                return "{$this->category_name} has been {$action}";
-            });
     }
 }

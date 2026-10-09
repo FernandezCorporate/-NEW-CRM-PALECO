@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::create('departments', function (Blueprint $table) {
             $table->id();
-            $table->string('dept_name'); 
+            $table->string('dept_name');
             $table->string('dept_desc')->nullable();
             $table->softDeletes();
             $table->timestamps();
@@ -32,8 +32,8 @@ return new class extends Migration
 
         Schema::create('consumers', function (Blueprint $table) {
             $table->ulid('id')->primary();
-            $table->string('acct_no')->unique(); 
-            $table->string('acct_code')->unique(); 
+            $table->string('acct_no')->unique();
+            $table->string('acct_code')->unique();
             $table->string('name');
             $table->string('address');
             $table->string('status')->nullable();
@@ -64,7 +64,7 @@ return new class extends Migration
 
         Schema::create('teams', function (Blueprint $table) {
             $table->ulid('id')->primary();
-            $table->string('team_name'); 
+            $table->string('team_name');
             $table->string('team_desc')->nullable();
             $table->time('shift_start');
             $table->time('shift_end');

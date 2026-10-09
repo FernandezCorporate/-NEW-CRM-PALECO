@@ -2,22 +2,22 @@
 
 namespace App\Livewire\Cwd;
 
-use Livewire\Component;
+use App\Services\Dashboard\WebDashboardService;
 use Livewire\Attributes\On;
-use App\Services\Web\Dashboard\DashboardService;
+use Livewire\Component;
 
 class DashboardOverview extends Component
 {
     public array $overview;
 
-    public function mount(DashboardService $service)
+    public function mount(WebDashboardService $service)
     {
         $this->overview = $service->ticketOverview();
     }
 
     // FIXED: Added the '.' before TicketCreated so Echo resolves the App\Events namespace
     #[On('echo-private:cwd.operations,.TicketCreated')]
-    public function refreshMetrics(DashboardService $service)
+    public function refreshMetrics(WebDashboardService $service)
     {
         $this->overview = $service->ticketOverview();
     }

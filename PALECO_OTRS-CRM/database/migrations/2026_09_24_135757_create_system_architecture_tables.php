@@ -61,14 +61,14 @@ return new class extends Migration
             $table->nullableUlidMorphs('subject', 'subject');
             $table->string('event')->nullable();
             $table->nullableUlidMorphs('causer', 'causer');
-            $table->json('attribute_changes')->nullable(); 
+            $table->json('attribute_changes')->nullable();
             $table->json('properties')->nullable();
             $table->timestamps();
         });
 
         Schema::create('personal_access_tokens', function (Blueprint $table) {
             $table->id();
-            $table->ulidMorphs('tokenable'); 
+            $table->ulidMorphs('tokenable');
             $table->text('name');
             $table->string('token', 64)->unique();
             $table->text('abilities')->nullable();

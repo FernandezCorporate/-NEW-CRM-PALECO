@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Concerns\Auditable;
 use App\Enums\ComplaintSources;
 use App\Enums\TicketStatus;
 use Illuminate\Database\Eloquent\Builder;
@@ -12,8 +13,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
-use Spatie\Activitylog\Models\Concerns\LogsActivity;
-use Spatie\Activitylog\Support\LogOptions;
 
 /**
  * Represents a core service ticket or complaint logged into the system.
@@ -21,9 +20,28 @@ use Spatie\Activitylog\Support\LogOptions;
  */
 class Ticket extends Model
 {
-    use HasUlids, LogsActivity, SoftDeletes;
+    use Auditable, HasUlids, SoftDeletes;
 
     protected $primaryKey = 'system_id';
+
+    protected string $activityLogName = 'Tickets';
+
+    protected string $activityTitleAttribute = 'ticket_number';
+
+    protected array $activityLogAttributes = [
+        'ticket_number',
+        'consumer_contact',
+        'complaint_source',
+        'category_id',
+        'other_category',
+        'other_category_name',
+        'barangay',
+        'department_id',
+        'team_id',
+        'status',
+        'started_at',
+        'closed_at',
+    ];
 
     protected $fillable = [
         'ticket_number',
@@ -295,15 +313,20 @@ class Ticket extends Model
     }
 
     /**
-     * API scope: Filter tickets by status.
+     * API scope: Filter tickets by validated lifecycle status.
+     * Gracefully ignores 'all' and invalid status values.
      */
     public function scopeApiFilterByStatus(Builder $query, ?string $status): Builder
     {
-        if (empty($status)) {
+        if (empty($status) || strtolower($status) === 'all') {
             return $query;
         }
 
-        return $query->where('status', $status);
+        if ($validStatus = TicketStatus::tryFrom($status)) {
+            return $query->where('status', $validStatus);
+        }
+
+        return $query;
     }
 
     /**
@@ -322,76 +345,48 @@ class Ticket extends Model
     // --- ACTIVITY LOG CONFIGURATION ---
 
     /**
-     * Configures the Spatie Activitylog options for this model.
+     * Custom description handler for ticket lifecycle milestones.
+     * Uses wasChanged() to evaluate post-save attribute updates accurately.
      */
-    public function getActivitylogOptions(): LogOptions
+    protected function getCustomActivityDescription(string $eventName): ?string
     {
-        return LogOptions::defaults()
-            ->useLogName('Tickets')
-            ->logOnly([
-                'ticket_number',
-                'consumer_contact',
-                'complaint_source',
-                'category_id',
-                'other_category',
-                'other_category_name',
-                'barangay',
-                'department_id',
-                'team_id',
-                'status',
-                'started_at',
-                'closed_at',
-            ])
-            ->logOnlyDirty()
-            ->setDescriptionForEvent(function (string $eventName) {
+        if ($eventName === 'updated' && $this->wasChanged('team_id')) {
+            $action = $this->getOriginal('team_id') === null ? 'assigned' : 'reassigned';
+            if ($this->status !== TicketStatus::PENDING_ENDORSEMENT) {
+                return "Ticket {$this->ticket_number} has been {$action} to a field team.";
+            }
+        }
 
-                if ($eventName === 'updated' && $this->isDirty('team_id')) {
-                    $action = $this->getOriginal('team_id') === null ? 'assigned' : 'reassigned';
-                    if ($this->status !== TicketStatus::PENDING_ENDORSEMENT) {
-                        return "Ticket {$this->ticket_number} has been {$action} to a field team.";
-                    }
+        if ($eventName === 'updated' && $this->wasChanged('status')) {
+            if ($this->getOriginal('status') === TicketStatus::PENDING_ENDORSEMENT && $this->status !== TicketStatus::ENDORSED) {
+                return "The endorsement request was rejected. Ticket {$this->ticket_number} has been returned to its previous state.";
+            }
+
+            if ($this->status === TicketStatus::IN_PROGRESS) {
+                if ($this->getOriginal('status') === TicketStatus::RESOLVED) {
+                    return "The accomplishment report was rejected. Ticket {$this->ticket_number} has been returned to In Progress.";
                 }
 
-                if ($eventName === 'updated' && $this->isDirty('status')) {
+                return "Work has started on Ticket {$this->ticket_number}.";
+            }
 
-                    if ($this->getOriginal('status') === TicketStatus::PENDING_ENDORSEMENT && $this->status !== TicketStatus::ENDORSED) {
-                        return "The endorsement request was rejected. Ticket {$this->ticket_number} has been returned to its previous state.";
-                    }
+            if ($this->status === TicketStatus::PENDING_ENDORSEMENT) {
+                return "An endorsement request was submitted. Ticket {$this->ticket_number} is pending management review.";
+            }
 
-                    if ($this->status === TicketStatus::IN_PROGRESS) {
-                        if ($this->getOriginal('status') === TicketStatus::RESOLVED) {
-                            return "The accomplishment report was rejected. Ticket {$this->ticket_number} has been returned to In Progress.";
-                        }
+            if ($this->status === TicketStatus::ENDORSED) {
+                return "The endorsement request was approved. Ticket {$this->ticket_number} has been routed to a new department.";
+            }
 
-                        return "Work has started on Ticket {$this->ticket_number}.";
-                    }
+            if ($this->status === TicketStatus::RESOLVED) {
+                return "An accomplishment report was submitted. Ticket {$this->ticket_number} is now resolved and pending verification.";
+            }
 
-                    if ($this->status === TicketStatus::PENDING_ENDORSEMENT) {
-                        return "An endorsement request was submitted. Ticket {$this->ticket_number} is pending management review.";
-                    }
+            if ($this->status === TicketStatus::CLOSED) {
+                return "Ticket {$this->ticket_number} has been verified and closed.";
+            }
+        }
 
-                    if ($this->status === TicketStatus::ENDORSED) {
-                        return "The endorsement request was approved. Ticket {$this->ticket_number} has been routed to a new department.";
-                    }
-
-                    if ($this->status === TicketStatus::RESOLVED) {
-                        return "An accomplishment report was submitted. Ticket {$this->ticket_number} is now resolved and pending verification.";
-                    }
-
-                    if ($this->status === TicketStatus::CLOSED) {
-                        return "Ticket {$this->ticket_number} has been verified and closed.";
-                    }
-                }
-
-                $action = match ($eventName) {
-                    'created' => 'created',
-                    'updated' => 'modified',
-                    'deleted' => $this->isForceDeleting() ? 'permanently deleted' : 'archived',
-                    'restored' => 'restored',
-                    default => $eventName,
-                };
-
-                return "Ticket {$this->ticket_number} has been {$action}.";
-            });
+        return null;
     }
 }

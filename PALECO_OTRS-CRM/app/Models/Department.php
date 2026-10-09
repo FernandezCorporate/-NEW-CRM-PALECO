@@ -2,14 +2,13 @@
 
 namespace App\Models;
 
+use App\Concerns\Auditable;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Spatie\Activitylog\Models\Concerns\LogsActivity;
-use Spatie\Activitylog\Support\LogOptions;
 
 /**
  * Represents a primary organizational unit within the cooperative.
@@ -18,7 +17,11 @@ use Spatie\Activitylog\Support\LogOptions;
 #[Fillable(['dept_name', 'dept_desc'])]
 class Department extends Model
 {
-    use HasFactory, LogsActivity, SoftDeletes;
+    use Auditable, HasFactory, SoftDeletes;
+
+    protected string $activityTitleAttribute = 'dept_name';
+
+    protected array $activityLogAttributes = ['dept_name', 'dept_desc'];
 
     // --- CASTS ---
 
@@ -105,26 +108,5 @@ class Department extends Model
         }
 
         return $query;
-    }
-
-    // --- ACTIVITY LOG CONFIGURATION ---
-
-    /**
-     * Configures the Spatie Activitylog options for this model.
-     */
-    public function getActivitylogOptions(): LogOptions
-    {
-        return LogOptions::defaults()
-            ->useLogName('Department')
-            ->logOnly(['dept_name', 'dept_desc'])
-            ->setDescriptionForEvent(function (string $eventName) {
-                $action = match ($eventName) {
-                    'deleted' => $this->isForceDeleting() ? 'permanently deleted' : 'archived',
-                    'restored' => 'restored',
-                    default => $eventName,
-                };
-
-                return "{$this->dept_name} has been {$action}";
-            });
     }
 }

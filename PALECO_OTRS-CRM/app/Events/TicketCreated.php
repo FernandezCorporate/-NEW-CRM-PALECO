@@ -43,9 +43,9 @@ class TicketCreated implements ShouldBroadcastNow
             'status_label' => $this->ticket->status->label(),
             'source' => $this->ticket->complaint_source->label(),
             'address' => implode(', ', array_filter([$this->ticket->purok, $this->ticket->street, $this->ticket->barangay])),
-            'category' => $this->ticket->other_category ? $this->ticket->other_category_name : ($this->ticket->category->category_name ?? 'Unspecified'),
-            'department' => $this->ticket->department->dept_name ?? 'Unassigned',
-            'created_at' => $this->ticket->reported_at->format('M d, Y'),
+            'category' => $this->ticket->other_category ? $this->ticket->other_category_name : ($this->ticket->category?->category_name ?? 'Unspecified'),
+            'department' => $this->ticket->department?->dept_name ?? 'Unassigned',
+            'created_at' => $this->ticket->reported_at?->format('M d, Y') ?? now()->format('M d, Y'),
         ];
     }
 

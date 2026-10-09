@@ -4,8 +4,8 @@ namespace App\Http\Controllers\Web\Cwd;
 
 use App\Http\Controllers\Controller;
 use App\Models\Consumer;
+use App\Services\Consumers\ConsumerService as WebConsumerService;
 use App\Services\External\ConsumerService as ExternalConsumerService;
-use App\Services\Web\Cwd\ConsumerService as WebConsumerService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;

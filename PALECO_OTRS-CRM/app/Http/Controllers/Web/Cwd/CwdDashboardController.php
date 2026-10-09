@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Web\Cwd;
 
 use App\Http\Controllers\Controller;
-use App\Services\Web\Dashboard\DashboardService;
+use App\Services\Dashboard\WebDashboardService;
 use Illuminate\View\View;
 
 /*
@@ -13,7 +13,7 @@ use Illuminate\View\View;
 class CwdDashboardController extends Controller
 {
     public function __construct(
-        protected DashboardService $dashboardService
+        protected WebDashboardService $dashboardService
     ) {}
 
     // --- VIEW METHODS ---

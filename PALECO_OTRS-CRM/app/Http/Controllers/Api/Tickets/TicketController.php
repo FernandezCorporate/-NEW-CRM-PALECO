@@ -7,7 +7,7 @@ use App\Http\Resources\Api\TicketDetailedResource;
 use App\Http\Resources\Api\TicketHistoryResource;
 use App\Http\Resources\Api\TicketResource;
 use App\Models\Ticket;
-use App\Services\Api\Tickets\TicketService;
+use App\Services\Tickets\TicketService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -36,7 +36,7 @@ class TicketController extends Controller
 
         $tickets = $this->ticketService->getInboxTickets(
             $user,
-            $request->only(['search', 'category', 'status', 'sort'])
+            $request->query()
         );
 
         $counts = $this->ticketService->getTicketStatusCount($user);

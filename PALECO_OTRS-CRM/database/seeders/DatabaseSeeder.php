@@ -7,7 +7,7 @@ use Illuminate\Database\Seeder;
 
 /*
  * Master seeder class that orchestrates the execution of all other seeders.
- * Ensures required reference tables (like roles) are populated before users.
+ * Ensures required reference tables (roles, departments, categories) are populated before users and teams.
  */
 class DatabaseSeeder extends Seeder
 {
@@ -16,8 +16,11 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $this->call([
-            TeamRoleSeeder::class,
             RoleSeeder::class,
+            TeamRoleSeeder::class,
+            DepartmentSeeder::class,
+            TeamSeeder::class,
+            TicketCategorySeeder::class,
             UserSeeder::class,
         ]);
     }

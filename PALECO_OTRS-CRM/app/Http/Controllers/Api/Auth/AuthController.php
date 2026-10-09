@@ -3,9 +3,9 @@
 namespace App\Http\Controllers\Api\Auth;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Api\Auth\MobileLoginRequest;
+use App\Http\Requests\Auth\MobileLoginRequest;
 use App\Http\Resources\Api\UserResource;
-use App\Services\Api\Auth\MobileAuthService;
+use App\Services\Auth\MobileAuthService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;

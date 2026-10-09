@@ -3,11 +3,11 @@
 namespace App\Http\Controllers\Api\Remarks;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Api\Remarks\StoreTicketRemarkRequest;
+use App\Http\Requests\Tickets\StoreTicketRemarkRequest;
 use App\Http\Resources\Api\TicketRemarkResource;
 use App\Models\Ticket;
 use App\Models\TicketRemark;
-use App\Services\Api\Remarks\TicketRemarkService;
+use App\Services\Tickets\TicketRemarkService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -29,7 +29,7 @@ class TicketRemarkController extends Controller
      */
     public function index(Request $request, Ticket $ticket): JsonResponse
     {
-        $remarks = $this->remarkService->getTimeline($ticket, $request->user());
+        $remarks = $this->remarkService->getTimeline($ticket, in_array($request->user()->role->slug_identifier, ['admin', 'cwd_officer']));
 
         return response()->json([
             'success' => true,

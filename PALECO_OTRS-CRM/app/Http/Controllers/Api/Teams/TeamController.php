@@ -3,11 +3,11 @@
 namespace App\Http\Controllers\Api\Teams;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Api\Teams\StoreTeamRequest;
-use App\Http\Requests\Api\Teams\UpdateTeamRequest;
+use App\Http\Requests\Teams\StoreTeamRequest;
+use App\Http\Requests\Teams\UpdateTeamRequest;
 use App\Http\Resources\Api\TeamResource;
 use App\Models\Team;
-use App\Services\Api\Teams\TeamService;
+use App\Services\Teams\TeamService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;

@@ -3,10 +3,10 @@
 namespace App\Http\Controllers\Web\Cwd;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Web\Cwd\StoreChildTicketRequest;
-use App\Http\Requests\Web\Cwd\StoreTicketRequest;
+use App\Http\Requests\Tickets\StoreChildTicketRequest;
+use App\Http\Requests\Tickets\StoreTicketRequest;
 use App\Models\Ticket;
-use App\Services\Web\Cwd\TicketService;
+use App\Services\Tickets\TicketService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;

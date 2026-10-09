@@ -2,12 +2,13 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
+use App\Models\Team;
 use App\Models\User;
+use Illuminate\Database\Seeder;
 
 /*
  * Populates the system with initial test accounts for local development.
- * Creates one user for each core system role.
+ * Creates one user for each core system role and establishes department/team memberships.
  */
 class UserSeeder extends Seeder
 {
@@ -22,7 +23,7 @@ class UserSeeder extends Seeder
             'role_id' => 1,
             'password' => 'password',
         ]);
-        
+
         // 2. CWD Officer Account (Web Portal)
         User::create([
             'username' => 'alliah',
@@ -40,11 +41,12 @@ class UserSeeder extends Seeder
             'last_name' => 'supervisor',
             'contact' => '09123456789',
             'role_id' => 3,
+            'department_id' => 1,
             'password' => 'password',
         ]);
 
         // 4. Field Personnel Account (Mobile App Target)
-        User::create([
+        $personnel = User::create([
             'username' => 'ralph',
             'first_name' => 'ralph',
             'last_name' => 'personnel',
@@ -52,5 +54,10 @@ class UserSeeder extends Seeder
             'role_id' => 4,
             'password' => 'password',
         ]);
+
+        $firstTeam = Team::first();
+        if ($firstTeam) {
+            $personnel->teams()->attach($firstTeam->id, ['team_role_id' => 1]);
+        }
     }
 }

@@ -39,7 +39,7 @@
                     <!-- Department -->
                     <div class="md:col-span-2">
                         <label class="block text-sm font-semibold text-slate-700 mb-1.5">Department <span class="text-rose-500">*</span></label>
-                        <select name="department_id" class="tom-select-sync hidden" data-autosubmit="false" autocomplete="off" required>
+                        <select name="department_id" class="tom-select-sync w-full border rounded-lg text-sm transition-colors focus:outline-none focus:ring-1 @error('department_id') border-rose-300 focus:border-rose-500 focus:ring-rose-500 @else border-slate-200 focus:border-emerald-500 focus:ring-emerald-500 @enderror" data-autosubmit="false" autocomplete="off" required>
                             <option value="" disabled selected>Select a department...</option>
                             @foreach ($depts as $id => $dept)
                                 <option value="{{ $id }}" {{ old('department_id', $team->department_id ?? '') == $id ? 'selected' : '' }}>

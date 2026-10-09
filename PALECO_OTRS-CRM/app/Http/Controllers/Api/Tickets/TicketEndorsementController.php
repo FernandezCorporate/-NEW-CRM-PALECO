@@ -3,11 +3,11 @@
 namespace App\Http\Controllers\Api\Tickets;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Api\Tickets\StoreEndorsementRequest;
+use App\Http\Requests\Tickets\StoreEndorsementRequest;
 use App\Http\Resources\Api\EndorsementOptionResource;
 use App\Http\Resources\Api\TicketEndorsementResource;
 use App\Models\Ticket;
-use App\Services\Api\Tickets\TicketService;
+use App\Services\Tickets\TicketEndorsementService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -19,7 +19,7 @@ use Symfony\Component\HttpFoundation\Response;
 class TicketEndorsementController extends Controller
 {
     public function __construct(
-        protected TicketService $ticketService
+        protected TicketEndorsementService $ticketEndorsementService
     ) {}
 
     // --- VIEW METHODS ---
@@ -31,7 +31,7 @@ class TicketEndorsementController extends Controller
     {
         Gate::authorize('endorse', $ticket);
 
-        $departments = $this->ticketService->getEndorsementOptions($request->user());
+        $departments = $this->ticketEndorsementService->getEndorsementOptions($request->user());
 
         return response()->json([
             'success' => true,
@@ -48,7 +48,7 @@ class TicketEndorsementController extends Controller
     {
         Gate::authorize('endorse', $ticket);
 
-        $endorsement = $this->ticketService->requestEndorsement(
+        $endorsement = $this->ticketEndorsementService->requestEndorsement(
             $ticket,
             $request->validated(),
             $request->user()

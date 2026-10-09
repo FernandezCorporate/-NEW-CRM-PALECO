@@ -2,9 +2,9 @@
 
 namespace Database\Seeders;
 
+use App\Models\TeamRole;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
-use App\Models\TeamRole;
 
 /*
  * Populates the operational roles used specifically within Team assignments.

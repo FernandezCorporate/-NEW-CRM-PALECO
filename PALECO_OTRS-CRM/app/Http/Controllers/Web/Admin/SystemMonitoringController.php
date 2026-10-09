@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Web\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Services\Web\Admin\ActivityLogService;
+use App\Services\ActivityLogs\ActivityLogService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\View\View;

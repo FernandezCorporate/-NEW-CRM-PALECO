@@ -2,9 +2,9 @@
 
 namespace Database\Seeders;
 
+use App\Models\AccountRole;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
-use App\Models\AccountRole;
 
 /*
  * Populates the system's foundational account roles.

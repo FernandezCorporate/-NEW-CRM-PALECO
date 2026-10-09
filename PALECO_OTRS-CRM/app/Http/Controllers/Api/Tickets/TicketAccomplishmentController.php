@@ -3,12 +3,12 @@
 namespace App\Http\Controllers\Api\Tickets;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Api\Tickets\SubmitAccomplishmentReportRequest;
-use App\Http\Requests\Api\Tickets\VerifyAccomplishmentRequest;
+use App\Http\Requests\Tickets\SubmitAccomplishmentReportRequest;
+use App\Http\Requests\Tickets\VerifyAccomplishmentRequest;
 use App\Http\Resources\Api\TicketAccomplishmentResource;
 use App\Models\Ticket;
 use App\Models\TicketAccomplishment;
-use App\Services\Api\Tickets\TicketService;
+use App\Services\Tickets\TicketAccomplishmentService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -20,7 +20,7 @@ use Symfony\Component\HttpFoundation\Response;
 class TicketAccomplishmentController extends Controller
 {
     public function __construct(
-        protected TicketService $ticketService
+        protected TicketAccomplishmentService $ticketAccomplishmentService
     ) {}
 
     // --- VIEW METHODS ---
@@ -32,7 +32,7 @@ class TicketAccomplishmentController extends Controller
     {
         Gate::authorize('view', $ticket);
 
-        $accomplishments = $this->ticketService->getAccomplishments($ticket);
+        $accomplishments = $this->ticketAccomplishmentService->getAccomplishments($ticket);
 
         return response()->json([
             'success' => true,
@@ -47,7 +47,7 @@ class TicketAccomplishmentController extends Controller
     {
         Gate::authorize('view', $ticket);
 
-        $loadedAccomplishment = $this->ticketService->getAccomplishmentDetails($ticket, $accomplishment);
+        $loadedAccomplishment = $this->ticketAccomplishmentService->getAccomplishmentDetails($ticket, $accomplishment);
 
         return response()->json([
             'success' => true,
@@ -64,7 +64,7 @@ class TicketAccomplishmentController extends Controller
     {
         Gate::authorize('accomplish', $ticket);
 
-        $accomplishmentReport = $this->ticketService->accomplishTicket(
+        $accomplishmentReport = $this->ticketAccomplishmentService->accomplishTicket(
             $ticket,
             $request->user(),
             $request->validated()
@@ -84,7 +84,7 @@ class TicketAccomplishmentController extends Controller
     {
         Gate::authorize('verify', $ticket);
 
-        $verifiedAccomplishment = $this->ticketService->verifyAccomplishment(
+        $verifiedAccomplishment = $this->ticketAccomplishmentService->verifyAccomplishment(
             $ticket,
             $accomplishment,
             $request->validated(),
