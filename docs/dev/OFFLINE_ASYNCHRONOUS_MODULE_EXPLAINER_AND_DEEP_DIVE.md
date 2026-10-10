@@ -140,35 +140,35 @@ sequenceDiagram
 
 ```mermaid
 flowchart TD
-    Start([Incoming HTTP Request]) --> HasHeader{Has X-Idempotency-Key?}
+    Start(["Incoming HTTP Request"]) --> HasHeader{"Has X-Idempotency-Key?"}
     
-    HasHeader -- No --> NormalFlow[Process Synchronously as normal]
-    NormalFlow --> ReturnSyncResponse[Return standard response]
+    HasHeader -- No --> NormalFlow["Process Synchronously as normal"]
+    NormalFlow --> ReturnSyncResponse["Return standard response"]
     
-    HasHeader -- Yes --> ValidateKey{Key length between 16 and 64 chars?}
-    ValidateKey -- No --> Ret422[Return 422: Invalid Key Header]
+    HasHeader -- Yes --> ValidateKey{"Key length between 16 and 64 chars?"}
+    ValidateKey -- No --> Ret422["Return 422: Invalid Key Header"]
     
-    ValidateKey -- Yes --> CheckCache{Key exists in idempotency_records?}
+    ValidateKey -- Yes --> CheckCache{"Key exists in idempotency_records?"}
     
-    CheckCache -- "Yes & Status = completed" --> ReturnCached[Return Cached JSON with HTTP 200/201<br/>Header: X-Cache: HIT]
-    CheckCache -- "Yes & Status = in_progress" --> Ret409[Return 409 Conflict: Processing in progress, retry shortly]
+    CheckCache -- "Yes & Status = completed" --> ReturnCached["Return Cached JSON with HTTP 200/201<br/>Header: X-Cache: HIT"]
+    CheckCache -- "Yes & Status = in_progress" --> Ret409["Return 409 Conflict: Processing in progress, retry shortly"]
     
-    CheckCache -- "No (Fresh Key)" --> InsertInProgress[Insert idempotency_records: status = in_progress]
-    InsertInProgress --> CheckTimestamp{Has X-Client-Timestamp?}
+    CheckCache -- "No (Fresh Key)" --> InsertInProgress["Insert idempotency_records: status = in_progress"]
+    InsertInProgress --> CheckTimestamp{"Has X-Client-Timestamp?"}
     
-    CheckTimestamp -- Yes --> ValidateTime{Valid ISO-8601 & Passes Guardrails?}
-    ValidateTime -- "Future (> now + 5m)" --> FailTime1[Return 422: Timestamp cannot be in future]
-    ValidateTime -- "Before ticket creation" --> FailTime2[Return 422: Timestamp cannot be earlier than ticket intake]
+    CheckTimestamp -- Yes --> ValidateTime{"Valid ISO-8601 & Passes Guardrails?"}
+    ValidateTime -- "Future (> now + 5m)" --> FailTime1["Return 422: Timestamp cannot be in future"]
+    ValidateTime -- "Before ticket creation" --> FailTime2["Return 422: Timestamp cannot be earlier than ticket intake"]
     
-    FailTime1 --> DeleteInProgress[Delete temporary in_progress record]
+    FailTime1 --> DeleteInProgress["Delete temporary in_progress record"]
     FailTime2 --> DeleteInProgress
     
-    ValidateTime -- "Valid" --> ExecuteAction[Execute Business Logic in DB Transaction]
+    ValidateTime -- "Valid" --> ExecuteAction["Execute Business Logic in DB Transaction"]
     CheckTimestamp -- No --> ExecuteAction
     
-    ExecuteAction --> ActionSuccess{Transaction Successful?}
-    ActionSuccess -- Yes --> CacheResponse[Update idempotency_records:<br/>status = completed, body = JSON, code = 200/201]
-    CacheResponse --> ReturnFinal[Return HTTP Response<br/>Header: X-Cache: MISS]
+    ExecuteAction --> ActionSuccess{"Transaction Successful?"}
+    ActionSuccess -- Yes --> CacheResponse["Update idempotency_records:<br/>status = completed, body = JSON, code = 200/201"]
+    CacheResponse --> ReturnFinal["Return HTTP Response<br/>Header: X-Cache: MISS"]
     
     ActionSuccess -- No --> DeleteInProgress
 ```
