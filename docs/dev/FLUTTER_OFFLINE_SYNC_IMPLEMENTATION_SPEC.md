@@ -52,24 +52,24 @@ In an online-only app, these actions fail immediately in dead zones. With this *
 
 ```mermaid
 flowchart TD
-    subgraph Mobile Device (Field - Dead Zone)
-        UI[Field Personnel UI] -->|1. Tap Start / Accomplish| OptState[Optimistic UI State<br/>'In Progress' / 'Resolved']
-        UI -->|2. Save Photos & Signature| LocalDisk[(Device App Storage<br/>/offline_media/)]
-        OptState -->|3. Record Event Time & UUID| OutboxDB[(Local Database / Isar<br/>offline_actions table)]
+    subgraph MobileDevice["Mobile Device (Field Dead Zone)"]
+        UI["Field Personnel UI"] -->|"1. Tap Start / Accomplish"| OptState["Optimistic UI State<br/>In Progress / Resolved"]
+        UI -->|"2. Save Photos & Signature"| LocalDisk[("Device App Storage<br/>/offline_media/")]
+        OptState -->|"3. Record Event Time & UUID"| OutboxDB[("Local Database / Isar<br/>offline_actions table")]
     end
 
-    subgraph Background Sync Worker
-        NetCheck{Internet Available?}
-        OutboxDB -->|Poll / Stream| NetCheck
-        NetCheck -->|No| Wait[Sleep & Listen to Connectivity]
-        NetCheck -->|Yes| FIFOLock[Lock Ticket & Order by Event Time]
+    subgraph SyncWorker["Background Sync Worker"]
+        NetCheck{"Internet Available?"}
+        OutboxDB -->|"Poll / Stream"| NetCheck
+        NetCheck -->|"No"| Wait["Sleep & Listen to Connectivity"]
+        NetCheck -->|"Yes"| FIFOLock["Lock Ticket & Order by Event Time"]
     end
 
-    subgraph PALECO Cloud API
-        FIFOLock -->|4. Sync Start with X-Idempotency-Key| ApiStart[PATCH /api/tickets/:id/start]
-        ApiStart -->|200 OK| OutboxMark1[Mark Action Synced]
-        OutboxMark1 -->|5. Sync Accomplish with Multipart| ApiAcc[POST /api/tickets/:id/accomplish]
-        ApiAcc -->|201 Created| OutboxMark2[Mark Action Synced & Clean Media]
+    subgraph CloudAPI["PALECO Cloud API"]
+        FIFOLock -->|"4. Sync Start with X-Idempotency-Key"| ApiStart["PATCH /api/tickets/:id/start"]
+        ApiStart -->|"200 OK"| OutboxMark1["Mark Action Synced"]
+        OutboxMark1 -->|"5. Sync Accomplish with Multipart"| ApiAcc["POST /api/tickets/:id/accomplish"]
+        ApiAcc -->|"201 Created"| OutboxMark2["Mark Action Synced & Clean Media"]
     end
 ```
 
