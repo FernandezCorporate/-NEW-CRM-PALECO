@@ -2,6 +2,3 @@
 node_modules/
 vendor/
 .env
-
-# System Documentation
-docs/
