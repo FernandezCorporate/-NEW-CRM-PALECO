@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\Tickets;
 
+use App\Http\Controllers\Api\Concerns\ResolvesClientTimestamp;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Tickets\SubmitAccomplishmentReportRequest;
 use App\Http\Requests\Tickets\VerifyAccomplishmentRequest;
@@ -19,6 +20,8 @@ use Symfony\Component\HttpFoundation\Response;
  */
 class TicketAccomplishmentController extends Controller
 {
+    use ResolvesClientTimestamp;
+
     public function __construct(
         protected TicketAccomplishmentService $ticketAccomplishmentService
     ) {}
@@ -64,10 +67,15 @@ class TicketAccomplishmentController extends Controller
     {
         Gate::authorize('accomplish', $ticket);
 
+        $clientTimestamp = $this->resolveClientTimestamp($request, $ticket);
+        $idempotencyKey = $request->header('X-Idempotency-Key') ?? $request->input('idempotency_key');
+
         $accomplishmentReport = $this->ticketAccomplishmentService->accomplishTicket(
             $ticket,
             $request->user(),
-            $request->validated()
+            $request->validated(),
+            $clientTimestamp,
+            $idempotencyKey
         );
 
         return response()->json([

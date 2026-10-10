@@ -37,6 +37,8 @@ class TicketAccomplishmentResource extends JsonResource
             'status' => $this->status->value ?? $this->status,
             'rejection_reason' => $this->rejection_reason,
             'accomplished_at' => $this->accomplished_at?->format('M d, Y h:i A'),
+            'is_offline_synced' => (bool) ($this->is_offline_synced ?? false),
+            'synced_at' => $this->synced_at?->format('M d, Y h:i A'),
 
             'worker' => $this->whenLoaded('accomplishedBy', function () {
                 return [

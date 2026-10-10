@@ -8,6 +8,7 @@ use App\Models\Ticket;
 use App\Models\TicketAccomplishment;
 use App\Models\TicketStatusLog;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -56,8 +57,32 @@ class TicketAccomplishmentService
      *
      * @throws ValidationException
      */
-    public function accomplishTicket(Ticket $ticket, User $worker, array $data): TicketAccomplishment
-    {
+    public function accomplishTicket(
+        Ticket $ticket,
+        User $worker,
+        array $data,
+        ?Carbon $clientTimestamp = null,
+        ?string $idempotencyKey = null
+    ): TicketAccomplishment {
+        // Idempotency safety: If client resubmits an accomplishment with the same key
+        if ($idempotencyKey) {
+            $existingReport = TicketAccomplishment::where('idempotency_key', $idempotencyKey)->first();
+            if ($existingReport) {
+                return $existingReport->load(['accomplishedBy', 'approvedBy', 'rejectedBy', 'photos']);
+            }
+        }
+
+        // Idempotency safety: If already resolved by this worker, return the existing report
+        if ($ticket->status === TicketStatus::RESOLVED) {
+            $existingReport = $ticket->accomplishments()
+                ->where('accomplished_by_id', $worker->id)
+                ->latest('id')
+                ->first();
+            if ($existingReport) {
+                return $existingReport->load(['accomplishedBy', 'approvedBy', 'rejectedBy', 'photos']);
+            }
+        }
+
         if ($ticket->status !== TicketStatus::IN_PROGRESS) {
             throw ValidationException::withMessages([
                 'status' => 'Only tickets that are currently in progress can be marked as accomplished.',
@@ -70,6 +95,9 @@ class TicketAccomplishmentService
             ]);
         }
 
+        $isOffline = $clientTimestamp !== null && $clientTimestamp->diffInMinutes(now()) > 5;
+        $actualAccomplishedTime = $clientTimestamp ?? now();
+
         $signaturePath = null;
         $photoPaths = [];
 
@@ -78,7 +106,17 @@ class TicketAccomplishmentService
                 $signaturePath = $data['signature']->store('accomplishments/signatures', 'public');
             }
 
-            return DB::transaction(function () use ($ticket, $worker, $data, $signaturePath, &$photoPaths) {
+            return DB::transaction(function () use (
+                $ticket,
+                $worker,
+                $data,
+                $signaturePath,
+                &$photoPaths,
+                $actualAccomplishedTime,
+                $clientTimestamp,
+                $isOffline,
+                $idempotencyKey
+            ) {
                 $lockedTicket = Ticket::where('id', $ticket->id)
                     ->lockForUpdate()
                     ->firstOrFail();
@@ -88,10 +126,14 @@ class TicketAccomplishmentService
                 $report = $lockedTicket->accomplishments()->create([
                     'accomplished_by_id' => $worker->id,
                     'remarks' => $data['remarks'],
-                    'accomplished_at' => now(),
+                    'accomplished_at' => $actualAccomplishedTime,
+                    'client_accomplished_at' => $clientTimestamp,
                     'consumer_name' => $data['consumer_name'] ?? null,
                     'signature_path' => $signaturePath,
                     'status' => TicketAccomplishmentStatus::PENDING,
+                    'is_offline_synced' => $isOffline,
+                    'synced_at' => $isOffline ? now() : null,
+                    'idempotency_key' => $idempotencyKey,
                 ]);
 
                 if (! empty($data['photos'])) {
@@ -113,12 +155,20 @@ class TicketAccomplishmentService
                     'old_status' => $oldStatus,
                     'new_status' => TicketStatus::RESOLVED,
                     'changed_by_id' => $worker->id,
+                    'created_at' => $actualAccomplishedTime,
                 ]);
 
-                $lockedTicket->update([
+                $ticketUpdate = [
                     'status' => TicketStatus::RESOLVED,
-                    'resolved_at' => now(),
-                ]);
+                    'resolved_at' => $actualAccomplishedTime,
+                ];
+
+                if ($isOffline && ! $lockedTicket->is_offline_synced) {
+                    $ticketUpdate['is_offline_synced'] = true;
+                    $ticketUpdate['synced_at'] = now();
+                }
+
+                $lockedTicket->update($ticketUpdate);
 
                 return $report;
             });

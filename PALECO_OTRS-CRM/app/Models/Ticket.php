@@ -63,6 +63,9 @@ class Ticket extends Model
         'reported_at',
         'resolved_at',
         'closed_at',
+        'is_offline_synced',
+        'synced_at',
+        'client_started_at',
     ];
 
     // --- CASTS ---
@@ -80,6 +83,9 @@ class Ticket extends Model
             'reported_at' => 'datetime',
             'resolved_at' => 'datetime',
             'closed_at' => 'datetime',
+            'is_offline_synced' => 'boolean',
+            'synced_at' => 'datetime',
+            'client_started_at' => 'datetime',
         ];
     }
 

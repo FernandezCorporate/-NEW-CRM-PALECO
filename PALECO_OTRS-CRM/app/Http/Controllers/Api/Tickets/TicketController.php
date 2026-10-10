@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\Tickets;
 
+use App\Http\Controllers\Api\Concerns\ResolvesClientTimestamp;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Api\TicketDetailedResource;
 use App\Http\Resources\Api\TicketHistoryResource;
@@ -19,6 +20,8 @@ use Symfony\Component\HttpFoundation\Response;
  */
 class TicketController extends Controller
 {
+    use ResolvesClientTimestamp;
+
     public function __construct(
         protected TicketService $ticketService
     ) {}
@@ -89,7 +92,9 @@ class TicketController extends Controller
     {
         Gate::authorize('start', $ticket);
 
-        $updatedTicket = $this->ticketService->startTicket($ticket, $request->user());
+        $clientTimestamp = $this->resolveClientTimestamp($request, $ticket);
+
+        $updatedTicket = $this->ticketService->startTicket($ticket, $request->user(), $clientTimestamp);
 
         return response()->json([
             'success' => true,

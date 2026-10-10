@@ -35,6 +35,10 @@ class SubmitAccomplishmentReportRequest extends FormRequest
 
             // Validate each individual file inside the photos array (Max 10MB each)
             'photos.*' => ['required', 'image', 'mimes:jpeg,png,jpg', 'max:10240'],
+
+            // Optional offline-async parameters
+            'client_timestamp' => ['nullable', 'string'],
+            'idempotency_key' => ['nullable', 'string', 'max:64'],
         ];
     }
 
