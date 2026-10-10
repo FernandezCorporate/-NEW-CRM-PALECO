@@ -79,8 +79,8 @@ Route::middleware('auth:sanctum')->group(function () {
         });
     });
 
-    // --- FIELD PERSONNEL SPECIFIC ENDPOINTS ---
-    Route::middleware('can:access-field_personnel')->group(function () {
+    // --- FIELD PERSONNEL SPECIFIC ENDPOINTS (OFFLINE-ASYNC SUPPORTED) ---
+    Route::middleware(['can:access-field_personnel', 'idempotent'])->group(function () {
 
         Route::prefix('tickets')->group(function () {
             Route::patch('/{ticket}/start', [TicketController::class, 'start']);

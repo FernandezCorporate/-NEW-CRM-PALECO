@@ -48,6 +48,8 @@ class TicketResource extends JsonResource
 
             'status' => $this->status?->value ?? $this->status,
             'child_tickets_count' => $this->child_tickets_count ?? 0,
+            'is_offline_synced' => (bool) ($this->is_offline_synced ?? false),
+            'synced_at' => $this->synced_at?->format('M d, Y h:i A'),
         ];
     }
 }

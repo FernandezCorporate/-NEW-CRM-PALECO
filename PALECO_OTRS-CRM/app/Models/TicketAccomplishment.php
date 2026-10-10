@@ -23,6 +23,10 @@ class TicketAccomplishment extends Model
         'approved_by_id',
         'rejected_by_id',
         'rejection_reason',
+        'is_offline_synced',
+        'synced_at',
+        'client_accomplished_at',
+        'idempotency_key',
     ];
 
     // --- CASTS ---
@@ -35,6 +39,9 @@ class TicketAccomplishment extends Model
         return [
             'accomplished_at' => 'datetime',
             'status' => TicketAccomplishmentStatus::class,
+            'is_offline_synced' => 'boolean',
+            'synced_at' => 'datetime',
+            'client_accomplished_at' => 'datetime',
         ];
     }
 
