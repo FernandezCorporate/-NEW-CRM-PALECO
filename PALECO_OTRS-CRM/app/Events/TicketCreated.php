@@ -36,7 +36,7 @@ class TicketCreated implements ShouldBroadcastNow
     public function broadcastWith(): array
     {
         return [
-            'ticket_id' => $this->ticket->system_id,
+            'ticket_id' => $this->ticket->id,
             'ticket_number' => $this->ticket->ticket_number,
             'parent_ticket_id' => $this->ticket->parent_ticket_id,
             'status' => $this->ticket->status->value,

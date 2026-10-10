@@ -14,7 +14,7 @@ class TicketAssignment extends Model
     protected $fillable = [
         'ticket_id',
         'team_id',
-        'assigned_by',
+        'assigned_by_id',
         'reason',
         'unassigned_at',
     ];
@@ -38,7 +38,7 @@ class TicketAssignment extends Model
      */
     public function ticket(): BelongsTo
     {
-        return $this->belongsTo(Ticket::class, 'ticket_id', 'system_id');
+        return $this->belongsTo(Ticket::class, 'ticket_id');
     }
 
     /**
@@ -54,6 +54,6 @@ class TicketAssignment extends Model
      */
     public function assigner(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'assigned_by');
+        return $this->belongsTo(User::class, 'assigned_by_id');
     }
 }

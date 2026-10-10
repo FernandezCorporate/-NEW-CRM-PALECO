@@ -22,8 +22,8 @@ class TicketEndorsement extends Model
         'status',
         'pre_endorsement_status',
         'rejection_reason',
-        'reviewed_by',
-        'created_by',
+        'reviewed_by_id',
+        'created_by_id',
         'reviewed_at',
     ];
 
@@ -47,7 +47,7 @@ class TicketEndorsement extends Model
      */
     public function ticket(): BelongsTo
     {
-        return $this->belongsTo(Ticket::class, 'ticket_id', 'system_id');
+        return $this->belongsTo(Ticket::class, 'ticket_id');
     }
 
     /**
@@ -55,7 +55,7 @@ class TicketEndorsement extends Model
      */
     public function creator(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'created_by');
+        return $this->belongsTo(User::class, 'created_by_id');
     }
 
     /**
@@ -63,7 +63,7 @@ class TicketEndorsement extends Model
      */
     public function reviewer(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'reviewed_by');
+        return $this->belongsTo(User::class, 'reviewed_by_id');
     }
 
     /**

@@ -17,14 +17,14 @@ return new class extends Migration
         });
 
         Schema::create('tickets', function (Blueprint $table) {
-            $table->ulid('system_id')->primary();
-            $table->string('ticket_number')->unique();
+            $table->ulid('id')->primary();
+            $table->string('ticket_number', 30)->unique();
 
-            $table->foreignUlid('parent_ticket_id')->nullable()->constrained('tickets', 'system_id')->nullOnDelete();
-            $table->foreignUlid('consumer_id')->nullable()->constrained('consumers', 'id')->nullOnDelete();
+            $table->foreignUlid('parent_ticket_id')->nullable()->constrained('tickets')->nullOnDelete();
+            $table->foreignUlid('consumer_id')->nullable()->constrained('consumers')->nullOnDelete();
 
-            $table->string('consumer_contact')->nullable();
-            $table->string('complaint_source');
+            $table->string('consumer_contact', 20)->nullable();
+            $table->string('complaint_source', 30);
             $table->text('complaint_description')->nullable();
 
             $table->foreignId('category_id')->nullable()->constrained('ticket_categories');
@@ -39,9 +39,9 @@ return new class extends Migration
             $table->foreignId('department_id')->nullable()->constrained('departments');
             $table->foreignUlid('team_id')->nullable()->constrained('teams');
 
-            $table->foreignUlid('created_by')->constrained('users', 'id');
+            $table->foreignUlid('created_by_id')->constrained('users');
 
-            $table->string('status')->default('open');
+            $table->string('status', 30)->default('open');
             $table->timestamp('reported_at')->nullable();
             $table->timestamp('started_at')->nullable();
             $table->timestamp('resolved_at')->nullable();
@@ -53,47 +53,38 @@ return new class extends Migration
 
         Schema::create('ticket_status_logs', function (Blueprint $table) {
             $table->id();
-            $table->foreignUlid('ticket_id')->constrained('tickets', 'system_id')->cascadeOnDelete();
-            $table->foreignUlid('changed_by')->nullable()->constrained('users', 'id')->nullOnDelete();
-            $table->string('old_status')->nullable();
-            $table->string('new_status');
+            $table->foreignUlid('ticket_id')->constrained('tickets')->cascadeOnDelete();
+            $table->foreignUlid('changed_by_id')->nullable()->constrained('users')->nullOnDelete();
+            $table->string('old_status', 30)->nullable();
+            $table->string('new_status', 30);
             $table->timestamps();
         });
 
         Schema::create('ticket_assignments', function (Blueprint $table) {
             $table->id();
-            $table->char('ticket_id', 26);
-            $table->char('team_id', 26);
-            $table->ulid('assigned_by');
+            $table->foreignUlid('ticket_id')->constrained('tickets')->cascadeOnDelete();
+            $table->foreignUlid('team_id')->constrained('teams')->cascadeOnDelete();
+            $table->foreignUlid('assigned_by_id')->constrained('users')->cascadeOnDelete();
             $table->text('reason')->nullable();
 
             $table->timestamp('unassigned_at')->nullable();
             $table->timestamps();
-
-            $table->foreign('ticket_id')->references('system_id')->on('tickets')->cascadeOnDelete();
-            $table->foreign('team_id')->references('id')->on('teams')->cascadeOnDelete();
-            $table->foreign('assigned_by')->references('id')->on('users')->cascadeOnDelete();
         });
 
         // --- UPDATED TABLE ---
         Schema::create('ticket_endorsements', function (Blueprint $table) {
             $table->ulid('id')->primary();
+            $table->foreignUlid('ticket_id')->constrained('tickets')->cascadeOnDelete();
+            $table->foreignUlid('created_by_id')->constrained('users')->cascadeOnDelete();
 
-            $table->char('ticket_id', 26);
-            $table->foreign('ticket_id')->references('system_id')->on('tickets')->cascadeOnDelete();
-
-            $table->char('created_by', 26);
-            $table->foreign('created_by')->references('id')->on('users')->cascadeOnDelete();
-
-            $table->unsignedBigInteger('suggested_department_id')->nullable();
+            $table->foreignId('suggested_department_id')->nullable()->constrained('departments')->nullOnDelete();
 
             $table->text('reason');
-            $table->string('status')->default('pending');
-            $table->string('pre_endorsement_status'); // UPDATED COLUMN
+            $table->string('status', 30)->default('pending');
+            $table->string('pre_endorsement_status', 30);
 
             $table->text('rejection_reason')->nullable();
-            $table->char('reviewed_by', 26)->nullable();
-            $table->foreign('reviewed_by')->references('id')->on('users')->nullOnDelete();
+            $table->foreignUlid('reviewed_by_id')->nullable()->constrained('users')->nullOnDelete();
             $table->timestamp('reviewed_at')->nullable();
 
             $table->timestamps();
@@ -101,8 +92,8 @@ return new class extends Migration
 
         Schema::create('ticket_accomplishments', function (Blueprint $table) {
             $table->id();
-            $table->char('ticket_id', 26);
-            $table->ulid('accomplished_by_id');
+            $table->foreignUlid('ticket_id')->constrained('tickets')->cascadeOnDelete();
+            $table->foreignUlid('accomplished_by_id')->constrained('users')->cascadeOnDelete();
 
             $table->text('remarks');
             $table->timestamp('accomplished_at');
@@ -110,30 +101,28 @@ return new class extends Migration
             $table->string('consumer_name')->nullable();
             $table->string('signature_path')->nullable();
 
-            $table->string('status')->default('pending');
-            $table->char('approved_by_id', 26)->nullable();
-
-            $table->ulid('rejected_by_id')->nullable();
+            $table->string('status', 30)->default('pending');
+            $table->foreignUlid('approved_by_id')->nullable()->constrained('users')->nullOnDelete();
+            $table->foreignUlid('rejected_by_id')->nullable()->constrained('users')->nullOnDelete();
             $table->text('rejection_reason')->nullable();
 
             $table->timestamps();
-
-            $table->foreign('ticket_id')->references('system_id')->on('tickets')->cascadeOnDelete();
-            $table->foreign('accomplished_by_id')->references('id')->on('users')->cascadeOnDelete();
-            $table->foreign('rejected_by_id')->references('id')->on('users')->cascadeOnDelete();
         });
 
         Schema::create('accomplishment_photos', function (Blueprint $table) {
             $table->id();
             $table->foreignId('accomplishment_id')->constrained('ticket_accomplishments')->cascadeOnDelete();
             $table->string('file_path');
+            $table->string('file_name')->nullable();
+            $table->unsignedInteger('file_size')->nullable();
+            $table->string('mime_type', 50)->nullable();
             $table->timestamps();
         });
 
         Schema::create('ticket_remarks', function (Blueprint $table) {
             $table->ulid('id')->primary();
-            $table->foreignUlid('ticket_id')->constrained('tickets', 'system_id')->cascadeOnDelete();
-            $table->foreignUlid('user_id')->constrained('users', 'id')->cascadeOnDelete();
+            $table->foreignUlid('ticket_id')->constrained('tickets')->cascadeOnDelete();
+            $table->foreignUlid('user_id')->constrained('users')->cascadeOnDelete();
             $table->text('body');
             $table->boolean('is_internal')->default(false);
             $table->timestamps();

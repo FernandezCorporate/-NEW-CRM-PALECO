@@ -17,7 +17,7 @@ class TicketResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
-            'id' => $this->system_id,
+            'id' => $this->id,
             'ticket_number' => $this->ticket_number,
             'consumer_contact' => $this->consumer_contact,
             'complaint_source' => $this->complaint_source?->value ?? $this->complaint_source,
@@ -34,7 +34,7 @@ class TicketResource extends JsonResource
 
             'team_id' => $this->team_id,
             'team_name' => $this->team?->team_name,
-            'created_by' => $this->created_by,
+            'created_by' => $this->created_by_id,
             'created_by_name' => $this->creator?->full_name,
 
             // FORMATTING APPLIED HERE

@@ -85,7 +85,7 @@ class User extends Authenticatable
      */
     public function ticket(): HasMany
     {
-        return $this->hasMany(Ticket::class);
+        return $this->hasMany(Ticket::class, 'created_by_id');
     }
 
     /**
@@ -93,7 +93,7 @@ class User extends Authenticatable
      */
     public function ticketStatus(): HasMany
     {
-        return $this->hasMany(TicketStatusLog::class, 'changed_by');
+        return $this->hasMany(TicketStatusLog::class, 'changed_by_id');
     }
 
     /**
@@ -101,7 +101,7 @@ class User extends Authenticatable
      */
     public function endorsements(): HasMany
     {
-        return $this->hasMany(TicketEndorsement::class, 'created_by');
+        return $this->hasMany(TicketEndorsement::class, 'created_by_id');
     }
 
     /**

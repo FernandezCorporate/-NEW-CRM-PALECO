@@ -27,7 +27,7 @@ class TicketAccomplishmentController extends Controller
     {
         Gate::authorize('view', $accomplishment);
 
-        if ($accomplishment->ticket_id !== $ticket->system_id) {
+        if ($accomplishment->ticket_id !== $ticket->id) {
             abort(404, 'This accomplishment report does not belong to the requested ticket.');
         }
 

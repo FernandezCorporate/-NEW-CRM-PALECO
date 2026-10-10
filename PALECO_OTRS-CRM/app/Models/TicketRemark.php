@@ -39,7 +39,7 @@ class TicketRemark extends Model
      */
     public function ticket(): BelongsTo
     {
-        return $this->belongsTo(Ticket::class, 'ticket_id', 'system_id');
+        return $this->belongsTo(Ticket::class, 'ticket_id');
     }
 
     /**

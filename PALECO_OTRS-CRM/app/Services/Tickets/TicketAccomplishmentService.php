@@ -41,7 +41,7 @@ class TicketAccomplishmentService
         $accomplishment = $second ?? $first;
 
         if ($first instanceof Ticket && $second instanceof TicketAccomplishment) {
-            if ($second->ticket_id !== $first->system_id) {
+            if ($second->ticket_id !== $first->id) {
                 abort(404, 'This accomplishment report does not belong to the requested ticket.');
             }
         }
@@ -79,7 +79,7 @@ class TicketAccomplishmentService
             }
 
             return DB::transaction(function () use ($ticket, $worker, $data, $signaturePath, &$photoPaths) {
-                $lockedTicket = Ticket::where('system_id', $ticket->system_id)
+                $lockedTicket = Ticket::where('id', $ticket->id)
                     ->lockForUpdate()
                     ->firstOrFail();
 
@@ -109,10 +109,10 @@ class TicketAccomplishmentService
                 }
 
                 TicketStatusLog::create([
-                    'ticket_id' => $lockedTicket->system_id,
+                    'ticket_id' => $lockedTicket->id,
                     'old_status' => $oldStatus,
                     'new_status' => TicketStatus::RESOLVED,
-                    'changed_by' => $worker->id,
+                    'changed_by_id' => $worker->id,
                 ]);
 
                 $lockedTicket->update([
@@ -141,7 +141,7 @@ class TicketAccomplishmentService
      */
     public function verifyAccomplishment(Ticket $ticket, TicketAccomplishment $accomplishment, array $data, User $supervisor): TicketAccomplishment
     {
-        if ($accomplishment->ticket_id !== $ticket->system_id) {
+        if ($accomplishment->ticket_id !== $ticket->id) {
             abort(404, 'This accomplishment report does not belong to the requested ticket.');
         }
 
@@ -156,7 +156,7 @@ class TicketAccomplishmentService
                 ]);
             }
 
-            $lockedTicket = Ticket::where('system_id', $ticket->system_id)
+            $lockedTicket = Ticket::where('id', $ticket->id)
                 ->lockForUpdate()
                 ->firstOrFail();
 
@@ -179,10 +179,10 @@ class TicketAccomplishmentService
                 ]);
 
                 TicketStatusLog::create([
-                    'ticket_id' => $lockedTicket->system_id,
+                    'ticket_id' => $lockedTicket->id,
                     'old_status' => $oldTicketStatus,
                     'new_status' => TicketStatus::CLOSED,
-                    'changed_by' => $supervisor->id,
+                    'changed_by_id' => $supervisor->id,
                 ]);
             }
 
@@ -199,10 +199,10 @@ class TicketAccomplishmentService
                 ]);
 
                 TicketStatusLog::create([
-                    'ticket_id' => $lockedTicket->system_id,
+                    'ticket_id' => $lockedTicket->id,
                     'old_status' => $oldTicketStatus,
                     'new_status' => TicketStatus::IN_PROGRESS,
-                    'changed_by' => $supervisor->id,
+                    'changed_by_id' => $supervisor->id,
                 ]);
             }
 
