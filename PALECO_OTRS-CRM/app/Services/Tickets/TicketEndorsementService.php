@@ -111,14 +111,14 @@ class TicketEndorsementService
         }
 
         return DB::transaction(function () use ($ticket, $data, $supervisor) {
-            $lockedTicket = Ticket::where('system_id', $ticket->system_id)
+            $lockedTicket = Ticket::where('id', $ticket->id)
                 ->lockForUpdate()
                 ->firstOrFail();
 
             $oldStatus = $lockedTicket->status;
 
             $endorsement = $lockedTicket->endorsements()->create([
-                'created_by' => $supervisor->id,
+                'created_by_id' => $supervisor->id,
                 'suggested_department_id' => $data['suggested_department_id'] ?? null,
                 'reason' => $data['reason'],
                 'pre_endorsement_status' => $oldStatus->value,
@@ -126,10 +126,10 @@ class TicketEndorsementService
             ]);
 
             TicketStatusLog::create([
-                'ticket_id' => $lockedTicket->system_id,
+                'ticket_id' => $lockedTicket->id,
                 'old_status' => $oldStatus,
                 'new_status' => TicketStatus::PENDING_ENDORSEMENT,
-                'changed_by' => $supervisor->id,
+                'changed_by_id' => $supervisor->id,
             ]);
 
             $lockedTicket->update([
@@ -158,7 +158,7 @@ class TicketEndorsementService
 
             $lockedEndorsement->update([
                 'status' => $validatedData['status'],
-                'reviewed_by' => Auth::id(),
+                'reviewed_by_id' => Auth::id(),
                 'reviewed_at' => now(),
                 'rejection_reason' => $isApproved ? null : $validatedData['rejection_reason'],
             ]);
@@ -179,7 +179,7 @@ class TicketEndorsementService
                 ]);
 
                 $parentTicket->statusLog()->create([
-                    'changed_by' => Auth::id(),
+                    'changed_by_id' => Auth::id(),
                     'old_status' => $oldParentStatus,
                     'new_status' => TicketStatus::ENDORSED,
                 ]);
@@ -206,12 +206,12 @@ class TicketEndorsementService
 
                     'subject' => $this->generateChildTicketSubject($parentTicket),
                     'status' => TicketStatus::OPEN,
-                    'created_by' => Auth::id(),
+                    'created_by_id' => Auth::id(),
                     'reported_at' => now(),
                 ]);
 
                 $childTicket->statusLog()->create([
-                    'changed_by' => Auth::id(),
+                    'changed_by_id' => Auth::id(),
                     'old_status' => null,
                     'new_status' => TicketStatus::OPEN,
                 ]);
@@ -223,7 +223,7 @@ class TicketEndorsementService
                 ]);
 
                 $parentTicket->statusLog()->create([
-                    'changed_by' => Auth::id(),
+                    'changed_by_id' => Auth::id(),
                     'old_status' => $oldStatus,
                     'new_status' => $lockedEndorsement->pre_endorsement_status,
                 ]);

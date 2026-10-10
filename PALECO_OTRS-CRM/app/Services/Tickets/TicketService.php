@@ -259,12 +259,12 @@ class TicketService
                     $ticket = Ticket::create(array_merge($validatedData, [
                         'ticket_number' => $ticketNumber,
                         'status' => TicketStatus::OPEN,
-                        'created_by' => Auth::id(),
+                        'created_by_id' => Auth::id(),
                         'reported_at' => now(),
                     ]));
 
                     $ticket->statusLog()->create([
-                        'changed_by' => Auth::id(),
+                        'changed_by_id' => Auth::id(),
                         'old_status' => null,
                         'new_status' => TicketStatus::OPEN,
                     ]);
@@ -297,13 +297,13 @@ class TicketService
     public function createManualChildTicket(Ticket $parentTicket, array $validatedData): Ticket
     {
         return DB::transaction(function () use ($parentTicket, $validatedData) {
-            $lockedParent = Ticket::where('system_id', $parentTicket->system_id)
+            $lockedParent = Ticket::where('id', $parentTicket->id)
                 ->lockForUpdate()
                 ->firstOrFail();
 
             $childTicket = Ticket::create([
                 'ticket_number' => $this->generateChildTicketNumber($lockedParent),
-                'parent_ticket_id' => $lockedParent->system_id,
+                'parent_ticket_id' => $lockedParent->id,
                 'department_id' => $validatedData['department_id'],
 
                 'consumer_id' => $lockedParent->consumer_id,
@@ -321,12 +321,12 @@ class TicketService
                 'landmark' => $validatedData['landmark'] ?? $lockedParent->landmark,
 
                 'status' => TicketStatus::OPEN,
-                'created_by' => Auth::id(),
+                'created_by_id' => Auth::id(),
                 'reported_at' => now(),
             ]);
 
             $childTicket->statusLog()->create([
-                'changed_by' => Auth::id(),
+                'changed_by_id' => Auth::id(),
                 'old_status' => null,
                 'new_status' => TicketStatus::OPEN,
             ]);
@@ -372,7 +372,7 @@ class TicketService
         }
 
         return DB::transaction(function () use ($ticket, $teamId, $assigner, $reason) {
-            $lockedTicket = Ticket::where('system_id', $ticket->system_id)
+            $lockedTicket = Ticket::where('id', $ticket->id)
                 ->lockForUpdate()
                 ->firstOrFail();
 
@@ -384,18 +384,18 @@ class TicketService
                 ->update(['unassigned_at' => now()]);
 
             TicketAssignment::create([
-                'ticket_id' => $lockedTicket->system_id,
+                'ticket_id' => $lockedTicket->id,
                 'team_id' => $teamId,
-                'assigned_by' => $assigner->id,
+                'assigned_by_id' => $assigner->id,
                 'reason' => $reason,
             ]);
 
             if ($oldStatus !== TicketStatus::ASSIGNED) {
                 TicketStatusLog::create([
-                    'ticket_id' => $lockedTicket->system_id,
+                    'ticket_id' => $lockedTicket->id,
                     'old_status' => $oldStatus,
                     'new_status' => TicketStatus::ASSIGNED,
-                    'changed_by' => $assigner->id,
+                    'changed_by_id' => $assigner->id,
                 ]);
             }
 
@@ -416,7 +416,7 @@ class TicketService
     public function startTicket(Ticket $ticket, User $worker): Ticket
     {
         return DB::transaction(function () use ($ticket, $worker) {
-            $lockedTicket = Ticket::where('system_id', $ticket->system_id)
+            $lockedTicket = Ticket::where('id', $ticket->id)
                 ->lockForUpdate()
                 ->firstOrFail();
 
@@ -435,10 +435,10 @@ class TicketService
             $oldStatus = $lockedTicket->status;
 
             TicketStatusLog::create([
-                'ticket_id' => $lockedTicket->system_id,
+                'ticket_id' => $lockedTicket->id,
                 'old_status' => $oldStatus,
                 'new_status' => TicketStatus::IN_PROGRESS,
-                'changed_by' => $worker->id,
+                'changed_by_id' => $worker->id,
             ]);
 
             $lockedTicket->update([

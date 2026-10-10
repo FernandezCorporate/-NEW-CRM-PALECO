@@ -14,7 +14,7 @@ class TicketStatusLog extends Model
 {
     protected $fillable = [
         'ticket_id',
-        'changed_by',
+        'changed_by_id',
         'old_status',
         'new_status',
     ];
@@ -39,7 +39,7 @@ class TicketStatusLog extends Model
      */
     public function ticket(): BelongsTo
     {
-        return $this->belongsTo(Ticket::class, 'ticket_id', 'system_id');
+        return $this->belongsTo(Ticket::class, 'ticket_id');
     }
 
     /**
@@ -47,6 +47,6 @@ class TicketStatusLog extends Model
      */
     public function updater(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'changed_by', 'id');
+        return $this->belongsTo(User::class, 'changed_by_id');
     }
 }

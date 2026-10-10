@@ -13,6 +13,9 @@ class AccomplishmentPhoto extends Model
     protected $fillable = [
         'accomplishment_id',
         'file_path',
+        'file_name',
+        'file_size',
+        'mime_type',
     ];
 
     // --- RELATIONSHIPS ---

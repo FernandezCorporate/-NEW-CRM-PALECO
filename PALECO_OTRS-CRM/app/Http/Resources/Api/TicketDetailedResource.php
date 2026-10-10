@@ -17,7 +17,7 @@ class TicketDetailedResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
-            'id' => $this->system_id,
+            'id' => $this->id,
             'ticket_number' => $this->ticket_number,
             'status' => $this->status?->value ?? $this->status,
             'reported_at' => $this->reported_at?->format('M d, Y h:i A'),
@@ -90,7 +90,7 @@ class TicketDetailedResource extends JsonResource
             'child_tickets' => $this->whenLoaded('childTickets', function () {
                 return $this->childTickets->map(function ($child) {
                     return [
-                        'id' => $child->system_id,
+                        'id' => $child->id,
                         'ticket_number' => $child->ticket_number,
                         'status' => $child->status?->value ?? $child->status,
                     ];

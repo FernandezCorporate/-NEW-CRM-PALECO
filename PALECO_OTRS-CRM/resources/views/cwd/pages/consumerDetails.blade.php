@@ -174,7 +174,7 @@
                                     </span>
                                 </td>
                                 <td class="px-6 py-4 text-right whitespace-nowrap">
-                                    <a href="{{ route('cwd.tickets.show', $ticket->system_id) }}" class="text-[#008f5d] hover:text-[#007049] font-medium text-sm">View details</a>
+                                    <a href="{{ route('cwd.tickets.show', $ticket->id) }}" class="text-[#008f5d] hover:text-[#007049] font-medium text-sm">View details</a>
                                 </td>
                             </tr>
                         @empty

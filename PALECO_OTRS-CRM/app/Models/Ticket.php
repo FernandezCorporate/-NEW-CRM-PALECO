@@ -22,8 +22,6 @@ class Ticket extends Model
 {
     use Auditable, HasUlids, SoftDeletes;
 
-    protected $primaryKey = 'system_id';
-
     protected string $activityLogName = 'Tickets';
 
     protected string $activityTitleAttribute = 'ticket_number';
@@ -59,7 +57,7 @@ class Ticket extends Model
         'landmark',
         'department_id',
         'team_id',
-        'created_by',
+        'created_by_id',
         'status',
         'started_at',
         'reported_at',
@@ -116,7 +114,7 @@ class Ticket extends Model
      */
     public function statusLog(): HasMany
     {
-        return $this->hasMany(TicketStatusLog::class, 'ticket_id', 'system_id');
+        return $this->hasMany(TicketStatusLog::class, 'ticket_id');
     }
 
     /**
@@ -124,7 +122,7 @@ class Ticket extends Model
      */
     public function creator(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'created_by', 'id');
+        return $this->belongsTo(User::class, 'created_by_id');
     }
 
     /**
@@ -132,7 +130,7 @@ class Ticket extends Model
      */
     public function childTickets(): HasMany
     {
-        return $this->hasMany(Ticket::class, 'parent_ticket_id', 'system_id');
+        return $this->hasMany(Ticket::class, 'parent_ticket_id');
     }
 
     /**
@@ -140,7 +138,7 @@ class Ticket extends Model
      */
     public function parentTicket(): BelongsTo
     {
-        return $this->belongsTo(Ticket::class, 'parent_ticket_id', 'system_id');
+        return $this->belongsTo(Ticket::class, 'parent_ticket_id');
     }
 
     /**
@@ -148,7 +146,7 @@ class Ticket extends Model
      */
     public function assignments(): HasMany
     {
-        return $this->hasMany(TicketAssignment::class, 'ticket_id', 'system_id');
+        return $this->hasMany(TicketAssignment::class, 'ticket_id');
     }
 
     /**
@@ -156,7 +154,7 @@ class Ticket extends Model
      */
     public function accomplishments(): HasMany
     {
-        return $this->hasMany(TicketAccomplishment::class, 'ticket_id', 'system_id');
+        return $this->hasMany(TicketAccomplishment::class, 'ticket_id');
     }
 
     /**
@@ -164,7 +162,7 @@ class Ticket extends Model
      */
     public function endorsements(): HasMany
     {
-        return $this->hasMany(TicketEndorsement::class, 'ticket_id', 'system_id');
+        return $this->hasMany(TicketEndorsement::class, 'ticket_id');
     }
 
     /**
@@ -172,7 +170,7 @@ class Ticket extends Model
      */
     public function remarks(): HasMany
     {
-        return $this->hasMany(TicketRemark::class, 'ticket_id', 'system_id');
+        return $this->hasMany(TicketRemark::class, 'ticket_id');
     }
 
     /**
