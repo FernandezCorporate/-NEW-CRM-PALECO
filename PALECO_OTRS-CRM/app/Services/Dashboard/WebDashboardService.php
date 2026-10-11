@@ -33,6 +33,9 @@ class WebDashboardService
             'key' => $status->value,
             'label' => $status->label(),
             'total' => (int) ($statusCounts->get($status->value) ?? 0),
+            'chart_class' => $status->chartClass(),
+            'color_hex' => $status->colorHex(),
+            'badge_classes' => $status->badgeClasses(),
         ])->values()->all();
 
         $startDate = Carbon::today()->subDays(6)->startOfDay();

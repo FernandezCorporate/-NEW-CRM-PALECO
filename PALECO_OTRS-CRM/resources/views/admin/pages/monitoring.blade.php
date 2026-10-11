@@ -104,7 +104,12 @@
                             <!-- Module & Event Tags -->
                             <td class="px-6 py-4">
                                 <div class="flex flex-col items-start gap-1.5">
-                                    @if($isAuth)
+                                    @php
+                                        $authAction = \App\Enums\NonModelActions::tryFrom($log->log_name);
+                                    @endphp
+                                    @if($authAction)
+                                        <span class="border text-[11px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wide {{ $authAction->badgeClasses() }}">{{ $authAction->label() }}</span>
+                                    @elseif($isAuth)
                                         <span class="bg-indigo-50 border border-indigo-200 text-indigo-700 text-[11px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wide">Authentication</span>
                                     @elseif($log->log_name === 'Tickets')
                                         <span class="bg-blue-50 border border-blue-200 text-blue-700 text-[11px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wide">Tickets</span>

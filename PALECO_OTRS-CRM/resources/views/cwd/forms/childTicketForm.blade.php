@@ -29,7 +29,7 @@
                 <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Parent Ticket Reference</span>
                 <span class="text-sm font-bold text-slate-900 font-mono">{{ $parentTicket->ticket_number }}</span>
             </div>
-            <span class="text-xs font-semibold px-2 py-0.5 rounded bg-emerald-100 text-emerald-800">
+            <span class="inline-flex items-center text-xs font-semibold px-2.5 py-0.5 rounded-full border {{ $parentTicket->status->badgeClasses() }}">
                 {{ $parentTicket->status->label() }}
             </span>
         </div>

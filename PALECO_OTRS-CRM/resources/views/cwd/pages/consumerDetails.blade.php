@@ -163,13 +163,7 @@
                                     {{ \Carbon\Carbon::parse($ticket->reported_at)->format('M d, Y h:i A') }}
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
-                                    <!-- Simplified status styling mapping -->
-                                    <span class="inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-bold tracking-wide uppercase border
-                                        @if(in_array($ticket->status->value, ['resolved', 'closed'])) bg-gray-100 text-gray-700 border-gray-200
-                                        @elseif(in_array($ticket->status->value, ['open'])) bg-amber-50 text-amber-700 border-amber-200
-                                        @else bg-blue-50 text-blue-700 border-blue-200
-                                        @endif
-                                    ">
+                                    <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold border {{ $ticket->status->badgeClasses() }}">
                                         {{ $ticket->status->label() }}
                                     </span>
                                 </td>

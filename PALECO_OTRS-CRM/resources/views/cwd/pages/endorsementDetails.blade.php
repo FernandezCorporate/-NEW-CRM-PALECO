@@ -34,19 +34,8 @@
                     <h1 class="text-2xl font-bold text-gray-900">Endorse</h1>
                     
                     <!-- Dynamic Status Badge -->
-                    @php
-                        $statusColor = match($endorsement->status->value ?? 'pending') {
-                            'pending' => 'bg-amber-50 text-amber-700 border-amber-200',
-                            'approved' => 'bg-emerald-50 text-emerald-700 border-emerald-200',
-                            'rejected' => 'bg-rose-50 text-rose-700 border-rose-200',
-                            default => 'bg-gray-100 text-gray-600 border-gray-200'
-                        };
-                        $statusLabel = method_exists($endorsement->status, 'label') 
-                            ? $endorsement->status->label() 
-                            : ucfirst($endorsement->status->value ?? 'Pending');
-                    @endphp
-                    <span class="inline-flex items-center justify-center px-2.5 py-1 rounded border {{ $statusColor }} text-[11px] font-bold tracking-wide">
-                        {{ $statusLabel }}
+                    <span class="inline-flex items-center justify-center px-2.5 py-1 rounded-full border {{ $endorsement->status->badgeClasses() }} text-[11px] font-bold tracking-wide">
+                        {{ $endorsement->status->label() }}
                     </span>
                 </div>
                 

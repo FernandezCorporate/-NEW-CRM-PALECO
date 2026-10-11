@@ -100,19 +100,8 @@
 
                             <!-- Status Badge -->
                             <td class="px-6 py-4 align-top text-center">
-                                @php
-                                    $statusColor = match($endorsement->status->value ?? 'pending') {
-                                        'pending' => 'bg-amber-50 text-amber-700 border-amber-200',
-                                        'approved' => 'bg-blue-50 text-blue-700 border-blue-200',
-                                        'rejected' => 'bg-red-50 text-red-700 border-red-200',
-                                        default => 'bg-gray-100 text-gray-600 border-gray-200'
-                                    };
-                                    $statusLabel = method_exists($endorsement->status, 'label') 
-                                        ? $endorsement->status->label() 
-                                        : ucfirst($endorsement->status->value ?? 'Pending');
-                                @endphp
-                                <span class="inline-flex items-center justify-center px-2.5 py-1 rounded-full border {{ $statusColor }} text-[11px] font-bold">
-                                    {{ $statusLabel }}
+                                <span class="inline-flex items-center justify-center px-2.5 py-1 rounded-full border {{ $endorsement->status->badgeClasses() }} text-[11px] font-bold">
+                                    {{ $endorsement->status->label() }}
                                 </span>
                             </td>
 

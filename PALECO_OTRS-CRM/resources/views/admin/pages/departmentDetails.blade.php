@@ -315,17 +315,7 @@
 
                             <!-- Ticket Status -->
                             <td class="px-6 py-4 align-top text-center">
-                                @php
-                                    $statusColor = match($ticket->status->value) {
-                                        'open' => 'bg-blue-50 text-blue-700 border-blue-200',
-                                        'assigned' => 'bg-purple-50 text-purple-700 border-purple-200',
-                                        'in_progress' => 'bg-amber-50 text-amber-700 border-amber-200',
-                                        'resolved' => 'bg-emerald-50 text-emerald-700 border-emerald-200',
-                                        'closed' => 'bg-slate-100 text-slate-700 border-slate-300',
-                                        default => 'bg-slate-100 text-slate-600 border-slate-200'
-                                    };
-                                @endphp
-                                <span class="inline-flex items-center justify-center px-2.5 py-1 rounded-full border {{ $statusColor }} text-[11px] font-bold">
+                                <span class="inline-flex items-center justify-center px-2.5 py-1 rounded-full border {{ $ticket->status->badgeClasses() }} text-[11px] font-bold">
                                     {{ $ticket->status->label() }}
                                 </span>
                             </td>

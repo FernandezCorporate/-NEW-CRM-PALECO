@@ -4,9 +4,9 @@
             $statusTotals = collect($overview['statuses'])->pluck('total', 'key');
         @endphp
         @foreach ([
-            ['Open tickets', $statusTotals['open'] ?? 0, 'Awaiting assignment or action', route('cwd.tickets', ['status' => 'open']), 'bg-emerald-50 text-emerald-600', 'M6 3h12a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V5a2 2 0 012-2zm3 5h6m-6 4h6m-6 4h4'],
-            ['In progress', $statusTotals['in_progress'] ?? 0, 'Currently handled by field teams', route('cwd.tickets', ['status' => 'in_progress']), 'bg-blue-50 text-blue-600', 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z'],
-            ['Endorsements', ($statusTotals['pending_endorsement'] ?? 0), 'Cases requiring added attention', route('cwd.endorsements'), 'bg-amber-50 text-amber-600', 'M13 7h8m0 0v8m0-8l-8 8-4-4-6 6'],
+            ['Open tickets', $statusTotals['open'] ?? 0, 'Awaiting assignment or action', route('cwd.tickets', ['status' => 'open']), 'bg-sky-50 text-sky-600', 'M6 3h12a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V5a2 2 0 012-2zm3 5h6m-6 4h6m-6 4h4'],
+            ['In progress', $statusTotals['in_progress'] ?? 0, 'Currently handled by field teams', route('cwd.tickets', ['status' => 'in_progress']), 'bg-amber-50 text-amber-600', 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z'],
+            ['Endorsements', ($statusTotals['pending_endorsement'] ?? 0), 'Cases requiring added attention', route('cwd.endorsements'), 'bg-orange-50 text-orange-600', 'M13 7h8m0 0v8m0-8l-8 8-4-4-6 6'],
         ] as $index => [$label, $value, $description, $url, $tone, $iconPath])
             <a href="{{ $url }}" data-animate class="ui-reveal metric-card group block" style="--delay: {{ $index * 70 }}ms">
                 <div class="flex items-start justify-between gap-4">
@@ -42,20 +42,19 @@
 
         <figure data-animate class="ui-reveal panel p-6 md:p-7" style="--delay: 90ms" aria-labelledby="status-chart-title">
             <figcaption><p class="eyebrow">Current workload</p><h2 id="status-chart-title" class="mt-1 text-xl font-bold text-slate-900">Ticket status mix</h2></figcaption>
-            @php
-                $statusColors = ['bg-emerald-500', 'bg-sky-500', 'bg-blue-600', 'bg-amber-500', 'bg-orange-500', 'bg-violet-500', 'bg-slate-500'];
-            @endphp
             <div class="mt-6 flex h-4 overflow-hidden rounded-full bg-slate-100" role="img" aria-label="Distribution of {{ $overview['total'] }} tickets by current status">
                 @foreach ($overview['statuses'] as $index => $status)
+                    @php $chartBarClass = $status['chart_class'] ?? (\App\Enums\TicketStatus::tryFrom($status['key'])?->chartClass() ?? 'bg-slate-400'); @endphp
                     @if ($status['total'] > 0)
-                        <span class="status-segment {{ $statusColors[$index] }}" style="--segment-width: {{ ($status['total'] / max(1, $overview['total'])) * 100 }}%; --segment-delay: {{ $index * 70 }}ms" title="{{ $status['label'] }}: {{ $status['total'] }}"></span>
+                        <span class="status-segment {{ $chartBarClass }}" style="--segment-width: {{ ($status['total'] / max(1, $overview['total'])) * 100 }}%; --segment-delay: {{ $index * 70 }}ms" title="{{ $status['label'] }}: {{ $status['total'] }}"></span>
                     @endif
                 @endforeach
             </div>
             <div class="mt-6 grid grid-cols-2 gap-x-5 gap-y-3">
                 @foreach ($overview['statuses'] as $index => $status)
+                    @php $dotClass = $status['chart_class'] ?? (\App\Enums\TicketStatus::tryFrom($status['key'])?->dotClass() ?? 'bg-slate-400'); @endphp
                     <div class="flex items-center justify-between gap-3 text-xs">
-                        <span class="flex min-w-0 items-center gap-2 text-slate-500"><i class="h-2 w-2 shrink-0 rounded-full {{ $statusColors[$index] }}"></i><span class="truncate">{{ $status['label'] }}</span></span>
+                        <span class="flex min-w-0 items-center gap-2 text-slate-500"><i class="h-2 w-2 shrink-0 rounded-full {{ $dotClass }}"></i><span class="truncate">{{ $status['label'] }}</span></span>
                         <strong class="tabular-nums text-slate-800">{{ $status['total'] }}</strong>
                     </div>
                 @endforeach

@@ -2,11 +2,13 @@
 
 namespace App\Enums;
 
+use App\Contracts\HasVisualPresentation;
+
 /**
  * Manages the complete lifecycle stages of service tickets.
  * Maps operational states from creation to final supervisor verification.
  */
-enum TicketStatus: string
+enum TicketStatus: string implements HasVisualPresentation
 {
     case OPEN = 'open';
     case ASSIGNED = 'assigned';
@@ -78,5 +80,13 @@ enum TicketStatus: string
             self::RESOLVED => 'bg-emerald-500',
             self::CLOSED => 'bg-slate-500',
         };
+    }
+
+    /**
+     * Returns the Tailwind CSS background class for status dot markers.
+     */
+    public function dotClass(): string
+    {
+        return $this->chartClass();
     }
 }

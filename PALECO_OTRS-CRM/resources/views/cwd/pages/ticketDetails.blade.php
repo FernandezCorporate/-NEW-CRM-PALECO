@@ -38,8 +38,8 @@
         <div class="flex flex-wrap items-center gap-3 self-stretch md:self-auto justify-start md:justify-end">
             <!-- Informational Metadata Pills -->
             <div class="flex items-center gap-2 flex-wrap">
-                <!-- Blue: Source -->
-                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 border border-blue-200 text-blue-700 text-xs font-semibold shadow-xs">
+                <!-- Source -->
+                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border text-xs font-semibold shadow-xs {{ $ticket->complaint_source->badgeClasses() }}">
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path></svg>
                     {{ $ticket->complaint_source->label() }}
                 </span>
@@ -384,7 +384,7 @@
                         @if($assignment->unassigned_at)
                             <time datetime="{{ $assignment->unassigned_at->toIso8601String() }}">{{ $assignment->unassigned_at->format('M d, Y') }}<small>{{ $assignment->unassigned_at->format('h:i A') }}</small></time>
                         @else
-                            <span class="history-status" data-status="assigned">Not released</span>
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold border {{ \App\Enums\TicketStatus::ASSIGNED->badgeClasses() }}">Active Handover</span>
                         @endif
                     </td>
                 </tr>
@@ -401,7 +401,7 @@
                     <td class="history-date"><time datetime="{{ $endorsement->created_at->toIso8601String() }}">{{ $endorsement->created_at->format('M d, Y') }}<small>{{ $endorsement->created_at->format('h:i A') }}</small></time></td>
                     <td>{{ $endorsement->creator->full_name ?? 'Unknown user' }}</td>
                     <td>{{ $endorsement->suggestedDepartment->dept_name ?? 'Not specified' }}</td>
-                    <td><span class="history-status" data-status="{{ $endorsement->status->value }}">{{ $endorsement->status->label() }}</span></td>
+                    <td><span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold border {{ $endorsement->status->badgeClasses() }}">{{ $endorsement->status->label() }}</span></td>
                 </tr>
             @empty
                 <tr><td colspan="4" class="history-empty"><strong>No endorsement requests</strong><span>Requests and their decisions will be listed here.</span></td></tr>
@@ -415,7 +415,7 @@
                 <tr>
                     <td class="history-date"><time datetime="{{ $acc->accomplished_at->toIso8601String() }}">{{ $acc->accomplished_at->format('M d, Y') }}<small>{{ $acc->accomplished_at->format('h:i A') }}</small></time></td>
                     <td>{{ $acc->accomplishedBy->full_name ?? 'Unknown user' }}</td>
-                    <td><span class="history-status" data-status="{{ $acc->status->value }}">{{ $acc->status->label() }}</span></td>
+                    <td><span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold border {{ $acc->status->badgeClasses() }}">{{ $acc->status->label() }}</span></td>
                     <td class="history-remarks">{{ $acc->remarks ?: 'No remarks provided.' }}</td>
                     <td><a class="history-report-link" href="{{ route('cwd.tickets.accomplishments.show', ['ticket' => $ticket, 'accomplishment' => $acc]) }}">View report<span class="sr-only"> by {{ $acc->accomplishedBy->full_name ?? 'unknown user' }} on {{ $acc->accomplished_at->format('M d, Y h:i A') }}</span><span aria-hidden="true"> ↗</span></a></td>
                 </tr>
