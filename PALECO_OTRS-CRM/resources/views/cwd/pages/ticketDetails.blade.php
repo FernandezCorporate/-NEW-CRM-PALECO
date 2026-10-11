@@ -9,42 +9,57 @@
     <!-- Header Section -->
     <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
         <div class="flex items-center gap-4">
-            <a href="{{ route('cwd.tickets') }}" aria-label="Back to tickets" class="min-h-11 min-w-11 inline-flex items-center justify-center p-2 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors text-gray-500">
+            <a href="{{ route('cwd.tickets') }}" aria-label="Back to tickets" class="min-h-11 min-w-11 inline-flex items-center justify-center p-2 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors text-gray-500 shadow-sm">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
             </a>
             <div>
-                <h1 class="text-2xl font-bold text-gray-900 flex flex-wrap items-center gap-2">
-                    {{ $ticket->ticket_number }}
+                <div class="flex items-center gap-3 flex-wrap">
+                    <h1 class="text-2xl font-bold text-gray-900 font-mono tracking-tight">
+                        {{ $ticket->ticket_number }}
+                    </h1>
+                    
+                    <!-- Standout Lifecycle Status Badge -->
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider shadow-xs border {{ $ticket->status->badgeClasses() }}">
+                        <span class="w-2 h-2 rounded-full {{ $ticket->status->chartClass() }}"></span>
+                        {{ $ticket->status->label() }}
+                    </span>
+
                     @if($ticket->parent_ticket_id)
-                        <span class="text-xs font-semibold bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded uppercase tracking-wide">Child Ticket</span>
+                        <span class="text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-200 px-2.5 py-0.5 rounded-full uppercase tracking-wider">
+                            Child Ticket
+                        </span>
                     @endif
-                </h1>
-                <p class="text-sm text-gray-500 mt-1">{{ $ticket->subject }}</p>
+                </div>
+                <p class="text-sm text-gray-500 mt-1 font-medium">{{ $ticket->subject }}</p>
             </div>
         </div>
 
-        <!-- Dynamic Pills -->
-        <div class="flex items-center gap-2 flex-wrap">
-            <!-- Blue: Source -->
-            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 border border-blue-200 text-blue-700 text-xs font-bold shadow-sm">
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path></svg>
-                {{ $ticket->complaint_source->label() }}
-            </span>
-            <!-- Red: Category -->
-            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-50 border border-red-200 text-red-700 text-xs font-bold shadow-sm">
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
-                {{ $ticket->other_category ? $ticket->other_category_name : ($ticket->category->category_name ?? 'Unspecified') }}
-            </span>
-            <!-- Green: Department -->
-            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-bold shadow-sm">
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
-                {{ $ticket->department->dept_name ?? 'Unassigned' }}
-            </span>
+        <!-- Action & Metadata Controls -->
+        <div class="flex flex-wrap items-center gap-3 self-stretch md:self-auto justify-start md:justify-end">
+            <!-- Informational Metadata Pills -->
+            <div class="flex items-center gap-2 flex-wrap">
+                <!-- Blue: Source -->
+                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 border border-blue-200 text-blue-700 text-xs font-semibold shadow-xs">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path></svg>
+                    {{ $ticket->complaint_source->label() }}
+                </span>
+                <!-- Category -->
+                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-50 border border-slate-200 text-slate-700 text-xs font-semibold shadow-xs">
+                    <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path></svg>
+                    {{ $ticket->other_category ? $ticket->other_category_name : ($ticket->category->category_name ?? 'Unspecified') }}
+                </span>
+                <!-- Department -->
+                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-semibold shadow-xs">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+                    {{ $ticket->department->dept_name ?? 'Unassigned' }}
+                </span>
+            </div>
 
+            <!-- Distinct Action Button for Child Ticket -->
             @can('createChild', $ticket)
-                <a href="{{ route('cwd.tickets.children.createForm', $ticket) }}" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-sm transition-colors">
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-                    Create Child Ticket
+                <a href="{{ route('cwd.tickets.children.createForm', $ticket) }}" class="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold shadow-sm transition-all hover:shadow focus:ring-2 focus:ring-indigo-500 focus:ring-offset-1 active:scale-[0.98]">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                    <span>Create Child Ticket</span>
                 </a>
             @endcan
         </div>
@@ -202,9 +217,12 @@
                             </div>
                         </div>
                     @else
-                        <div class="p-4 bg-gray-50 border border-dashed border-gray-300 rounded-lg text-sm text-gray-500 text-center flex flex-col items-center justify-center h-24">
-                            <svg class="w-5 h-5 text-gray-400 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-                            Team not yet assigned
+                        <div class="p-4 bg-gray-50 border border-dashed border-gray-200 rounded-lg text-sm text-gray-400 text-center flex flex-col items-center justify-center h-24">
+                            <svg class="w-6 h-6 text-gray-300 mb-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                            </svg>
+                            <span class="font-medium text-gray-500 text-xs">Team not yet assigned</span>
+                            <span class="text-[10px] text-gray-400 mt-0.5">Awaiting supervisor dispatch</span>
                         </div>
                     @endif
                 </div>
@@ -233,7 +251,7 @@
                             <div class="p-3 bg-emerald-50 border-l-4 border-emerald-500 rounded-r-lg">
                                 <div class="flex items-center justify-between">
                                     <span class="font-bold text-emerald-800 text-sm">{{ $ticket->ticket_number }} (Current)</span>
-                                    <span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700">{{ $ticket->status->label() }}</span>
+                                    <span class="text-[10px] font-bold px-2 py-0.5 rounded-full border {{ $ticket->status->badgeClasses() }}">{{ $ticket->status->label() }}</span>
                                 </div>
                                 <div class="text-xs text-emerald-600 mt-0.5">{{ $ticket->department->dept_name ?? 'Unassigned' }}</div>
                             </div>
@@ -245,10 +263,10 @@
                                 <div class="space-y-2 pl-4 border-l-2 border-gray-200 ml-2">
                                     @foreach($ticket->childTickets as $child)
                                         <a href="{{ route('cwd.tickets.show', $child) }}" class="block p-3 bg-gray-50 border border-gray-200 rounded-lg hover:border-indigo-300 hover:shadow-sm transition-all group">
-                                            <div class="flex items-center justify-between">
-                                                <span class="font-bold text-indigo-600 text-sm group-hover:text-indigo-700 transition-colors">{{ $child->ticket_number }}</span>
-                                                <span class="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-gray-200 text-gray-700">{{ $child->status->label() }}</span>
-                                            </div>
+                                             <div class="flex items-center justify-between">
+                                                 <span class="font-bold text-indigo-600 text-sm group-hover:text-indigo-700 transition-colors">{{ $child->ticket_number }}</span>
+                                                 <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full border {{ $child->status->badgeClasses() }}">{{ $child->status->label() }}</span>
+                                             </div>
                                             <div class="text-xs text-gray-500 mt-0.5">{{ $child->department->dept_name ?? 'Unassigned' }}</div>
                                         </a>
                                     @endforeach
@@ -263,7 +281,7 @@
                             <a href="{{ route('cwd.tickets.show', $ticket->parentTicket) }}" class="block p-3 bg-gray-50 border border-gray-200 rounded-lg hover:border-indigo-300 hover:shadow-sm transition-all group">
                                 <div class="flex items-center justify-between">
                                     <span class="font-bold text-indigo-600 text-sm group-hover:text-indigo-700 transition-colors">{{ $ticket->parentTicket->ticket_number }}</span>
-                                    <span class="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-gray-200 text-gray-700">{{ $ticket->parentTicket->status->label() }}</span>
+                                    <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full border {{ $ticket->parentTicket->status->badgeClasses() }}">{{ $ticket->parentTicket->status->label() }}</span>
                                 </div>
                                 <div class="text-xs text-gray-500 mt-0.5">{{ $ticket->parentTicket->department->dept_name ?? 'Unassigned' }}</div>
                             </a>
@@ -274,7 +292,7 @@
                             <div class="p-3 bg-emerald-50 border-l-4 border-emerald-500 rounded-r-lg pl-4 ml-2">
                                 <div class="flex items-center justify-between">
                                     <span class="font-bold text-emerald-800 text-sm">{{ $ticket->ticket_number }} (Current)</span>
-                                    <span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700">{{ $ticket->status->label() }}</span>
+                                    <span class="text-[10px] font-bold px-2 py-0.5 rounded-full border {{ $ticket->status->badgeClasses() }}">{{ $ticket->status->label() }}</span>
                                 </div>
                                 <div class="text-xs text-emerald-600 mt-0.5">{{ $ticket->department->dept_name ?? 'Unassigned' }}</div>
                             </div>
@@ -286,10 +304,10 @@
                                 <div class="space-y-2 pl-4 border-l-2 border-gray-200 ml-2">
                                     @foreach($ticket->childTickets as $subChild)
                                         <a href="{{ route('cwd.tickets.show', $subChild) }}" class="block p-3 bg-gray-50 border border-gray-200 rounded-lg hover:border-indigo-300 hover:shadow-sm transition-all group">
-                                            <div class="flex items-center justify-between">
-                                                <span class="font-bold text-indigo-600 text-sm group-hover:text-indigo-700 transition-colors">{{ $subChild->ticket_number }}</span>
-                                                <span class="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-gray-200 text-gray-700">{{ $subChild->status->label() }}</span>
-                                            </div>
+                                             <div class="flex items-center justify-between">
+                                                 <span class="font-bold text-indigo-600 text-sm group-hover:text-indigo-700 transition-colors">{{ $subChild->ticket_number }}</span>
+                                                 <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full border {{ $subChild->status->badgeClasses() }}">{{ $subChild->status->label() }}</span>
+                                             </div>
                                             <div class="text-xs text-gray-500 mt-0.5">{{ $subChild->department->dept_name ?? 'Unassigned' }}</div>
                                         </a>
                                     @endforeach
@@ -308,15 +326,24 @@
         <header class="ticket-history-intro">
             <p class="eyebrow">Ticket record</p>
             <h2 id="ticket-history-title">Activity & service history</h2>
-            <p>Follow status changes, team handovers, endorsements, and submitted field reports.</p>
+            <p>Follow status changes, team handovers, endorsements, submitted field reports, and communication remarks.</p>
         </header>
-        <nav class="ticket-history-nav" aria-label="Jump to ticket history section">
-            <a href="#status-history">Status changes <span>{{ $ticket->statusLog->count() }}</span></a>
-            <a href="#assignment-history">Team assignments <span>{{ $ticket->assignments->count() }}</span></a>
-            <a href="#endorsement-history">Endorsements <span>{{ $ticket->endorsements->count() }}</span></a>
-            <a href="#accomplishment-history">Field reports <span>{{ $ticket->accomplishments->count() }}</span></a>
-            
-            <a href="#remark-history">Activity remarks <span>{{ $ticket->remarks->count() }}</span></a>
+        <nav class="ticket-history-nav" aria-label="Ticket record history tabs" role="tablist">
+            <a href="#status-history" role="tab" id="tab-status-history" data-tab-target="status-history" aria-controls="status-history" aria-selected="true" aria-current="page">
+                Status changes <span>{{ $ticket->statusLog->count() }}</span>
+            </a>
+            <a href="#assignment-history" role="tab" id="tab-assignment-history" data-tab-target="assignment-history" aria-controls="assignment-history" aria-selected="false">
+                Team assignments <span>{{ $ticket->assignments->count() }}</span>
+            </a>
+            <a href="#endorsement-history" role="tab" id="tab-endorsement-history" data-tab-target="endorsement-history" aria-controls="endorsement-history" aria-selected="false">
+                Endorsements <span>{{ $ticket->endorsements->count() }}</span>
+            </a>
+            <a href="#accomplishment-history" role="tab" id="tab-accomplishment-history" data-tab-target="accomplishment-history" aria-controls="accomplishment-history" aria-selected="false">
+                Field reports <span>{{ $ticket->accomplishments->count() }}</span>
+            </a>
+            <a href="#remark-history" role="tab" id="tab-remark-history" data-tab-target="remark-history" aria-controls="remark-history" aria-selected="false">
+                Activity remarks <span>{{ $ticket->remarks->count() }}</span>
+            </a>
         </nav>
 
         <x-ticket-history-table id="status-history" title="Status changes"
@@ -326,12 +353,16 @@
                 <tr>
                     <td class="history-date"><time datetime="{{ $log->created_at->toIso8601String() }}">{{ $log->created_at->format('M d, Y') }}<small>{{ $log->created_at->format('h:i A') }}</small></time></td>
                     <td>
-                        <div class="history-transition">
+                        <div class="history-transition flex items-center gap-1.5 flex-wrap">
                             @if($log->old_status)
-                                <span class="history-previous">{{ $log->old_status->label() }}</span>
-                                <span aria-hidden="true" class="history-arrow">→</span><span class="sr-only"> changed to </span>
+                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold border {{ $log->old_status->badgeClasses() }}">
+                                    {{ $log->old_status->label() }}
+                                </span>
+                                <span aria-hidden="true" class="text-gray-400 font-bold text-xs">→</span><span class="sr-only"> changed to </span>
                             @endif
-                            <span class="history-status" data-status="{{ $log->new_status->value }}">{{ $log->new_status->label() }}</span>
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold border {{ $log->new_status->badgeClasses() }}">
+                                {{ $log->new_status->label() }}
+                            </span>
                         </div>
                     </td>
                     <td>{{ $log->updater->full_name ?? 'System' }}</td>
@@ -393,63 +424,95 @@
             @endforelse
         </x-ticket-history-table>
 
-<!-- Remarks & Communication Thread -->
-<div id="remark-history" class="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden mt-8">
-    <div class="px-6 py-4 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
-        <h3 class="font-bold text-gray-800 text-sm">Communication & Remarks</h3>
-        <span class="text-xs text-gray-500 font-medium">{{ $ticket->remarks->count() }} Entries</span>
-    </div>
+        <!-- Remarks & Communication Thread (Panel) -->
+        <div id="remark-history" data-tab-panel="remark-history" role="tabpanel" aria-labelledby="tab-remark-history" class="ticket-history-section border border-[#dce5df] rounded-xl bg-white shadow-xs overflow-hidden mb-6 hidden">
+            <header class="ticket-history-heading border-b border-gray-100 bg-gray-50/50">
+                <div>
+                    <h3 id="remark-history-heading">Activity remarks & notes <span class="ticket-history-count">{{ number_format($ticket->remarks->count()) }}</span></h3>
+                    <p>Chronological operational communication, supervisor instructions, and internal memos.</p>
+                </div>
+            </header>
 
-    <div class="p-6">
-        <!-- Post Remark Form -->
-        <form action="{{ route('shared.tickets.remarks.store', $ticket) }}" method="POST" class="mb-8">
-            @csrf
-            <div class="mb-3">
-                <textarea 
-                    name="body" 
-                    rows="3" 
-                    required 
-                    placeholder="Add an update, operational note, or dispatch instructions..." 
-                    class="w-full text-sm rounded-lg border-gray-300 focus:border-[#008f5d] focus:ring-1 focus:ring-[#008f5d] p-3 shadow-sm placeholder:text-gray-400"></textarea>
-                @error('body')
-                    <p class="text-xs text-red-500 mt-1">{{ $message }}</p>
-                @enderror
-            </div>
-
-            <div class="flex items-center justify-between">
-                <label class="flex items-center gap-2 cursor-pointer select-none">
-                    <input type="checkbox" name="is_internal" value="1" class="rounded border-gray-300 text-[#008f5d] focus:ring-[#008f5d]">
-                    <span class="text-xs font-semibold text-gray-600">Internal memo only (hide from field workers)</span>
-                </label>
-
-                <button type="submit" class="bg-[#008f5d] hover:bg-[#007a4f] text-white text-xs font-semibold px-4 py-2 rounded-lg transition-colors shadow-sm">
-                    Post Remark
-                </button>
-            </div>
-        </form>
-
-        <!-- Remarks Feed -->
-        <div class="space-y-4">
-            @forelse($ticket->remarks as $remark)
-                <div class="p-4 rounded-lg border {{ $remark->is_internal ? 'bg-amber-50/60 border-amber-200' : 'bg-gray-50 border-gray-100' }}">
-                    <div class="flex items-center justify-between mb-2">
-                        <div class="flex items-center gap-2">
-                            <span class="font-bold text-xs text-gray-900">{{ $remark->author->full_name ?? 'Unknown' }}</span>
-                            @if($remark->is_internal)
-                                <span class="bg-amber-100 text-amber-800 text-[10px] font-bold px-2 py-0.5 rounded border border-amber-200 uppercase">Internal</span>
-                            @endif
-                        </div>
-                        <span class="text-[11px] text-gray-400">{{ $remark->created_at->format('M d, Y h:i A') }}</span>
+            <div class="p-6">
+                <!-- Post Remark Form -->
+                <div class="bg-gray-50/70 border border-gray-200/80 rounded-xl p-5 mb-8">
+                    <div class="flex items-center justify-between mb-3 border-b border-gray-200/60 pb-2.5">
+                        <span class="text-xs font-bold text-gray-700 flex items-center gap-2">
+                            <svg class="w-4 h-4 text-[#008f5d]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                            Add Operational Remark
+                        </span>
+                        @if(auth()->check())
+                            <span class="text-[11px] text-gray-500 font-medium">
+                                Posting as <strong class="text-gray-800">{{ auth()->user()->full_name }}</strong>
+                            </span>
+                        @endif
                     </div>
-                    <p class="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">{{ $remark->body }}</p>
+
+                    <form action="{{ route('shared.tickets.remarks.store', $ticket) }}#remark-history" method="POST">
+                        @csrf
+                        <div class="mb-3">
+                            <textarea 
+                                name="body" 
+                                rows="3" 
+                                required 
+                                placeholder="Add an operational update, dispatch instructions, or customer communication note..." 
+                                class="w-full text-sm rounded-lg border-gray-300 bg-white focus:border-[#008f5d] focus:ring-2 focus:ring-[#008f5d]/20 p-3.5 shadow-xs transition-colors placeholder:text-gray-400 text-gray-800"></textarea>
+                            @error('body')
+                                <p class="text-xs text-rose-500 mt-1 font-medium">{{ $message }}</p>
+                            @enderror
+                        </div>
+
+                        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pt-1">
+                            <label class="flex items-center gap-2.5 cursor-pointer select-none py-1">
+                                <input type="checkbox" name="is_internal" value="1" class="rounded border-gray-300 text-[#008f5d] focus:ring-[#008f5d] h-4 w-4">
+                                <span class="text-xs font-medium text-gray-700">Internal memo only <span class="text-gray-400 font-normal">(hide from mobile field crews)</span></span>
+                            </label>
+
+                            <button type="submit" class="inline-flex items-center gap-2 bg-[#008f5d] hover:bg-[#007a4f] text-white text-xs font-semibold px-4.5 py-2.5 rounded-lg transition-all shadow-sm active:scale-[0.98]">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
+                                <span>Post Remark</span>
+                            </button>
+                        </div>
+                    </form>
                 </div>
-            @empty
-                <div class="text-center py-6 text-gray-400 text-xs italic">
-                    No remarks recorded for this ticket yet.
+
+                <!-- Remarks Feed -->
+                <div class="space-y-4">
+                    @forelse($ticket->remarks as $remark)
+                        <div class="p-4 rounded-xl border transition-colors {{ $remark->is_internal ? 'bg-amber-50/60 border-amber-200' : 'bg-gray-50/80 border-gray-200/70 hover:border-gray-300' }}">
+                            <div class="flex items-center justify-between mb-2">
+                                <div class="flex items-center gap-2.5">
+                                    <div class="w-7 h-7 rounded-full bg-slate-200 text-slate-700 font-bold text-[11px] flex items-center justify-center shrink-0">
+                                        {{ $remark->author->avatar_initials ?? '?' }}
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <span class="font-bold text-xs text-gray-900">{{ $remark->author->full_name ?? 'Unknown User' }}</span>
+                                        @if($remark->author?->role)
+                                            <span class="text-[10px] text-gray-500 uppercase tracking-wide font-medium">• {{ $remark->author->role->role_name }}</span>
+                                        @endif
+                                    </div>
+                                    @if($remark->is_internal)
+                                        <span class="inline-flex items-center gap-1 bg-amber-100 text-amber-800 text-[10px] font-bold px-2 py-0.5 rounded border border-amber-300 uppercase tracking-wider">
+                                            <svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                                            Internal
+                                        </span>
+                                    @endif
+                                </div>
+                                <span class="text-[11px] text-gray-400 font-medium">{{ $remark->created_at->format('M d, Y h:i A') }}</span>
+                            </div>
+                            <p class="text-sm text-gray-800 whitespace-pre-wrap leading-relaxed pl-9">{{ $remark->body }}</p>
+                        </div>
+                    @empty
+                        <div class="text-center py-10 border-2 border-dashed border-gray-200 rounded-xl">
+                            <div class="inline-flex items-center justify-center w-10 h-10 rounded-full bg-gray-100 text-gray-400 mb-2">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
+                            </div>
+                            <h4 class="text-xs font-bold text-gray-700">No remarks recorded</h4>
+                            <p class="text-xs text-gray-400 mt-0.5">Use the form above to add an operational update or internal note.</p>
+                        </div>
+                    @endforelse
                 </div>
-            @endforelse
+            </div>
         </div>
-    </div>
-</div>
     </section>
 @endsection

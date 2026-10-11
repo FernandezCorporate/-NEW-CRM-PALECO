@@ -29,10 +29,16 @@
     border-bottom: 2px solid transparent; transition: border-color .16s ease;
 }
 .ticket-history-nav a:hover { border-bottom-color: #08794e; }
-.ticket-history-nav a[aria-current="location"] { background: #08794e; color: #fff; border-bottom-color: #064e3b; }
-.ticket-history-nav a[aria-current="location"] span { color: #fff; }
+.ticket-history-nav a[aria-current="location"],
+.ticket-history-nav a[aria-current="page"],
+.ticket-history-nav a[aria-selected="true"] { background: #08794e; color: #fff; border-bottom-color: #064e3b; }
+.ticket-history-nav a[aria-current="location"] span,
+.ticket-history-nav a[aria-current="page"] span,
+.ticket-history-nav a[aria-selected="true"] span { color: #fff; }
 .ticket-history-nav span, .ticket-history-count { color: #627268; font-size: .8rem; font-weight: 500; }
 .ticket-history-count { margin-left: .4rem; font-variant-numeric: tabular-nums; }
+[data-tab-panel]:not(.hidden) { animation: tabFadeIn .18s ease-in-out; }
+@keyframes tabFadeIn { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: translateY(0); } }
 .ticket-history-section {
     min-width: 0; margin-bottom: 1.5rem; scroll-margin-top: 6rem;
     border: 1px solid #dce5df; border-radius: .85rem; background: white;

@@ -35,22 +35,25 @@ class TicketService
     // --- WEB QUERY METHODS ---
 
     /**
-     * Retrieve paginated tickets filtered by search query, category, and status for CWD web portal.
+     * Retrieve paginated tickets filtered by search query, category, department, and status for CWD web portal.
      */
     public function getTicketList(Request $request): array
     {
         $tickets = Ticket::with(['category', 'department', 'creator', 'parentTicket'])
             ->search($request->search)
             ->filterByCategory($request->filter)
+            ->filterByDepartment($request->department)
             ->filterByStatus($request->status === 'all' ? null : $request->status)
             ->sort($request->sort)
             ->paginate(10);
 
         $categories = TicketCategory::orderBy('category_name')->get();
+        $departments = Department::orderBy('dept_name')->get();
 
         return [
             'tickets' => $tickets,
             'categories' => $categories,
+            'departments' => $departments,
             'statuses' => TicketStatus::cases(),
         ];
     }
@@ -82,6 +85,9 @@ class TicketService
             'accomplishments.accomplishedBy',
             'accomplishments.approvedBy',
             'accomplishments.rejectedBy',
+
+            // Remarks & Notes
+            'remarks.author.role',
         ]);
 
         return compact('ticket');

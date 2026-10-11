@@ -20,13 +20,21 @@
             </div>
 
             <!-- Filter Dropdowns (Styled to match your Tom Select look) -->
-            <div class="flex items-center gap-3 w-full lg:w-auto shrink-0">
+            <div class="flex items-center gap-3 w-full lg:w-auto shrink-0 flex-wrap">
                 <select wire:model.live="filter" style="min-height: 42px; border: 1px solid #e2e8f0; border-radius: 0.5rem; padding: 0.625rem 0.75rem; font-size: 0.875rem; color: #334155; outline: none; background-color: white;">
                     <option value="all">All Categories</option>
                     @foreach($categories as $category)
                         <option value="{{ $category->id }}">{{ $category->category_name }}</option>
                     @endforeach
                     <option value="other">Custom/Other Categories</option>
+                </select>
+
+                <select wire:model.live="department" style="min-height: 42px; border: 1px solid #e2e8f0; border-radius: 0.5rem; padding: 0.625rem 0.75rem; font-size: 0.875rem; color: #334155; outline: none; background-color: white;">
+                    <option value="all">All Departments</option>
+                    @foreach($departments as $dept)
+                        <option value="{{ $dept->id }}">{{ $dept->dept_name }}</option>
+                    @endforeach
+                    <option value="unassigned">Unassigned</option>
                 </select>
 
                 <select wire:model.live="sort" style="min-height: 42px; border: 1px solid #e2e8f0; border-radius: 0.5rem; padding: 0.625rem 0.75rem; font-size: 0.875rem; color: #334155; outline: none; background-color: white;">
@@ -100,17 +108,7 @@
                                 </span>
                             </td>
                             <td class="px-6 py-4 align-top text-center">
-                                @php
-                                    $statusColor = match($tkt->status->value) {
-                                        'open' => 'bg-blue-50 text-blue-700 border-blue-200',
-                                        'assigned' => 'bg-purple-50 text-purple-700 border-purple-200',
-                                        'in_progress' => 'bg-amber-50 text-amber-700 border-amber-200',
-                                        'resolved' => 'bg-emerald-50 text-emerald-700 border-emerald-200',
-                                        'closed' => 'bg-gray-100 text-gray-700 border-gray-300',
-                                        default => 'bg-gray-100 text-gray-600 border-gray-200'
-                                    };
-                                @endphp
-                                <span class="inline-flex items-center justify-center px-2.5 py-1 rounded-full border {{ $statusColor }} text-[11px] font-bold">
+                                <span class="inline-flex items-center justify-center px-2.5 py-1 rounded-full border {{ $tkt->status->badgeClasses() }} text-[11px] font-bold">
                                     {{ $tkt->status->label() }}
                                 </span>
                             </td>

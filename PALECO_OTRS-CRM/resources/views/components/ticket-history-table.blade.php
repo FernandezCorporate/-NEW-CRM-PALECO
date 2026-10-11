@@ -1,6 +1,6 @@
 @props(['id', 'title', 'description', 'count', 'columns'])
 
-<section id="{{ $id }}" class="ticket-history-section" aria-labelledby="{{ $id }}-heading">
+<section id="{{ $id }}" class="ticket-history-section" data-tab-panel="{{ $id }}" role="tabpanel" aria-labelledby="{{ $id }}-heading">
     <header class="ticket-history-heading">
         <div>
             <h3 id="{{ $id }}-heading">{{ $title }} <span class="ticket-history-count">{{ number_format($count) }}</span></h3>

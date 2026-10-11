@@ -300,6 +300,33 @@ class Ticket extends Model
     }
 
     /**
+     * Unified scope: Filter tickets by assigned department.
+     * Supports:
+     * - Numeric ID (e.g. 2 or '2' from Web dropdown)
+     * - 'unassigned' (tickets without an assigned department)
+     * - Department name string (e.g. 'Technical Services' from API)
+     * Gracefully ignores null, empty string, or 'all'.
+     */
+    public function scopeFilterByDepartment(Builder $query, mixed $department): Builder
+    {
+        if (empty($department) || (is_string($department) && strtolower($department) === 'all')) {
+            return $query;
+        }
+
+        if (is_string($department) && strtolower($department) === 'unassigned') {
+            return $query->whereNull('department_id');
+        }
+
+        if (is_numeric($department)) {
+            return $query->where('department_id', (int) $department);
+        }
+
+        return $query->whereHas('department', function ($q) use ($department) {
+            $q->where('dept_name', $department);
+        });
+    }
+
+    /**
      * Unified scope: Sort tickets by created_at date, ticket number, or status.
      */
     public function scopeSort(Builder $query, ?string $sort): Builder
@@ -337,6 +364,14 @@ class Ticket extends Model
     public function scopeApiFilterByStatus(Builder $query, mixed $status): Builder
     {
         return $this->scopeFilterByStatus($query, $status);
+    }
+
+    /**
+     * @deprecated Use scopeFilterByDepartment instead.
+     */
+    public function scopeApiFilterByDepartment(Builder $query, mixed $department): Builder
+    {
+        return $this->scopeFilterByDepartment($query, $department);
     }
 
     /**
