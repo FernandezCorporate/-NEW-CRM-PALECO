@@ -249,21 +249,61 @@ Fetches the profile details, department affiliation, and role meta for the activ
 - **Access Level:** Authenticated (`auth:sanctum`)
 - **Headers:** `Authorization: Bearer <token>`, `Accept: application/json`
 
-#### Response: `200 OK`
+> [!NOTE]
+> **Role-Aware Hydration:**
+> - When authenticated as **Field Personnel** (`role_slug: "field_personnel"`), the response conditionally eager-loads and exposes the `teams` array with active assignments and team roles.
+> - When authenticated as a **Supervisor** (`role_slug: "supervisor"`), the `teams` key is automatically omitted from the payload.
+
+#### Response Example: Field Personnel (`200 OK`)
 ```json
 {
   "success": true,
   "data": {
-    "id": 14,
-    "username": "supervisor_john",
-    "name": "John Doe",
-    "first_name": "John",
-    "middle_name": "M",
-    "last_name": "Doe",
-    "full_name_ext": "John Doe",
-    "avatar": "JD",
+    "id": "01JM4G1P000000000000000001",
+    "username": "ralph",
+    "name": "Ralph C. Field",
+    "first_name": "Ralph",
+    "middle_name": "C",
+    "last_name": "Field",
+    "full_name_ext": "Ralph C. Field",
+    "avatar": "RF",
     "name_ext": null,
-    "email": "johndoe@paleco.com",
+    "email": "ralph@paleco.com",
+    "contact": "09123456789",
+    "role_slug": "field_personnel",
+    "role_name": "Field Personnel",
+    "department_id": 2,
+    "department": "Engineering and Technical Operations",
+    "teams": [
+      {
+        "id": "01JM4G1T000000000000000001",
+        "team_name": "Alpha Emergency Response Crew",
+        "team_desc": "Primary high-voltage line response crew",
+        "shift_start": "08:00",
+        "shift_end": "17:00",
+        "team_role_id": 1,
+        "role_name": "Team Leader"
+      }
+    ]
+  }
+}
+```
+
+#### Response Example: Supervisor (`200 OK`)
+```json
+{
+  "success": true,
+  "data": {
+    "id": "01JM4G1P000000000000000002",
+    "username": "mycka",
+    "name": "Mycka Supervisor",
+    "first_name": "Mycka",
+    "middle_name": null,
+    "last_name": "Supervisor",
+    "full_name_ext": "Mycka Supervisor",
+    "avatar": "MS",
+    "name_ext": null,
+    "email": "mycka@paleco.com",
     "contact": "09171234567",
     "role_slug": "supervisor",
     "role_name": "Department Supervisor",

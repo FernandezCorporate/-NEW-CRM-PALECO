@@ -80,11 +80,16 @@ class MobileAuthService
         // 7. Generate Sanctum Token & Payload
         $token = $user->createToken($credentials['device_name'])->plainTextToken;
 
+        $user->load(['role', 'department']);
+        if ($userRoleSlug === 'field_personnel') {
+            $user->load('teams');
+        }
+
         return [
             'success' => true,
             'status' => Response::HTTP_OK,
             'token' => $token,
-            'user' => $user->load(['role', 'department']),
+            'user' => $user,
         ];
     }
 }

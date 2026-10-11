@@ -291,7 +291,7 @@ feat(web): add branded universal 404 error page with intelligent navigation back
 
 ---
 
-## Phase 5: Field Personnel Profile Team Hydration
+## Phase 5: Field Personnel Profile Team Hydration [STATUS: IMPLEMENTED & VERIFIED]
 
 ### 5.1 Unfiltered Architectural Analysis & Verification
 * **Current State:**
@@ -318,47 +318,60 @@ feat(web): add branded universal 404 error page with intelligent navigation back
    ```php
    public function getProfileData(User $user): User
    {
+       $user->load(['role', 'department']);
+
        if ($user->role?->slug_identifier === 'field_personnel') {
-           return $user->load(['role', 'department', 'teams']);
+           $user->load('teams');
        }
 
-       return $user->load(['role', 'department']);
+       return $user;
    }
    ```
 2. **Update `MobileAuthService::processLogin`:**
-   - When returning user payload upon successful mobile login, load `'teams'` if role is `field_personnel`.
+   - When returning user payload upon successful mobile login, conditionally load `'teams'` if role is `field_personnel`.
 3. **Update `UserResource::toArray`:**
    ```php
    'teams' => $this->whenLoaded('teams', function () {
-       return $this->teams->map(fn ($team) => [
-           'id' => $team->id,
-           'team_name' => $team->team_name,
-           'team_desc' => $team->team_desc,
-           'shift_start' => $team->shift_start?->format('H:i'),
-           'shift_end' => $team->shift_end?->format('H:i'),
-       ]);
+       $teamRoles = TeamRole::pluck('role_name', 'id')->toArray();
+
+       return $this->teams->map(function ($team) use ($teamRoles) {
+           $roleId = $team->pivot?->team_role_id;
+
+           return [
+               'id' => $team->id,
+               'team_name' => $team->team_name,
+               'team_desc' => $team->team_desc,
+               'shift_start' => $team->shift_start?->format('H:i'),
+               'shift_end' => $team->shift_end?->format('H:i'),
+               'team_role_id' => $roleId ? (int) $roleId : null,
+               'role_name' => $roleId ? ($teamRoles[$roleId] ?? null) : null,
+           ];
+       });
    }),
    ```
 
 ### 5.3 Files Affected
-- `PALECO_OTRS-CRM/app/Services/Users/ProfileService.php`
-- `PALECO_OTRS-CRM/app/Services/Auth/MobileAuthService.php`
-- `PALECO_OTRS-CRM/app/Http/Resources/Api/UserResource.php`
-- `docs/dev/API_DOCUMENTATION.md`
+- `PALECO_OTRS-CRM/app/Services/Users/ProfileService.php` (Conditionally eager-loads teams for field personnel)
+- `PALECO_OTRS-CRM/app/Services/Auth/MobileAuthService.php` (Eager-loads teams for field personnel upon login)
+- `PALECO_OTRS-CRM/app/Http/Resources/Api/UserResource.php` (Includes whenLoaded teams transformation with role names)
+- `PALECO_OTRS-CRM/tests/Feature/FieldPersonnelProfileTeamsTest.php` (Feature tests for profile and auth endpoints)
+- `docs/dev/API_DOCUMENTATION.md` (Updated endpoint specification and JSON schema)
 
 ### 5.4 Verification & Testing Plan
-- Log in to Mobile API as `ralph` (Field Personnel) and call `GET /api/user/profile`.
-  - Verify `'teams'` array is present with Alpha Crew details.
-- Log in to Mobile API as `mycka` (Supervisor) and call `GET /api/user/profile`.
-  - Verify `'teams'` key is absent from the JSON response.
+- Execute automated tests verifying:
+  1. `ProfileService` and `GET /api/user/profile` eager-load and return `teams` array with team role names for field personnel.
+  2. `ProfileService` and `GET /api/user/profile` omit `teams` key completely for supervisor accounts.
+  3. `POST /api/login` hydrates `teams` on both `data.user` and root `user` for field personnel, and omits for supervisors.
+- **Automated Verification Completed:** All 3 test cases passed (30 assertions). Full test suite: 42 passed, 0 failed, 206 assertions.
 
 ### 5.5 Proposed Commit Message
 ```text
 feat(api): eager-load and expose assigned teams for field personnel in profile and auth resources
 
-- Conditionally load teams relationship in ProfileService and MobileAuthService for field workers
-- Add whenLoaded('teams') transformation block to UserResource
-- Update API documentation with field personnel profile payload specification
+- Conditionally load teams relationship in ProfileService and MobileAuthService for field personnel
+- Add whenLoaded('teams') transformation block with team role names in UserResource
+- Add FieldPersonnelProfileTeamsTest feature test suite verifying profile and login responses
+- Update API documentation with role-aware response specifications
 ```
 
 ---

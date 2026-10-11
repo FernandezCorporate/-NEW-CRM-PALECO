@@ -2,6 +2,8 @@
 
 namespace App\Http\Resources\Api;
 
+use App\Models\TeamRole;
+use DateTimeInterface;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -32,6 +34,27 @@ class UserResource extends JsonResource
             'role_name' => $this->role?->role_name,
             'department_id' => $this->department_id,
             'department' => $this->department?->dept_name,
+            'teams' => $this->whenLoaded('teams', function () {
+                $teamRoles = TeamRole::pluck('role_name', 'id')->toArray();
+
+                return $this->teams->map(function ($team) use ($teamRoles) {
+                    $roleId = $team->pivot?->team_role_id;
+
+                    return [
+                        'id' => $team->id,
+                        'team_name' => $team->team_name,
+                        'team_desc' => $team->team_desc,
+                        'shift_start' => $team->shift_start instanceof DateTimeInterface
+                            ? $team->shift_start->format('H:i')
+                            : ($team->shift_start ? substr((string) $team->shift_start, 0, 5) : null),
+                        'shift_end' => $team->shift_end instanceof DateTimeInterface
+                            ? $team->shift_end->format('H:i')
+                            : ($team->shift_end ? substr((string) $team->shift_end, 0, 5) : null),
+                        'team_role_id' => $roleId ? (int) $roleId : null,
+                        'role_name' => $roleId ? ($teamRoles[$roleId] ?? null) : null,
+                    ];
+                });
+            }),
         ];
     }
 }

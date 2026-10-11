@@ -13,9 +13,16 @@ class ProfileService
 
     /**
      * Retrieves the authenticated user and eagerly loads required relationships for resource formatting.
+     * Eagerly loads assigned operational teams when the authenticated user is a field personnel.
      */
     public function getProfileData(User $user): User
     {
-        return $user->load(['role', 'department']);
+        $user->load(['role', 'department']);
+
+        if ($user->role?->slug_identifier === 'field_personnel') {
+            $user->load('teams');
+        }
+
+        return $user;
     }
 }
