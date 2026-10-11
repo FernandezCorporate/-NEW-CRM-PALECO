@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
 
@@ -153,6 +154,19 @@ class Ticket extends Model
     public function assignments(): HasMany
     {
         return $this->hasMany(TicketAssignment::class, 'ticket_id');
+    }
+
+    /**
+     * Currently active field team assignment for this ticket.
+     */
+    public function activeAssignment(): HasOne
+    {
+        return $this->hasOne(TicketAssignment::class, 'ticket_id')
+            ->ofMany([
+                'id' => 'max',
+            ], function ($query) {
+                $query->whereNull('unassigned_at');
+            });
     }
 
     /**

@@ -413,6 +413,14 @@ Returns the full ticket details including complainant particulars, assigned crew
         { "id": 23, "name": "Juan Electrician" }
       ]
     },
+    "active_assignment": {
+      "team_id": "01JM4BT01TEAM1234567890",
+      "team_name": "Alpha Response Crew",
+      "assigned_by": "Mycka Supervisor",
+      "assigned_by_role": "Supervisor",
+      "reason": "Emergency response for burning fuse cutout",
+      "assigned_at": "Oct 06, 2026 09:30 AM"
+    },
     "status_logs": [
       {
         "id": 101,
@@ -705,7 +713,15 @@ Assigns or reassigns a service ticket to a designated team. If the ticket is bei
     "ticket_number": "2026-0042",
     "team_id": "01JM4BT02TEAM9876543210",
     "team_name": "Bravo Hotline Team",
-    "status": "Assigned"
+    "status": "Assigned",
+    "active_assignment": {
+      "team_id": "01JM4BT02TEAM9876543210",
+      "team_name": "Bravo Hotline Team",
+      "assigned_by": "Mycka Supervisor",
+      "assigned_by_role": "Supervisor",
+      "reason": "Previous crew called to an emergency feeder outage.",
+      "assigned_at": "Oct 06, 2026 10:15 AM"
+    }
   }
 }
 ```

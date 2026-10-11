@@ -188,6 +188,8 @@ class TicketService
             'category',
             'creator.role',
             'team.members',
+            'activeAssignment.team',
+            'activeAssignment.assigner.role',
             'statusLog.updater',
             'childTickets',
             'consumer',
@@ -405,7 +407,12 @@ class TicketService
                 'status' => TicketStatus::ASSIGNED,
             ]);
 
-            return $lockedTicket->fresh(['category']);
+            return $lockedTicket->fresh([
+                'category',
+                'team',
+                'activeAssignment.team',
+                'activeAssignment.assigner.role',
+            ]);
         });
     }
 

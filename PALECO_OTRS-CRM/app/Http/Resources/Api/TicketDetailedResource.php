@@ -72,6 +72,22 @@ class TicketDetailedResource extends JsonResource
                 ];
             }),
 
+            // Eager-loaded Active Assignment & Dispatch Reason
+            'active_assignment' => $this->whenLoaded('activeAssignment', function () {
+                if (! $this->activeAssignment) {
+                    return null;
+                }
+
+                return [
+                    'team_id' => $this->activeAssignment->team_id,
+                    'team_name' => $this->activeAssignment->team?->team_name,
+                    'assigned_by' => $this->activeAssignment->assigner?->full_name,
+                    'assigned_by_role' => $this->activeAssignment->assigner?->role?->role_name,
+                    'reason' => $this->activeAssignment->reason,
+                    'assigned_at' => $this->activeAssignment->created_at?->format('M d, Y h:i A'),
+                ];
+            }),
+
             // Eager-loaded Status Logs for the Timeline
             'status_logs' => $this->whenLoaded('statusLog', function () {
                 return $this->statusLog->map(function ($log) {

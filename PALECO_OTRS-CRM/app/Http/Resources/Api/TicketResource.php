@@ -50,6 +50,21 @@ class TicketResource extends JsonResource
             'child_tickets_count' => $this->child_tickets_count ?? 0,
             'is_offline_synced' => (bool) ($this->is_offline_synced ?? false),
             'synced_at' => $this->synced_at?->format('M d, Y h:i A'),
+
+            'active_assignment' => $this->whenLoaded('activeAssignment', function () {
+                if (! $this->activeAssignment) {
+                    return null;
+                }
+
+                return [
+                    'team_id' => $this->activeAssignment->team_id,
+                    'team_name' => $this->activeAssignment->team?->team_name,
+                    'assigned_by' => $this->activeAssignment->assigner?->full_name,
+                    'assigned_by_role' => $this->activeAssignment->assigner?->role?->role_name,
+                    'reason' => $this->activeAssignment->reason,
+                    'assigned_at' => $this->activeAssignment->created_at?->format('M d, Y h:i A'),
+                ];
+            }),
         ];
     }
 }
