@@ -29,11 +29,8 @@ class TeamService
         $query = Team::with('department')->withCount('members', 'ticket')
             ->search($filters['search'] ?? null)
             ->filter($filters['filter'] ?? null)
+            ->filterByStatus($filters['status'] ?? null)
             ->sort($filters['sort'] ?? null);
-
-        if (($filters['status'] ?? null) === 'archived') {
-            $query->onlyTrashed();
-        }
 
         $teams = $query->paginate(9)->withQueryString();
 
@@ -108,9 +105,9 @@ class TeamService
                 $query->select('users.id', 'users.first_name', 'users.middle_name', 'users.last_name', 'users.name_ext');
             }]);
 
-        $query->apiSearch($params['search'] ?? null)
-            ->apiFilterStatus($params['filter'] ?? 'active')
-            ->apiSort($params['sort'] ?? null);
+        $query->search($params['search'] ?? null)
+            ->filterByStatus($params['filter'] ?? 'active')
+            ->sort($params['sort'] ?? null);
 
         return $query->paginate(10)->withQueryString();
     }

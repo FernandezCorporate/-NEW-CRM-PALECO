@@ -4,7 +4,7 @@
 **Document Version:** 1.0  
 **Context:** Technical analysis, architectural critique, and execution blueprint for 6 key system cleanup concerns across API, query scopes, cybersecurity error handling, Web UX, profile hydration, and authentication.  
 **Execution Strategy:** 6 isolated phases corresponding to **6 atomic Git commits**.  
-**Current Code State:** No code changes have been applied yet (Planning phase).
+**Current Code State:** Phase 1 and Phase 2 implemented and verified in working tree. Phase 3-6 pending implementation. Git commits deferred to user.
 
 ---
 
@@ -102,7 +102,7 @@ feat(api): expose active assignment and dispatch reason on ticket detail and mut
 
 ---
 
-## Phase 2: Unification of Query Scopes Between Web and Mobile
+## Phase 2: Unification of Query Scopes Between Web and Mobile [STATUS: IMPLEMENTED & VERIFIED]
 
 ### 2.1 Unfiltered Architectural Analysis: Should We Unify Them?
 * **Current State in `Ticket.php` & `Team.php`:**
@@ -142,6 +142,16 @@ feat(api): expose active assignment and dispatch reason on ticket detail and mut
 - Test Web Livewire ticket search by category ID, purok, street, and category name.
 - Test Mobile API `GET /api/tickets?category=Power+Outage` and `GET /api/tickets?search=Malvar`.
 - Confirm both surfaces return identical query result counts for identical criteria.
+
+**Automated Verification Completed:**
+- Created `tests/Feature/UnifiedQueryScopeTest.php` covering:
+  1. Multi-field search across 8 fields + category relation name.
+  2. Polymorphic category filter handling integer IDs (Livewire dropdown), numeric strings (URL query), string names (Mobile API), and `'other'`.
+  3. Status filter accepting string and `TicketStatus` enums, ignoring `'all'`.
+  4. Ticket sorting across `ticket_number_asc`, `ticket_number_desc`, `oldest`, `status`, and `latest`.
+  5. Team word-based search, status lifecycle filter (`active`, `archived`, `all`), and directional sorting.
+  6. Backward-compatibility of deprecated `api*` scope aliases.
+- Test suite execution: 28 tests passed (141 assertions).
 
 ### 2.4 Proposed Commit Message
 ```text

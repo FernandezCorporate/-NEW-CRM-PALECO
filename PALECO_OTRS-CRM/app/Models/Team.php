@@ -68,10 +68,10 @@ class Team extends Model
         return $this->hasMany(Ticket::class);
     }
 
-    // --- SCOPES (WEB) ---
+    // --- SCOPES (UNIFIED) ---
 
     /**
-     * Web scope: Search teams across words in name, description, and shifts.
+     * Unified scope: Search teams across words in name, description, and shifts.
      */
     public function scopeSearch(Builder $query, ?string $term): Builder
     {
@@ -95,7 +95,7 @@ class Team extends Model
     }
 
     /**
-     * Web scope: Filter teams by department ID.
+     * Unified scope: Filter teams by department ID.
      */
     public function scopeFilter(Builder $query, ?string $filter): Builder
     {
@@ -107,71 +107,59 @@ class Team extends Model
     }
 
     /**
-     * Web scope: Sort teams.
+     * Unified scope: Filter teams by lifecycle status.
+     * Supports 'archive'/'archived' (only trashed), 'all' (with trashed), 'active' (active only).
      */
-    public function scopeSort(Builder $query, ?string $sort): Builder
-    {
-        return match ($sort) {
-            'oldest' => $query->oldest(),
-            'team_nameASC' => $query->orderBy('team_name', 'asc'),
-            'team_nameDESC' => $query->orderBy('team_name', 'desc'),
-            default => $query->latest(),
-        };
-    }
-
-    // --- SCOPES (API) ---
-
-    /**
-     * API scope: Search teams across words.
-     */
-    public function scopeApiSearch(Builder $query, ?string $term): Builder
-    {
-        if (empty($term)) {
-            return $query;
-        }
-
-        $words = array_filter(explode(' ', $term));
-
-        return $query->where(function ($query) use ($words) {
-            foreach ($words as $word) {
-                $searchWord = "%{$word}%";
-                $query->where(function ($subQuery) use ($searchWord) {
-                    $subQuery->where('team_name', 'like', $searchWord)
-                        ->orWhere('team_desc', 'like', $searchWord)
-                        ->orWhere('shift_start', 'like', $searchWord)
-                        ->orWhere('shift_end', 'like', $searchWord);
-                });
-            }
-        });
-    }
-
-    /**
-     * API scope: Dedicated scope to filter teams by their lifecycle status.
-     */
-    public function scopeApiFilterStatus(Builder $query, ?string $status): Builder
+    public function scopeFilterByStatus(Builder $query, ?string $status): Builder
     {
         return match ($status) {
             'archive', 'archived' => $query->onlyTrashed(),
             'all' => $query->withTrashed(),
             'active' => $query->whereNull('deleted_at'),
-            default => $query->whereNull('deleted_at'),
+            default => $status ? $query->whereNull('deleted_at') : $query,
         };
     }
 
     /**
-     * API scope: Sort teams.
+     * Unified scope: Sort teams.
      */
-    public function scopeApiSort(Builder $query, ?string $sort): Builder
+    public function scopeSort(Builder $query, ?string $sort): Builder
     {
         return match ($sort) {
             'oldest' => $query->oldest(),
-            'team_nameASC' => $query->orderBy('team_name', 'asc'),
-            'team_nameDESC' => $query->orderBy('team_name', 'desc'),
+            'name_asc', 'team_nameASC' => $query->orderBy('team_name', 'asc'),
+            'name_desc', 'team_nameDESC' => $query->orderBy('team_name', 'desc'),
             'shift_startASC' => $query->orderBy('shift_start', 'asc'),
             'shift_startDESC' => $query->orderBy('shift_start', 'desc'),
             'shift_endASC' => $query->orderBy('shift_end', 'asc'),
             'shift_endDESC' => $query->orderBy('shift_end', 'desc'),
             default => $query->latest(),
         };
+    }
+
+    // --- SCOPES (API ALIASES FOR BACKWARD COMPATIBILITY) ---
+
+    /**
+     * @deprecated Use scopeSearch instead.
+     */
+    public function scopeApiSearch(Builder $query, ?string $term): Builder
+    {
+        return $this->scopeSearch($query, $term);
+    }
+
+    /**
+     * @deprecated Use scopeFilterByStatus instead.
+     */
+    public function scopeApiFilterStatus(Builder $query, ?string $status): Builder
+    {
+        return $this->scopeFilterByStatus($query, $status);
+    }
+
+    /**
+     * @deprecated Use scopeSort instead.
+     */
+    public function scopeApiSort(Builder $query, ?string $sort): Builder
+    {
+        return $this->scopeSort($query, $sort);
     }
 }

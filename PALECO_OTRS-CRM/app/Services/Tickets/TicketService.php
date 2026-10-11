@@ -137,10 +137,10 @@ class TicketService
             $query->whereIn('team_id', $teamIds);
         }
 
-        $query->apiSearch($params['search'] ?? null)
-            ->apiFilterByCategoryName($params['category'] ?? null)
-            ->apiFilterByStatus($params['status'] ?? null)
-            ->apiSort($params['sort'] ?? null);
+        $query->search($params['search'] ?? null)
+            ->filterByCategory($params['category'] ?? null)
+            ->filterByStatus($params['status'] ?? null)
+            ->sort($params['sort'] ?? null);
 
         return $query->paginate(10)->withQueryString();
     }

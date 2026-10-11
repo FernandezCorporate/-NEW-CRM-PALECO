@@ -291,10 +291,10 @@ Includes real-time global status counters in the pagination `meta` block.
 | Parameter | Type | Required | Description |
 | :--- | :--- | :--- | :--- |
 | `page` | `integer` | No | Target page number (default: `1`). |
-| `search` | `string` | No | Search term matching ticket number, consumer name, subject, or landmark. |
-| `category` | `string` | No | Filter by ticket category name. |
+| `search` | `string` | No | Multi-field search term matching ticket number, complaint source, description, address (purok, street, barangay), status, or category name. |
+| `category` | `string\|integer` | No | Filter by ticket category name (e.g., `Power Interruption / Blackout`), numeric category ID, or `other` for custom unlisted categories. |
 | `status` | `string` | No | Filter by ticket status (`open`, `assigned`, `in_progress`, `resolved`, `closed`, `pending_endorsement`, `endorsed`, or `all` to return all tickets). Unrecognized status strings are safely ignored. |
-| `sort` | `string` | No | Sort order: `newest` (default) or `oldest`. |
+| `sort` | `string` | No | Sort order: `newest` (default), `oldest`, `ticket_number_asc`, `ticket_number_desc`, or `status`. |
 
 #### Response: `200 OK`
 ```json

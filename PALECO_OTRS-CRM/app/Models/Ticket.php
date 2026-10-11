@@ -222,10 +222,11 @@ class Ticket extends Model
         );
     }
 
-    // --- SCOPES (WEB) ---
+    // --- SCOPES (UNIFIED) ---
 
     /**
-     * Web scope: Search tickets by ticket number, description, barangay, or custom category.
+     * Unified scope: Search tickets across ticket number, complaint source, description,
+     * address (purok, street, barangay), status, custom category, and category name.
      */
     public function scopeSearch(Builder $query, ?string $search): Builder
     {
@@ -235,72 +236,8 @@ class Ticket extends Model
 
         return $query->where(function ($q) use ($search) {
             $q->where('ticket_number', 'like', "%{$search}%")
-                ->orWhere('complaint_description', 'like', "%{$search}%")
-                ->orWhere('barangay', 'like', "%{$search}%")
-                ->orWhere('other_category_name', 'like', "%{$search}%");
-        });
-    }
-
-    /**
-     * Web scope: Filter tickets by category ID or custom 'other' classification.
-     */
-    public function scopeFilterByCategory(Builder $query, ?string $filter): Builder
-    {
-        if (empty($filter) || $filter === 'all') {
-            return $query;
-        }
-
-        if ($filter === 'other') {
-            return $query->where('other_category', true);
-        }
-
-        return $query->where('category_id', $filter);
-    }
-
-    /**
-     * Web scope: Filter tickets by status enum value.
-     */
-    public function scopeFilterByStatus(Builder $query, ?string $status): Builder
-    {
-        if (empty($status)) {
-            return $query;
-        }
-
-        $validStatuses = array_column(TicketStatus::cases(), 'value');
-
-        if (in_array($status, $validStatuses)) {
-            return $query->where('status', $status);
-        }
-
-        return $query;
-    }
-
-    /**
-     * Web scope: Sort tickets by date or status.
-     */
-    public function scopeSort(Builder $query, ?string $sort): Builder
-    {
-        return match ($sort) {
-            'oldest' => $query->oldest(),
-            'status' => $query->orderBy('status'),
-            default => $query->latest(),
-        };
-    }
-
-    // --- SCOPES (API) ---
-
-    /**
-     * API scope: Multi-field search for mobile endpoints.
-     */
-    public function scopeApiSearch(Builder $query, ?string $search): Builder
-    {
-        if (empty($search)) {
-            return $query;
-        }
-
-        return $query->where(function ($q) use ($search) {
-            $q->where('ticket_number', 'like', "%{$search}%")
                 ->orWhere('complaint_source', 'like', "%{$search}%")
+                ->orWhere('complaint_description', 'like', "%{$search}%")
                 ->orWhere('purok', 'like', "%{$search}%")
                 ->orWhere('street', 'like', "%{$search}%")
                 ->orWhere('barangay', 'like', "%{$search}%")
@@ -313,16 +250,25 @@ class Ticket extends Model
     }
 
     /**
-     * API scope: Filter tickets by category name or 'other'.
+     * Unified scope: Polymorphically filter tickets by category.
+     * Supports:
+     * - Numeric ID (e.g. 1 or '1' from Web Livewire dropdown)
+     * - 'other' (custom classified tickets)
+     * - Category name string (e.g. 'Power Interruption / Blackout' from Mobile API)
+     * Gracefully ignores null, empty string, or 'all'.
      */
-    public function scopeApiFilterByCategoryName(Builder $query, ?string $filter): Builder
+    public function scopeFilterByCategory(Builder $query, mixed $filter): Builder
     {
-        if (empty($filter)) {
+        if (empty($filter) || (is_string($filter) && strtolower($filter) === 'all')) {
             return $query;
         }
 
-        if (strtolower($filter) === 'other') {
+        if (is_string($filter) && strtolower($filter) === 'other') {
             return $query->where('other_category', true);
+        }
+
+        if (is_numeric($filter)) {
+            return $query->where('category_id', (int) $filter);
         }
 
         return $query->whereHas('category', function ($q) use ($filter) {
@@ -331,33 +277,74 @@ class Ticket extends Model
     }
 
     /**
-     * API scope: Filter tickets by validated lifecycle status.
-     * Gracefully ignores 'all' and invalid status values.
+     * Unified scope: Filter tickets by lifecycle status.
+     * Accepts TicketStatus enum or string representation. Gracefully ignores null, empty, or 'all'.
      */
-    public function scopeApiFilterByStatus(Builder $query, ?string $status): Builder
+    public function scopeFilterByStatus(Builder $query, mixed $status): Builder
     {
-        if (empty($status) || strtolower($status) === 'all') {
+        if (empty($status) || (is_string($status) && strtolower($status) === 'all')) {
             return $query;
         }
 
-        if ($validStatus = TicketStatus::tryFrom($status)) {
-            return $query->where('status', $validStatus);
+        if ($status instanceof TicketStatus) {
+            return $query->where('status', $status);
+        }
+
+        if (is_string($status)) {
+            if ($validStatus = TicketStatus::tryFrom($status)) {
+                return $query->where('status', $validStatus);
+            }
         }
 
         return $query;
     }
 
     /**
-     * API scope: Sort tickets.
+     * Unified scope: Sort tickets by created_at date, ticket number, or status.
      */
-    public function scopeApiSort(Builder $query, ?string $sort): Builder
+    public function scopeSort(Builder $query, ?string $sort): Builder
     {
         return match ($sort) {
             'ticket_number_asc' => $query->orderBy('ticket_number', 'asc'),
             'ticket_number_desc' => $query->orderBy('ticket_number', 'desc'),
+            'status' => $query->orderBy('status'),
             'oldest' => $query->oldest('created_at'),
             default => $query->latest('created_at'),
         };
+    }
+
+    // --- SCOPES (API ALIASES FOR BACKWARD COMPATIBILITY) ---
+
+    /**
+     * @deprecated Use scopeSearch instead.
+     */
+    public function scopeApiSearch(Builder $query, ?string $search): Builder
+    {
+        return $this->scopeSearch($query, $search);
+    }
+
+    /**
+     * @deprecated Use scopeFilterByCategory instead.
+     */
+    public function scopeApiFilterByCategoryName(Builder $query, ?string $filter): Builder
+    {
+        return $this->scopeFilterByCategory($query, $filter);
+    }
+
+    /**
+     * @deprecated Use scopeFilterByStatus instead.
+     */
+    public function scopeApiFilterByStatus(Builder $query, mixed $status): Builder
+    {
+        return $this->scopeFilterByStatus($query, $status);
+    }
+
+    /**
+     * @deprecated Use scopeSort instead.
+     */
+    public function scopeApiSort(Builder $query, ?string $sort): Builder
+    {
+        return $this->scopeSort($query, $sort);
     }
 
     // --- ACTIVITY LOG CONFIGURATION ---
