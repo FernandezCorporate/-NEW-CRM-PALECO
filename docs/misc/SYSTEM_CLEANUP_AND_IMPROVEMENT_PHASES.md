@@ -4,7 +4,7 @@
 **Document Version:** 1.0  
 **Context:** Technical analysis, architectural critique, and execution blueprint for 6 key system cleanup concerns across API, query scopes, cybersecurity error handling, Web UX, profile hydration, and authentication.  
 **Execution Strategy:** 6 isolated phases corresponding to **6 atomic Git commits**.  
-**Current Code State:** Phase 1, Phase 2, and Phase 3 implemented and verified in working tree. Phase 4-6 pending implementation. Git commits deferred to user.
+**Current Code State:** Phases 1-3 committed by user. Phase 4 implemented and verified in working tree. Phase 5-6 pending implementation. Git commits deferred to user.
 
 ---
 
@@ -234,7 +234,7 @@ security(policies): harden object-level authorization to deny as not found (anti
 
 ---
 
-## Phase 4: Universal Web 404 UX & Smart Navigation
+## Phase 4: Universal Web 404 UX & Smart Navigation [STATUS: IMPLEMENTED & VERIFIED]
 
 ### 4.1 Unfiltered Architectural Analysis & UX Critique
 * **Current State in Web App:**
@@ -242,43 +242,51 @@ security(policies): harden object-level authorization to deny as not found (anti
   - When a user enters an invalid URL, attempts to access an unauthorized route, or hits a resource denied as not found, Laravel serves the raw, unstyled framework 404 page.
   - This looks unpolished for a Capstone presentation and leaves the user stranded with no contextual return path.
 * **UX Strategy for the 404 View:**
-  - A dedicated view at `resources/views/errors/404.blade.php`.
-  - Styled with the PALECO theme (primary green accents, clean neutral background, SVGs, responsive layout).
+  - A dedicated view at `resources/views/errors/404.blade.php` backed by a reusable `resources/views/errors/layout.blade.php`.
+  - Styled with the PALECO theme (primary green accents, clean neutral background, SVGs, responsive layout, PALECO cooperative logo).
   - **Smart Return Button:**
-    - If the user arrived from within the web app (`document.referrer` contains the host or `window.history.length > 1`), clicking **"Go Back"** calls `history.back()`.
+    - If the user arrived from within the web app (`document.referrer` contains the host or `window.history.length > 1`), clicking **"Return to Previous Page"** calls `window.history.back()`.
     - If the user landed on the URL directly (e.g. typed in address bar or clicked an external link), the button intelligently falls back to their authenticated home dashboard:
       - Admin $\rightarrow$ `/admin/dashboard`
       - CWD $\rightarrow$ `/cwd/tickets`
       - Guest $\rightarrow$ `/portal`
 
 ### 4.2 Proposed Implementation Plan
-1. **Create `resources/views/errors/404.blade.php`:**
-   - Clean, modern layout utilizing the existing Vite/Tailwind build.
-   - Include clear messaging: *"Page or Record Not Found — The page you requested doesn't exist, has been moved, or you don't have access to view it."*
-   - Interactive action buttons:
-     - Primary Button: **"Return to Previous Page"** (`onclick="window.history.length > 1 ? window.history.back() : window.location.href='{{ auth()->check() ? route('dashboard') : url('/') }}'"`).
-     - Secondary Button: **"Go to Dashboard / Portal"**.
-2. **Create `resources/views/errors/403.blade.php` (or alias to 404):**
-   - For web routes that explicitly throw 403, render the same friendly view or redirect seamlessly.
+1. **Create `resources/views/errors/layout.blade.php`:**
+   - Shared layout featuring PALECO brand logo, responsive card shell, Vite asset pipeline (`resources/css/app.css`, `resources/js/app.js`), balanced dual-action buttons with `data-smart-back` and fallback URLs, and zero inline JavaScript.
+2. **Create `resources/views/errors/404.blade.php`:**
+   - Extends error layout, displays status code 404 badge, contextual missing message, smart back button, and dynamic dashboard fallback.
+3. **Create `resources/views/errors/403.blade.php`:**
+   - Extends error layout, displays access forbidden badge for unauthorized web access.
+4. **Create `resources/js/smart-navigation.js` & Import in `resources/js/app.js`:**
+   - Standalone single-responsibility navigation module bound via `[data-smart-back]` data-attribute.
+   - Evaluates internal origin referrer and history stack before gracefully falling back to target route.
+   - Strictly keeps `app.js` as an import manifest without business logic.
 
 ### 4.3 Files Affected
-- `PALECO_OTRS-CRM/resources/views/errors/404.blade.php` (New File)
-- `PALECO_OTRS-CRM/resources/views/errors/403.blade.php` (New File)
-- `PALECO_OTRS-CRM/resources/views/errors/layout.blade.php` (Optional shared layout)
+- `PALECO_OTRS-CRM/resources/views/errors/layout.blade.php` (New File - Universal error layout with enhanced, balanced buttons)
+- `PALECO_OTRS-CRM/resources/views/errors/404.blade.php` (New File - Branded 404 template)
+- `PALECO_OTRS-CRM/resources/views/errors/403.blade.php` (New File - Branded 403 template)
+- `PALECO_OTRS-CRM/resources/js/smart-navigation.js` (New File - Single-responsibility history backtracking)
+- `PALECO_OTRS-CRM/resources/js/app.js` (Import manifest updated)
+- `PALECO_OTRS-CRM/tests/Feature/WebErrorViewsTest.php` (New File - Feature tests for authenticated/guest views)
 
 ### 4.4 Verification & Testing Plan
-- Navigate in browser to `http://127.0.0.1:8000/cwd/non-existent-route`.
-- Confirm branded 404 page renders properly with PALECO styling.
-- Click "Return to Previous Page" and verify it navigates back without reloading or crashing.
-- Test responsive view on mobile browser resolution.
+- Execute automated tests verifying:
+  1. Unauthenticated visitor visiting missing route receives 404 and sees PALECO brand + "Back to Portal" (`/portal`) fallback.
+  2. Authenticated user visiting missing route receives 404 and sees PALECO brand + "Go to Dashboard" (`/`) fallback.
+  3. Direct rendering of 403 error template renders PALECO brand + "Access Forbidden".
+- **Asset Compilation Verified:** Vite build ran cleanly (`npm run build`, 56 modules transformed, zero errors).
+- **Automated Verification Completed:** All 3 test cases passed (19 assertions). Full test suite: 39 passed, 0 failed, 176 assertions.
 
 ### 4.5 Proposed Commit Message
 ```text
 feat(web): add branded universal 404 error page with intelligent navigation backtracking
 
-- Create resources/views/errors/404.blade.php matching PALECO branding and Tailwind styling
-- Implement smart browser history backtracking with authenticated dashboard fallback
-- Handle 403 forbidden web exceptions with graceful user navigation
+- Create resources/views/errors/layout.blade.php with PALECO theme and balanced action buttons
+- Create resources/views/errors/404.blade.php and 403.blade.php error templates
+- Implement single-responsibility resources/js/smart-navigation.js and register in app.js
+- Add WebErrorViewsTest feature test verifying authenticated dashboard and guest portal fallbacks
 ```
 
 ---

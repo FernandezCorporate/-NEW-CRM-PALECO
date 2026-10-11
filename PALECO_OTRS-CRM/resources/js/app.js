@@ -23,3 +23,4 @@ import './title-aria';
 import './system-fields';
 import './livewire-animations';
 import './tomselect-filters';
+import './smart-navigation';
