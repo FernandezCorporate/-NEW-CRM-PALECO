@@ -4,7 +4,7 @@
 **Document Version:** 1.0  
 **Context:** Technical analysis, architectural critique, and execution blueprint for 6 key system cleanup concerns across API, query scopes, cybersecurity error handling, Web UX, profile hydration, and authentication.  
 **Execution Strategy:** 6 isolated phases corresponding to **6 atomic Git commits**.  
-**Current Code State:** Phase 1 and Phase 2 implemented and verified in working tree. Phase 3-6 pending implementation. Git commits deferred to user.
+**Current Code State:** Phase 1, Phase 2, and Phase 3 implemented and verified in working tree. Phase 4-6 pending implementation. Git commits deferred to user.
 
 ---
 
@@ -164,7 +164,7 @@ refactor(models): unify web and mobile query scopes with polymorphic filter cont
 
 ---
 
-## Phase 3: Error Code Strategy — The 404 Paradox & Information Disclosure Hardening
+## Phase 3: Error Code Strategy — The 404 Paradox & Information Disclosure Hardening [STATUS: IMPLEMENTED & VERIFIED]
 
 ### 3.1 Unfiltered Architectural Critique: Should ALL Errors Point to 404?
 > **Direct Answer:** **NO.** Making *all* errors return 404 is a dangerous anti-pattern that cripples client applications, degrades developer experience, and causes silent data synchronization failures.
@@ -204,21 +204,30 @@ To prevent resource enumeration while keeping API protocol integrity:
    - Attackers cannot probe ULID sequences to discover other consumers' tickets or internal records.
 
 ### 3.3 Files Affected
-- `PALECO_OTRS-CRM/app/Policies/TicketPolicy.php`
-- `PALECO_OTRS-CRM/app/Policies/TicketEndorsementPolicy.php`
-- `PALECO_OTRS-CRM/app/Policies/TeamPolicy.php`
-- `docs/dev/SYSTEM_DOCUMENTATION.md`
+- `PALECO_OTRS-CRM/bootstrap/app.php` (Preserve 404 status in `AuthorizationException` and normalize JSON error message)
+- `PALECO_OTRS-CRM/app/Policies/TicketPolicy.php` (All object authorization methods updated to `Response::denyAsNotFound()`)
+- `PALECO_OTRS-CRM/app/Policies/TeamPolicy.php` (Mobile department team inspection and mutation methods updated to `Response::denyAsNotFound()`)
+- `PALECO_OTRS-CRM/app/Policies/TicketRemarkPolicy.php` (`mobileCreate` updated to `Response::denyAsNotFound()`)
+- `PALECO_OTRS-CRM/app/Policies/UserPolicy.php` (`viewProfile` updated to `Response::denyAsNotFound()`)
+- `PALECO_OTRS-CRM/tests/Feature/AuthorizationAntiEnumerationTest.php` (Automated feature tests)
 
 ### 3.4 Verification & Testing Plan
-- Authenticate in Postman as `mycka` (Supervisor in TSD).
-- Query a ticket belonging to `LCMD` or `AOD`.
-- Verify the server returns `404 Not Found` with message: `"Resource not found."` instead of `403 Forbidden`.
+- Execute automated tests verifying:
+  1. Supervisor accessing cross-department ticket returns 404 Not Found (anti-enumeration).
+  2. Supervisor accessing own-department ticket returns 200 OK.
+  3. Field personnel accessing ticket not assigned to their team returns 404 Not Found.
+  4. Supervisor inspecting/archiving cross-department team returns 404 Not Found.
+  5. Unauthenticated request retains semantic 401 Unauthorized.
+  6. Non-supervisor accessing supervisor-only route returns 404 Not Found (route hidden).
+  7. Standard non-404 authorization denials retain 403 Forbidden.
+- **Automated Verification Completed:** All 8 test cases passed. Full test suite: 36 passed, 0 failed, 157 assertions.
 
 ### 3.5 Proposed Commit Message
 ```text
 security(policies): harden object-level authorization to deny as not found (anti-enumeration)
 
-- Update TicketPolicy, TeamPolicy, and TicketEndorsementPolicy to use Response::denyAsNotFound()
+- Update TicketPolicy, TeamPolicy, TicketRemarkPolicy, and UserPolicy to use Response::denyAsNotFound()
+- Enhance bootstrap/app.php exception renderer to preserve 404 status on AuthorizationException
 - Prevent resource enumeration attacks by obscuring existence of unauthorized records
 - Preserve standard 401, 409, 422, and 429 status codes for client-side protocol integrity
 ```

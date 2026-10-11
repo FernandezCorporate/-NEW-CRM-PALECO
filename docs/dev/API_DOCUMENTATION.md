@@ -124,7 +124,8 @@ All errors rendered under the `/api/*` route namespace are converted to standard
 }
 ```
 
-#### 403 Forbidden (Insufficient Role Permissions or Department Mismatch)
+#### 403 Forbidden (Insufficient Role Permissions)
+Returned when an authenticated user's role does not have permission to execute an operation (e.g., field personnel attempting to access supervisor-only administrative endpoints).
 ```json
 {
   "success": false,
@@ -132,11 +133,12 @@ All errors rendered under the `/api/*` route namespace are converted to standard
 }
 ```
 
-#### 404 Not Found (Missing Resource or ULID Mismatch)
+#### 404 Not Found (Missing Resource or Authorization Anti-Enumeration)
+Returned when a requested resource does not exist, or when an authenticated user attempts to access an existing record belonging to another department or unassigned team. In compliance with OWASP anti-enumeration standards, unauthorized object requests deliberately yield 404 to obscure entity existence in the cooperative database.
 ```json
 {
   "success": false,
-  "message": "Accomplishment report not found."
+  "message": "The requested resource was not found."
 }
 ```
 

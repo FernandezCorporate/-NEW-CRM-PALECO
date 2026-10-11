@@ -3,6 +3,7 @@
 namespace App\Policies;
 
 use App\Models\User;
+use Illuminate\Auth\Access\Response;
 
 /*
  * Defines role-based access controls for managing user accounts across web and mobile surfaces.
@@ -101,10 +102,11 @@ class UserPolicy
     /*
      * Determine whether the user can retrieve their own profile information.
      */
-    public function viewProfile(User $user, User $targetUser): bool
+    public function viewProfile(User $user, User $targetUser): Response
     {
-        return $user->is($targetUser)
-            && in_array($user->role->slug_identifier, ['admin', 'cwd_officer', 'supervisor', 'field_personnel'], true);
+        return $user->is($targetUser) && in_array($user->role->slug_identifier, ['admin', 'cwd_officer', 'supervisor', 'field_personnel'], true)
+            ? Response::allow()
+            : Response::denyAsNotFound('The requested user profile was not found.');
     }
 
     /*

@@ -50,28 +50,47 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $exceptions->render(function (AuthorizationException $e, Request $request) {
             if ($request->is('api/*')) {
+                $status = $e->hasStatus() ? $e->status() : Response::HTTP_FORBIDDEN;
+                $message = $e->getMessage();
+
+                if ($status === Response::HTTP_NOT_FOUND && ($message === '' || $message === 'This action is unauthorized.' || $message === 'Not Found')) {
+                    $message = 'The requested resource was not found.';
+                }
+
                 return response()->json([
                     'success' => false,
-                    'message' => $e->getMessage() ?: 'This action is unauthorized.',
-                ], Response::HTTP_FORBIDDEN);
+                    'message' => $message ?: 'This action is unauthorized.',
+                ], $status);
             }
         });
 
         $exceptions->render(function (NotFoundHttpException $e, Request $request) {
             if ($request->is('api/*')) {
+                $message = $e->getMessage();
+                if ($message === '' || $message === 'Not Found') {
+                    $message = 'The requested resource was not found.';
+                }
+
                 return response()->json([
                     'success' => false,
-                    'message' => $e->getMessage() ?: 'The requested resource was not found.',
+                    'message' => $message,
                 ], Response::HTTP_NOT_FOUND);
             }
         });
 
         $exceptions->render(function (HttpExceptionInterface $e, Request $request) {
             if ($request->is('api/*')) {
+                $status = $e->getStatusCode();
+                $message = $e->getMessage();
+
+                if ($status === Response::HTTP_NOT_FOUND && ($message === '' || $message === 'Not Found')) {
+                    $message = 'The requested resource was not found.';
+                }
+
                 return response()->json([
                     'success' => false,
-                    'message' => $e->getMessage(),
-                ], $e->getStatusCode());
+                    'message' => $message,
+                ], $status);
             }
         });
     })->create();

@@ -4,6 +4,7 @@ namespace App\Policies;
 
 use App\Models\Team;
 use App\Models\User;
+use Illuminate\Auth\Access\Response;
 
 /*
  * Defines role-based access controls for operations on operational Teams across web and mobile surfaces.
@@ -97,46 +98,71 @@ class TeamPolicy
     /*
      * Determine whether the user can inspect a team within their department.
      */
-    public function viewDepartmentTeams(User $user, Team $team): bool
+    public function viewDepartmentTeams(User $user, Team $team): Response
     {
-        return $user->role->slug_identifier === 'supervisor'
-            && $user->department_id === $team->department_id;
+        if ($user->role->slug_identifier !== 'supervisor') {
+            return Response::deny('Only supervisors can access department teams.');
+        }
+
+        return $user->department_id === $team->department_id
+            ? Response::allow()
+            : Response::denyAsNotFound('The requested team was not found.');
     }
 
     /*
      * Determine whether the supervisor can update a team within their department.
      */
-    public function mobileUpdateTeam(User $user, Team $team): bool
+    public function mobileUpdateTeam(User $user, Team $team): Response
     {
-        return $user->role->slug_identifier === 'supervisor'
-            && $user->department_id === $team->department_id;
+        if ($user->role->slug_identifier !== 'supervisor') {
+            return Response::deny('Only supervisors can update department teams.');
+        }
+
+        return $user->department_id === $team->department_id
+            ? Response::allow()
+            : Response::denyAsNotFound('The requested team was not found.');
     }
 
     /*
      * Determine whether the supervisor can archive a team within their department.
      */
-    public function mobileArchiveTeam(User $user, Team $team): bool
+    public function mobileArchiveTeam(User $user, Team $team): Response
     {
-        return $user->role->slug_identifier === 'supervisor'
-            && $user->department_id === $team->department_id;
+        if ($user->role->slug_identifier !== 'supervisor') {
+            return Response::deny('Only supervisors can archive department teams.');
+        }
+
+        return $user->department_id === $team->department_id
+            ? Response::allow()
+            : Response::denyAsNotFound('The requested team was not found.');
     }
 
     /*
      * Determine whether the supervisor can restore an archived team within their department.
      */
-    public function mobileRestoreTeam(User $user, Team $team): bool
+    public function mobileRestoreTeam(User $user, Team $team): Response
     {
-        return $user->role->slug_identifier === 'supervisor'
-            && $user->department_id === $team->department_id;
+        if ($user->role->slug_identifier !== 'supervisor') {
+            return Response::deny('Only supervisors can restore department teams.');
+        }
+
+        return $user->department_id === $team->department_id
+            ? Response::allow()
+            : Response::denyAsNotFound('The requested team was not found.');
     }
 
     /*
      * Determine whether the supervisor can permanently purge a team within their department.
      */
-    public function mobileDestroyTeam(User $user, Team $team): bool
+    public function mobileDestroyTeam(User $user, Team $team): Response
     {
-        return $user->role->slug_identifier === 'supervisor'
-            && $user->department_id === $team->department_id;
+        if ($user->role->slug_identifier !== 'supervisor') {
+            return Response::deny('Only supervisors can delete department teams.');
+        }
+
+        return $user->department_id === $team->department_id
+            ? Response::allow()
+            : Response::denyAsNotFound('The requested team was not found.');
     }
 
     /*
