@@ -21,13 +21,27 @@
         
         <!-- Action Buttons -->
         <div class="flex items-center gap-3">
-            <a href="{{ route('admin.users') }}" class="action-link inline-flex items-center gap-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 px-4 py-2.5 rounded-lg text-sm font-medium shadow-sm transition-colors" data-loading-text="Loading...">
+            @php
+                $isFromDept = request('source') === 'department' && request('dept');
+                $isFromTeam = request('source') === 'team' && request('team');
+                if ($isFromDept) {
+                    $backRoute = route('admin.departments.show', ['dept' => request('dept')]);
+                    $backText = 'Back to Department';
+                } elseif ($isFromTeam) {
+                    $backRoute = route('admin.teams.show', array_filter(['team' => request('team'), 'source' => request('dept') ? 'department' : null, 'dept' => request('dept')]));
+                    $backText = 'Back to Team';
+                } else {
+                    $backRoute = session('user_list_url', route('admin.users'));
+                    $backText = 'Back to List';
+                }
+            @endphp
+            <a href="{{ $backRoute }}" class="action-link inline-flex items-center gap-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 px-4 py-2.5 rounded-lg text-sm font-medium shadow-sm transition-colors" data-loading-text="Loading...">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
-                Back to List
+                {{ $backText }}
             </a>
             
             @can('update', $user)
-                <a href="{{ route('admin.users.editForm', ['user' => $user]) }}" class="action-link inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 rounded-lg text-sm font-medium shadow-sm shadow-emerald-700/20 transition-all active:scale-[0.98]" data-loading-text="Loading...">
+                <a href="{{ route('admin.users.editForm', array_filter(['user' => $user, 'source' => request('source') ?: 'details', 'dept' => request('dept'), 'team' => request('team')])) }}" class="action-link inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 rounded-lg text-sm font-medium shadow-sm shadow-emerald-700/20 transition-all active:scale-[0.98]" data-loading-text="Loading...">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
                     Edit User
                 </a>
@@ -35,14 +49,14 @@
 
             @if($user->is_active)
                 @can('deactivateConfirm', $user)
-                    <a href="{{ route('admin.users.deactivateConfirm', ['user' => $user]) }}" class="action-link inline-flex items-center gap-2 bg-amber-50 hover:bg-amber-600 text-amber-700 hover:text-white border border-amber-200 hover:border-transparent px-4 py-2.5 rounded-lg text-sm font-medium shadow-sm transition-all active:scale-[0.98]" data-loading-text="Loading...">
+                    <a href="{{ route('admin.users.deactivateConfirm', array_filter(['user' => $user, 'source' => request('source') ?: 'details', 'dept' => request('dept'), 'team' => request('team')])) }}" class="action-link inline-flex items-center gap-2 bg-amber-50 hover:bg-amber-600 text-amber-700 hover:text-white border border-amber-200 hover:border-transparent px-4 py-2.5 rounded-lg text-sm font-medium shadow-sm transition-all active:scale-[0.98]" data-loading-text="Loading...">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"></path></svg>
                         Deactivate
                     </a>
                 @endcan
             @else
                 @can('reactivateConfirm', $user)
-                    <a href="{{ route('admin.users.reactivateConfirm', ['user' => $user]) }}" class="action-link inline-flex items-center gap-2 bg-indigo-50 hover:bg-indigo-600 text-indigo-700 hover:text-white border border-indigo-200 hover:border-transparent px-4 py-2.5 rounded-lg text-sm font-medium shadow-sm transition-all active:scale-[0.98]" data-loading-text="Loading...">
+                    <a href="{{ route('admin.users.reactivateConfirm', array_filter(['user' => $user, 'source' => request('source') ?: 'details', 'dept' => request('dept'), 'team' => request('team')])) }}" class="action-link inline-flex items-center gap-2 bg-indigo-50 hover:bg-indigo-600 text-indigo-700 hover:text-white border border-indigo-200 hover:border-transparent px-4 py-2.5 rounded-lg text-sm font-medium shadow-sm transition-all active:scale-[0.98]" data-loading-text="Loading...">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"></path></svg>
                         Reactivate
                     </a>
@@ -121,9 +135,10 @@
                     @if($user->department_id)
                         <div class="flex justify-between items-center py-2 border-b border-slate-100">
                             <span class="text-slate-500 font-medium">Office Department</span>
-                            <span class="text-emerald-700 font-bold tracking-wide uppercase">
+                            <a href="{{ route('admin.departments.show', ['dept' => $user->department_id, 'source' => 'user', 'user' => $user->id]) }}" class="text-emerald-700 hover:underline font-bold tracking-wide uppercase inline-flex items-center gap-1 group">
                                 {{ $user->department->dept_name }}
-                            </span>
+                                <svg class="w-3.5 h-3.5 text-slate-400 group-hover:text-emerald-700 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                            </a>
                         </div>
                     @endif
 
@@ -215,7 +230,7 @@
                                 </td>
 
                                 <td class="px-6 py-4 text-right">
-                                    <a href="{{ route('admin.teams.show', ['team' => $team]) }}" class="inline-flex p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="View Team Details">
+                                    <a href="{{ route('admin.teams.show', array_filter(['team' => $team, 'source' => 'user', 'user' => $user->id, 'dept' => request('dept')])) }}" class="inline-flex p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="View Team Details">
                                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
                                     </a>
                                 </td>

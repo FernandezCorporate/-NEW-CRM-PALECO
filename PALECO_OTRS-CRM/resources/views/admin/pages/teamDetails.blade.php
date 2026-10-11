@@ -15,9 +15,23 @@
         
         <!-- Action Buttons -->
         <div class="flex items-center gap-3">
-            <a href="{{ route('admin.teams') }}" class="action-link inline-flex items-center gap-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 px-4 py-2.5 rounded-lg text-sm font-medium shadow-sm transition-colors" data-loading-text="Loading...">
+            @php
+                $isFromDept = request('source') === 'department' && request('dept');
+                $isFromUser = request('source') === 'user' && request('user');
+                if ($isFromDept) {
+                    $backRoute = route('admin.departments.show', ['dept' => request('dept')]);
+                    $backText = 'Back to Department';
+                } elseif ($isFromUser) {
+                    $backRoute = route('admin.users.show', array_filter(['user' => request('user'), 'source' => request('dept') ? 'department' : null, 'dept' => request('dept')]));
+                    $backText = 'Back to User Profile';
+                } else {
+                    $backRoute = session('team_list_url', route('admin.teams'));
+                    $backText = 'Back to List';
+                }
+            @endphp
+            <a href="{{ $backRoute }}" class="action-link inline-flex items-center gap-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 px-4 py-2.5 rounded-lg text-sm font-medium shadow-sm transition-colors" data-loading-text="Loading...">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
-                Back to List
+                {{ $backText }}
             </a>
             
             <!-- CONTEXT: Check if Team is Soft Deleted -->
@@ -35,12 +49,12 @@
                     Force Delete
                 </a>
             @else
-                <a href="{{ route('admin.teams.editForm', ['team' => $team, 'source' => 'details']) }}" class="action-link inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 rounded-lg text-sm font-medium shadow-sm shadow-emerald-700/20 transition-all active:scale-[0.98]" data-loading-text="Loading...">
+                <a href="{{ route('admin.teams.editForm', array_filter(['team' => $team, 'source' => request('source') ?: 'details', 'dept' => request('dept'), 'user' => request('user')])) }}" class="action-link inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 rounded-lg text-sm font-medium shadow-sm shadow-emerald-700/20 transition-all active:scale-[0.98]" data-loading-text="Loading...">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
                     Edit
                 </a>
 
-                <a href="{{ route('admin.teams.deleteConfirm', ['team' => $team, 'source' => 'details']) }}" class="action-link inline-flex items-center gap-2 bg-rose-50 hover:bg-rose-600 text-rose-700 hover:text-white border border-rose-200 hover:border-transparent px-4 py-2.5 rounded-lg text-sm font-medium shadow-sm transition-all active:scale-[0.98]" data-loading-text="Loading...">
+                <a href="{{ route('admin.teams.deleteConfirm', array_filter(['team' => $team, 'source' => request('source') ?: 'details', 'dept' => request('dept'), 'user' => request('user')])) }}" class="action-link inline-flex items-center gap-2 bg-rose-50 hover:bg-rose-600 text-rose-700 hover:text-white border border-rose-200 hover:border-transparent px-4 py-2.5 rounded-lg text-sm font-medium shadow-sm transition-all active:scale-[0.98]" data-loading-text="Loading...">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path></svg>
                     Archive
                 </a>
@@ -68,9 +82,14 @@
                     <div>
                         <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Department</h4>
                         <!-- CONTEXT: Department Name (Navigates through relationship) -->
-                        <p class="text-base text-emerald-700 font-bold tracking-wide uppercase">
-                            {{ $team->department->dept_name ?? 'Unassigned' }}
-                        </p>
+                        @if($team->department)
+                            <a href="{{ route('admin.departments.show', ['dept' => $team->department, 'source' => 'team', 'team' => $team->id]) }}" class="text-base text-emerald-700 hover:underline font-bold tracking-wide uppercase inline-flex items-center gap-1.5 group">
+                                {{ $team->department->dept_name }}
+                                <svg class="w-3.5 h-3.5 text-slate-400 group-hover:text-emerald-700 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                            </a>
+                        @else
+                            <p class="text-base text-slate-500 font-medium">Unassigned</p>
+                        @endif
                     </div>
                     
                     <div>
@@ -199,7 +218,7 @@
                             </td>
 
                             <td class="px-6 py-4 text-right">
-                                <a href="{{ route('admin.users.show', ['user' => $member]) }}" class="inline-flex p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="View Member Profile">
+                                <a href="{{ route('admin.users.show', array_filter(['user' => $member, 'source' => 'team', 'team' => $team->id, 'dept' => request('dept')])) }}" class="inline-flex p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="View Member Profile">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
                                 </a>
                             </td>

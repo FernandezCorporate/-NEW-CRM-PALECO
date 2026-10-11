@@ -7,13 +7,30 @@
 @section('content')
     <div class="max-w-2xl mx-auto mt-10">
         
+        @php
+            $source = request('source');
+            $userId = request('user');
+            $deptId = request('dept');
+            $cancelRoute = match($source) {
+                'details' => route('admin.teams.show', array_filter(['team' => $team, 'source' => $userId ? 'user' : ($deptId ? 'department' : null), 'user' => $userId, 'dept' => $deptId])),
+                'user' => $userId ? route('admin.users.show', ['user' => $userId]) : route('admin.teams.show', ['team' => $team]),
+                'department' => $deptId ? route('admin.departments.show', ['dept' => $deptId]) : route('admin.teams.show', ['team' => $team]),
+                default => session('team_list_url', route('admin.teams')),
+            };
+            $backLabel = match($source) {
+                'user' => 'Back to User Profile',
+                'department' => 'Back to Department',
+                'details' => 'Back to Team Details',
+                default => 'Back to Teams',
+            };
+        @endphp
         <!-- Breadcrumb / Back Link -->
         <div class="mb-6">
-            <a href="{{ route('admin.teams') }}" class="action-link inline-flex items-center text-sm font-medium text-slate-500 hover:text-slate-800 transition-colors" data-loading-text="Returning...">
+            <a href="{{ $cancelRoute }}" class="action-link inline-flex items-center text-sm font-medium text-slate-500 hover:text-slate-800 transition-colors" data-loading-text="Returning...">
                 <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
                 </svg>
-                Back to Teams
+                {{ $backLabel }}
             </a>
         </div>
 
@@ -59,8 +76,17 @@
                 <form action="{{ $isForceDelete ? route('admin.teams.destroy', $team) : route('admin.teams.archive', $team) }}" method="POST" class="flex flex-col-reverse sm:flex-row justify-center gap-3">
                     @csrf
                     @method('DELETE')
+                    @if(request()->filled('source'))
+                        <input type="hidden" name="source" value="{{ request('source') }}">
+                    @endif
+                    @if(request()->filled('dept'))
+                        <input type="hidden" name="dept" value="{{ request('dept') }}">
+                    @endif
+                    @if(request()->filled('user'))
+                        <input type="hidden" name="user" value="{{ request('user') }}">
+                    @endif
                     
-                    <a href="{{ route('admin.teams') }}" class="action-link inline-flex justify-center items-center px-5 py-2.5 bg-white border border-slate-300 text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-50 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-500 w-full sm:w-auto" data-loading-text="Canceling...">
+                    <a href="{{ $cancelRoute }}" class="action-link inline-flex justify-center items-center px-5 py-2.5 bg-white border border-slate-300 text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-50 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-500 w-full sm:w-auto" data-loading-text="Canceling...">
                         Cancel
                     </a>
                     

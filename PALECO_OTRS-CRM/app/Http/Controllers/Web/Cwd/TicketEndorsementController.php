@@ -29,6 +29,8 @@ class TicketEndorsementController extends Controller
     {
         Gate::authorize('viewAny', TicketEndorsement::class);
 
+        session()->put('endorsement_list_url', $request->fullUrl());
+
         $result = $this->ticketEndorsementService->getEndorsementList($request);
 
         return view('cwd.pages.endorsementDashboard', $result);

@@ -9,7 +9,10 @@
     <!-- Header Section -->
     <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
         <div class="flex items-center gap-4">
-            <a href="{{ route('cwd.tickets.show', $ticket) }}" class="p-2 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors text-gray-500" title="Back to Ticket">
+            @php
+                $ticketRoute = route('cwd.tickets.show', array_filter(['ticket' => $ticket, 'source' => request('source'), 'consumer' => request('consumer'), 'parent' => request('parent')]));
+            @endphp
+            <a href="{{ $ticketRoute }}" class="p-2 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors text-gray-500" title="Back to Ticket">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
             </a>
             <div>
@@ -17,7 +20,7 @@
                     ACCOMPLISHMENT REPORT DETAIL VIEW
                 </h1>
                 <p class="text-sm text-gray-500 mt-1">
-                    Link: <a href="{{ route('cwd.tickets.show', $ticket) }}" class="text-[#008f5d] hover:underline font-semibold">{{ $ticket->ticket_number }}</a> • Fieldworker: {{ $accomplishment->accomplishedBy->fullName ?? 'Unknown' }}
+                    Link: <a href="{{ $ticketRoute }}" class="text-[#008f5d] hover:underline font-semibold">{{ $ticket->ticket_number }}</a> • Fieldworker: {{ $accomplishment->accomplishedBy->fullName ?? 'Unknown' }}
                 </p>
             </div>
         </div>

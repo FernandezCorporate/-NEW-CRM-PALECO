@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Web\Admin;
 
+use App\Concerns\ResolvesSmartRedirects;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Categories\StoreTicketCategoryRequest;
 use App\Http\Requests\Categories\UpdateTicketCategoryRequest;
@@ -16,6 +17,7 @@ use Illuminate\Support\Facades\Gate;
  */
 class TicketCategoryController extends Controller
 {
+    use ResolvesSmartRedirects;
     public function __construct(
         protected TicketCategoryService $categoryService
     ) {}
@@ -94,9 +96,9 @@ class TicketCategoryController extends Controller
             return redirect()->back()->with('error', $result['message'])->withInput();
         }
 
-        $redirectRoute = $request->query('source') === 'details'
-            ? route('admin.ticketCategories.show', $category)
-            : route('admin.ticketCategories');
+        $redirectRoute = $this->resolveSmartRedirect($request, 'admin.ticketCategories', [
+            'details' => ['admin.ticketCategories.show', ['category' => $category]],
+        ]);
 
         if (! $result['changed']) {
             return redirect($redirectRoute)->with('info', 'No changes were made to the category.');

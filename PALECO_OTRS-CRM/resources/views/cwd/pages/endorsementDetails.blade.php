@@ -10,9 +10,14 @@
         
         <!-- Back Navigation -->
         <div class="mb-6">
-            <a href="{{ route('cwd.endorsements') }}" class="inline-flex items-center text-sm font-medium text-gray-500 hover:text-[#008f5d] transition-colors">
+            @php
+                $isFromTicket = request('source') === 'ticket' && request('ticket');
+                $backRoute = $isFromTicket ? route('cwd.tickets.show', ['ticket' => request('ticket')]) : session('endorsement_list_url', route('cwd.endorsements'));
+                $backLabel = $isFromTicket ? 'Back to Ticket' : 'Back to Endorsements';
+            @endphp
+            <a href="{{ $backRoute }}" class="inline-flex items-center text-sm font-medium text-gray-500 hover:text-[#008f5d] transition-colors">
                 <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
-                Back to Endorsements
+                {{ $backLabel }}
             </a>
         </div>
 
@@ -41,7 +46,14 @@
                 
                 <!-- Ticket Context Subtitle -->
                 <div class="text-sm text-gray-600 ml-11">
-                    Ticket {{ $endorsement->ticket->ticket_number ?? 'N/A' }} &mdash; {{ $endorsement->ticket->subject ?? 'No Subject Provided' }} 
+                    @if($endorsement->ticket)
+                        <a href="{{ route('cwd.tickets.show', ['ticket' => $endorsement->ticket, 'source' => 'endorsement', 'endorsement' => $endorsement->id]) }}" class="text-[#008f5d] hover:underline font-bold">
+                            Ticket {{ $endorsement->ticket->ticket_number }}
+                        </a>
+                        &mdash; {{ $endorsement->ticket->subject ?? 'No Subject Provided' }}
+                    @else
+                        Ticket N/A &mdash; No Subject Provided
+                    @endif
                 </div>
             </div>
 

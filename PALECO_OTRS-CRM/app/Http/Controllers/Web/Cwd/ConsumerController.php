@@ -32,6 +32,8 @@ class ConsumerController extends Controller
     {
         Gate::authorize('viewAny', Consumer::class);
 
+        session()->put('consumer_list_url', $request->fullUrl());
+
         $data = $this->consumerService->getConsumerList($request);
 
         return view('cwd.pages.consumerManagement', $data);

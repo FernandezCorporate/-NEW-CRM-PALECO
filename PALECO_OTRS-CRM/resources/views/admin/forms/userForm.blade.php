@@ -22,6 +22,15 @@
                 @method('PUT')
                 <input type="hidden" name="original_updated_at" value="{{ $user->updated_at }}">
             @endisset
+            @if(request()->filled('source') || old('source'))
+                <input type="hidden" name="source" value="{{ old('source', request('source')) }}">
+            @endif
+            @if(request()->filled('dept') || old('dept'))
+                <input type="hidden" name="dept" value="{{ old('dept', request('dept')) }}">
+            @endif
+            @if(request()->filled('team') || old('team'))
+                <input type="hidden" name="team" value="{{ old('team', request('team')) }}">
+            @endif
 
             <div class="mb-6 pb-4 border-b border-slate-100 flex justify-between items-center">
                 <h2 class="text-base font-semibold text-slate-800">Account Details</h2>
@@ -157,7 +166,20 @@
 
             <!-- Form Actions -->
             <div class="mt-8 pt-5 border-t border-slate-100 flex items-center justify-end gap-3">
-                <a href="{{ route('admin.users') }}"
+                @php
+                    $source = old('source', request('source'));
+                    $deptId = old('dept', request('dept', $user->department_id ?? null));
+                    $teamId = old('team', request('team'));
+                    $cancelRoute = match($source) {
+                        'details' => isset($user) 
+                            ? route('admin.users.show', array_filter(['user' => $user, 'source' => $teamId ? 'team' : ($deptId ? 'department' : null), 'team' => $teamId, 'dept' => $deptId])) 
+                            : route('admin.users'),
+                        'team' => $teamId ? route('admin.teams.show', ['team' => $teamId]) : (isset($user) ? route('admin.users.show', ['user' => $user]) : session('user_list_url', route('admin.users'))),
+                        'department' => $deptId ? route('admin.departments.show', ['dept' => $deptId]) : session('user_list_url', route('admin.users')),
+                        default => session('user_list_url', route('admin.users')),
+                    };
+                @endphp
+                <a href="{{ $cancelRoute }}"
                     class="action-link px-5 py-2.5 text-sm font-medium text-slate-600 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-200 transition-colors"
                     data-loading-text="Canceling...">
                     Cancel

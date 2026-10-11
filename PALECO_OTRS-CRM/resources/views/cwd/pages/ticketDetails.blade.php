@@ -9,7 +9,25 @@
     <!-- Header Section -->
     <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
         <div class="flex items-center gap-4">
-            <a href="{{ route('cwd.tickets') }}" aria-label="Back to tickets" class="min-h-11 min-w-11 inline-flex items-center justify-center p-2 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors text-gray-500 shadow-sm">
+            @php
+                $isFromConsumer = request('source') === 'consumer' && request('consumer');
+                $isFromParent = request('source') === 'parent' && request('parent');
+                $isFromEndorsement = request('source') === 'endorsement' && request('endorsement');
+                if ($isFromConsumer) {
+                    $backRoute = route('cwd.consumers.show', ['consumer' => request('consumer')]);
+                    $backLabel = 'Back to Consumer Profile';
+                } elseif ($isFromParent) {
+                    $backRoute = route('cwd.tickets.show', ['ticket' => request('parent')]);
+                    $backLabel = 'Back to Parent Ticket';
+                } elseif ($isFromEndorsement) {
+                    $backRoute = route('cwd.endorsements.show', ['endorsement' => request('endorsement')]);
+                    $backLabel = 'Back to Endorsement';
+                } else {
+                    $backRoute = session('ticket_list_url', route('cwd.tickets'));
+                    $backLabel = 'Back to Tickets';
+                }
+            @endphp
+            <a href="{{ $backRoute }}" aria-label="{{ $backLabel }}" title="{{ $backLabel }}" class="min-h-11 min-w-11 inline-flex items-center justify-center p-2 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors text-gray-500 shadow-sm">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
             </a>
             <div>
@@ -57,7 +75,7 @@
 
             <!-- Distinct Action Button for Child Ticket -->
             @can('createChild', $ticket)
-                <a href="{{ route('cwd.tickets.children.createForm', $ticket) }}" class="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold shadow-sm transition-all hover:shadow focus:ring-2 focus:ring-indigo-500 focus:ring-offset-1 active:scale-[0.98]">
+                <a href="{{ route('cwd.tickets.children.createForm', array_filter(['ticket' => $ticket, 'source' => request('source'), 'consumer' => request('consumer')])) }}" class="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold shadow-sm transition-all hover:shadow focus:ring-2 focus:ring-indigo-500 focus:ring-offset-1 active:scale-[0.98]">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
                     <span>Create Child Ticket</span>
                 </a>
@@ -85,7 +103,12 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-y-6 gap-x-8">
                     <div class="lg:col-span-2">
                         <span class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Account Name</span>
-                        <div class="text-sm font-bold text-gray-900">{{ $ticket->consumer->name }}</div>
+                        <div class="text-sm font-bold text-gray-900">
+                            <a href="{{ route('cwd.consumers.show', ['consumer' => $ticket->consumer, 'source' => 'ticket', 'ticket' => $ticket->id]) }}" class="hover:text-emerald-700 hover:underline inline-flex items-center gap-1 group">
+                                {{ $ticket->consumer->name }}
+                                <svg class="w-3.5 h-3.5 text-gray-400 group-hover:text-emerald-700 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                            </a>
+                        </div>
                     </div>
 
                     <div>
@@ -236,7 +259,7 @@
                         Ticket Hierarchy
                     </h2>
                     @can('createChild', $ticket)
-                        <a href="{{ route('cwd.tickets.children.createForm', $ticket) }}" class="text-xs font-semibold text-indigo-600 hover:text-indigo-800 flex items-center gap-1 transition-colors">
+                        <a href="{{ route('cwd.tickets.children.createForm', array_filter(['ticket' => $ticket, 'source' => request('source'), 'consumer' => request('consumer')])) }}" class="text-xs font-semibold text-indigo-600 hover:text-indigo-800 flex items-center gap-1 transition-colors">
                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
                             New Child
                         </a>
@@ -262,7 +285,7 @@
                                 <span class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">Child Tickets ({{ $ticket->childTickets->count() }})</span>
                                 <div class="space-y-2 pl-4 border-l-2 border-gray-200 ml-2">
                                     @foreach($ticket->childTickets as $child)
-                                        <a href="{{ route('cwd.tickets.show', $child) }}" class="block p-3 bg-gray-50 border border-gray-200 rounded-lg hover:border-indigo-300 hover:shadow-sm transition-all group">
+                                        <a href="{{ route('cwd.tickets.show', ['ticket' => $child, 'source' => 'parent', 'parent' => $ticket->id]) }}" class="block p-3 bg-gray-50 border border-gray-200 rounded-lg hover:border-indigo-300 hover:shadow-sm transition-all group">
                                              <div class="flex items-center justify-between">
                                                  <span class="font-bold text-indigo-600 text-sm group-hover:text-indigo-700 transition-colors">{{ $child->ticket_number }}</span>
                                                  <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full border {{ $child->status->badgeClasses() }}">{{ $child->status->label() }}</span>
@@ -278,7 +301,7 @@
                         <!-- This ticket is a CHILD -->
                         <div>
                             <span class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">Origin / Parent Ticket</span>
-                            <a href="{{ route('cwd.tickets.show', $ticket->parentTicket) }}" class="block p-3 bg-gray-50 border border-gray-200 rounded-lg hover:border-indigo-300 hover:shadow-sm transition-all group">
+                            <a href="{{ route('cwd.tickets.show', ['ticket' => $ticket->parentTicket, 'source' => 'child', 'child' => $ticket->id]) }}" class="block p-3 bg-gray-50 border border-gray-200 rounded-lg hover:border-indigo-300 hover:shadow-sm transition-all group">
                                 <div class="flex items-center justify-between">
                                     <span class="font-bold text-indigo-600 text-sm group-hover:text-indigo-700 transition-colors">{{ $ticket->parentTicket->ticket_number }}</span>
                                     <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full border {{ $ticket->parentTicket->status->badgeClasses() }}">{{ $ticket->parentTicket->status->label() }}</span>
@@ -303,7 +326,7 @@
                                 <span class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">Sub-Child Tickets ({{ $ticket->childTickets->count() }})</span>
                                 <div class="space-y-2 pl-4 border-l-2 border-gray-200 ml-2">
                                     @foreach($ticket->childTickets as $subChild)
-                                        <a href="{{ route('cwd.tickets.show', $subChild) }}" class="block p-3 bg-gray-50 border border-gray-200 rounded-lg hover:border-indigo-300 hover:shadow-sm transition-all group">
+                                        <a href="{{ route('cwd.tickets.show', ['ticket' => $subChild, 'source' => 'parent', 'parent' => $ticket->id]) }}" class="block p-3 bg-gray-50 border border-gray-200 rounded-lg hover:border-indigo-300 hover:shadow-sm transition-all group">
                                              <div class="flex items-center justify-between">
                                                  <span class="font-bold text-indigo-600 text-sm group-hover:text-indigo-700 transition-colors">{{ $subChild->ticket_number }}</span>
                                                  <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full border {{ $subChild->status->badgeClasses() }}">{{ $subChild->status->label() }}</span>
@@ -395,16 +418,17 @@
 
         <x-ticket-history-table id="endorsement-history" title="Endorsement requests"
             description="Requests to route this ticket to another department."
-            :count="$ticket->endorsements->count()" :columns="['Requested', 'Requested by', 'Target department', 'Decision']">
+            :count="$ticket->endorsements->count()" :columns="['Requested', 'Requested by', 'Target department', 'Decision', 'Details']">
             @forelse($ticket->endorsements as $endorsement)
                 <tr>
                     <td class="history-date"><time datetime="{{ $endorsement->created_at->toIso8601String() }}">{{ $endorsement->created_at->format('M d, Y') }}<small>{{ $endorsement->created_at->format('h:i A') }}</small></time></td>
                     <td>{{ $endorsement->creator->full_name ?? 'Unknown user' }}</td>
                     <td>{{ $endorsement->suggestedDepartment->dept_name ?? 'Not specified' }}</td>
                     <td><span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold border {{ $endorsement->status->badgeClasses() }}">{{ $endorsement->status->label() }}</span></td>
+                    <td><a class="history-report-link" href="{{ route('cwd.endorsements.show', ['endorsement' => $endorsement, 'source' => 'ticket', 'ticket' => $ticket->id]) }}">View endorsement<span class="sr-only"> request</span><span aria-hidden="true"> ↗</span></a></td>
                 </tr>
             @empty
-                <tr><td colspan="4" class="history-empty"><strong>No endorsement requests</strong><span>Requests and their decisions will be listed here.</span></td></tr>
+                <tr><td colspan="5" class="history-empty"><strong>No endorsement requests</strong><span>Requests and their decisions will be listed here.</span></td></tr>
             @endforelse
         </x-ticket-history-table>
 
@@ -417,7 +441,7 @@
                     <td>{{ $acc->accomplishedBy->full_name ?? 'Unknown user' }}</td>
                     <td><span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold border {{ $acc->status->badgeClasses() }}">{{ $acc->status->label() }}</span></td>
                     <td class="history-remarks">{{ $acc->remarks ?: 'No remarks provided.' }}</td>
-                    <td><a class="history-report-link" href="{{ route('cwd.tickets.accomplishments.show', ['ticket' => $ticket, 'accomplishment' => $acc]) }}">View report<span class="sr-only"> by {{ $acc->accomplishedBy->full_name ?? 'unknown user' }} on {{ $acc->accomplished_at->format('M d, Y h:i A') }}</span><span aria-hidden="true"> ↗</span></a></td>
+                    <td><a class="history-report-link" href="{{ route('cwd.tickets.accomplishments.show', array_filter(['ticket' => $ticket, 'accomplishment' => $acc, 'source' => request('source'), 'consumer' => request('consumer'), 'parent' => request('parent')])) }}">View report<span class="sr-only"> by {{ $acc->accomplishedBy->full_name ?? 'unknown user' }} on {{ $acc->accomplished_at->format('M d, Y h:i A') }}</span><span aria-hidden="true"> ↗</span></a></td>
                 </tr>
             @empty
                 <tr><td colspan="5" class="history-empty"><strong>No field reports submitted</strong><span>Completed work and supporting reports will appear here.</span></td></tr>

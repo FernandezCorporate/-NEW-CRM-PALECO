@@ -20,6 +20,15 @@
                 @method('PUT')
                 <input type="hidden" name="original_updated_at" value="{{ $team->updated_at }}">
             @endisset
+            @if(request()->filled('source') || old('source'))
+                <input type="hidden" name="source" value="{{ old('source', request('source')) }}">
+            @endif
+            @if(request()->filled('dept') || old('dept'))
+                <input type="hidden" name="dept" value="{{ old('dept', request('dept')) }}">
+            @endif
+            @if(request()->filled('user') || old('user'))
+                <input type="hidden" name="user" value="{{ old('user', request('user')) }}">
+            @endif
             <!-- Section 1: Team Details -->
             <div class="p-6 md:p-8 space-y-6">
                 <h2 class="text-base font-bold text-slate-800 border-b border-slate-200 pb-2 mb-4">Team Details</h2>
@@ -183,7 +192,20 @@
 
             <!-- Form Actions -->
             <div class="bg-slate-50 px-6 py-4 border-t border-slate-200 rounded-b-xl flex items-center justify-end gap-3">
-                <a href="{{ route('admin.teams') }}" class="action-link px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-800 hover:bg-slate-200 rounded-lg transition-colors" data-loading-text="Canceling...">
+                @php
+                    $source = old('source', request('source'));
+                    $deptId = old('dept', request('dept', $team->department_id ?? null));
+                    $userId = old('user', request('user'));
+                    $cancelRoute = match($source) {
+                        'details' => isset($team) 
+                            ? route('admin.teams.show', array_filter(['team' => $team, 'source' => $userId ? 'user' : ($deptId ? 'department' : null), 'user' => $userId, 'dept' => $deptId])) 
+                            : route('admin.teams'),
+                        'user' => $userId ? route('admin.users.show', ['user' => $userId]) : (isset($team) ? route('admin.teams.show', ['team' => $team]) : session('team_list_url', route('admin.teams'))),
+                        'department' => $deptId ? route('admin.departments.show', ['dept' => $deptId]) : session('team_list_url', route('admin.teams')),
+                        default => session('team_list_url', route('admin.teams')),
+                    };
+                @endphp
+                <a href="{{ $cancelRoute }}" class="action-link px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-800 hover:bg-slate-200 rounded-lg transition-colors" data-loading-text="Canceling...">
                     Cancel
                 </a>
                 <button type="submit" class="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-lg text-sm font-medium shadow-sm shadow-emerald-700/20 transition-all active:scale-[0.98]" data-loading-text="Saving...">

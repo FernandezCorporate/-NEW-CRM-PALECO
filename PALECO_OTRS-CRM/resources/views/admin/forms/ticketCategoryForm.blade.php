@@ -21,6 +21,9 @@
                 @method('PUT')
                 <input type="hidden" name="original_updated_at" value="{{ $category->updated_at }}">
             @endisset
+            @if(request()->filled('source') || old('source'))
+                <input type="hidden" name="source" value="{{ old('source', request('source')) }}">
+            @endif
             
             <div class="p-6 space-y-6">
                 <div>
@@ -48,7 +51,12 @@
 
             <div class="bg-slate-50 px-6 py-4 border-t border-slate-200 flex items-center justify-end gap-3">
                 <!-- Smart Cancel Button -->
-                <a href="{{ request('source') === 'details' && isset($category) ? route('admin.ticketCategories.show', $category) : session('category_list_url', route('admin.ticketCategories')) }}" class="action-link px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-800 hover:bg-slate-200 rounded-lg transition-colors" data-loading-text="Canceling...">
+                @php
+                    $cancelRoute = (old('source', request('source')) === 'details' && isset($category))
+                        ? route('admin.ticketCategories.show', $category)
+                        : session('category_list_url', route('admin.ticketCategories'));
+                @endphp
+                <a href="{{ $cancelRoute }}" class="action-link px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-800 hover:bg-slate-200 rounded-lg transition-colors" data-loading-text="Canceling...">
                     Cancel
                 </a>
                 <button type="submit" class="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2 rounded-lg text-sm font-medium shadow-sm shadow-emerald-700/20 transition-all active:scale-[0.98]" data-loading-text="Saving...">

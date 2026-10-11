@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Web\Admin;
 
+use App\Concerns\ResolvesSmartRedirects;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Departments\StoreDepartmentRequest;
 use App\Http\Requests\Departments\UpdateDepartmentRequest;
@@ -16,6 +17,7 @@ use Illuminate\Support\Facades\Gate;
  */
 class DepartmentController extends Controller
 {
+    use ResolvesSmartRedirects;
     /*
      * Injects the DepartmentService to handle complex business logic.
      */
@@ -98,9 +100,26 @@ class DepartmentController extends Controller
             return redirect()->back()->with('error', $result['message'])->withInput();
         }
 
-        $redirectRoute = $request->query('source') === 'details'
-            ? route('admin.departments.show', $dept)
-            : route('admin.departments');
+        $redirectRoute = $this->resolveSmartRedirect($request, 'admin.departments', [
+            'details' => function (Request $req) use ($dept) {
+                $userId = $req->input('user', $req->query('user'));
+                $teamId = $req->input('team', $req->query('team'));
+                return route('admin.departments.show', array_filter([
+                    'dept' => $dept,
+                    'source' => $userId ? 'user' : ($teamId ? 'team' : null),
+                    'user' => $userId,
+                    'team' => $teamId,
+                ]));
+            },
+            'user' => function (Request $req) use ($dept) {
+                $userId = $req->input('user', $req->query('user'));
+                return $userId ? route('admin.users.show', ['user' => $userId]) : route('admin.departments.show', ['dept' => $dept]);
+            },
+            'team' => function (Request $req) use ($dept) {
+                $teamId = $req->input('team', $req->query('team'));
+                return $teamId ? route('admin.teams.show', ['team' => $teamId]) : route('admin.departments.show', ['dept' => $dept]);
+            },
+        ]);
 
         if (! $result['changed']) {
             return redirect($redirectRoute)->with('info', 'No changes were made to the department.');

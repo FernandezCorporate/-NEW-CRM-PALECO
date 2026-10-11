@@ -18,6 +18,9 @@
     <!-- Data Ingestion Form Execution -->
     <form action="{{ route('cwd.tickets.store') }}" method="POST" autocomplete="off" class="space-y-8">
         @csrf
+        @if(request()->filled('source') || old('source'))
+            <input type="hidden" name="source" value="{{ old('source', request('source')) }}">
+        @endif
 
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-x-12 gap-y-8">
             
@@ -153,7 +156,7 @@
 
         <!-- Actions -->
         <div class="flex items-center justify-end space-x-3 border-t border-gray-200 pt-6 mt-4">
-            <a href="{{ route('cwd.tickets') }}" class="action-link px-5 py-2.5 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors" data-loading-text="Canceling...">
+            <a href="{{ old('source', request('source')) === 'dashboard' ? route('cwd.dashboard') : route('cwd.tickets') }}" class="action-link px-5 py-2.5 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors" data-loading-text="Canceling...">
                 Cancel
             </a>
             <button type="submit" class="px-6 py-2.5 text-sm font-medium text-white bg-[#008f5d] rounded-md hover:bg-[#007a4f] shadow-sm transition-colors" data-loading-text="Routing Ticket...">

@@ -8,7 +8,12 @@
 
     <!-- Header & Back Button -->
     <div class="flex items-center gap-4 mb-8">
-        <a href="{{ route('cwd.consumers') }}" class="inline-flex items-center justify-center w-10 h-10 rounded-full bg-white border border-gray-200 text-gray-500 hover:text-gray-700 hover:bg-gray-50 transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-[#008f5d] focus:ring-offset-2">
+        @php
+            $isFromTicket = request('source') === 'ticket' && request('ticket');
+            $backRoute = $isFromTicket ? route('cwd.tickets.show', ['ticket' => request('ticket')]) : session('consumer_list_url', route('cwd.consumers'));
+            $backTitle = $isFromTicket ? 'Back to Ticket' : 'Back to Consumers';
+        @endphp
+        <a href="{{ $backRoute }}" title="{{ $backTitle }}" aria-label="{{ $backTitle }}" class="inline-flex items-center justify-center w-10 h-10 rounded-full bg-white border border-gray-200 text-gray-500 hover:text-gray-700 hover:bg-gray-50 transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-[#008f5d] focus:ring-offset-2">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
             </svg>
@@ -168,7 +173,7 @@
                                     </span>
                                 </td>
                                 <td class="px-6 py-4 text-right whitespace-nowrap">
-                                    <a href="{{ route('cwd.tickets.show', $ticket->id) }}" class="text-[#008f5d] hover:text-[#007049] font-medium text-sm">View details</a>
+                                    <a href="{{ route('cwd.tickets.show', ['ticket' => $ticket->id, 'source' => 'consumer', 'consumer' => $consumer->id]) }}" class="text-[#008f5d] hover:text-[#007049] font-medium text-sm">View details</a>
                                 </td>
                             </tr>
                         @empty

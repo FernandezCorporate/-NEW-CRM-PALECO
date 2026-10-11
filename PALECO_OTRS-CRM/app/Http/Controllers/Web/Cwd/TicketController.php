@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Web\Cwd;
 
+use App\Concerns\ResolvesSmartRedirects;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Tickets\StoreChildTicketRequest;
 use App\Http\Requests\Tickets\StoreTicketRequest;
@@ -18,6 +19,8 @@ use Illuminate\View\View;
  */
 class TicketController extends Controller
 {
+    use ResolvesSmartRedirects;
+
     public function __construct(
         protected TicketService $ticketService
     ) {}
@@ -31,6 +34,8 @@ class TicketController extends Controller
     public function index(Request $request): View
     {
         Gate::authorize('viewAny', Ticket::class);
+
+        session()->put('ticket_list_url', $request->fullUrl());
 
         $result = $this->ticketService->getTicketList($request);
 
@@ -54,11 +59,12 @@ class TicketController extends Controller
     /*
      * Renders the dynamic Ticket Creation Form, populating necessary dropdowns.
      */
-    public function ticketForm(): View
+    public function ticketForm(Request $request): View
     {
         Gate::authorize('ticketForm', Ticket::class);
 
         $result = $this->ticketService->loadTicketForm();
+        $result['source'] = $request->query('source');
 
         return view('cwd.forms.ticketForm', $result);
     }
@@ -86,7 +92,12 @@ class TicketController extends Controller
 
         $ticket = $this->ticketService->createCwdTicket($request->validated());
 
-        return redirect()->route('cwd.tickets')
+        $destination = $this->resolveSmartRedirect($request, 'cwd.tickets', [
+            'dashboard' => 'cwd.dashboard',
+            'list' => 'cwd.tickets',
+        ]);
+
+        return redirect($destination)
             ->with('success', "Service Ticket {$ticket->ticket_number} successfully registered and queued.");
     }
 

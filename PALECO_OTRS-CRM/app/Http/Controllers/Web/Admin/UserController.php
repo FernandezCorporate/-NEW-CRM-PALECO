@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Web\Admin;
 
+use App\Concerns\ResolvesSmartRedirects;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Users\StoreUserRequest;
 use App\Http\Requests\Users\UpdateUserRequest;
@@ -18,6 +19,8 @@ use Illuminate\Support\Facades\Gate;
  */
 class UserController extends Controller
 {
+    use ResolvesSmartRedirects;
+
     /*
      * Injects the UserService to handle complex user processing and database transactions.
      */
@@ -33,6 +36,8 @@ class UserController extends Controller
         Gate::authorize('viewAny', User::class);
 
         $dashboardData = $this->userService->getDashboardUsers($request->all());
+
+        session()->put('user_list_url', $request->fullUrl());
 
         return view('admin.pages.userManagement', $dashboardData);
     }
@@ -91,11 +96,32 @@ class UserController extends Controller
             return redirect()->back()->with('error', $result['message'])->withInput();
         }
 
+        $redirectRoute = $this->resolveSmartRedirect($request, 'admin.users', [
+            'details' => function (Request $req) use ($user) {
+                $teamId = $req->input('team', $req->query('team'));
+                $deptId = $req->input('dept', $req->query('dept'));
+                return route('admin.users.show', array_filter([
+                    'user' => $user,
+                    'source' => $teamId ? 'team' : ($deptId ? 'department' : null),
+                    'team' => $teamId,
+                    'dept' => $deptId,
+                ]));
+            },
+            'team' => function (Request $req) use ($user) {
+                $teamId = $req->input('team', $req->query('team'));
+                return $teamId ? route('admin.teams.show', ['team' => $teamId]) : route('admin.users.show', ['user' => $user]);
+            },
+            'department' => function (Request $req) use ($user) {
+                $deptId = $req->input('dept', $req->query('dept', $user->department_id));
+                return $deptId ? route('admin.departments.show', ['dept' => $deptId]) : route('admin.users.show', ['user' => $user]);
+            },
+        ]);
+
         if (! $result['changed']) {
-            return redirect()->route('admin.users')->with('info', 'No changes were made to the user.');
+            return redirect($redirectRoute)->with('info', 'No changes were made to the user.');
         }
 
-        return redirect()->route('admin.users')->with('success', 'User updated successfully.');
+        return redirect($redirectRoute)->with('success', 'User updated successfully.');
     }
 
     // --- DESTRUCTIVE & STATE METHODS ---
@@ -111,7 +137,7 @@ class UserController extends Controller
         return view('admin.prompts.userDeactivateConfirm', ['userAccount' => $user]);
     }
 
-    public function deactivate(User $user)
+    public function deactivate(Request $request, User $user)
     {
         if (! $user->is_active) {
             return redirect()->route('admin.users')->with('info', 'This account has already been deactivated by another administrator.');
@@ -120,7 +146,28 @@ class UserController extends Controller
         Gate::authorize('deactivate', $user);
         $this->userService->toggleUserStatus($user, false);
 
-        return redirect()->route('admin.users')->with('success', 'Account deactivated successfully.');
+        $redirectRoute = $this->resolveSmartRedirect($request, 'admin.users', [
+            'details' => function (Request $req) use ($user) {
+                $teamId = $req->input('team', $req->query('team'));
+                $deptId = $req->input('dept', $req->query('dept'));
+                return route('admin.users.show', array_filter([
+                    'user' => $user,
+                    'source' => $teamId ? 'team' : ($deptId ? 'department' : null),
+                    'team' => $teamId,
+                    'dept' => $deptId,
+                ]));
+            },
+            'team' => function (Request $req) use ($user) {
+                $teamId = $req->input('team', $req->query('team'));
+                return $teamId ? route('admin.teams.show', ['team' => $teamId]) : route('admin.users.show', ['user' => $user]);
+            },
+            'department' => function (Request $req) use ($user) {
+                $deptId = $req->input('dept', $req->query('dept', $user->department_id));
+                return $deptId ? route('admin.departments.show', ['dept' => $deptId]) : route('admin.users.show', ['user' => $user]);
+            },
+        ]);
+
+        return redirect($redirectRoute)->with('success', 'Account deactivated successfully.');
     }
 
     public function reactivateConfirm(User $user)
@@ -134,7 +181,7 @@ class UserController extends Controller
         return view('admin.prompts.userReactivateConfirm', ['userAccount' => $user]);
     }
 
-    public function reactivate(User $user)
+    public function reactivate(Request $request, User $user)
     {
         if ($user->is_active) {
             return redirect()->route('admin.users')->with('info', 'This account has already been reactivated by another administrator.');
@@ -143,6 +190,27 @@ class UserController extends Controller
         Gate::authorize('reactivate', $user);
         $this->userService->toggleUserStatus($user, true);
 
-        return redirect()->route('admin.users')->with('success', 'Account reactivated successfully.');
+        $redirectRoute = $this->resolveSmartRedirect($request, 'admin.users', [
+            'details' => function (Request $req) use ($user) {
+                $teamId = $req->input('team', $req->query('team'));
+                $deptId = $req->input('dept', $req->query('dept'));
+                return route('admin.users.show', array_filter([
+                    'user' => $user,
+                    'source' => $teamId ? 'team' : ($deptId ? 'department' : null),
+                    'team' => $teamId,
+                    'dept' => $deptId,
+                ]));
+            },
+            'team' => function (Request $req) use ($user) {
+                $teamId = $req->input('team', $req->query('team'));
+                return $teamId ? route('admin.teams.show', ['team' => $teamId]) : route('admin.users.show', ['user' => $user]);
+            },
+            'department' => function (Request $req) use ($user) {
+                $deptId = $req->input('dept', $req->query('dept', $user->department_id));
+                return $deptId ? route('admin.departments.show', ['dept' => $deptId]) : route('admin.users.show', ['user' => $user]);
+            },
+        ]);
+
+        return redirect($redirectRoute)->with('success', 'Account reactivated successfully.');
     }
 }

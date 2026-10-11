@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Web\Admin;
 
+use App\Concerns\ResolvesSmartRedirects;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Teams\StoreTeamRequest;
 use App\Http\Requests\Teams\UpdateTeamRequest;
@@ -16,6 +17,7 @@ use Illuminate\Support\Facades\Gate;
  */
 class TeamController extends Controller
 {
+    use ResolvesSmartRedirects;
     /*
      * Injects the TeamService to handle complex member assignments and team logic.
      */
@@ -31,6 +33,8 @@ class TeamController extends Controller
         Gate::authorize('viewAny', Team::class);
 
         $dashboardData = $this->teamService->getDashboardTeams($request->all());
+
+        session()->put('team_list_url', $request->fullUrl());
 
         return view('admin.pages.teamManagement', $dashboardData);
     }
@@ -104,9 +108,26 @@ class TeamController extends Controller
             return redirect()->back()->with('error', $result['message'])->withInput();
         }
 
-        $redirectRoute = $request->query('source') === 'details'
-            ? route('admin.teams.show', $team)
-            : route('admin.teams');
+        $redirectRoute = $this->resolveSmartRedirect($request, 'admin.teams', [
+            'details' => function (Request $req) use ($team) {
+                $userId = $req->input('user', $req->query('user'));
+                $deptId = $req->input('dept', $req->query('dept'));
+                return route('admin.teams.show', array_filter([
+                    'team' => $team,
+                    'source' => $userId ? 'user' : ($deptId ? 'department' : null),
+                    'user' => $userId,
+                    'dept' => $deptId,
+                ]));
+            },
+            'user' => function (Request $req) use ($team) {
+                $userId = $req->input('user', $req->query('user'));
+                return $userId ? route('admin.users.show', ['user' => $userId]) : route('admin.teams.show', ['team' => $team]);
+            },
+            'department' => function (Request $req) use ($team) {
+                $deptId = $req->input('dept', $req->query('dept', $team->department_id));
+                return $deptId ? route('admin.departments.show', ['dept' => $deptId]) : route('admin.teams.show', ['team' => $team]);
+            },
+        ]);
 
         if (! $result['changed']) {
             return redirect($redirectRoute)->with('info', 'No changes were made to the team.');
