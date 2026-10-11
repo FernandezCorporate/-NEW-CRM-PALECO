@@ -219,6 +219,35 @@ Authenticates mobile users, validates device identification, verifies role autho
 }
 ```
 
+#### Response: `401 Unauthorized` (Invalid Credentials or Role Mismatch)
+> [!NOTE]
+> **Anti-Enumeration Hardening:** To prevent credential harvesting and role discovery attacks, any failed authentication—including valid web administrator credentials attempting to access the mobile API—returns HTTP `401 Unauthorized` with an accurate countdown (4, 3, 2, 1) starting from the very first failure.
+
+```json
+{
+  "success": false,
+  "message": "The provided credentials do not match our records. You have 4 attempt(s) remaining."
+}
+```
+
+#### Response: `423 Locked` (Account Lockout Enacted)
+When 5 failed attempts occur against an account identity, the account is temporarily frozen for 15 minutes.
+```json
+{
+  "success": false,
+  "message": "This account is temporarily locked due to multiple failed attempts. Please wait 15 minute(s)."
+}
+```
+
+#### Response: `429 Too Many Requests` (Network IP Velocity Throttled)
+When an IP address exceeds the velocity ceiling of 10 requests within 60 seconds (independent of account status).
+```json
+{
+  "success": false,
+  "message": "Too many attempts from this network. Please wait 60 second(s)."
+}
+```
+
 ---
 
 ### 4.2. Mobile Logout

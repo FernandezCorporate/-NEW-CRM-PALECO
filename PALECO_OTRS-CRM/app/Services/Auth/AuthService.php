@@ -8,7 +8,6 @@ use App\Events\LoginEvents;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\RateLimiter;
 
 /**
  * Service encapsulating the core web authentication logic, rate limiting,
@@ -26,41 +25,36 @@ class AuthService
      */
     public function processLogin(array $credentials, string $ip, string $expectedRole, Request $request): array
     {
+        // 1. Layer 1: Check IP Velocity Rate Limit (Infrastructure defense)
+        if ($ipThrottled = $this->checkIpVelocityLimit($ip)) {
+            return ['success' => false, 'message' => $ipThrottled['message']];
+        }
+
         $username = strtolower((string) $credentials['username']);
         $user = User::query()->where('username', $username)->first();
 
-        // 1. Check Database Lockout
-        if ($lockoutMessage = $this->handleDatabaseLockout($user)) {
+        // 2. Layer 2: Check Database & Virtual Account Lockout
+        if ($lockoutMessage = $this->handleAccountLockout($user, $username)) {
             return ['success' => false, 'message' => $lockoutMessage];
-        }
-
-        $rateLimitKey = 'login:'.sha1($username.'|'.$ip);
-
-        // 2. Check Rate Limiter (5th Attempt)
-        if (RateLimiter::tooManyAttempts($rateLimitKey, 4)) {
-            $message = $this->handleRateLimitExceeded($user, $rateLimitKey);
-
-            return ['success' => false, 'message' => $message];
         }
 
         // 3. Attempt Authentication
         if (! Auth::attempt($credentials)) {
-            RateLimiter::hit($rateLimitKey, 60);
             LoginEvents::dispatch(NonModelActions::LOGIN_FAILED, null);
 
-            return ['success' => false, 'message' => 'The provided credentials do not match our records.'];
+            return $this->handleAccountLoginFailure($username, $user);
         }
 
         // 4. Post-Authentication Security Checks
-        RateLimiter::clear($rateLimitKey);
         $loggedUser = Auth::user();
         $userRoleSlug = $loggedUser->role->slug_identifier;
 
+        // Role Gatekeeping (Oracle Elimination)
         if ($userRoleSlug !== $expectedRole) {
             LoginEvents::dispatch(NonModelActions::LOGIN_FAILED, $loggedUser);
             $this->terminateSession($request);
 
-            return ['success' => false, 'message' => 'Access Denied: You do not have permission to access this specific portal.'];
+            return $this->handleAccountLoginFailure($username, $user);
         }
 
         if (! $loggedUser->is_active) {
@@ -72,12 +66,14 @@ class AuthService
 
         $landingRoute = $this->getLandingRoute($userRoleSlug);
         if (! $landingRoute) {
+            LoginEvents::dispatch(NonModelActions::LOGIN_FAILED, $loggedUser);
             $this->terminateSession($request);
 
-            return ['success' => false, 'message' => 'Access Denied: Your account role does not have web portal privileges.'];
+            return $this->handleAccountLoginFailure($username, $user);
         }
 
         // 5. Finalize Session and Log Success
+        $this->clearAccountSecurityTrackers($username, $loggedUser);
         $request->session()->regenerate();
         $loggedUser->updateQuietly(['last_login' => now()]);
         LoginEvents::dispatch(NonModelActions::LOGIN_SUCCESS, $loggedUser);

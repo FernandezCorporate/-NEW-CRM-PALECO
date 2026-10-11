@@ -7,7 +7,6 @@ use App\Enums\NonModelActions;
 use App\Events\LoginEvents;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\RateLimiter;
 use Symfony\Component\HttpFoundation\Response;
 
 /*
@@ -26,51 +25,67 @@ class MobileAuthService
      */
     public function processLogin(array $credentials, string $ip): array
     {
+        // 1. Layer 1: Check IP Velocity Rate Limit (Infrastructure defense)
+        if ($ipThrottled = $this->checkIpVelocityLimit($ip)) {
+            return [
+                'success' => false,
+                'status' => Response::HTTP_TOO_MANY_REQUESTS,
+                'message' => $ipThrottled['message'],
+            ];
+        }
+
         $username = strtolower((string) $credentials['username']);
         $user = User::query()->where('username', $username)->first();
 
-        // 1. Check Database Lockout
-        if ($lockoutMessage = $this->handleDatabaseLockout($user)) {
-            return ['success' => false, 'status' => Response::HTTP_LOCKED, 'message' => $lockoutMessage];
-        }
-
-        $rateLimitKey = 'api-login:'.sha1($username.'|'.$ip);
-
-        // 2. Check Rate Limiter (5th Attempt triggers lockout)
-        if (RateLimiter::tooManyAttempts($rateLimitKey, 4)) {
-            $message = $this->handleRateLimitExceeded($user, $rateLimitKey);
-
-            return ['success' => false, 'status' => Response::HTTP_TOO_MANY_REQUESTS, 'message' => $message];
+        // 2. Layer 2: Check Database & Virtual Account Lockout
+        if ($lockoutMessage = $this->handleAccountLockout($user, $username)) {
+            return [
+                'success' => false,
+                'status' => Response::HTTP_LOCKED,
+                'message' => $lockoutMessage,
+            ];
         }
 
         // 3. Attempt Authentication (Stateless comparison)
         if (! $user || ! Hash::check($credentials['password'], $user->password)) {
-            RateLimiter::hit($rateLimitKey, 60);
             LoginEvents::dispatch(NonModelActions::LOGIN_FAILED, null);
+            $failure = $this->handleAccountLoginFailure($username, $user);
 
-            return ['success' => false, 'status' => Response::HTTP_UNAUTHORIZED, 'message' => 'The provided credentials do not match our records.'];
+            return [
+                'success' => false,
+                'status' => ($failure['locked'] ?? false) ? Response::HTTP_LOCKED : Response::HTTP_UNAUTHORIZED,
+                'message' => $failure['message'],
+            ];
         }
 
         // 4. Post-Authentication Security Checks
-        RateLimiter::clear($rateLimitKey);
-
         if (! $user->is_active) {
             LoginEvents::dispatch(NonModelActions::LOGIN_ACCOUNT_DEACTIVATED, $user);
 
-            return ['success' => false, 'status' => Response::HTTP_FORBIDDEN, 'message' => 'User account is deactivated. Please contact the system administrator.'];
+            return [
+                'success' => false,
+                'status' => Response::HTTP_FORBIDDEN,
+                'message' => 'User account is deactivated. Please contact the system administrator.',
+            ];
         }
 
-        // Role Gatekeeping: Reject web portals (Admin, CWD)
+        // Role Gatekeeping: Reject web portals (Admin, CWD) - Oracle Elimination
         $userRoleSlug = $user->role->slug_identifier;
         $allowedMobileRoles = ['supervisor', 'field_personnel'];
 
         if (! in_array($userRoleSlug, $allowedMobileRoles)) {
             LoginEvents::dispatch(NonModelActions::LOGIN_FAILED, $user);
+            $failure = $this->handleAccountLoginFailure($username, $user);
 
-            return ['success' => false, 'status' => Response::HTTP_FORBIDDEN, 'message' => 'Access Denied: Web-based accounts cannot access the mobile application.'];
+            return [
+                'success' => false,
+                'status' => ($failure['locked'] ?? false) ? Response::HTTP_LOCKED : Response::HTTP_UNAUTHORIZED,
+                'message' => $failure['message'],
+            ];
         }
 
         // 5. Finalize Session and Log Success
+        $this->clearAccountSecurityTrackers($username, $user);
         $user->updateQuietly(['last_login' => now()]);
         LoginEvents::dispatch(NonModelActions::LOGIN_SUCCESS, $user);
 

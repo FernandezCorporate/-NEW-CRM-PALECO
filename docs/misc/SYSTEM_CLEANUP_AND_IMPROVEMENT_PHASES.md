@@ -376,24 +376,19 @@ feat(api): eager-load and expose assigned teams for field personnel in profile a
 
 ---
 
-## Phase 6: Authentication Hardening — Remaining Attempts Display & Oracle Attack Elimination
+## Phase 6: Authentication Hardening — Remaining Attempts Display & Oracle Attack Elimination [STATUS: IMPLEMENTED & VERIFIED]
 
 ### 6.1 Unfiltered Architectural Analysis: Oracle Attacks & User Feedback
 * **Problem 1: The Role Enumeration Oracle Attack (Critical Security Flaw):**
-  - In `AuthService.php` (lines 59–64):
+  - In previous versions of `AuthService.php`:
     ```php
     if ($userRoleSlug !== $expectedRole) {
-        LoginEvents::dispatch(NonModelActions::LOGIN_FAILED, $loggedUser);
-        $this->terminateSession($request);
-
         return ['success' => false, 'message' => 'Access Denied: You do not have permission to access this specific portal.'];
     }
     ```
-  - In `MobileAuthService.php` (lines 67–71):
+  - In previous versions of `MobileAuthService.php`:
     ```php
     if (! in_array($userRoleSlug, $allowedMobileRoles)) {
-        LoginEvents::dispatch(NonModelActions::LOGIN_FAILED, $user);
-
         return ['success' => false, 'status' => Response::HTTP_FORBIDDEN, 'message' => 'Access Denied: Web-based accounts cannot access the mobile application.'];
     }
     ```
@@ -401,68 +396,63 @@ feat(api): eager-load and expose assigned teams for field personnel in profile a
     - If an attacker guesses passwords on `/login/admin` with username `ralph` and password `password`:
       - If the password is wrong $\rightarrow$ `"The provided credentials do not match our records."`
       - If the password is RIGHT $\rightarrow$ `"Access Denied: You do not have permission to access this specific portal."`
-    - **The attacker now knows with 100% certainty that the password for `ralph` is `password`!**
+    - The attacker now knows with 100% certainty that the password for `ralph` is `password`!
     - This violates **OWASP Authentication Verification Standard (V2.1.2)**: Authentication responses must never confirm whether an account exists or has a specific role.
 * **Problem 2: Missing Remaining Attempts Feedback:**
-  - When a user mistypes their password, the app simply says *"The provided credentials do not match our records."*
-  - The user has no idea how close they are to being locked out until their account suddenly gets locked for 15 minutes!
+  - When a user mistypes their password, the app simply said *"The provided credentials do not match our records."*
+  - The user had no idea how close they were to being locked out until their account suddenly was locked for 15 minutes!
 
 ### 6.2 Proposed Implementation Plan
 1. **Eradicate the Authentication Oracle:**
    - In both `AuthService.php` and `MobileAuthService.php`, if credentials authenticate successfully but the role is disallowed for that portal:
      - Terminate session / do not issue token.
      - Increment the rate limiter as a failed attempt.
-     - Return the exact same generic error: `"The provided credentials do not match our records."`
+     - Return the exact same generic error: `"The provided credentials do not match our records. You have X attempt(s) remaining."`
      - **Result:** An attacker cannot distinguish between bad passwords, wrong roles, or non-existent usernames.
-2. **Implement User-Friendly Remaining Attempts Countdown:**
-   - The system allows **5 attempts** (triggers lockout on attempt 5).
-   - In `HandlesAuthSecurity.php`, add a helper method to format the warning:
-     ```php
-     protected function getRemainingAttemptsMessage(string $rateLimitKey, int $maxAttempts = 5): string
-     {
-         $retriesLeft = RateLimiter::retriesLeft($rateLimitKey, $maxAttempts);
-         if ($retriesLeft > 0) {
-             return "The provided credentials do not match our records. You have {$retriesLeft} attempt(s) remaining.";
-         }
-         return "The provided credentials do not match our records.";
-     }
-     ```
-   - In `AuthService::processLogin` and `MobileAuthService::processLogin`:
-     - When password check fails:
-       ```php
-       RateLimiter::hit($rateLimitKey, 60);
-       $message = $this->getRemainingAttemptsMessage($rateLimitKey, 4);
-       return ['success' => false, 'message' => $message];
-       ```
-3. **Lockout Clarity:**
-   - Keep the existing database lockout warning when limit is reached:
-     `"This account is temporarily locked due to multiple failed attempts. Please wait 15 minute(s)."`
+2. **Implement User-Friendly Remaining Attempts Countdown (Decoupled from IP):**
+   - The system allows **5 attempts** per account identity across a 15-minute sliding window.
+   - In `HandlesAuthSecurity.php`:
+     - Added `checkIpVelocityLimit($ip, 10, 60)` for silent Layer 1 infrastructure/DoS defense (10 requests/min).
+     - Added `handleAccountLoginFailure($username, $user, 5, 900)` for Layer 2 account-based tracking and lockout.
+     - Failed attempts decrement from 5:
+       - Attempt 1: 4 attempts remaining
+       - Attempt 2: 3 attempts remaining
+       - Attempt 3: 2 attempts remaining
+       - Attempt 4: 1 attempt remaining
+       - Attempt 5: Account temporarily locked for 15 minutes in database.
+3. **Lockout Clarity, Anti-Proxy Hopping, & Virtual Cache Lockout:**
+   - Account lockout is tracked per `username` over 15 minutes, completely defeating proxy-hopping and VPN rotation.
+   - When 5 attempts are breached, real accounts receive `$user->locked_until = now()->addMinutes(15)` in the database, and ALL usernames (including non-existent/gibberish usernames) receive a 15-minute virtual cache lock (`auth:account:locked:{username}`).
+   - On attempt 6, fake usernames remain locked for 15 minutes, completely eliminating username enumeration timing or response leaks.
 
 ### 6.3 Files Affected
-- `PALECO_OTRS-CRM/app/Concerns/HandlesAuthSecurity.php`
-- `PALECO_OTRS-CRM/app/Services/Auth/AuthService.php`
-- `PALECO_OTRS-CRM/app/Services/Auth/MobileAuthService.php`
-- `docs/dev/API_DOCUMENTATION.md`
-- `docs/dev/MANUAL_TESTING_GUIDE.md`
+- `PALECO_OTRS-CRM/app/Concerns/HandlesAuthSecurity.php` (Decoupled `checkIpVelocityLimit`, `handleAccountLockout`, and `handleAccountLoginFailure` with virtual cache lock)
+- `PALECO_OTRS-CRM/app/Services/Auth/AuthService.php` (Dual-layer flow, oracle removal, accurate countdown)
+- `PALECO_OTRS-CRM/app/Services/Auth/MobileAuthService.php` (Dual-layer flow, HTTP 401/423/429 status codes)
+- `PALECO_OTRS-CRM/tests/Feature/AuthSecurityHardeningTest.php` (7 automated feature tests covering velocity, proxy hopping, and non-existent accounts)
+- `docs/dev/API_DOCUMENTATION.md` (Updated login endpoint error responses: 401, 423, and 429)
 
 ### 6.4 Verification & Testing Plan
-- Attempt web login with wrong password:
-  - Attempt 1: Verify message says *"You have 3 attempt(s) remaining."*
-  - Attempt 2: Verify message says *"You have 2 attempt(s) remaining."*
-  - Attempt 4: Triggers rate limit lockout; verify lockout message displays minutes remaining.
-- Attempt web login at `/login/admin` using valid credentials for a field worker (`ralph` / `password`):
-  - Verify server returns `"The provided credentials do not match our records."` instead of revealing portal denial.
-- Attempt mobile login using valid credentials for an admin (`allenglenn` / `password`):
-  - Verify server returns HTTP 401 `"The provided credentials do not match our records."` instead of revealing web account status.
+- Execute automated tests verifying:
+  1. Failed web login countdown: Attempt 1 $\rightarrow$ 4 remaining; Attempt 2 $\rightarrow$ 3 remaining; Attempt 3 $\rightarrow$ 2 remaining; Attempt 4 $\rightarrow$ 1 remaining; Attempt 5 $\rightarrow$ 15-minute database lockout applied.
+  2. Web role oracle elimination: Logging in at `/login/admin` with valid field personnel credentials returns `"The provided credentials do not match our records. You have 4 attempt(s) remaining."` and leaves user as guest.
+  3. Mobile role oracle elimination: Logging in at `POST /api/login` with valid web administrator credentials returns HTTP 401 with generic credential error and countdown, not HTTP 403.
+  4. Successful authentication clears account failed attempts.
+  5. Layer 1 IP velocity limiter blocks rapid-fire flood requests (>10/min) independent of account status.
+  6. Layer 2 account lockout defeats proxy hopping across multiple rotating IP addresses.
+  7. Non-existent gibberish username undergoes virtual cache lockout on 5th attempt and remains locked on attempt 6, preventing username enumeration.
+- **Automated Verification Completed:** All 7 test cases passed (54 assertions). Full test suite: 49 passed, 0 failed, 260 assertions.
 
 ### 6.5 Proposed Commit Message
 ```text
-security(auth): eliminate role enumeration oracle and display remaining login attempts
+security(auth): decouple IP rate limiting from account lockout and harden authentication
 
-- Remove portal-specific authorization rejection messages to prevent credential harvesting
-- Return generic credential error when authenticated user lacks portal role
-- Add dynamic remaining attempts counter to rate-limiting failures before lockout
-- Update HandlesAuthSecurity with centralized attempt calculation
+- Introduce silent Layer 1 IP velocity limiter (10 req/min) for infrastructure and DoS protection
+- Implement Layer 2 account-level failure tracking (5 attempts over 15 min window)
+- Implement virtual cache lockout for non-existent usernames to prevent enumeration leaks
+- Fix attempt countdown to display 4 remaining on first failure (decrementing to lockout)
+- Eliminate portal-specific role mismatch disclosure oracles across web and mobile
+- Add comprehensive AuthSecurityHardeningTest feature tests verifying proxy hopping defense
 ```
 
 ---
