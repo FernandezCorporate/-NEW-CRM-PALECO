@@ -111,11 +111,11 @@
 
             <div class="mt-4 flex items-center gap-3 p-3 bg-white/5 rounded-xl border border-white/10">
                 <div class="w-9 h-9 rounded-full bg-[#00a86b] text-white flex items-center justify-center font-bold text-sm shrink-0">
-                    {{ auth()->check() ? strtoupper(substr(auth()->user()->username, 0, 2)) : '??' }}
+                    {{ auth()->check() ? auth()->user()->avatar_initials : '??' }}
                 </div>
                 <div class="overflow-hidden">
                     <p class="text-sm font-bold text-white truncate">
-                        {{ auth()->check() && auth()->user()->first_name ? auth()->user()->first_name . ' ' . auth()->user()->last_name : (auth()->check() ? auth()->user()->username : 'Guest') }}
+                        {{ auth()->check() ? (auth()->user()->full_name ?: auth()->user()->username) : 'Guest' }}
                     </p>
                     <p class="text-[10px] text-slate-400 truncate uppercase tracking-wider mt-0.5">
                         {{ auth()->check() ? Str::headline(auth()->user()->role->role_name) : 'No Role' }} • IT

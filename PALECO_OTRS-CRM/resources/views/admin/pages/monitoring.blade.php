@@ -32,20 +32,25 @@
             <div class="flex items-center gap-2">
                 <input type="text" name="search" placeholder="Search by actor, action, target..." value="{{ request('search') }}" class="border border-slate-200 p-2.5 rounded-lg text-sm focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 w-full md:w-80">
                 <button type="submit" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 rounded-lg text-sm font-medium shadow-sm transition-colors" data-loading-text="Searching...">Search</button>
-                @if(request()->filled('search'))
-                    <a href="{{ route('admin.monitoring.index', request()->except('search')) }}" class="action-link bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 px-4 py-2.5 rounded-lg text-sm font-medium shadow-sm transition-colors" data-loading-text="Clearing...">Clear</a>
+                @if(request()->filled('search') || (request()->filled('category') && request('category') !== 'all') || (request()->filled('event_type') && request('event_type') !== 'all'))
+                    <a href="{{ route('admin.monitoring.index') }}" class="action-link bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 px-4 py-2.5 rounded-lg text-sm font-medium shadow-sm transition-colors" data-loading-text="Clearing...">Clear</a>
                 @endif
             </div>
 
-            <!-- Category Filter -->
-            <div class="flex items-center gap-2 ml-auto">
-                <select name="category" class="ts-filter-dropdown border border-slate-300 rounded-lg text-sm bg-white px-3 py-2 text-slate-700">
-                    <option value="All Categories" {{ request('category') === 'All Categories' || empty(request('category')) ? 'selected' : '' }}>All Categories</option>
-                    <option value="login_success" {{ request('category') === 'login_success' ? 'selected' : '' }}>Authentication</option>
-                    <option value="Tickets" {{ request('category') === 'Tickets' ? 'selected' : '' }}>Tickets</option>
-                    <option value="Users" {{ request('category') === 'Users' ? 'selected' : '' }}>User Mgmt</option>
-                    <option value="Teams" {{ request('category') === 'Teams' ? 'selected' : '' }}>Teams</option>
-                    <option value="Department" {{ request('category') === 'Department' ? 'selected' : '' }}>Departments</option>
+            <!-- Category & Event Type Filters (Server-Provided) -->
+            <div class="flex items-center gap-3 ml-auto flex-wrap">
+                <!-- Event Type Filter (CRUD vs Non-CRUD) -->
+                <select name="event_type" class="ts-filter-dropdown border border-slate-300 rounded-lg text-sm bg-white px-3 py-2 text-slate-700" aria-label="Filter by event type">
+                    @foreach($eventTypes as $value => $label)
+                        <option value="{{ $value }}" {{ request('event_type', 'all') === (string) $value ? 'selected' : '' }}>{{ $label }}</option>
+                    @endforeach
+                </select>
+
+                <!-- Category Filter -->
+                <select name="category" class="ts-filter-dropdown border border-slate-300 rounded-lg text-sm bg-white px-3 py-2 text-slate-700" aria-label="Filter by category">
+                    @foreach($categories as $value => $label)
+                        <option value="{{ $value }}" {{ (request('category', 'all') === (string) $value || (in_array(request('category'), ['auth', 'login_success', 'login', 'authentication']) && $value === 'auth')) ? 'selected' : '' }}>{{ $label }}</option>
+                    @endforeach
                 </select>
                 <noscript><button type="submit" class="bg-slate-500 text-white px-4 py-2 rounded">Apply</button></noscript>
             </div>
@@ -84,9 +89,9 @@
                                 <div class="flex items-center gap-3">
                                     @php
                                         $isAuth = str_starts_with($log->log_name, 'login_');
-                                        $actorName = $log->causer ? ($log->causer->first_name . ' ' . $log->causer->last_name) : ($log->properties['username'] ?? 'System');
+                                        $actorName = $log->causer ? ($log->causer->first_name . ' ' . $log->causer->last_name) : ($log->properties['full_name'] ?? $log->properties['username'] ?? 'System');
                                         $actorRole = $log->causer ? $log->causer->role->role_name : ($log->properties['role'] ?? 'Unknown');
-                                        $initials = strtoupper(substr($actorName, 0, 2));
+                                        $initials = strtoupper(substr(trim($actorName), 0, 2)) ?: 'SY';
                                     @endphp
                                     
                                     <div class="w-9 h-9 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center font-bold text-xs shrink-0 border border-slate-200">
@@ -114,7 +119,13 @@
                                     @elseif($log->log_name === 'Tickets')
                                         <span class="bg-blue-50 border border-blue-200 text-blue-700 text-[11px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wide">Tickets</span>
                                     @elseif($log->log_name === 'Users')
-                                        <span class="bg-emerald-50 border border-emerald-200 text-emerald-700 text-[11px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wide">User Mgmt</span>
+                                        <span class="bg-emerald-50 border border-emerald-200 text-emerald-700 text-[11px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wide">Users</span>
+                                    @elseif($log->log_name === 'Teams')
+                                        <span class="bg-purple-50 border border-purple-200 text-purple-700 text-[11px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wide">Teams</span>
+                                    @elseif($log->log_name === 'Department')
+                                        <span class="bg-amber-50 border border-amber-200 text-amber-700 text-[11px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wide">Departments</span>
+                                    @elseif($log->log_name === 'TicketCategory')
+                                        <span class="bg-teal-50 border border-teal-200 text-teal-700 text-[11px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wide">Categories</span>
                                     @else
                                         <span class="bg-slate-100 border border-slate-200 text-slate-700 text-[11px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wide">{{ $log->log_name }}</span>
                                     @endif

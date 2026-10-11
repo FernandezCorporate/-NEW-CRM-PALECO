@@ -27,10 +27,10 @@ class SystemMonitoringController extends Controller
     {
         Gate::authorize('viewAny', Activity::class);
 
-        $logs = $this->activityLogService->getLogEntries(
-            $request->only(['search', 'category', 'severity'])
+        $dashboardData = $this->activityLogService->getMonitoringDashboard(
+            $request->only(['search', 'category', 'event_type'])
         );
 
-        return view('admin.pages.monitoring', compact('logs'));
+        return view('admin.pages.monitoring', $dashboardData);
     }
 }
