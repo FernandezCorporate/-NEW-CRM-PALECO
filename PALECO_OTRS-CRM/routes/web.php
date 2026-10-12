@@ -10,9 +10,9 @@ use App\Http\Controllers\Web\Auth\AuthController;
 use App\Http\Controllers\Web\Cwd\ConsumerController;
 use App\Http\Controllers\Web\Cwd\CwdDashboardController;
 use App\Http\Controllers\Web\Cwd\TicketAccomplishmentController;
-use App\Http\Controllers\Web\Cwd\TicketController;
 use App\Http\Controllers\Web\Cwd\TicketEndorsementController;
 use App\Http\Controllers\Web\Remarks\TicketRemarkController;
+use App\Http\Controllers\Web\Tickets\TicketController;
 use App\Http\Middleware\CheckIfActive;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -158,12 +158,18 @@ Route::middleware(['auth', CheckIfActive::class])->group(function () {
             Route::delete('/{category}/force-delete', [TicketCategoryController::class, 'destroy'])->name('admin.ticketCategories.destroy')->whereNumber('category')->withTrashed();
         });
 
+        Route::prefix('tickets')->group(function () {
+            Route::get('/', [TicketController::class, 'index'])->name('admin.tickets');
+            Route::get('/{ticket}', [TicketController::class, 'show'])->name('admin.tickets.show')->whereUlid('ticket');
+        });
+
         Route::prefix('system-monitoring')->group(function () {
             Route::get('/', [SystemMonitoringController::class, 'index'])->name('admin.monitoring.index');
             Route::get('/{activity}', [SystemMonitoringController::class, 'show'])->name('admin.monitoring.show')->whereNumber('activity');
         });
 
     });
+
 
     /*
      * CWD Officer Domain

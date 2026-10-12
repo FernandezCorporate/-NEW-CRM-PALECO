@@ -51,6 +51,15 @@
                                 Dashboard
                             </a>
                         </li>
+                        <li>
+                            <a href="{{ route('admin.tickets') }}" 
+                                class="flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-xl transition-all {{ request()->routeIs('admin.tickets*') ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-950/20' : 'text-slate-300 hover:bg-white/10 hover:text-white' }}">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M6 3h12a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V5a2 2 0 012-2zm3 5h6m-6 4h6m-6 4h4"></path>
+                                </svg>
+                                Tickets
+                            </a>
+                        </li>
                     </ul>
                 </div>
 

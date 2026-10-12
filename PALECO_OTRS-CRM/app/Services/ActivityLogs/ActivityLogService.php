@@ -203,7 +203,9 @@ class ActivityLogService
     {
         try {
             return match ($shortType) {
-                'Ticket' => route('cwd.tickets.show', ['ticket' => $subject->getKey()]),
+                'Ticket' => auth()->user()?->role?->slug_identifier === 'admin'
+                    ? route('admin.tickets.show', ['ticket' => $subject->getKey()])
+                    : route('cwd.tickets.show', ['ticket' => $subject->getKey()]),
                 'User' => route('admin.users.show', ['user' => $subject->getKey()]),
                 'Team' => route('admin.teams.show', ['team' => $subject->getKey()]),
                 'Department' => route('admin.departments.show', ['dept' => $subject->getKey()]),

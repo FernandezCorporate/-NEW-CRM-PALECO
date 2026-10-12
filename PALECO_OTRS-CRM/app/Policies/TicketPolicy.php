@@ -44,7 +44,7 @@ class TicketPolicy
      */
     public function create(User $user): bool
     {
-        return in_array($user->role->slug_identifier, ['cwd_officer', 'admin'], true);
+        return $user->role->slug_identifier === 'cwd_officer';
     }
 
     /*
@@ -52,7 +52,7 @@ class TicketPolicy
      */
     public function createChild(User $user, Ticket $ticket): Response
     {
-        if (! in_array($user->role->slug_identifier, ['cwd_officer', 'admin'], true)) {
+        if ($user->role->slug_identifier !== 'cwd_officer') {
             return Response::deny('This action is unauthorized.');
         }
 
