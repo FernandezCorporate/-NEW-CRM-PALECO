@@ -160,7 +160,9 @@ Route::middleware(['auth', CheckIfActive::class])->group(function () {
 
         Route::prefix('system-monitoring')->group(function () {
             Route::get('/', [SystemMonitoringController::class, 'index'])->name('admin.monitoring.index');
+            Route::get('/{activity}', [SystemMonitoringController::class, 'show'])->name('admin.monitoring.show')->whereNumber('activity');
         });
+
     });
 
     /*

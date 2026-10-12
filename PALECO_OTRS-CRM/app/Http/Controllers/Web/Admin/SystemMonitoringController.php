@@ -27,10 +27,24 @@ class SystemMonitoringController extends Controller
     {
         Gate::authorize('viewAny', Activity::class);
 
+        session()->put('monitoring_list_url', $request->fullUrl());
+
         $dashboardData = $this->activityLogService->getMonitoringDashboard(
             $request->only(['search', 'category', 'event_type'])
         );
 
         return view('admin.pages.monitoring', $dashboardData);
+    }
+
+    /*
+     * Displays granular details, forensic context, and attribute diffs for a single audit log entry.
+     */
+    public function show(Activity $activity): View
+    {
+        Gate::authorize('view', $activity);
+
+        $detailData = $this->activityLogService->getActivityDetail($activity);
+
+        return view('admin.pages.activityLogDetails', $detailData);
     }
 }

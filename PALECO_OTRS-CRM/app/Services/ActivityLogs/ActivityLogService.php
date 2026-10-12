@@ -122,4 +122,284 @@ class ActivityLogService
 
         return $paginator;
     }
+
+    // --- DETAIL & DIFF PRESENTATION METHODS ---
+
+    /**
+     * Prepares normalized detail data for a single activity log entry.
+     */
+    public function getActivityDetail(Activity $activity): array
+    {
+        $activity->loadMissing(['causer.role', 'subject']);
+
+        $subject = $activity->subject;
+        $isSubjectDeleted = false;
+        if (! $subject && $activity->subject_type && $activity->subject_id && class_exists($activity->subject_type)) {
+            if (in_array(\Illuminate\Database\Eloquent\SoftDeletes::class, class_uses_recursive($activity->subject_type), true)) {
+                $subject = ($activity->subject_type)::withTrashed()->find($activity->subject_id);
+                $isSubjectDeleted = (bool) ($subject?->trashed());
+            }
+        }
+
+        $subjectData = $this->resolveSubjectDetails($activity, $subject, $isSubjectDeleted);
+        $actorData = $this->resolveActorDetails($activity);
+        $clientData = $this->resolveClientDetails($activity);
+        $diffData = $this->resolveAttributeDiffs($activity);
+
+        return [
+            'activity' => $activity,
+            'actor' => $actorData,
+            'subject' => $subjectData,
+            'client' => $clientData,
+            'diff' => $diffData,
+            'rawAttributeChanges' => json_encode($activity->attribute_changes, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES),
+            'rawProperties' => json_encode($activity->properties, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES),
+            'rawPayload' => json_encode($activity->toArray(), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES),
+        ];
+    }
+
+    /**
+     * Resolves target subject entity details and safe navigation links.
+     */
+    protected function resolveSubjectDetails(Activity $activity, mixed $subject, bool $isSubjectDeleted): ?array
+    {
+        if (! $activity->subject_type && ! $activity->subject_id && ! $subject) {
+            return null;
+        }
+
+        $shortType = $activity->subject_type ? class_basename($activity->subject_type) : 'Unknown';
+
+        $title = null;
+        $url = null;
+
+        if ($subject) {
+            $title = $subject->ticket_number
+                ?? $subject->team_name
+                ?? $subject->dept_name
+                ?? $subject->category_name
+                ?? $subject->full_name
+                ?? $subject->name
+                ?? $subject->username
+                ?? (string) $activity->subject_id;
+
+            $url = $this->resolveSubjectUrl($shortType, $subject);
+        }
+
+        return [
+            'type' => $shortType,
+            'full_type' => $activity->subject_type,
+            'id' => $activity->subject_id,
+            'title' => $title ?: ($activity->subject_id ? "{$shortType} #{$activity->subject_id}" : $shortType),
+            'url' => $url,
+            'is_deleted' => $isSubjectDeleted,
+            'exists' => (bool) $subject,
+        ];
+    }
+
+    /**
+     * Safely resolves a detail view route for known subject models.
+     */
+    protected function resolveSubjectUrl(string $shortType, mixed $subject): ?string
+    {
+        try {
+            return match ($shortType) {
+                'Ticket' => route('cwd.tickets.show', ['ticket' => $subject->getKey()]),
+                'User' => route('admin.users.show', ['user' => $subject->getKey()]),
+                'Team' => route('admin.teams.show', ['team' => $subject->getKey()]),
+                'Department' => route('admin.departments.show', ['dept' => $subject->getKey()]),
+                'TicketCategory' => route('admin.ticketCategories.show', ['category' => $subject->getKey()]),
+                default => null,
+            };
+        } catch (\Throwable) {
+            return null;
+        }
+    }
+
+    /**
+     * Resolves actor profile information and fallback identity properties.
+     */
+    protected function resolveActorDetails(Activity $activity): array
+    {
+        $causer = $activity->causer;
+        $properties = $activity->properties?->toArray() ?? [];
+
+        if ($causer) {
+            $name = $causer->full_name ?: $causer->username;
+            $role = $causer->role?->role_name ?? 'User';
+            $username = $causer->username;
+            $email = $causer->email;
+            $contact = $causer->contact;
+            $initials = $causer->avatar_initials ?? strtoupper(substr(trim($name), 0, 2));
+            $url = route('admin.users.show', ['user' => $causer->getKey()]);
+        } else {
+            $name = $properties['full_name'] ?? $properties['username'] ?? 'System';
+            $role = $properties['role'] ?? 'System / Anonymous';
+            $username = $properties['username'] ?? null;
+            $email = $properties['email'] ?? null;
+            $contact = $properties['contact'] ?? null;
+            $initials = strtoupper(substr(trim($name), 0, 2)) ?: 'SY';
+            $url = null;
+        }
+
+        return [
+            'name' => \Illuminate\Support\Str::title($name),
+            'username' => $username,
+            'role' => \Illuminate\Support\Str::headline($role),
+            'email' => $email,
+            'contact' => $contact,
+            'initials' => $initials,
+            'url' => $url,
+            'is_causer_model' => (bool) $causer,
+        ];
+    }
+
+    /**
+     * Resolves client network and device details from properties.
+     */
+    protected function resolveClientDetails(Activity $activity): array
+    {
+        $ip = $activity->getProperty('ip_address', 'Unknown');
+        $userAgent = $activity->getProperty('user_agent');
+
+        return [
+            'ip_address' => $ip,
+            'user_agent' => $userAgent,
+            'client_hint' => $this->parseClientHint($userAgent),
+            'formatted_datetime' => $activity->created_at->format('M d, Y h:i:s A'),
+            'relative_time' => $activity->created_at->diffForHumans(),
+        ];
+    }
+
+    /**
+     * Parses user agent header to produce an intuitive browser and OS hint.
+     */
+    protected function parseClientHint(?string $userAgent): string
+    {
+        if (empty($userAgent)) {
+            return 'Not Recorded';
+        }
+
+        if (str_contains($userAgent, 'PostmanRuntime')) {
+            return 'Postman API Client';
+        }
+
+        $platform = 'Unknown OS';
+        if (str_contains($userAgent, 'Windows')) {
+            $platform = 'Windows';
+        } elseif (str_contains($userAgent, 'Macintosh') || str_contains($userAgent, 'Mac OS')) {
+            $platform = 'macOS';
+        } elseif (str_contains($userAgent, 'Android')) {
+            $platform = 'Android';
+        } elseif (str_contains($userAgent, 'iPhone') || str_contains($userAgent, 'iPad')) {
+            $platform = 'iOS';
+        } elseif (str_contains($userAgent, 'Linux')) {
+            $platform = 'Linux';
+        }
+
+        $browser = 'Browser';
+        if (str_contains($userAgent, 'Edg/')) {
+            $browser = 'Microsoft Edge';
+        } elseif (str_contains($userAgent, 'Chrome/')) {
+            $browser = 'Chrome';
+        } elseif (str_contains($userAgent, 'Firefox/')) {
+            $browser = 'Firefox';
+        } elseif (str_contains($userAgent, 'Safari/') && ! str_contains($userAgent, 'Chrome/')) {
+            $browser = 'Safari';
+        }
+
+        return "{$browser} on {$platform}";
+    }
+
+    /**
+     * Resolves and normalizes attribute diffs across Spatie v5 attribute_changes and legacy properties.
+     */
+    protected function resolveAttributeDiffs(Activity $activity): array
+    {
+        $attributeChanges = $activity->attribute_changes?->toArray() ?? [];
+        $properties = $activity->properties?->toArray() ?? [];
+
+        $old = $attributeChanges['old'] ?? $properties['old'] ?? null;
+        $attributes = $attributeChanges['attributes'] ?? $properties['attributes'] ?? null;
+
+        $hasModelDiff = ($old !== null || $attributes !== null);
+        $diffType = match ($activity->event) {
+            'created', 'create' => 'created',
+            'deleted', 'delete' => 'deleted',
+            'updated', 'update', 'roster_updated' => 'updated',
+            default => $hasModelDiff ? 'diff' : 'metadata',
+        };
+
+        $rows = [];
+
+        if ($hasModelDiff) {
+            $allKeys = array_unique(array_merge(
+                array_keys((array) ($old ?? [])),
+                array_keys((array) ($attributes ?? []))
+            ));
+
+            foreach ($allKeys as $key) {
+                $oldVal = $old[$key] ?? null;
+                $newVal = $attributes[$key] ?? null;
+
+                $rows[] = [
+                    'key' => $key,
+                    'label' => \Illuminate\Support\Str::headline(str_replace('_', ' ', $key)),
+                    'old_raw' => $oldVal,
+                    'new_raw' => $newVal,
+                    'old_display' => $this->formatDiffValue($oldVal),
+                    'new_display' => $this->formatDiffValue($newVal),
+                    'is_changed' => $oldVal !== $newVal,
+                ];
+            }
+        } else {
+            $metadata = array_diff_key($properties, array_flip(['ip_address', 'user_agent']));
+            foreach ($metadata as $key => $val) {
+                $rows[] = [
+                    'key' => $key,
+                    'label' => \Illuminate\Support\Str::headline(str_replace('_', ' ', $key)),
+                    'old_raw' => null,
+                    'new_raw' => $val,
+                    'old_display' => null,
+                    'new_display' => $this->formatDiffValue($val),
+                    'is_changed' => false,
+                ];
+            }
+        }
+
+        return [
+            'type' => $diffType,
+            'has_model_diff' => $hasModelDiff,
+            'rows' => $rows,
+            'count' => count($rows),
+        ];
+    }
+
+    /**
+     * Formats individual scalar, array, boolean, or datetime values for diff presentation.
+     */
+    protected function formatDiffValue(mixed $value): string
+    {
+        if ($value === null) {
+            return '—';
+        }
+
+        if (is_bool($value)) {
+            return $value ? 'Yes' : 'No';
+        }
+
+        if (is_array($value)) {
+            return json_encode($value, JSON_UNESCAPED_SLASHES);
+        }
+
+        if (is_string($value) && preg_match('/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/', $value)) {
+            try {
+                return \Carbon\Carbon::parse($value)->format('M d, Y h:i A');
+            } catch (\Throwable) {
+                return (string) $value;
+            }
+        }
+
+        return (string) $value;
+    }
 }
+
