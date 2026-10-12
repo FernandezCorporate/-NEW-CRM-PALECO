@@ -11,6 +11,7 @@
 @import './preferences.css';
 
 /* Modulated Components */
+@import './components.css';
 @import './dashboard-cards.css';
 @import './dashboard-charts.css';
 @import './animations.css';
@@ -27,4 +28,10 @@
 @theme {
     --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
         'Segoe UI Symbol', 'Noto Color Emoji';
+
+    --color-paleco-950: #062d21;
+    --color-paleco-900: #073b2a;
+    --color-paleco-700: #08794e;
+    --color-paleco-600: #09975d;
+    --color-paleco-500: #12ad6b;
 }
