@@ -105,6 +105,21 @@
         outline-offset: 2px;
     }
 
+    .btn-warning {
+        background-color: #d97706;
+        color: #ffffff;
+        box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    }
+
+    .btn-warning:hover {
+        background-color: #b45309;
+    }
+
+    .btn-warning:focus-visible {
+        outline: 2px solid #f59e0b;
+        outline-offset: 2px;
+    }
+
     .btn-ghost {
         background-color: transparent;
         color: #475569;
