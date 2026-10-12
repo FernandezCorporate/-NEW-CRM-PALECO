@@ -5,44 +5,54 @@
 @section('title', 'Category Details')
 
 @section('content')
+    <!-- Back Navigation -->
     <div class="mb-6">
-        <a href="{{ session('category_list_url', route('admin.ticketCategories')) }}" class="action-link inline-flex items-center text-sm font-medium text-slate-500 hover:text-slate-800 transition-colors">
-            <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
-            Back to Categories
+        <a href="{{ session('category_list_url', route('admin.ticketCategories')) }}" class="action-link inline-flex items-center gap-2 text-sm font-medium text-slate-500 hover:text-slate-800 transition-colors">
+            <x-icons.arrow-left class="w-4 h-4" />
+            <span>Back to Categories</span>
         </a>
     </div>
 
-    <div class="bg-white border border-slate-200 rounded-xl shadow-sm p-8 max-w-full mb-6">
-        <div class="flex justify-between items-start mb-6">
+    <!-- Category Profile Card -->
+    <article class="bg-white border border-slate-200 rounded-xl shadow-xs p-6 lg:p-8 max-w-full mb-6">
+        <header class="flex justify-between items-start mb-6">
             <div>
                 <h1 class="text-2xl font-bold text-slate-800">{{ $category->category_name }}</h1>
                 <p class="text-sm text-slate-500 mt-1">Created {{ $category->created_at->format('M d, Y') }}</p>
             </div>
             @if($category->trashed())
-                <span class="bg-rose-100 text-rose-700 font-bold px-3 py-1 rounded text-xs uppercase tracking-wide">Archived</span>
+                <span class="bg-rose-100 text-rose-700 font-bold px-3 py-1 rounded-full text-xs uppercase tracking-wide border border-rose-200">Archived</span>
             @else
-                <span class="bg-emerald-100 text-emerald-700 font-bold px-3 py-1 rounded text-xs uppercase tracking-wide">Active</span>
+                <span class="bg-emerald-100 text-emerald-700 font-bold px-3 py-1 rounded-full text-xs uppercase tracking-wide border border-emerald-200">Active</span>
             @endif
-        </div>
+        </header>
 
-        <div class="mb-8">
-            <h3 class="text-sm font-bold text-slate-400 uppercase tracking-wider mb-2">Description</h3>
-            <p class="text-slate-700">{{ $category->category_desc ?? 'No description provided for this category.' }}</p>
-        </div>
+        <dl class="mb-8">
+            <dt class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Category Description</dt>
+            <dd class="text-slate-700 leading-relaxed bg-slate-50 p-4 rounded-lg border border-slate-100 text-sm">
+                {{ $category->category_desc ?? 'No description provided for this category.' }}
+            </dd>
+        </dl>
 
-        <div class="flex gap-3 border-t border-slate-100 pt-6">
+        <footer class="flex gap-3 border-t border-slate-100 pt-6">
             @if(!$category->trashed())
-                <a href="{{ route('admin.ticketCategories.editForm', ['category' => $category, 'source' => 'details']) }}" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">Edit Category</a>
-                <a href="{{ route('admin.ticketCategories.deleteConfirm', ['category' => $category, 'source' => 'details']) }}" class="bg-rose-50 text-rose-600 hover:bg-rose-100 px-4 py-2 rounded-lg text-sm font-medium transition-colors">Archive Category</a>
+                <a href="{{ route('admin.ticketCategories.editForm', ['category' => $category, 'source' => 'details']) }}" class="action-link btn btn-primary text-sm shadow-xs" data-loading-text="Loading...">
+                    <x-icons.pencil class="w-4 h-4" />
+                    <span>Edit Category</span>
+                </a>
+                <a href="{{ route('admin.ticketCategories.deleteConfirm', ['category' => $category, 'source' => 'details']) }}" class="action-link btn btn-secondary text-rose-700 hover:bg-rose-50 hover:border-rose-300 text-sm shadow-2xs" data-loading-text="Loading...">
+                    <x-icons.trash class="w-4 h-4" />
+                    <span>Archive Category</span>
+                </a>
             @endif
-        </div>
-    </div>
+        </footer>
+    </article>
 
-    <!-- Appended Full-Width Tickets Table[cite: 10] -->
-    <div class="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden mb-6">
+    <!-- Appended Full-Width Tickets Table -->
+    <section class="bg-white border border-slate-200 rounded-xl shadow-xs overflow-hidden mb-6" aria-labelledby="category-tickets-heading">
         <div class="px-6 py-5 border-b border-slate-200 bg-slate-50 flex justify-between items-center">
             <div>
-                <h3 class="text-lg font-bold text-slate-800">Tickets Logged Under This Category</h3>
+                <h2 id="category-tickets-heading" class="text-base font-bold text-slate-800">Tickets Logged Under This Category</h2>
                 <p class="text-xs text-slate-500 mt-1">Service requests historically linked to this classification.</p>
             </div>
             
@@ -55,13 +65,14 @@
 
         <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse min-w-[1000px]">
+                <caption class="sr-only">Tickets logged under {{ $category->category_name }}</caption>
                 <thead>
                     <tr class="bg-white border-b border-slate-200 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-                        <th class="px-6 py-4 w-40">Ticket ID</th>
-                        <th class="px-6 py-4 w-40">Source</th>
-                        <th class="px-6 py-4 w-56">Full Address</th>
-                        <th class="px-6 py-4 w-48">Landmark</th>
-                        <th class="px-6 py-4 w-32 text-center">Status</th>
+                        <th scope="col" class="px-6 py-4 w-40">Ticket ID</th>
+                        <th scope="col" class="px-6 py-4 w-40">Source</th>
+                        <th scope="col" class="px-6 py-4 w-56">Full Address</th>
+                        <th scope="col" class="px-6 py-4 w-48">Landmark</th>
+                        <th scope="col" class="px-6 py-4 w-32 text-center">Status</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100">
@@ -97,8 +108,8 @@
                     @empty
                         <tr>
                             <td colspan="5" class="px-6 py-16 text-center border-2 border-dashed border-slate-200 rounded-lg">
-                                <div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-slate-50 mb-3">
-                                    <svg class="w-6 h-6 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
+                                <div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-slate-50 mb-3 text-slate-400">
+                                    <x-icons.ticket class="w-6 h-6" />
                                 </div>
                                 <h3 class="text-sm font-bold text-slate-900">No tickets recorded</h3>
                                 <p class="text-xs text-slate-500 mt-1">There are currently no tickets logged under this specific category.</p>
@@ -114,5 +125,5 @@
                 {{ $assignedTickets->onEachSide(0)->links() }}
             </div>
         @endif
-    </div>
+    </section>
 @endsection

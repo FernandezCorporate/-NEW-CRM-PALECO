@@ -9,9 +9,12 @@ const initLightbox = () => {
     if (lightbox.dataset.bound) return;
     lightbox.dataset.bound = 'true';
 
+    let lastFocusedTrigger = null;
+
     // 1. Open Lightbox
     triggers.forEach(trigger => {
         trigger.addEventListener('click', () => {
+            lastFocusedTrigger = trigger;
             const src = trigger.getAttribute('data-image-src');
             
             // Set image and reset zoom classes
@@ -22,6 +25,11 @@ const initLightbox = () => {
             // Show overlay and lock background scrolling
             lightbox.classList.remove('hidden');
             document.body.style.overflow = 'hidden';
+
+            const closeBtn = document.getElementById('lightbox-close-btn') || lightbox.querySelector('.js-lightbox-close');
+            if (closeBtn) {
+                closeBtn.focus();
+            }
         });
     });
 
@@ -29,6 +37,10 @@ const initLightbox = () => {
     const closeLightbox = () => {
         lightbox.classList.add('hidden');
         document.body.style.overflow = 'auto';
+        if (lastFocusedTrigger) {
+            lastFocusedTrigger.focus();
+            lastFocusedTrigger = null;
+        }
     };
 
     // Attach close event to button and background overlay

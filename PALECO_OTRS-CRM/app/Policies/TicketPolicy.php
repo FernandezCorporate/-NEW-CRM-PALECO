@@ -61,6 +61,14 @@ class TicketPolicy
             : Response::denyAsNotFound('The requested ticket was not found.');
     }
 
+    /*
+     * Determine whether the user can post an operational remark on this ticket.
+     */
+    public function createRemark(User $user, Ticket $ticket): bool
+    {
+        return $user->role->slug_identifier === 'cwd_officer';
+    }
+
     // --- MOBILE SUPERVISOR & FIELD PERSONNEL PERMISSIONS ---
 
     /*
