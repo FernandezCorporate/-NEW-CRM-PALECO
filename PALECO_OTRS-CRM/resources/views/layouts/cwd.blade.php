@@ -1,0 +1,2 @@
+@extends('cwd.base.base')
+
