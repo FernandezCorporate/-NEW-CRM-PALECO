@@ -117,6 +117,32 @@ class ActivityLogService
             $log->formatted_time = $log->created_at->format('h:i A');
             $log->formatted_datetime = $log->created_at->format('M d, Y h:i A');
 
+            $authAction = NonModelActions::tryFrom($log->log_name);
+            if ($authAction) {
+                $log->module_label = $authAction->label();
+                $log->module_badge_class = $authAction->badgeClasses();
+            } elseif (str_starts_with($log->log_name, 'login_')) {
+                $log->module_label = 'Authentication';
+                $log->module_badge_class = 'bg-indigo-50 border-indigo-200 text-indigo-700';
+            } else {
+                $log->module_label = match ($log->log_name) {
+                    'Tickets' => 'Tickets',
+                    'Users' => 'Users',
+                    'Teams' => 'Teams',
+                    'Department' => 'Departments',
+                    'TicketCategory' => 'Categories',
+                    default => $log->log_name,
+                };
+                $log->module_badge_class = match ($log->log_name) {
+                    'Tickets' => 'bg-blue-50 border-blue-200 text-blue-700',
+                    'Users' => 'bg-emerald-50 border-emerald-200 text-emerald-700',
+                    'Teams' => 'bg-purple-50 border-purple-200 text-purple-700',
+                    'Department' => 'bg-amber-50 border-amber-200 text-amber-700',
+                    'TicketCategory' => 'bg-teal-50 border-teal-200 text-teal-700',
+                    default => 'bg-slate-100 border-slate-200 text-slate-700',
+                };
+            }
+
             return $log;
         });
 

@@ -18,6 +18,8 @@ const initToggleCardTable = () => {
             
             btnCard.classList.add('bg-slate-100', 'text-emerald-600');
             btnList.classList.remove('bg-slate-100', 'text-emerald-600');
+            btnCard.setAttribute('aria-pressed', 'true');
+            btnList.setAttribute('aria-pressed', 'false');
             
             localStorage.setItem(pageKey, 'card');
         } else {
@@ -27,6 +29,8 @@ const initToggleCardTable = () => {
             
             btnList.classList.add('bg-slate-100', 'text-emerald-600');
             btnCard.classList.remove('bg-slate-100', 'text-emerald-600');
+            btnList.setAttribute('aria-pressed', 'true');
+            btnCard.setAttribute('aria-pressed', 'false');
             
             localStorage.setItem(pageKey, 'list');
         }

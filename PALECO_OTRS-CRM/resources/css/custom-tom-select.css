@@ -1,23 +1,31 @@
 /* Resetting the default Tom Select styling to match Tailwind */
+.ts-wrapper {
+    border: none !important;
+    padding: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+}
+
 .ts-control {
     background-color: #ffffff !important;
     background-image: none !important; /* Kills the default grey gradient */
-    border: 1px solid #e2e8f0 !important; /* border-slate-200 */
+    border: 1px solid #cbd5e1 !important; /* border-slate-300 matching form-input */
     border-radius: 0.5rem !important; /* rounded-lg */
-    padding: 0.625rem 0.75rem !important; /* Perfectly matches tailwind p-2.5 */
+    padding: 0.625rem 0.875rem !important; /* Matches form-input */
     min-height: 42px !important;
-    box-shadow: none !important;
+    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.02) !important;
     font-size: 0.875rem !important; /* text-sm */
-    color: #334155 !important; /* text-slate-700 */
+    color: #0f172a !important; /* text-slate-900 */
     display: flex;
     align-items: center;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
 /* The Focus Ring (Matches focus:ring-emerald-500) */
 .ts-wrapper.focus .ts-control,
 .ts-wrapper:focus-within .ts-control {
-    border-color: #10b981 !important; 
-    box-shadow: 0 0 0 1px #10b981 !important; 
+    border-color: var(--paleco-600, #09975d) !important; 
+    box-shadow: 0 0 0 2px rgb(18 173 107 / 0.2) !important; 
 }
 
 /* The internal typing area is not a second form field. Keep one focus

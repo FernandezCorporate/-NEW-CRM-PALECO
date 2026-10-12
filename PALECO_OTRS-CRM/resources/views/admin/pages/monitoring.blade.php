@@ -3,10 +3,10 @@
 @section('title', 'System Monitoring & Audit Log')
 
 @section('content')
-    @include('admin.prompts.alert')
+    <x-alert />
 
     <!-- Page Header -->
-    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+    <header class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
         <div>
             <h1 class="text-2xl font-bold text-slate-800">System Monitoring & Audit Log</h1>
             <p class="text-sm text-slate-500 mt-1">Track all actions performed across every user level — Admin, CWD, Supervisor, Field Personnel.</p>
@@ -16,7 +16,7 @@
             <button type="button" disabled class="unavailable-action" aria-describedby="export-note">Export CSV</button>
             <p id="export-note" class="mt-1 text-xs text-slate-500">Export is not available yet.</p>
         </div>
-    </div>
+    </header>
 
     <p class="mb-5 text-sm text-slate-600">
         <strong class="text-slate-800">{{ number_format($logs->total()) }}</strong> matching events
@@ -25,49 +25,50 @@
     </p>
 
     <!-- Controls Row -->
-    <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-6">
+    <search class="filter-toolbar mb-6" aria-label="Audit log search and filters">
         <form action="{{ route('admin.monitoring.index') }}" method="GET" class="flex flex-col md:flex-row flex-wrap gap-4 w-full">
             
             <!-- Search -->
             <div class="flex items-center gap-2">
-                <input type="text" name="search" placeholder="Search by actor, action, target..." value="{{ request('search') }}" class="border border-slate-200 p-2.5 rounded-lg text-sm focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 w-full md:w-80">
-                <button type="submit" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 rounded-lg text-sm font-medium shadow-sm transition-colors" data-loading-text="Searching...">Search</button>
+                <input type="text" name="search" placeholder="Search by actor, action, target..." value="{{ request('search') }}" class="form-input w-full md:w-80" aria-label="Search audit logs by actor, action, or target">
+                <x-btn type="submit" variant="primary" size="md" data-loading-text="Searching...">Search</x-btn>
                 @if(request()->filled('search') || (request()->filled('category') && request('category') !== 'all') || (request()->filled('event_type') && request('event_type') !== 'all'))
-                    <a href="{{ route('admin.monitoring.index') }}" class="action-link bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 px-4 py-2.5 rounded-lg text-sm font-medium shadow-sm transition-colors" data-loading-text="Clearing...">Clear</a>
+                    <x-btn href="{{ route('admin.monitoring.index') }}" variant="secondary" size="md" class="action-link" data-loading-text="Clearing...">Clear</x-btn>
                 @endif
             </div>
 
             <!-- Category & Event Type Filters (Server-Provided) -->
             <div class="flex items-center gap-3 ml-auto flex-wrap">
                 <!-- Event Type Filter (CRUD vs Non-CRUD) -->
-                <select name="event_type" class="ts-filter-dropdown border border-slate-300 rounded-lg text-sm bg-white px-3 py-2 text-slate-700" aria-label="Filter by event type">
+                <select name="event_type" class="ts-filter-dropdown" aria-label="Filter by event type">
                     @foreach($eventTypes as $value => $label)
                         <option value="{{ $value }}" {{ request('event_type', 'all') === (string) $value ? 'selected' : '' }}>{{ $label }}</option>
                     @endforeach
                 </select>
 
                 <!-- Category Filter -->
-                <select name="category" class="ts-filter-dropdown border border-slate-300 rounded-lg text-sm bg-white px-3 py-2 text-slate-700" aria-label="Filter by category">
+                <select name="category" class="ts-filter-dropdown" aria-label="Filter by category">
                     @foreach($categories as $value => $label)
                         <option value="{{ $value }}" {{ (request('category', 'all') === (string) $value || (in_array(request('category'), ['auth', 'login_success', 'login', 'authentication']) && $value === 'auth')) ? 'selected' : '' }}>{{ $label }}</option>
                     @endforeach
                 </select>
-                <noscript><button type="submit" class="bg-slate-500 text-white px-4 py-2 rounded">Apply</button></noscript>
+                <noscript><x-btn type="submit" variant="secondary" size="md">Apply</x-btn></noscript>
             </div>
         </form>
-    </div>
+    </search>
 
     <!-- Data Grid Table -->
-    <div class="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden mb-4">
+    <div class="bg-white border border-slate-200 rounded-xl shadow-xs overflow-hidden mb-4">
         <div class="overflow-x-auto">
-            <table class="w-full text-left border-collapse">
+            <table class="system-table w-full text-left border-collapse">
+                <caption class="sr-only">System audit activity logs and security events</caption>
                 <thead>
                     <tr class="bg-slate-50 border-b border-slate-200 text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                        <th class="px-6 py-4">Timestamp & Source</th>
-                        <th class="px-6 py-4">Actor</th>
-                        <th class="px-6 py-4">Module & Event</th>
-                        <th class="px-6 py-4">Primary Action</th>
-                        <th class="px-6 py-4 text-right">Action</th>
+                        <th scope="col" class="px-6 py-4">Timestamp & Source</th>
+                        <th scope="col" class="px-6 py-4">Actor</th>
+                        <th scope="col" class="px-6 py-4">Module & Event</th>
+                        <th scope="col" class="px-6 py-4">Primary Action</th>
+                        <th scope="col" class="px-6 py-4 text-right">Action</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100">
@@ -76,11 +77,9 @@
                             
                             <!-- Timestamp & IP Address -->
                             <td class="px-6 py-4 whitespace-nowrap">
-                                <!-- Pulled from the newly injected properties on the Service layer -->
                                 <div class="font-medium text-slate-800">{{ $log->formatted_date }}</div>
                                 <div class="text-xs text-slate-500 flex items-center gap-1 mt-0.5">
-                                    <svg class="w-3 h-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"></path></svg>
-                                    IP: {{ $log->properties['ip_address'] ?? 'Unknown' }}
+                                    <span class="font-mono text-[11px]">IP: {{ $log->properties['ip_address'] ?? 'Unknown' }}</span>
                                 </div>
                                 <div class="text-xs text-slate-400 mt-0.5">{{ $log->formatted_time }}</div>
                             </td>
@@ -89,7 +88,6 @@
                             <td class="px-6 py-4">
                                 <div class="flex items-center gap-3">
                                     @php
-                                        $isAuth = str_starts_with($log->log_name, 'login_');
                                         $actorName = $log->causer ? ($log->causer->first_name . ' ' . $log->causer->last_name) : ($log->properties['full_name'] ?? $log->properties['username'] ?? 'System');
                                         $actorRole = $log->causer ? $log->causer->role->role_name : ($log->properties['role'] ?? 'Unknown');
                                         $initials = strtoupper(substr(trim($actorName), 0, 2)) ?: 'SY';
@@ -110,29 +108,11 @@
                             <!-- Module & Event Tags -->
                             <td class="px-6 py-4">
                                 <div class="flex flex-col items-start gap-1.5">
-                                    @php
-                                        $authAction = \App\Enums\NonModelActions::tryFrom($log->log_name);
-                                    @endphp
-                                    @if($authAction)
-                                        <span class="border text-[11px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wide {{ $authAction->badgeClasses() }}">{{ $authAction->label() }}</span>
-                                    @elseif($isAuth)
-                                        <span class="bg-indigo-50 border border-indigo-200 text-indigo-700 text-[11px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wide">Authentication</span>
-                                    @elseif($log->log_name === 'Tickets')
-                                        <span class="bg-blue-50 border border-blue-200 text-blue-700 text-[11px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wide">Tickets</span>
-                                    @elseif($log->log_name === 'Users')
-                                        <span class="bg-emerald-50 border border-emerald-200 text-emerald-700 text-[11px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wide">Users</span>
-                                    @elseif($log->log_name === 'Teams')
-                                        <span class="bg-purple-50 border border-purple-200 text-purple-700 text-[11px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wide">Teams</span>
-                                    @elseif($log->log_name === 'Department')
-                                        <span class="bg-amber-50 border border-amber-200 text-amber-700 text-[11px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wide">Departments</span>
-                                    @elseif($log->log_name === 'TicketCategory')
-                                        <span class="bg-teal-50 border border-teal-200 text-teal-700 text-[11px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wide">Categories</span>
-                                    @else
-                                        <span class="bg-slate-100 border border-slate-200 text-slate-700 text-[11px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wide">{{ $log->log_name }}</span>
-                                    @endif
+                                    <span class="border text-[11px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wide {{ $log->module_badge_class }}">
+                                        {{ $log->module_label }}
+                                    </span>
                                     
                                     <span class="text-xs text-slate-400 flex items-center gap-1">
-                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
                                         {{ $log->event }}
                                     </span>
                                 </div>
@@ -147,8 +127,8 @@
 
                             <!-- View Details Action Button -->
                             <td class="px-6 py-4 whitespace-nowrap text-right">
-                                <a href="{{ route('admin.monitoring.show', $log) }}" class="action-link inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 hover:text-emerald-700 hover:border-emerald-200 shadow-xs transition-colors" data-loading-text="Opening...">
-                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                                <a href="{{ route('admin.monitoring.show', $log) }}" class="action-link inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 hover:text-emerald-700 hover:border-emerald-200 shadow-xs transition-colors" data-loading-text="Opening..." aria-label="View details for event #{{ $log->id }}">
+                                    <x-icons.eye class="w-3.5 h-3.5" />
                                     <span>Details</span>
                                 </a>
                             </td>
@@ -158,7 +138,7 @@
                         <tr>
                             <td colspan="5" class="px-6 py-16 text-center border-2 border-dashed border-slate-100 rounded-lg">
                                 <div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-slate-50 mb-3">
-                                    <svg class="w-6 h-6 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                                    <x-icons.monitoring class="w-6 h-6 text-slate-400" />
                                 </div>
                                 <h3 class="text-sm font-semibold text-slate-800">No activity logs found</h3>
                                 <p class="text-xs text-slate-500 mt-1">Adjust your search or filter to find what you're looking for.</p>
