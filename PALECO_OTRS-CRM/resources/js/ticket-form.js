@@ -50,9 +50,14 @@ const initTicketCategoryToggle = () => {
     };
 
     otherCheckbox.addEventListener('change', toggleCategoryFields);
-    
-    // Tiny macrotask execution delay ensures global Tom Select initializers finish binding instances
-    setTimeout(toggleCategoryFields, 50);
+
+    // Event-driven initial execution eliminating setTimeout hack
+    if (categorySelect.tomselect) {
+        toggleCategoryFields();
+    } else {
+        categorySelect.addEventListener('tomselect:initialized', toggleCategoryFields, { once: true });
+        toggleCategoryFields();
+    }
 };
 
 if (document.readyState === 'loading') {

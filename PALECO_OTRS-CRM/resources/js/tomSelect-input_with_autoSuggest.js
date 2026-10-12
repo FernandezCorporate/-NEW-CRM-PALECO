@@ -4,7 +4,7 @@ const initTomSelectSync = () => {
     document.querySelectorAll('.tom-select-sync').forEach((selectElement) => {
         if (selectElement.tomselect) return;
         try {
-            new TomSelect(selectElement, {
+            const ts = new TomSelect(selectElement, {
                 create: false,
                 maxOptions: null,
                 onChange: function(value) {
@@ -13,6 +13,7 @@ const initTomSelectSync = () => {
                     }
                 }
             });
+            selectElement.dispatchEvent(new CustomEvent('tomselect:initialized', { detail: ts, bubbles: true }));
         } catch (e) {
             console.warn('TomSelect failed to initialize on element:', selectElement, e);
         }

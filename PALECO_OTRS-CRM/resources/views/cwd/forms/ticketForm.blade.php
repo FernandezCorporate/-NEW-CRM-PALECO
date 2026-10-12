@@ -4,18 +4,15 @@
 @section('title', 'New Ticket')
 
 @section('content')
-<div class="max-w-5xl mx-auto my-6 p-6 sm:p-10 bg-white rounded-lg border border-gray-200">
+<article class="card max-w-5xl mx-auto my-6 p-6 sm:p-10">
     
-    <!-- Header -->
-    <div class="mb-8">
-        <h1 class="text-2xl font-bold text-gray-900">New service ticket</h1>
-        <p class="text-sm text-gray-500 mt-1">Record the complaint, choose the responsible department, and confirm the incident location.</p>
-    </div>
+    <header class="mb-8">
+        <h1 class="text-2xl font-bold text-slate-900">New service ticket</h1>
+        <p class="text-sm text-slate-500 mt-1">Record the complaint, choose the responsible department, and confirm the incident location.</p>
+    </header>
 
-    <!-- Reused Shared System Prompts Alerts -->
-    @include('cwd.prompts.alert')
+    <x-alert />
 
-    <!-- Data Ingestion Form Execution -->
     <form action="{{ route('cwd.tickets.store') }}" method="POST" autocomplete="off" class="space-y-8">
         @csrf
         @if(request()->filled('source') || old('source'))
@@ -25,16 +22,13 @@
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-x-12 gap-y-8">
             
             <!-- Left Column: Classification -->
-            <div class="space-y-6">
+            <fieldset class="space-y-6">
+                <legend class="sr-only">Classification and Nature</legend>
                 
                 <div>
-                    <label for="complaint_source" class="block text-sm font-semibold text-gray-700 mb-1.5">Complaint Intake Source <span class="text-red-500">*</span></label>
-                    
-                    <!-- Applied Custom Tom Select Pattern -->
+                    <x-form.label for="complaint_source" :required="true">Complaint Intake Source</x-form.label>
                     <select name="complaint_source" id="complaint_source" class="tom-select-sync" data-autosubmit="false" autocomplete="off" placeholder="Select intake channel">
-                        
                         <option value=""></option>
-                        
                         @foreach($sources as $source)
                             <option value="{{ $source->value }}" {{ old('complaint_source') === $source->value ? 'selected' : '' }}>
                                 {{ $source->label() }}
@@ -44,22 +38,22 @@
                 </div>
 
                 <div>
-                    <label for="consumer_contact" class="block text-sm font-semibold text-gray-700 mb-1.5">Consumer Contact <span class="text-red-500">*</span></label>
-                    <input type="text" name="consumer_contact" id="consumer_contact" value="{{ old('consumer_contact') }}" class="w-full rounded-md border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-[#008f5d] focus:ring-1 focus:ring-[#008f5d] outline-none transition-colors" placeholder="e.g., 09123456789">
+                    <x-form.label for="consumer_contact" :required="true">Consumer Contact</x-form.label>
+                    <x-form.input name="consumer_contact" id="consumer_contact" :value="old('consumer_contact')" placeholder="e.g., 09123456789" />
                 </div>
 
                 <!-- Category Grouping -->
                 <div class="space-y-5 pt-2">
                     <div class="flex items-center">
-                        <input type="checkbox" name="other_category" id="other_category" value="1" {{ old('other_category') ? 'checked' : '' }} class="h-4 w-4 rounded border-gray-300 text-[#008f5d] focus:ring-[#008f5d]">
-                        <label for="other_category" class="ml-2 block text-sm font-medium text-gray-800 select-none">
+                        <input type="checkbox" name="other_category" id="other_category" value="1" {{ old('other_category') ? 'checked' : '' }} class="h-4 w-4 rounded border-slate-300 text-paleco-600 focus:ring-paleco-600">
+                        <label for="other_category" class="ml-2 block text-sm font-medium text-slate-800 select-none cursor-pointer">
                             Request Unlisted / Custom Category
                         </label>
                     </div>
 
                     <div>
-                        <label id="category_id_label" for="category_id" class="block text-sm font-semibold text-gray-700 mb-1.5">Established Ticket Category</label>
-                        <select name="category_id" id="category_id" class="tom-select-sync w-full rounded-md border border-gray-300 bg-white text-sm text-gray-900 focus:border-[#008f5d] focus:ring-1 focus:ring-[#008f5d]">
+                        <label id="category_id_label" for="category_id" class="form-label mb-1.5">Established Ticket Category</label>
+                        <select name="category_id" id="category_id" class="tom-select-sync w-full rounded-lg border border-slate-300 bg-white text-sm text-slate-900 focus:border-paleco-600 focus:ring-1 focus:ring-paleco-600">
                             <option value="">Choose standard nature</option>
                             @foreach($categories as $category)
                                 <option value="{{ $category->id }}" {{ old('category_id') == $category->id ? 'selected' : '' }}>
@@ -70,14 +64,14 @@
                     </div>
 
                     <div>
-                        <label id="other_category_name_label" for="other_category_name" class="block text-sm font-semibold text-gray-400 mb-1.5">Custom Category Name</label>
-                        <input type="text" name="other_category_name" id="other_category_name" value="{{ old('other_category_name') }}" disabled class="w-full rounded-md border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-[#008f5d] focus:ring-1 focus:ring-[#008f5d] outline-none disabled:bg-gray-50 disabled:text-gray-500 disabled:border-gray-200 transition-colors" placeholder="Enter manual issue specification">
+                        <label id="other_category_name_label" for="other_category_name" class="form-label text-slate-400 mb-1.5">Custom Category Name</label>
+                        <input type="text" name="other_category_name" id="other_category_name" value="{{ old('other_category_name') }}" disabled class="form-input disabled:bg-slate-50 disabled:text-slate-500 disabled:border-slate-200" placeholder="Enter manual issue specification">
                     </div>
                 </div>
 
                 <div class="pt-2">
-                    <label for="department_id" class="block text-sm font-semibold text-gray-700 mb-1.5">Initial Departmental Routing <span class="text-red-500">*</span></label>
-                    <select name="department_id" id="department_id" class="tom-select-sync w-full rounded-md border border-gray-300 bg-white text-sm text-gray-900 focus:border-[#008f5d] focus:ring-1 focus:ring-[#008f5d]">
+                    <x-form.label for="department_id" :required="true">Initial Departmental Routing</x-form.label>
+                    <select name="department_id" id="department_id" class="tom-select-sync w-full rounded-lg border border-slate-300 bg-white text-sm text-slate-900 focus:border-paleco-600 focus:ring-1 focus:ring-paleco-600">
                         <option value="">Select field division</option>
                         @foreach($departments as $dept)
                             <option value="{{ $dept->id }}" {{ old('department_id') == $dept->id ? 'selected' : '' }}>
@@ -86,84 +80,85 @@
                         @endforeach
                     </select>
                 </div>
-
-            </div>
+            </fieldset>
 
             <!-- Right Column: Location & Details -->
-            <div class="space-y-6">
+            <fieldset class="space-y-6">
+                <legend class="sr-only">Incident Location and Details</legend>
                 
                 <div class="space-y-5">
-                    <h3 class="text-sm font-bold text-gray-900 border-b border-gray-200 pb-2">Incident location</h3>
+                    <h2 class="text-sm font-bold text-slate-900 border-b border-slate-200 pb-2">Incident location</h2>
                     
                     <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                         <div>
-                            <label for="purok" class="block text-xs font-semibold text-gray-600 mb-1.5">Purok</label>
-                            <input type="text" name="purok" id="purok" value="{{ old('purok') }}" class="w-full rounded-md border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-[#008f5d] focus:ring-1 focus:ring-[#008f5d] outline-none transition-colors" placeholder="e.g., Ipil-Ipil">
+                            <label for="purok" class="block text-xs font-semibold text-slate-600 mb-1.5">Purok</label>
+                            <input type="text" name="purok" id="purok" value="{{ old('purok') }}" class="form-input text-sm" placeholder="e.g., Ipil-Ipil">
                         </div>
                         <div>
-                            <label for="street" class="block text-xs font-semibold text-gray-600 mb-1.5">Street</label>
-                            <input type="text" name="street" id="street" value="{{ old('street') }}" class="w-full rounded-md border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-[#008f5d] focus:ring-1 focus:ring-[#008f5d] outline-none transition-colors" placeholder="e.g., National Highway">
+                            <label for="street" class="block text-xs font-semibold text-slate-600 mb-1.5">Street</label>
+                            <input type="text" name="street" id="street" value="{{ old('street') }}" class="form-input text-sm" placeholder="e.g., National Highway">
                         </div>
                     </div>
 
                     <div>
-                        <label for="barangay" class="block text-sm font-semibold text-gray-700 mb-1.5">Barangay <span class="text-red-500">*</span></label>
-                        <input type="text" name="barangay" id="barangay" value="{{ old('barangay') }}" class="w-full rounded-md border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-[#008f5d] focus:ring-1 focus:ring-[#008f5d] outline-none transition-colors" placeholder="e.g., Tiniguiban">
+                        <x-form.label for="barangay" :required="true">Barangay</x-form.label>
+                        <x-form.input name="barangay" id="barangay" :value="old('barangay')" placeholder="e.g., Tiniguiban" />
                     </div>
 
                     <div>
-                        <label for="landmark" class="block text-sm font-semibold text-gray-700 mb-1.5">Landmark Remarks</label>
-                        <input type="text" name="landmark" id="landmark" value="{{ old('landmark') }}" class="w-full rounded-md border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-[#008f5d] focus:ring-1 focus:ring-[#008f5d] outline-none transition-colors" placeholder="e.g., Near Shell Station">
+                        <x-form.label for="landmark">Landmark Remarks</x-form.label>
+                        <x-form.input name="landmark" id="landmark" :value="old('landmark')" placeholder="e.g., Near Shell Station" />
                     </div>
                 </div>
 
                 <div class="pt-2">
-                    <label for="complaint_description" class="block text-sm font-semibold text-gray-700 mb-1.5">Complaint Details & Description <span class="text-red-500">*</span></label>
-                    <textarea name="complaint_description" id="complaint_description" rows="5" class="w-full rounded-md border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-[#008f5d] focus:ring-1 focus:ring-[#008f5d] outline-none transition-colors" placeholder="Provide details regarding the outage or utility complication..."></textarea>
+                    <x-form.label for="complaint_description" :required="true">Complaint Details & Description</x-form.label>
+                    <textarea name="complaint_description" id="complaint_description" rows="5" class="form-input" placeholder="Provide details regarding the outage or utility complication...">{{ old('complaint_description') }}</textarea>
                 </div>
-
-            </div>
+            </fieldset>
 
             <!-- CRM Integration: Consumer Link -->
-            <div class="col-span-1 lg:col-span-2 pt-6 mt-2 border-t border-gray-200">
-                <h3 class="text-sm font-bold text-gray-900 mb-4">CRM Integration</h3>
+            <fieldset class="col-span-1 lg:col-span-2 pt-6 mt-2 border-t border-slate-200">
+                <legend class="text-sm font-bold text-slate-900 mb-4">CRM Integration</legend>
                 
                 <div class="flex items-start mb-4">
                     <div class="flex h-5 items-center">
-                        <input id="link_consumer" name="link_consumer" type="checkbox" value="1" {{ old('link_consumer') ? 'checked' : '' }} class="h-4 w-4 rounded border-gray-300 text-[#008f5d] focus:ring-[#008f5d]">
+                        <input id="link_consumer" name="link_consumer" type="checkbox" value="1" {{ old('link_consumer') ? 'checked' : '' }} class="h-4 w-4 rounded border-slate-300 text-paleco-600 focus:ring-paleco-600">
                     </div>
                     <div class="ml-3 text-sm">
-                        <label for="link_consumer" class="font-semibold text-gray-700 select-none cursor-pointer">Link to an existing consumer account</label>
-                        <p class="text-gray-500">Enable this to query the cooperative's billing system and attach the consumer's official profile to this ticket.</p>
+                        <label for="link_consumer" class="font-semibold text-slate-700 select-none cursor-pointer">Link to an existing consumer account</label>
+                        <p class="text-slate-500">Enable this to query the cooperative's billing system and attach the consumer's official profile to this ticket.</p>
                     </div>
                 </div>
 
                 <div id="account_code_container" class="{{ old('link_consumer') ? 'block' : 'hidden' }} max-w-md ml-7 mt-3">
-                    <label for="account_code" class="block text-sm font-semibold text-gray-700 mb-1.5">Account Code <span class="text-red-500">*</span></label>
+                    <x-form.label for="account_code" :required="true">Account Code</x-form.label>
                     <div class="flex gap-2">
-                        <input type="text" name="account_code" id="account_code" value="{{ old('account_code') }}" class="w-full rounded-md border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-[#008f5d] focus:ring-1 focus:ring-[#008f5d] outline-none transition-colors" placeholder="e.g., 02-0504-8538">
-                        <button type="button" id="verify_consumer_btn" class="px-4 py-2 bg-gray-100 border border-gray-300 text-gray-700 text-sm font-semibold rounded-md hover:bg-gray-200 transition-colors shrink-0">Verify</button>
+                        <input type="text" name="account_code" id="account_code" value="{{ old('account_code') }}" class="form-input" placeholder="e.g., 02-0504-8538">
+                        <button type="button" id="verify_consumer_btn" class="btn btn-secondary shrink-0">Verify</button>
                     </div>
 
                     <!-- Dynamic Preview Box -->
-                    <div id="consumer_preview" class="hidden mt-3 p-3 rounded-md border text-sm"></div>
+                    <div id="consumer_preview" class="hidden mt-3 p-3 rounded-lg border text-sm"></div>
 
-                    <p class="mt-1.5 text-xs text-gray-500">The system will verify this exact code against the external database before registering the ticket.</p>
+                    <p class="mt-1.5 text-xs text-slate-500">The system will verify this exact code against the external database before registering the ticket.</p>
                 </div>
-            </div>
+            </fieldset>
 
         </div>
 
         <!-- Actions -->
-        <div class="flex items-center justify-end space-x-3 border-t border-gray-200 pt-6 mt-4">
-            <a href="{{ old('source', request('source')) === 'dashboard' ? route('cwd.dashboard') : route('cwd.tickets') }}" class="action-link px-5 py-2.5 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors" data-loading-text="Canceling...">
+        @php
+            $cancelRoute = old('source', request('source')) === 'dashboard' ? route('cwd.dashboard') : route('cwd.tickets');
+        @endphp
+        <div class="flex items-center justify-end space-x-3 border-t border-slate-200 pt-6 mt-4">
+            <x-btn variant="secondary" href="{{ $cancelRoute }}" data-loading-text="Canceling...">
                 Cancel
-            </a>
-            <button type="submit" class="px-6 py-2.5 text-sm font-medium text-white bg-[#008f5d] rounded-md hover:bg-[#007a4f] shadow-sm transition-colors" data-loading-text="Routing Ticket...">
+            </x-btn>
+            <x-btn variant="primary" type="submit" data-loading-text="Routing Ticket...">
                 Register Ticket
-            </button>
+            </x-btn>
         </div>
     </form>
-</div>
-
+</article>
 @endsection

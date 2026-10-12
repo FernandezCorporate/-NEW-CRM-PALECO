@@ -32,7 +32,14 @@ const initDisableDeptForFieldPerson = () => {
         };
 
         roleSelect.addEventListener('change', toggleDepartmentInput);
-        setTimeout(toggleDepartmentInput, 100); 
+
+        // Event-driven check eliminating setTimeout hack
+        if (deptSelect.tomselect) {
+            toggleDepartmentInput();
+        } else {
+            deptSelect.addEventListener('tomselect:initialized', toggleDepartmentInput, { once: true });
+            toggleDepartmentInput();
+        }
     }
 };
 

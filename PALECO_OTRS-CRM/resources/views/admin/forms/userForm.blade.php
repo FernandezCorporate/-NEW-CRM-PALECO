@@ -5,17 +5,14 @@
 @section('title', isset($user) ? 'Edit User Account' : 'Create New User Account')
 
 @section('content')
-    <!-- Header -->
-    <div class="mb-6">
+    <header class="mb-6">
         <h1 class="text-2xl font-bold text-slate-800">{{ isset($user) ? 'Edit User Account' : 'New User Account' }}</h1>
         <p class="text-sm text-slate-500 mt-1">{{ isset($user) ? 'Update the details of an existing user account' : 'Fill out the information below to register a new user.'}}</p>
-    </div>
+    </header>
 
-    @include('admin.prompts.alert')
+    <x-alert />
 
-    <!-- Form Container -->
-    <div class="bg-white border border-slate-200 rounded-xl shadow-sm p-6 lg:p-8 max-w-5xl">
-
+    <article class="card max-w-5xl">
         <form method="POST" action="{{ isset($user) ? route('admin.users.update', ['user' => $user]) : route('admin.users.store') }}">
             @csrf
             @isset($user)
@@ -32,164 +29,147 @@
                 <input type="hidden" name="team" value="{{ old('team', request('team')) }}">
             @endif
 
-            <div class="mb-6 pb-4 border-b border-slate-100 flex justify-between items-center">
-                <h2 class="text-base font-semibold text-slate-800">Account Details</h2>
-                <span class="text-xs text-slate-500"><span class="text-rose-500 font-bold">*</span> Indicates a required field</span>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
-
-                <div class="md:col-span-4">
-                    <label for="user-first_name" class="block text-sm font-semibold text-slate-700 mb-1.5">First Name <span class="text-rose-500">*</span></label>
-                    <input type="text" name="first_name" id="user-first_name" @error('first_name') aria-invalid="true" aria-describedby="error-first_name" @enderror required maxlength="255" value="{{ old('first_name', $user->first_name ?? '') }}" placeholder="Enter First Name"
-                        class="w-full px-3.5 py-2.5 border border-slate-300 rounded-lg shadow-sm text-sm focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-colors bg-white">
-                    @error('first_name') <p id="error-first_name" class="mt-1 text-xs text-rose-500">{{ $message }}</p> @enderror
+            <fieldset class="space-y-6">
+                <div class="card-header flex justify-between items-center">
+                    <legend class="text-base font-semibold text-slate-800">Account Details</legend>
+                    <span class="text-xs text-slate-500"><span class="text-rose-500 font-bold">*</span> Indicates a required field</span>
                 </div>
 
-                <div class="md:col-span-3">
-                    <label for="user-middle_name" class="block text-sm font-semibold text-slate-700 mb-1.5">Middle Name</label>
-                    <input type="text" name="middle_name" id="user-middle_name" @error('middle_name') aria-invalid="true" aria-describedby="error-middle_name" @enderror maxlength="255" value="{{ old('middle_name', $user->middle_name ?? '') }}" placeholder="Enter Middle Name (Optional)"
-                        class="w-full px-3.5 py-2.5 border border-slate-300 rounded-lg shadow-sm text-sm focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-colors bg-white">
-                    @error('middle_name') <p id="error-middle_name" class="mt-1 text-xs text-rose-500">{{ $message }}</p> @enderror
-                </div>
+                <div class="card-body">
+                    <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
 
-                <div class="md:col-span-3">
-                    <label for="user-last_name" class="block text-sm font-semibold text-slate-700 mb-1.5">Last Name <span class="text-rose-500">*</span></label>
-                    <input type="text" name="last_name" id="user-last_name" @error('last_name') aria-invalid="true" aria-describedby="error-last_name" @enderror required maxlength="255" value="{{ old('last_name', $user->last_name ?? '') }}" placeholder="Enter Last Name"
-                        class="w-full px-3.5 py-2.5 border border-slate-300 rounded-lg shadow-sm text-sm focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-colors bg-white">
-                    @error('last_name') <p id="error-last_name" class="mt-1 text-xs text-rose-500">{{ $message }}</p> @enderror
-                </div>
-
-                <div class="md:col-span-2">
-                    <label for="user-name_ext" class="block text-sm font-semibold text-slate-700 mb-1.5">Ext (e.g., Jr.)</label>
-                    <input type="text" name="name_ext" id="user-name_ext" @error('name_ext') aria-invalid="true" aria-describedby="error-name_ext" @enderror maxlength="10" value="{{ old('name_ext', $user->name_ext ?? '') }}" placeholder="Enter Extension (optional)"
-                        class="w-full px-3.5 py-2.5 border border-slate-300 rounded-lg shadow-sm text-sm focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-colors bg-white">
-                    @error('name_ext') <p id="error-name_ext" class="mt-1 text-xs text-rose-500">{{ $message }}</p> @enderror
-                </div>
-
-                <div class="md:col-span-6">
-                    <label for="user-email" class="block text-sm font-semibold text-slate-700 mb-1.5">Email Address</label>
-                    <input type="email" name="email" id="user-email" @error('email') aria-invalid="true" aria-describedby="error-email" @enderror maxlength="255" value="{{ old('email', $user->email ?? '') }}" placeholder="user@paleco.coop"
-                        class="w-full px-3.5 py-2.5 border border-slate-300 rounded-lg shadow-sm text-sm focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-colors bg-white">
-                    @error('email') <p id="error-email" class="mt-1 text-xs text-rose-500">{{ $message }}</p> @enderror
-                </div>
-
-                <div class="md:col-span-6">
-                    <label for="user-contact" class="block text-sm font-semibold text-slate-700 mb-1.5">Contact Number <span class="text-rose-500">*</span></label>
-                    <input type="tel" name="contact" id="user-contact" @error('contact') aria-invalid="true" aria-describedby="error-contact" @enderror required pattern="^(09|\+639)\d{9}$" value="{{ old('contact', $user->contact ?? '') }}" placeholder="09123456789 or +639123456789"
-                        class="w-full px-3.5 py-2.5 border border-slate-300 rounded-lg shadow-sm text-sm focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-colors bg-white">
-                    @error('contact') <p id="error-contact" class="mt-1 text-xs text-rose-500">{{ $message }}</p> @enderror
-                </div>
-
-                <div class="md:col-span-12">
-                    <label for="user-username" class="block text-sm font-semibold text-slate-700 mb-1.5">Username <span class="text-rose-500">*</span></label>
-                    <input type="text" name="username" id="user-username" @error('username') aria-invalid="true" aria-describedby="error-username" @enderror required maxlength="100" value="{{ old('username', $user->username ?? '') }}" placeholder="Enter Username"
-                        class="w-full px-3.5 py-2.5 border border-slate-300 rounded-lg shadow-sm text-sm focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-colors bg-white">
-                    @error('username') <p id="error-username" class="mt-1 text-xs text-rose-500">{{ $message }}</p> @enderror
-                </div>
-
-                <!-- Organization Row (MODIFIED FOR VISUAL LOCK) -->
-                <div class="md:col-span-6">
-                <label for="user-role-select" class="block text-sm font-semibold text-slate-700 mb-1.5">System Role <span class="text-rose-500">*</span></label>
-
-                <!-- Simplified classes, added tom-select-sync, removed manual SVG chevron -->
-                <select id="user-role-select" name="role_id" {{ isset($user) ? 'disabled' : 'required' }}
-                    class="tom-select-sync {{ $errors->has('role_id') ? 'border-rose-300 focus:border-rose-500 focus:ring-1 focus:ring-rose-500' : '' }}"
-                    data-autosubmit="false" autocomplete="off">
-
-                    <option value="" disabled {{ old('role_id', optional($user)->role_id) ? '' : 'selected' }}>Assign a role...</option>
-                    @foreach ($roles as $role)
-                        <option value="{{ $role->id }}" data-slug="{{ $role->slug_identifier }}" {{ old('role_id', optional($user)->role_id) == $role->id ? 'selected' : '' }}>
-                            {{ Str::headline($role->role_name) }}
-                        </option>
-                    @endforeach
-                </select>
-
-                @if(isset($user))
-                    <p class="mt-1 text-xs text-slate-500">System roles are locked after creation to preserve audit history.</p>
-                @endif
-                @error('role_id') <p class="mt-1 text-xs text-rose-500">{{ $message }}</p> @enderror
-            </div>
-
-                <div class="md:col-span-6" id="department-wrapper">
-                    <label for="department-select" class="block text-sm font-semibold text-slate-700 mb-1.5">Department</label>
-
-                    <!-- Merged classes, removed 'hidden', kept data-autosubmit="false" -->
-                    <select id="department-select" name="department_id" data-autosubmit="false" autocomplete="off"
-                        class="tom-select-sync {{ $errors->has('department_id') ? 'border-rose-300 focus:border-rose-500 focus:ring-1 focus:ring-rose-500' : 'border-slate-300 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500' }}">
-
-                        <option value="" disabled {{ old('department_id', optional($user)->department_id) ? '' : 'selected' }}>Select a department...</option>
-                        @foreach ($depts as $id => $dept)
-                            <option value="{{ $id }}" {{ old('department_id', optional($user)->department_id) == $id ? 'selected' : '' }}>
-                                {{ $dept }}
-                            </option>
-                        @endforeach
-                    </select>
-
-                    <p id="dept-team-message" class="mt-1 text-xs text-emerald-600 font-medium hidden">
-                        Only supervisors can be directly assigned to a department.
-                    </p>
-                    @error('department_id') <p class="mt-1 text-xs text-rose-500">{{ $message }}</p> @enderror
-                </div>
-
-                <!-- Row 5: Security (Only visible during creation) -->
-                @if(!isset($user))
-                    <!-- ... Keep password fields exactly the same as provided ... -->
-                    <div class="md:col-span-6">
-                        <label for="login-password" class="block text-sm font-semibold text-slate-700 mb-1.5">Password <span class="text-rose-500">*</span></label>
-                        <div class="relative">
-                            <input type="password" name="password" id="login-password" minlength="8" required placeholder="Minimum 8 characters"
-                                class="w-full px-3.5 py-2.5 pr-10 border border-slate-300 rounded-lg shadow-sm text-sm focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-colors bg-white">
-
-                            <button type="button" id="toggle-password-btn" aria-label="Toggle password visibility" class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-emerald-600 transition-colors focus:outline-none">
-                                <svg id="eye-icon-closed" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" /></svg>
-                                <svg id="eye-icon-open" class="hidden h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
-                            </button>
+                        <div class="md:col-span-4">
+                            <x-form.label for="user-first_name" :required="true">First Name</x-form.label>
+                            <x-form.input name="first_name" id="user-first_name" required maxlength="255" :value="$user->first_name ?? null" placeholder="Enter First Name" />
+                            <x-form.error name="first_name" />
                         </div>
-                        @error('password') <p class="mt-1 text-xs text-rose-500">{{ $message }}</p> @enderror
-                    </div>
 
-                    <div class="md:col-span-6">
-                        <label for="confirm-password" class="block text-sm font-semibold text-slate-700 mb-1.5">Confirm Password <span class="text-rose-500">*</span></label>
-                        <div class="relative">
-                            <input type="password" name="password_confirmation" id="confirm-password" minlength="8" required placeholder="Must match password"
-                                class="w-full px-3.5 py-2.5 pr-10 border border-slate-300 rounded-lg shadow-sm text-sm focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-colors bg-white">
-
-                            <button type="button" id="toggle-confirm-password-btn" aria-label="Toggle confirmation password visibility" class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-emerald-600 transition-colors focus:outline-none">
-                                <svg id="confirm-eye-closed" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" /></svg>
-                                <svg id="confirm-eye-open" class="hidden h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
-                            </button>
+                        <div class="md:col-span-3">
+                            <x-form.label for="user-middle_name">Middle Name</x-form.label>
+                            <x-form.input name="middle_name" id="user-middle_name" maxlength="255" :value="$user->middle_name ?? null" placeholder="Enter Middle Name (Optional)" />
+                            <x-form.error name="middle_name" />
                         </div>
-                    </div>
-                @endif
-            </div>
 
-            <!-- Form Actions -->
-            <div class="mt-8 pt-5 border-t border-slate-100 flex items-center justify-end gap-3">
-                @php
-                    $source = old('source', request('source'));
-                    $deptId = old('dept', request('dept', $user->department_id ?? null));
-                    $teamId = old('team', request('team'));
-                    $cancelRoute = match($source) {
-                        'details' => isset($user) 
-                            ? route('admin.users.show', array_filter(['user' => $user, 'source' => $teamId ? 'team' : ($deptId ? 'department' : null), 'team' => $teamId, 'dept' => $deptId])) 
-                            : route('admin.users'),
-                        'team' => $teamId ? route('admin.teams.show', ['team' => $teamId]) : (isset($user) ? route('admin.users.show', ['user' => $user]) : session('user_list_url', route('admin.users'))),
-                        'department' => $deptId ? route('admin.departments.show', ['dept' => $deptId]) : session('user_list_url', route('admin.users')),
-                        default => session('user_list_url', route('admin.users')),
-                    };
-                @endphp
-                <a href="{{ $cancelRoute }}"
-                    class="action-link px-5 py-2.5 text-sm font-medium text-slate-600 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-200 transition-colors"
-                    data-loading-text="Canceling...">
+                        <div class="md:col-span-3">
+                            <x-form.label for="user-last_name" :required="true">Last Name</x-form.label>
+                            <x-form.input name="last_name" id="user-last_name" required maxlength="255" :value="$user->last_name ?? null" placeholder="Enter Last Name" />
+                            <x-form.error name="last_name" />
+                        </div>
+
+                        <div class="md:col-span-2">
+                            <x-form.label for="user-name_ext">Ext (e.g., Jr.)</x-form.label>
+                            <x-form.input name="name_ext" id="user-name_ext" maxlength="10" :value="$user->name_ext ?? null" placeholder="Extension" />
+                            <x-form.error name="name_ext" />
+                        </div>
+
+                        <div class="md:col-span-6">
+                            <x-form.label for="user-email">Email Address</x-form.label>
+                            <x-form.input type="email" name="email" id="user-email" maxlength="255" :value="$user->email ?? null" placeholder="user@paleco.coop" />
+                            <x-form.error name="email" />
+                        </div>
+
+                        <div class="md:col-span-6">
+                            <x-form.label for="user-contact" :required="true">Contact Number</x-form.label>
+                            <x-form.input type="tel" name="contact" id="user-contact" required pattern="^(09|\+639)\d{9}$" :value="$user->contact ?? null" placeholder="09123456789 or +639123456789" />
+                            <x-form.error name="contact" />
+                        </div>
+
+                        <div class="md:col-span-12">
+                            <x-form.label for="user-username" :required="true">Username</x-form.label>
+                            <x-form.input name="username" id="user-username" required maxlength="100" :value="$user->username ?? null" placeholder="Enter Username" />
+                            <x-form.error name="username" />
+                        </div>
+
+                        <!-- Organization Row -->
+                        <div class="md:col-span-6">
+                            <x-form.label for="user-role-select" :required="true">System Role</x-form.label>
+                            <select id="user-role-select" name="role_id" {{ isset($user) ? 'disabled' : 'required' }}
+                                class="tom-select-sync {{ $errors->has('role_id') ? 'border-rose-300 focus:border-rose-500 focus:ring-1 focus:ring-rose-500' : '' }}"
+                                data-autosubmit="false" autocomplete="off">
+                                <option value="" disabled {{ old('role_id', optional($user)->role_id) ? '' : 'selected' }}>Assign a role...</option>
+                                @foreach ($roles as $role)
+                                    <option value="{{ $role->id }}" data-slug="{{ $role->slug_identifier }}" {{ old('role_id', optional($user)->role_id) == $role->id ? 'selected' : '' }}>
+                                        {{ Str::headline($role->role_name) }}
+                                    </option>
+                                @endforeach
+                            </select>
+
+                            @if(isset($user))
+                                <p class="mt-1 text-xs text-slate-500">System roles are locked after creation to preserve audit history.</p>
+                            @endif
+                            <x-form.error name="role_id" />
+                        </div>
+
+                        <div class="md:col-span-6" id="department-wrapper">
+                            <x-form.label for="department-select">Department</x-form.label>
+                            <select id="department-select" name="department_id" data-autosubmit="false" autocomplete="off"
+                                class="tom-select-sync {{ $errors->has('department_id') ? 'border-rose-300 focus:border-rose-500 focus:ring-1 focus:ring-rose-500' : 'border-slate-300 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500' }}">
+                                <option value="" disabled {{ old('department_id', optional($user)->department_id) ? '' : 'selected' }}>Select a department...</option>
+                                @foreach ($depts as $id => $dept)
+                                    <option value="{{ $id }}" {{ old('department_id', optional($user)->department_id) == $id ? 'selected' : '' }}>
+                                        {{ $dept }}
+                                    </option>
+                                @endforeach
+                            </select>
+
+                            <p id="dept-team-message" class="mt-1 text-xs text-emerald-600 font-medium hidden">
+                                Only supervisors can be directly assigned to a department.
+                            </p>
+                            <x-form.error name="department_id" />
+                        </div>
+
+                        <!-- Security Section (Creation Only) -->
+                        @if(!isset($user))
+                            <div class="md:col-span-6">
+                                <x-form.label for="login-password" :required="true">Password</x-form.label>
+                                <div class="relative">
+                                    <x-form.input type="password" name="password" id="login-password" minlength="8" required placeholder="Minimum 8 characters" class="pr-10" />
+                                    <button type="button" id="toggle-password-btn" aria-label="Toggle password visibility" class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-emerald-600 transition-colors focus:outline-none">
+                                        <x-icons.eye-slash id="eye-icon-closed" class="w-5 h-5" />
+                                        <x-icons.eye id="eye-icon-open" class="hidden w-5 h-5" />
+                                    </button>
+                                </div>
+                                <x-form.error name="password" />
+                            </div>
+
+                            <div class="md:col-span-6">
+                                <x-form.label for="confirm-password" :required="true">Confirm Password</x-form.label>
+                                <div class="relative">
+                                    <x-form.input type="password" name="password_confirmation" id="confirm-password" minlength="8" required placeholder="Must match password" class="pr-10" />
+                                    <button type="button" id="toggle-confirm-password-btn" aria-label="Toggle confirmation password visibility" class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-emerald-600 transition-colors focus:outline-none">
+                                        <x-icons.eye-slash id="confirm-eye-closed" class="w-5 h-5" />
+                                        <x-icons.eye id="confirm-eye-open" class="hidden w-5 h-5" />
+                                    </button>
+                                </div>
+                            </div>
+                        @endif
+                    </div>
+                </div>
+            </fieldset>
+
+            @php
+                $source = old('source', request('source'));
+                $deptId = old('dept', request('dept', $user->department_id ?? null));
+                $teamId = old('team', request('team'));
+                $cancelRoute = match($source) {
+                    'details' => isset($user) 
+                        ? route('admin.users.show', array_filter(['user' => $user, 'source' => $teamId ? 'team' : ($deptId ? 'department' : null), 'team' => $teamId, 'dept' => $deptId])) 
+                        : route('admin.users'),
+                    'team' => $teamId ? route('admin.teams.show', ['team' => $teamId]) : (isset($user) ? route('admin.users.show', ['user' => $user]) : session('user_list_url', route('admin.users'))),
+                    'department' => $deptId ? route('admin.departments.show', ['dept' => $deptId]) : session('user_list_url', route('admin.users')),
+                    default => session('user_list_url', route('admin.users')),
+                };
+            @endphp
+
+            <div class="card-footer flex items-center justify-end gap-3">
+                <x-btn variant="secondary" href="{{ $cancelRoute }}" data-loading-text="Canceling...">
                     Cancel
-                </a>
-
-                <button type="submit" class="action-btn inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2.5 rounded-lg text-sm font-medium shadow-sm shadow-emerald-700/20 transition-all active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500" data-loading-text="Saving...">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                    {{ isset($user) ? 'Update User' : 'Create User' }}
-                </button>
+                </x-btn>
+                <x-btn variant="primary" type="submit" data-loading-text="Saving...">
+                    <x-icons.check-circle class="w-4 h-4" />
+                    <span>{{ isset($user) ? 'Update User' : 'Create User' }}</span>
+                </x-btn>
             </div>
         </form>
-    </div>
+    </article>
 @endsection
