@@ -51,10 +51,8 @@
             <button type="button"
                     data-smart-back
                     data-fallback-url="{{ auth()->check() ? route('dashboard') : route('portal') }}"
-                    class="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-6 py-3.5 text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98] rounded-xl shadow-md shadow-emerald-700/20 hover:shadow-lg hover:shadow-emerald-700/30 transition-all duration-200 cursor-pointer">
-                <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
-                </svg>
+                    class="btn btn-primary w-full sm:w-auto px-6 py-3 text-sm font-semibold shadow-md shadow-emerald-700/20 gap-2.5">
+                <x-icons.arrow-left class="w-4 h-4 shrink-0" />
                 <span>Return to Previous Page</span>
             </button>
 
@@ -63,10 +61,8 @@
                 $dashboardLabel = auth()->check() ? 'Go to Dashboard' : 'Back to Portal';
             @endphp
             <a href="{{ $dashboardUrl }}"
-               class="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-6 py-3.5 text-sm font-semibold text-slate-700 hover:text-slate-900 bg-white hover:bg-slate-50 active:scale-[0.98] border border-slate-200 hover:border-slate-300 rounded-xl shadow-sm hover:shadow transition-all duration-200 cursor-pointer">
-                <svg class="w-4 h-4 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
-                </svg>
+               class="btn btn-secondary w-full sm:w-auto px-6 py-3 text-sm font-semibold shadow-xs gap-2.5">
+                <x-icons.dashboard class="w-4 h-4 shrink-0 text-slate-400" />
                 <span>{{ $dashboardLabel }}</span>
             </a>
         </div>

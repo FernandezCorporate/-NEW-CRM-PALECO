@@ -165,11 +165,11 @@
     </div>
 
     <!-- Bottom Section: Record History Tabs -->
-    <section class="ticket-history-tabs" aria-labelledby="ticket-history-title">
-        <header class="ticket-history-header">
-            <p class="eyebrow">Ticket record</p>
-            <h2 id="ticket-history-title">Activity & service history</h2>
-            <p>Follow status changes, team handovers, endorsements, submitted field reports, and communication remarks.</p>
+    <section class="ticket-history-tabs mt-8" aria-labelledby="ticket-history-title">
+        <header class="ticket-history-header mb-4">
+            <p class="eyebrow text-xs font-bold text-emerald-700 uppercase tracking-wider">Ticket record</p>
+            <h2 id="ticket-history-title" class="text-xl font-bold text-slate-900 tracking-tight mt-1 font-sans">Activity & service history</h2>
+            <p class="text-sm text-slate-500 mt-1">Follow status changes, team handovers, endorsements, submitted field reports, and communication remarks.</p>
         </header>
         <nav class="ticket-history-nav" aria-label="Ticket record history tabs" role="tablist">
             <a href="#status-history" role="tab" id="tab-status-history" data-tab-target="status-history" aria-controls="status-history" aria-selected="true" aria-current="page">

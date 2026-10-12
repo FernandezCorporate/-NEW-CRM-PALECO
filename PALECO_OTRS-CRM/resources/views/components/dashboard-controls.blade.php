@@ -6,8 +6,8 @@
             <p class="eyebrow">{{ $eyebrow }}</p>
             <h2 class="mt-1 text-xl font-bold text-slate-900">{{ $title }}</h2>
         </div>
-        <button type="button" data-controls-open class="btn btn-secondary text-emerald-700 bg-emerald-50 hover:bg-emerald-100 hover:border-emerald-300 border-emerald-200 text-xs font-bold gap-2">
-            <x-icons.plus class="h-4 w-4" />
+        <button type="button" data-controls-open class="btn btn-sm btn-secondary text-emerald-700 bg-emerald-50 hover:bg-emerald-100 hover:border-emerald-300 border-emerald-200 text-xs font-semibold px-3 py-1.5 rounded-lg shadow-2xs gap-1.5">
+            <x-icons.plus class="h-3.5 w-3.5 shrink-0" />
             <span>Add controls</span>
         </button>
     </div>
@@ -45,9 +45,9 @@
         <div class="flex flex-col gap-3 border-t border-slate-100 bg-slate-50 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
             <p data-controls-count class="text-xs font-semibold text-slate-500">{{ count($defaultControls) }} of 4 selected</p>
             <div class="flex items-center justify-end gap-2">
-                <button type="button" data-controls-reset class="btn btn-ghost text-xs py-2 px-3">Reset defaults</button>
-                <button type="button" data-controls-cancel class="btn btn-secondary text-xs py-2 px-4">Cancel</button>
-                <button type="button" data-controls-save class="btn btn-primary text-xs py-2 px-4 shadow-xs">Save controls</button>
+                <button type="button" data-controls-reset class="btn btn-sm btn-ghost text-xs">Reset defaults</button>
+                <button type="button" data-controls-cancel class="btn btn-sm btn-secondary text-xs">Cancel</button>
+                <button type="button" data-controls-save class="btn btn-sm btn-primary text-xs shadow-2xs">Save controls</button>
             </div>
         </div>
     </dialog>

@@ -55,8 +55,8 @@ html[data-mode="dark"] .refined-shell :is(.panel, .metric-card, .quick-link, .co
     background-color: var(--night-panel); color: var(--night-ink); border-color: var(--night-border);
 }
 html[data-mode="dark"] .refined-shell :is(.bg-slate-50, .bg-slate-100, .bg-gray-50, .bg-gray-100, .chart-row-track, .preference-choice:has(input:checked), .card-footer) { background-color: var(--night-raised); }
-html[data-mode="dark"] .refined-shell :is(.text-slate-900, .text-slate-800, .text-slate-700, .text-gray-900, .text-gray-800, .text-gray-700, .page-title, h1, legend) { color: var(--night-ink); }
-html[data-mode="dark"] .refined-shell :is(.text-slate-600, .text-slate-500, .text-slate-400, .text-gray-600, .text-gray-500, .text-gray-400, .history-date small, .ticket-history-heading p) { color: var(--night-muted); }
+html[data-mode="dark"] .refined-shell :is(.text-slate-900, .text-slate-800, .text-slate-700, .text-gray-900, .text-gray-800, .text-gray-700, .page-title, h1, h2, legend) { color: var(--night-ink); }
+html[data-mode="dark"] .refined-shell :is(.text-slate-600, .text-slate-500, .text-slate-400, .text-gray-600, .text-gray-500, .text-gray-400, .history-date small, .ticket-history-heading p, .ticket-history-header p) { color: var(--night-muted); }
 html[data-mode="dark"] .refined-shell :is(.eyebrow, .queue-clear, .record-tabs a, .history-report-link, .ticket-history-back) { color: var(--accent-readable); }
 html[data-mode="dark"] .refined-shell .record-tabs a:hover { background: #1b3c32; }
 html[data-mode="dark"] .refined-shell .record-tabs a[aria-current="page"] { background: #174535; color: #a7f3d0; border-color: #34d399; box-shadow: inset 0 -1px #34d399; }

@@ -9,19 +9,20 @@
     
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
-<body class="auth-shell auth-portal-lines h-full flex items-center justify-center p-4 md:p-6">
+<body class="auth-shell auth-portal-lines h-full flex items-center justify-center p-4 md:p-6 font-sans text-slate-800 antialiased">
 
-    <div class="w-full max-w-5xl bg-white rounded-[1.75rem] shadow-2xl shadow-slate-900/10 flex flex-col md:flex-row overflow-hidden border border-white" style="min-height: 580px;">
+    <main class="w-full max-w-5xl bg-white rounded-[1.75rem] shadow-2xl shadow-slate-900/10 flex flex-col md:flex-row overflow-hidden border border-white min-h-[580px]">
         
-        <div class="sidebar-surface w-full md:w-[45%] text-white p-8 md:p-10 flex flex-col justify-between relative overflow-hidden">
+        <!-- Left Brand Section -->
+        <aside class="sidebar-surface w-full md:w-[45%] text-white p-8 md:p-10 flex flex-col justify-between relative overflow-hidden" aria-label="PALECO Portal Information">
             <div>
                 <div class="flex items-center gap-2">
-                    <h1 class="text-2xl font-bold tracking-tight">PALECO CRM-CWD</h1>
+                    <span class="text-2xl font-bold tracking-tight">PALECO CRM-CWD</span>
                 </div>
                 <p class="text-xs text-emerald-300 font-light mt-0.5">Consumer Welfare Desk Portal</p>
 
                 <div class="mt-12 space-y-3">
-                    <h2 class="text-2xl md:text-3xl font-semibold tracking-tight leading-snug">Ticketing & Dispatch System</h2>
+                    <h1 class="text-2xl md:text-3xl font-semibold tracking-tight leading-snug">Ticketing & Dispatch System</h1>
                     <p class="text-sm text-slate-300 font-light leading-relaxed max-w-sm">
                         24/7 complaint intake, team assignment, and cooperative-level reporting for PALECO's Member Services Division.
                     </p>
@@ -35,27 +36,28 @@
             <div class="text-xs text-slate-400 font-light tracking-wide mt-auto">
                 Hotlines: Globe & Smart
             </div>
-        </div>
+        </aside>
 
-        <div class="w-full md:w-[55%] p-8 md:p-12 flex flex-col justify-center">
+        <!-- Right Login Form Section -->
+        <section class="w-full md:w-[55%] p-8 md:p-12 flex flex-col justify-center" aria-label="Sign In Credentials">
             
             <header class="mb-6">
-                <a href="{{ route('portal') }}" class="inline-flex items-center text-xs font-medium text-slate-500 hover:text-emerald-600 transition-colors mb-4">
-                    <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
-                    Back to Portal Selection
+                <a href="{{ route('portal') }}" class="inline-flex items-center text-xs font-semibold text-slate-500 hover:text-emerald-700 transition-colors mb-4 gap-1.5 group">
+                    <x-icons.arrow-left class="w-4 h-4 transition-transform group-hover:-translate-x-0.5" />
+                    <span>Back to Portal Selection</span>
                 </a>
                 
-                <h3 class="text-2xl font-bold text-slate-800">
+                <h2 class="text-2xl font-bold text-slate-900 tracking-tight">
                     {{ $role === 'admin' ? 'Administrator' : 'CWD Officer' }} Sign in
-                </h3>
+                </h2>
                 <p class="text-sm text-slate-500 mt-1">Provide your credentials to continue</p>
             </header>
 
             @if ($errors->any())
-                <div class="mb-5 p-3.5 bg-rose-50 border-l-4 border-rose-500 rounded text-xs text-rose-700 space-y-1">
+                <div class="mb-5 p-3.5 bg-rose-50 border-l-4 border-rose-500 rounded-lg text-xs text-rose-700 space-y-1" role="alert">
                     @foreach ($errors->all() as $error)
                         <div class="flex items-center gap-1.5">
-                            <svg class="w-4 h-4 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path></svg>
+                            <x-icons.exclamation-triangle class="w-4 h-4 shrink-0 text-rose-600" />
                             <span>{{ $error }}</span>
                         </div>
                     @endforeach
@@ -72,7 +74,7 @@
                         </label>
                         <span class="text-[10px] text-slate-400">Required</span>
                     </div>
-                    <input type="text" id="username" name="username" value="{{ old('username') }}" placeholder="Enter your username" required autocomplete="off" class="w-full px-3.5 py-2.5 border border-slate-200 rounded-lg text-sm text-slate-800 focus:outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 placeholder-slate-300 transition-all">
+                    <input type="text" id="username" name="username" value="{{ old('username') }}" placeholder="Enter your username" required autocomplete="off" class="form-input w-full px-3.5 py-2.5 border border-slate-200 rounded-lg text-sm text-slate-800 focus:outline-none focus:border-emerald-600 focus:ring-4 focus:ring-emerald-500/10 placeholder-slate-400 transition-all shadow-2xs">
                 </div>
 
                 <div class="space-y-1.5">
@@ -82,28 +84,27 @@
                         </label>
                         <span class="text-[10px] text-slate-400">Required</span>
                     </div>
-                        <div class="relative">
-                            <input type="password" id="login-password" name="password" placeholder="••••••••" required minlength="8" autocomplete="new-password" class="w-full pl-3.5 pr-10 py-2.5 border border-slate-200 rounded-lg text-sm text-slate-800 focus:outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 placeholder-slate-300 transition-all">
-                            
-                            <button type="button" id="toggle-password-btn" class="absolute inset-y-0 right-0 px-3 flex items-center text-slate-400 hover:text-emerald-600 transition-colors focus:outline-none" title="Toggle Password Visibility">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path id="eye-icon-open" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
-                                    <path id="eye-icon-closed" class="hidden" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"></path>
-                                </svg>
-                            </button>
-                        </div>
+                    <div class="relative">
+                        <input type="password" id="login-password" name="password" placeholder="••••••••" required minlength="8" autocomplete="new-password" class="form-input w-full pl-3.5 pr-11 py-2.5 border border-slate-200 rounded-lg text-sm text-slate-800 focus:outline-none focus:border-emerald-600 focus:ring-4 focus:ring-emerald-500/10 placeholder-slate-400 transition-all shadow-2xs">
+                        
+                        <button type="button" id="toggle-password-btn" data-password-toggle="login-password" class="absolute inset-y-0 right-0 px-3 flex items-center text-slate-400 hover:text-emerald-700 transition-colors focus:outline-none cursor-pointer" title="Show password" aria-label="Show password" aria-pressed="false">
+                            <span id="eye-icon-open" class="flex items-center">
+                                <x-icons.eye class="w-5 h-5" />
+                            </span>
+                            <span id="eye-icon-closed" class="hidden flex items-center">
+                                <x-icons.eye-slash class="w-5 h-5" />
+                            </span>
+                        </button>
+                    </div>
                 </div>
 
-                <button type="submit" data-loading-text="Signing in..." class="w-full bg-[#10a352] hover:bg-[#0e8f47] text-white font-medium py-3 rounded-lg text-sm transition duration-150 flex items-center justify-center gap-2 shadow-lg shadow-emerald-700/10 hover:shadow-emerald-700/20 active:scale-[0.99] transform mt-2">
-                    <svg fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15M12 9l-3 3m0 0 3 3m-3-3h12.75" />
-                    </svg>
-                    Sign in
+                <button type="submit" data-loading-text="Signing in..." class="btn btn-primary w-full py-3 text-sm font-semibold shadow-md shadow-emerald-700/15 gap-2 mt-2">
+                    <x-icons.arrow-path class="w-4 h-4" />
+                    <span>Sign in</span>
                 </button>
-
             </form>
-        </div>
+        </section>
 
-    </div>
+    </main>
 </body>
 </html>
