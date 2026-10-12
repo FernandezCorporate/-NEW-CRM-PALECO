@@ -34,6 +34,7 @@ class WebDashboardService
             'label' => $status->label(),
             'total' => (int) ($statusCounts->get($status->value) ?? 0),
             'chart_class' => $status->chartClass(),
+            'dot_class' => $status->dotClass(),
             'color_hex' => $status->colorHex(),
             'badge_classes' => $status->badgeClasses(),
         ])->values()->all();

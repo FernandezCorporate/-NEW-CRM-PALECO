@@ -6,15 +6,21 @@
             <p class="eyebrow">{{ $eyebrow }}</p>
             <h2 class="mt-1 text-xl font-bold text-slate-900">{{ $title }}</h2>
         </div>
-        <button type="button" data-controls-open class="inline-flex min-h-11 items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3.5 text-xs font-bold text-emerald-700 transition hover:border-emerald-300 hover:bg-emerald-100 focus:outline-none focus:ring-4 focus:ring-emerald-500/10">
-            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v14m7-7H5" /></svg>
-            Add controls
+        <button type="button" data-controls-open class="btn btn-secondary text-emerald-700 bg-emerald-50 hover:bg-emerald-100 hover:border-emerald-300 border-emerald-200 text-xs font-bold gap-2">
+            <x-icons.plus class="h-4 w-4" />
+            <span>Add controls</span>
         </button>
     </div>
     <div data-controls-grid class="mt-6 grid gap-3 sm:grid-cols-2">
-        @foreach ($controlCatalog as [$id, $label, $description, $url, $tone, $iconPath])
+        @foreach ($controlCatalog as [$id, $label, $description, $url, $tone, $icon])
             <a href="{{ $url }}" data-control-item="{{ $id }}" class="quick-link {{ in_array($id, $defaultControls, true) ? '' : 'hidden' }}">
-                <span class="metric-icon !h-10 !w-10 {{ $tone }}"><svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7" d="{{ $iconPath }}" /></svg></span>
+                <span class="metric-icon !h-10 !w-10 {{ $tone }}">
+                    @if (str_starts_with($icon, 'M'))
+                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7" d="{{ $icon }}" /></svg>
+                    @else
+                        <x-dynamic-component :component="'icons.' . $icon" class="h-5 w-5" />
+                    @endif
+                </span>
                 <span class="min-w-0"><strong class="block truncate text-sm text-slate-800">{{ $label }}</strong><small class="block truncate text-slate-500">{{ $description }}</small></span>
             </a>
         @endforeach
@@ -29,7 +35,7 @@
             <p class="mt-1 text-sm text-slate-500">Select up to four shortcuts. Your choices are saved for this account on this device.</p>
         </div>
         <div class="grid gap-2 px-6 py-5 sm:grid-cols-2">
-            @foreach ($controlCatalog as [$id, $label, $description, $url, $tone, $iconPath])
+            @foreach ($controlCatalog as [$id, $label, $description, $url, $tone, $icon])
                 <label class="control-choice flex cursor-pointer items-start gap-3 rounded-xl border border-slate-200 p-3.5 transition hover:border-emerald-300 hover:bg-emerald-50/50">
                     <input type="checkbox" value="{{ $id }}" data-control-choice class="mt-0.5 h-4 w-4 rounded border-slate-300 text-emerald-600 accent-emerald-600" {{ in_array($id, $defaultControls, true) ? 'checked' : '' }}>
                     <span><strong class="block text-sm text-slate-800">{{ $label }}</strong><small class="mt-0.5 block leading-5 text-slate-500">{{ $description }}</small></span>
@@ -39,9 +45,9 @@
         <div class="flex flex-col gap-3 border-t border-slate-100 bg-slate-50 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
             <p data-controls-count class="text-xs font-semibold text-slate-500">{{ count($defaultControls) }} of 4 selected</p>
             <div class="flex items-center justify-end gap-2">
-                <button type="button" data-controls-reset class="min-h-10 rounded-lg px-3 text-xs font-semibold text-slate-500 transition hover:bg-slate-200/70 hover:text-slate-800">Reset defaults</button>
-                <button type="button" data-controls-cancel class="min-h-10 rounded-lg border border-slate-300 bg-white px-4 text-xs font-semibold text-slate-700 transition hover:bg-slate-50">Cancel</button>
-                <button type="button" data-controls-save class="min-h-10 rounded-lg bg-emerald-600 px-4 text-xs font-semibold text-white transition hover:bg-emerald-700">Save controls</button>
+                <button type="button" data-controls-reset class="btn btn-ghost text-xs py-2 px-3">Reset defaults</button>
+                <button type="button" data-controls-cancel class="btn btn-secondary text-xs py-2 px-4">Cancel</button>
+                <button type="button" data-controls-save class="btn btn-primary text-xs py-2 px-4 shadow-xs">Save controls</button>
             </div>
         </div>
     </dialog>

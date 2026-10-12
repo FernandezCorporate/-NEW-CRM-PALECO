@@ -17,7 +17,9 @@
         ] as [$label, $value, $hint])
             <div>
                 <dt class="text-xs font-semibold text-slate-600">{{ $label }}</dt>
-                <dd class="mt-2 text-2xl font-bold tabular-nums text-slate-900">{{ number_format($value) }}</dd>
+                <dd class="mt-2 text-2xl font-bold tabular-nums text-slate-900">
+                    <data value="{{ $value }}">{{ number_format($value) }}</data>
+                </dd>
                 <dd class="mt-1 text-xs leading-5 text-slate-500">{{ $hint }}</dd>
             </div>
         @endforeach
@@ -37,9 +39,13 @@
                         <li>
                             <div class="mb-2 flex items-start justify-between gap-4 text-sm">
                                 <span class="min-w-0 break-words font-medium text-slate-700">{{ $row['label'] }}</span>
-                                <strong class="shrink-0 tabular-nums text-slate-900">{{ number_format($row['total']) }}</strong>
+                                <strong class="shrink-0 tabular-nums text-slate-900">
+                                    <data value="{{ $row['total'] }}">{{ number_format($row['total']) }}</data>
+                                </strong>
                             </div>
-                            <div class="chart-row-track" aria-hidden="true"><div class="chart-row-fill {{ $id === 'ticket-age' ? ['bg-teal-500', 'bg-sky-600', 'bg-amber-500'][$index] : 'bg-emerald-600' }}" style="--chart-width: {{ $row['total'] / $maximum * 100 }}%; --bar-delay: {{ $index * 65 }}ms"></div></div>
+                            <div class="chart-row-track" aria-hidden="true">
+                                <div class="chart-row-fill {{ $id === 'ticket-age' ? ['bg-teal-500', 'bg-sky-600', 'bg-amber-500'][$index] : 'bg-emerald-600' }}" style="--chart-width: {{ ($row['total'] / $maximum) * 100 }}%; --bar-delay: {{ $index * 65 }}ms"></div>
+                            </div>
                         </li>
                     @empty
                         <li class="border-l-2 border-emerald-300 pl-4 text-sm text-slate-500">No unresolved tickets to distribute.</li>

@@ -11,9 +11,9 @@
                 <h1 class="page-title mt-2">PALECO Service Desk</h1>
                 <p class="mt-2 text-sm text-slate-500">Receive, organize, and follow through on consumer service requests.</p>
             </div>
-            <a href="{{ route('cwd.tickets.createForm', ['source' => 'dashboard']) }}" class="inline-flex w-fit items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-emerald-700/15 transition hover:-translate-y-0.5 hover:bg-emerald-700">
-                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
-                Create ticket
+            <a href="{{ route('cwd.tickets.createForm', ['source' => 'dashboard']) }}" class="btn btn-primary text-sm py-3 px-4 shadow-sm gap-2">
+                <x-icons.plus class="h-4 w-4" />
+                <span>Create ticket</span>
             </a>
         </header>
 
@@ -23,12 +23,12 @@
         <section class="cwd-action-panels grid gap-6 xl:grid-cols-2">
             @php
                 $cwdControls = [
-                    ['tickets', 'Manage tickets', 'View all service requests', route('cwd.tickets'), 'bg-emerald-50 text-emerald-600', 'M9 5h6m-6 4h6m-8 4h10m-10 4h6M6 3h12v18H6z'],
-                    ['new-ticket', 'New ticket', 'Record a service complaint', route('cwd.tickets.createForm', ['source' => 'dashboard']), 'bg-teal-50 text-teal-600', 'M12 5v14m7-7H5'],
-                    ['open-tickets', 'Open tickets', 'Review unassigned requests', route('cwd.tickets', ['status' => 'open']), 'bg-sky-50 text-sky-600', 'M9 5h6m-6 4h6M5 3h14v18H5z'],
-                    ['in-progress', 'Work in progress', 'Follow ongoing field work', route('cwd.tickets', ['status' => 'in_progress']), 'bg-blue-50 text-blue-600', 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z'],
-                    ['endorsements', 'Review endorsements', 'View all endorsement requests', route('cwd.endorsements'), 'bg-amber-50 text-amber-600', 'M12 9v4m0 4h.01M12 3L2 21h20L12 3z'],
-                    ['pending-endorsements', 'Pending reviews', 'Endorsements awaiting a decision', route('cwd.endorsements', ['status' => 'pending']), 'bg-orange-50 text-orange-600', 'M9 12l2 2 4-4M5 3h14v18H5z'],
+                    ['tickets', 'Manage tickets', 'View all service requests', route('cwd.tickets'), 'bg-emerald-50 text-emerald-600', 'ticket'],
+                    ['new-ticket', 'New ticket', 'Record a service complaint', route('cwd.tickets.createForm', ['source' => 'dashboard']), 'bg-teal-50 text-teal-600', 'plus'],
+                    ['open-tickets', 'Open tickets', 'Review unassigned requests', route('cwd.tickets', ['status' => 'open']), 'bg-sky-50 text-sky-600', 'ticket'],
+                    ['in-progress', 'Work in progress', 'Follow ongoing field work', route('cwd.tickets', ['status' => 'in_progress']), 'bg-blue-50 text-blue-600', 'clock'],
+                    ['endorsements', 'Review endorsements', 'View all endorsement requests', route('cwd.endorsements'), 'bg-amber-50 text-amber-600', 'endorsement'],
+                    ['pending-endorsements', 'Pending reviews', 'Endorsements awaiting a decision', route('cwd.endorsements', ['status' => 'pending']), 'bg-orange-50 text-orange-600', 'exclamation-triangle'],
                 ];
             @endphp
             <x-dashboard-controls :control-catalog="$cwdControls" :default-controls="['tickets', 'endorsements']"
@@ -52,8 +52,10 @@
                                     <span class="block text-sm font-semibold text-slate-800">{{ $queueLabel }}</span>
                                     <span class="mt-1 block text-xs leading-5 text-slate-500">{{ $queueCount > 0 ? $queueHint : 'No requests in this queue' }}</span>
                                 </span>
-                                <strong class="text-xl font-bold tabular-nums {{ $queueCount > 0 ? 'text-emerald-700' : 'text-slate-400' }}">{{ number_format($queueCount) }}</strong>
-                                <svg aria-hidden="true" class="h-4 w-4 shrink-0 text-slate-400 group-hover:text-emerald-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m9 5 7 7-7 7" /></svg>
+                                <strong class="text-xl font-bold tabular-nums {{ $queueCount > 0 ? 'text-emerald-700' : 'text-slate-400' }}">
+                                    <data value="{{ $queueCount }}">{{ number_format($queueCount) }}</data>
+                                </strong>
+                                <x-icons.chevron-right class="h-4 w-4 shrink-0 text-slate-400 group-hover:text-emerald-700 transition-colors" />
                             </a>
                         </li>
                     @endforeach
