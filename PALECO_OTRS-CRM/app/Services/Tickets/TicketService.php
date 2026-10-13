@@ -191,6 +191,7 @@ class TicketService
             'closed' => (int) ($rawCounts->get(TicketStatus::CLOSED->value) ?? 0),
             'pending_endorsement' => (int) ($rawCounts->get(TicketStatus::PENDING_ENDORSEMENT->value) ?? 0),
             'endorsed' => (int) ($rawCounts->get(TicketStatus::ENDORSED->value) ?? 0),
+            'cancelled' => (int) ($rawCounts->get(TicketStatus::CANCELLED->value) ?? 0),
         ];
 
         $counts['all'] = array_sum($counts);
@@ -345,6 +346,12 @@ class TicketService
                     if ($lockedParent->status === TicketStatus::PENDING_ENDORSEMENT) {
                         throw ValidationException::withMessages([
                             'parent_ticket_id' => 'Cannot spawn child tickets from a ticket that is pending endorsement.',
+                        ]);
+                    }
+
+                    if ($lockedParent->status === TicketStatus::CANCELLED) {
+                        throw ValidationException::withMessages([
+                            'parent_ticket_id' => 'Cannot spawn child tickets from a ticket that is cancelled.',
                         ]);
                     }
 
@@ -607,6 +614,64 @@ class TicketService
             ]);
 
             return $lockedTicket->fresh(['category']);
+        });
+    }
+
+    /**
+     * Cancels an open service ticket upon dispatcher review.
+     * Pessimistically locks the ticket, verifies OPEN status and CWD role,
+     * logs status transition to CANCELLED, and appends a freely typed audit remark.
+     *
+     * @throws ValidationException
+     */
+    public function cancelTicket(Ticket $ticket, array $data, User $actor): Ticket
+    {
+        return DB::transaction(function () use ($ticket, $data, $actor) {
+            $lockedTicket = Ticket::where('id', $ticket->id)
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            if ($actor->role->slug_identifier !== 'cwd_officer') {
+                throw ValidationException::withMessages([
+                    'actor' => 'Only CWD officers are authorized to cancel tickets.',
+                ]);
+            }
+
+            if ($lockedTicket->status === TicketStatus::CANCELLED) {
+                throw ValidationException::withMessages([
+                    'status' => 'This ticket is already cancelled.',
+                ]);
+            }
+
+            if ($lockedTicket->status !== TicketStatus::OPEN) {
+                throw ValidationException::withMessages([
+                    'status' => 'Ticket can only be cancelled while in Open status. Once assigned to a team or dispatched, cancellation is locked.',
+                ]);
+            }
+
+            $oldStatus = $lockedTicket->status;
+
+            // Create immutable status transition log
+            TicketStatusLog::create([
+                'ticket_id' => $lockedTicket->id,
+                'old_status' => $oldStatus,
+                'new_status' => TicketStatus::CANCELLED,
+                'changed_by_id' => $actor->id,
+            ]);
+
+            // Update ticket status, freely typed cancellation reason, and cancelled timestamp
+            $lockedTicket->update([
+                'status' => TicketStatus::CANCELLED,
+                'cancellation_reason' => trim($data['cancellation_reason']),
+                'cancelled_at' => now(),
+            ]);
+
+            return $lockedTicket->fresh([
+                'category',
+                'department',
+                'team',
+                'statusLog.updater',
+            ]);
         });
     }
 

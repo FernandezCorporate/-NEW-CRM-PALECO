@@ -69,6 +69,10 @@ class TicketPolicy
             return Response::deny('Cannot spawn child tickets from a ticket that is pending endorsement.');
         }
 
+        if ($ticket->status === TicketStatus::CANCELLED) {
+            return Response::deny('Cannot spawn child tickets from a cancelled ticket.');
+        }
+
         return Response::allow();
     }
 
@@ -124,6 +128,10 @@ class TicketPolicy
             return Response::deny('Ticket is locked pending inter-departmental endorsement review.');
         }
 
+        if ($ticket->status === TicketStatus::CANCELLED) {
+            return Response::deny('Cancelled tickets cannot be assigned.');
+        }
+
         return $user->department_id === $ticket->department_id
             ? Response::allow()
             : Response::denyAsNotFound('The requested ticket was not found.');
@@ -164,6 +172,10 @@ class TicketPolicy
             return Response::deny('Ticket is locked pending inter-departmental endorsement review.');
         }
 
+        if ($ticket->status === TicketStatus::CANCELLED) {
+            return Response::deny('Cancelled tickets cannot be started.');
+        }
+
         return $user->teams()->where('teams.id', $ticket->team_id)->exists()
             ? Response::allow()
             : Response::denyAsNotFound('The requested ticket was not found.');
@@ -180,6 +192,10 @@ class TicketPolicy
 
         if ($ticket->status === TicketStatus::PENDING_ENDORSEMENT) {
             return Response::deny('Ticket is locked pending inter-departmental endorsement review.');
+        }
+
+        if ($ticket->status === TicketStatus::CANCELLED) {
+            return Response::deny('Cannot submit accomplishments for a cancelled ticket.');
         }
 
         return $user->teams()->where('teams.id', $ticket->team_id)->exists()
@@ -210,6 +226,10 @@ class TicketPolicy
             return Response::deny('Only supervisors can endorse tickets.');
         }
 
+        if ($ticket->status === TicketStatus::CANCELLED) {
+            return Response::deny('Cancelled tickets cannot be endorsed.');
+        }
+
         return $user->department_id === $ticket->department_id
             ? Response::allow()
             : Response::denyAsNotFound('The requested ticket was not found.');
@@ -227,5 +247,30 @@ class TicketPolicy
         return $user->department_id === $ticket->department_id
             ? Response::allow()
             : Response::denyAsNotFound('The requested ticket was not found.');
+    }
+
+    /*
+     * Determine whether the user can cancel the service ticket.
+     * Permitted strictly to CWD officers and only while the ticket is in OPEN status.
+     */
+    public function cancel(User $user, Ticket $ticket): Response
+    {
+        if ($user->role->slug_identifier !== 'cwd_officer') {
+            return Response::deny('Only CWD officers can cancel tickets.');
+        }
+
+        if ($ticket->trashed()) {
+            return Response::denyAsNotFound('The requested ticket was not found.');
+        }
+
+        if ($ticket->status === TicketStatus::CANCELLED) {
+            return Response::deny('This ticket has already been cancelled.');
+        }
+
+        if ($ticket->status !== TicketStatus::OPEN) {
+            return Response::deny('Ticket can only be cancelled while in Open status. Once assigned to a team or dispatched, cancellation is locked.');
+        }
+
+        return Response::allow();
     }
 }

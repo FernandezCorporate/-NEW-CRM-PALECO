@@ -17,6 +17,7 @@ enum TicketStatus: string implements HasVisualPresentation
     case ENDORSED = 'endorsed';
     case RESOLVED = 'resolved';
     case CLOSED = 'closed';
+    case CANCELLED = 'cancelled';
 
     /**
      * Returns the human-readable text presentation of the status.
@@ -31,6 +32,7 @@ enum TicketStatus: string implements HasVisualPresentation
             self::ENDORSED => 'Endorsed',
             self::RESOLVED => 'Resolved',
             self::CLOSED => 'Closed',
+            self::CANCELLED => 'Cancelled',
         };
     }
 
@@ -47,6 +49,7 @@ enum TicketStatus: string implements HasVisualPresentation
             self::ENDORSED => 'bg-indigo-50 text-indigo-700 border-indigo-200',
             self::RESOLVED => 'bg-emerald-50 text-emerald-700 border-emerald-200',
             self::CLOSED => 'bg-slate-100 text-slate-700 border-slate-300',
+            self::CANCELLED => 'bg-rose-50 text-rose-700 border-rose-200',
         };
     }
 
@@ -63,6 +66,7 @@ enum TicketStatus: string implements HasVisualPresentation
             self::ENDORSED => '#4f46e5',
             self::RESOLVED => '#059669',
             self::CLOSED => '#64748b',
+            self::CANCELLED => '#e11d48',
         };
     }
 
@@ -79,6 +83,7 @@ enum TicketStatus: string implements HasVisualPresentation
             self::ENDORSED => 'bg-indigo-500',
             self::RESOLVED => 'bg-emerald-500',
             self::CLOSED => 'bg-slate-500',
+            self::CANCELLED => 'bg-rose-500',
         };
     }
 

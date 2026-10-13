@@ -194,6 +194,7 @@ Route::middleware(['auth', CheckIfActive::class])->group(function () {
             Route::put('/{ticket}', [TicketController::class, 'update'])->name('cwd.tickets.update')->whereUlid('ticket');
             Route::get('/{ticket}/children/create', [TicketController::class, 'childTicketForm'])->name('cwd.tickets.children.createForm')->whereUlid('ticket');
             Route::post('/{ticket}/children', [TicketController::class, 'storeChild'])->name('cwd.tickets.children.store')->whereUlid('ticket');
+            Route::post('/{ticket}/cancel', [TicketController::class, 'cancel'])->name('cwd.tickets.cancel')->whereUlid('ticket');
             Route::get('/{ticket}/accomplishments/{accomplishment}', [TicketAccomplishmentController::class, 'show'])->name('cwd.tickets.accomplishments.show')->whereUlid('ticket')->whereNumber('accomplishment');
         });
 

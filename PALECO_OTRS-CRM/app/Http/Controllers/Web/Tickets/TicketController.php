@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Web\Tickets;
 
 use App\Concerns\ResolvesSmartRedirects;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Tickets\CancelTicketRequest;
 use App\Http\Requests\Tickets\StoreChildTicketRequest;
 use App\Http\Requests\Tickets\StoreTicketRequest;
 use App\Http\Requests\Tickets\UpdateTicketIntakeRequest;
@@ -148,6 +149,26 @@ class TicketController extends Controller
 
         return redirect()->route('cwd.tickets.show', $childTicket)
             ->with('success', "Child Ticket {$childTicket->ticket_number} successfully registered under parent ticket {$ticket->ticket_number}.");
+    }
+
+    /*
+     * Validates and processes the cancellation of an open or assigned service ticket.
+     */
+    public function cancel(CancelTicketRequest $request, Ticket $ticket): RedirectResponse
+    {
+        Gate::authorize('cancel', $ticket);
+
+        try {
+            $this->ticketService->cancelTicket($ticket, $request->validated(), $request->user());
+        } catch (ValidationException $e) {
+            $errorMessage = collect($e->errors())->flatten()->first() ?? 'Ticket cannot be cancelled.';
+
+            return redirect()->route('cwd.tickets.show', $ticket)
+                ->with('error', $errorMessage);
+        }
+
+        return redirect()->route('cwd.tickets.show', $ticket)
+            ->with('success', "Ticket {$ticket->ticket_number} has been successfully cancelled.");
     }
 }
 

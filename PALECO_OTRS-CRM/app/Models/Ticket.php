@@ -38,8 +38,10 @@ class Ticket extends Model
         'department_id',
         'team_id',
         'status',
+        'cancellation_reason',
         'started_at',
         'closed_at',
+        'cancelled_at',
     ];
 
     protected $fillable = [
@@ -60,10 +62,12 @@ class Ticket extends Model
         'team_id',
         'created_by_id',
         'status',
+        'cancellation_reason',
         'started_at',
         'reported_at',
         'resolved_at',
         'closed_at',
+        'cancelled_at',
         'is_offline_synced',
         'synced_at',
         'client_started_at',
@@ -84,6 +88,7 @@ class Ticket extends Model
             'reported_at' => 'datetime',
             'resolved_at' => 'datetime',
             'closed_at' => 'datetime',
+            'cancelled_at' => 'datetime',
             'is_offline_synced' => 'boolean',
             'synced_at' => 'datetime',
             'client_started_at' => 'datetime',
@@ -220,6 +225,24 @@ class Ticket extends Model
                 return ($categoryName ?? 'UNSPECIFIED').' @ '.($completeAddress ?? 'UNKNOWN');
             }
         );
+    }
+
+    /**
+     * Resolves cancellation audit metadata (timestamp, reason, actor) for the ticket.
+     */
+    public function getCancellationDetails(): ?array
+    {
+        if ($this->status !== TicketStatus::CANCELLED) {
+            return null;
+        }
+
+        $log = $this->statusLog->firstWhere('new_status', TicketStatus::CANCELLED);
+
+        return [
+            'cancelled_at' => $this->cancelled_at ?? $log?->created_at ?? $this->updated_at,
+            'cancelled_by' => $log?->updater?->full_name ?? 'CWD Officer',
+            'reason' => $this->cancellation_reason ?? 'Cancelled by dispatcher',
+        ];
     }
 
     // --- SCOPES (UNIFIED) ---
@@ -424,6 +447,10 @@ class Ticket extends Model
 
             if ($this->status === TicketStatus::CLOSED) {
                 return "Ticket {$this->ticket_number} has been verified and closed.";
+            }
+
+            if ($this->status === TicketStatus::CANCELLED) {
+                return "Ticket {$this->ticket_number} has been cancelled.";
             }
         }
 
