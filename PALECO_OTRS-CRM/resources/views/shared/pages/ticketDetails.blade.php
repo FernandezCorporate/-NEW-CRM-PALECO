@@ -15,13 +15,13 @@
 
     <x-alert />
 
-    <!-- Header Section -->
-    <header class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
-        <div class="flex items-center gap-4">
+    <!-- Header Section: Clean Identity & Informational Metadata -->
+    <header class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-6">
+        <div class="flex items-center gap-4 min-w-0">
             <x-contextual-back :default="session('ticket_list_url', $isAdmin ? route('admin.tickets') : route('cwd.tickets'))" default-label="Back to Tickets" variant="icon-box" />
-            <div>
+            <div class="min-w-0">
                 <div class="flex items-center gap-3 flex-wrap">
-                    <h1 class="text-2xl font-bold text-slate-900 font-mono tracking-tight">
+                    <h1 class="text-2xl font-bold text-slate-900 font-mono tracking-tight whitespace-nowrap">
                         {{ $ticket->ticket_number }}
                     </h1>
                     
@@ -49,67 +49,80 @@
                         </span>
                     @endif
                 </div>
-                <p class="text-sm text-slate-500 mt-1 font-medium">{{ $ticket->subject }}</p>
+                <p class="text-sm text-slate-600 mt-1 font-medium leading-relaxed">{{ $ticket->subject }}</p>
             </div>
         </div>
 
-        <!-- Action & Metadata Controls -->
-        <div class="flex flex-wrap items-center gap-3 self-stretch md:self-auto justify-start md:justify-end">
-            <!-- Informational Metadata Pills -->
-            <div class="flex items-center gap-2 flex-wrap">
-                <!-- Source -->
-                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border text-xs font-semibold shadow-2xs {{ $ticket->complaint_source->badgeClasses() }}">
-                    <x-icons.phone class="w-3.5 h-3.5" />
-                    {{ $ticket->complaint_source->label() }}
-                </span>
-                <!-- Category -->
-                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-50 border border-slate-200 text-slate-700 text-xs font-semibold shadow-2xs">
-                    <x-icons.category class="w-3.5 h-3.5 text-slate-400" />
-                    <span>{{ $ticket->other_category ? $ticket->other_category_name : ($ticket->category->category_name ?? 'Unspecified') }}</span>
-                    @if(! $ticket->other_category && $ticket->category?->trashed())
-                        <span class="text-[10px] bg-slate-200 text-slate-600 px-1.5 py-0.5 rounded font-medium italic">Archived</span>
-                    @endif
-                </span>
-                <!-- Department -->
-                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-semibold shadow-2xs">
-                    <x-icons.department class="w-3.5 h-3.5" />
-                    <span>{{ $ticket->department->dept_name ?? 'Unassigned' }}</span>
-                    @if($ticket->department?->trashed())
-                        <span class="text-[10px] bg-emerald-200 text-emerald-800 px-1.5 py-0.5 rounded font-medium italic">Archived</span>
-                    @endif
-                </span>
-            </div>
-
-            @can('update', $ticket)
-                <a href="{{ route('cwd.tickets.editForm', array_filter(['ticket' => $ticket, 'source' => request('source'), 'consumer' => request('consumer'), 'parent' => request('parent')])) }}" class="btn btn-secondary text-xs py-2 px-3.5 shadow-xs">
-                    <x-icons.pencil class="w-4 h-4 text-slate-500" />
-                    <span>Edit Details</span>
-                </a>
-            @endcan
-
-            <!-- Distinct Action Button for Child Ticket (Mutating Action: CWD Only) -->
-            @can('createChild', $ticket)
-                <a href="{{ route('cwd.tickets.children.createForm', array_filter(['ticket' => $ticket, 'source' => request('source'), 'consumer' => request('consumer')])) }}" class="btn bg-indigo-600 hover:bg-indigo-700 text-white text-xs py-2 px-3.5 shadow-xs">
-                    <x-icons.plus class="w-4 h-4" />
-                    <span>Create Child Ticket</span>
-                </a>
-            @endcan
-
-            @can('cancel', $ticket)
-                <a href="{{ route('cwd.tickets.cancelConfirm', $ticket) }}" class="btn bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-xs py-2 px-3.5 shadow-xs transition-colors">
-                    <x-icons.x-mark class="w-4 h-4 text-rose-600" />
-                    <span>Cancel Ticket</span>
-                </a>
-            @endcan
-
-            @can('forceClose', $ticket)
-                <a href="{{ $isAdmin ? route('admin.tickets.forceCloseConfirm', $ticket) : route('cwd.tickets.forceCloseConfirm', $ticket) }}" class="btn bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 text-xs py-2 px-3.5 shadow-xs transition-colors">
-                    <x-icons.exclamation-triangle class="w-4 h-4 text-amber-600" />
-                    <span>Force Close</span>
-                </a>
-            @endcan
+        <!-- Informational Metadata Pills -->
+        <div class="flex items-center gap-2 flex-wrap shrink-0">
+            <!-- Source -->
+            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border text-xs font-semibold shadow-2xs {{ $ticket->complaint_source->badgeClasses() }}">
+                <x-icons.phone class="w-3.5 h-3.5" />
+                {{ $ticket->complaint_source->label() }}
+            </span>
+            <!-- Category -->
+            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-50 border border-slate-200 text-slate-700 text-xs font-semibold shadow-2xs">
+                <x-icons.category class="w-3.5 h-3.5 text-slate-400" />
+                <span>{{ $ticket->other_category ? $ticket->other_category_name : ($ticket->category->category_name ?? 'Unspecified') }}</span>
+                @if(! $ticket->other_category && $ticket->category?->trashed())
+                    <span class="text-[10px] bg-slate-200 text-slate-600 px-1.5 py-0.5 rounded font-medium italic">Archived</span>
+                @endif
+            </span>
+            <!-- Department -->
+            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-semibold shadow-2xs">
+                <x-icons.department class="w-3.5 h-3.5" />
+                <span>{{ $ticket->department->dept_name ?? 'Unassigned' }}</span>
+                @if($ticket->department?->trashed())
+                    <span class="text-[10px] bg-emerald-200 text-emerald-800 px-1.5 py-0.5 rounded font-medium italic">Archived</span>
+                @endif
+            </span>
         </div>
     </header>
+
+    @canany(['update', 'createChild', 'cancel', 'forceClose'], $ticket)
+        <!-- Shared Ticket Operational Control Panel -->
+        <aside aria-label="Ticket operational controls" class="bg-white border border-slate-200 rounded-xl px-5 py-3.5 mb-6 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div class="flex items-center gap-2.5">
+                <div class="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center justify-center shrink-0">
+                    <x-icons.sliders class="w-4 h-4" />
+                </div>
+                <div>
+                    <h2 class="text-xs font-bold uppercase tracking-wider text-slate-800">Operational Controls</h2>
+                    <p class="text-xs text-slate-500">Authorized administrative and dispatch actions for this ticket</p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-2.5 flex-wrap">
+                @can('update', $ticket)
+                    <a href="{{ route('cwd.tickets.editForm', array_filter(['ticket' => $ticket, 'source' => request('source'), 'consumer' => request('consumer'), 'parent' => request('parent')])) }}" class="btn btn-secondary text-xs py-2 px-3.5 shadow-2xs">
+                        <x-icons.pencil class="w-4 h-4 text-slate-500" />
+                        <span>Edit Details</span>
+                    </a>
+                @endcan
+
+                @can('createChild', $ticket)
+                    <a href="{{ route('cwd.tickets.children.createForm', array_filter(['ticket' => $ticket, 'source' => request('source'), 'consumer' => request('consumer')])) }}" class="btn bg-indigo-600 hover:bg-indigo-700 text-white text-xs py-2 px-3.5 shadow-2xs">
+                        <x-icons.plus class="w-4 h-4" />
+                        <span>Create Child Ticket</span>
+                    </a>
+                @endcan
+
+                @can('cancel', $ticket)
+                    <a href="{{ route('cwd.tickets.cancelConfirm', $ticket) }}" class="btn bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-xs py-2 px-3.5 shadow-2xs transition-colors">
+                        <x-icons.x-mark class="w-4 h-4 text-rose-600" />
+                        <span>Cancel Ticket</span>
+                    </a>
+                @endcan
+
+                @can('forceClose', $ticket)
+                    <a href="{{ $isAdmin ? route('admin.tickets.forceCloseConfirm', $ticket) : route('cwd.tickets.forceCloseConfirm', $ticket) }}" class="btn bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 text-xs py-2 px-3.5 shadow-2xs transition-colors">
+                        <x-icons.exclamation-triangle class="w-4 h-4 text-amber-600" />
+                        <span>Force Close</span>
+                    </a>
+                @endcan
+            </div>
+        </aside>
+    @endcanany
 
     @if($ticket->status->value === 'cancelled')
         <div class="mb-6 p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-900 shadow-xs">

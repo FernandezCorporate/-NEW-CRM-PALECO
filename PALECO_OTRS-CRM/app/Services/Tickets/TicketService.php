@@ -426,8 +426,10 @@ class TicketService
 
     /**
      * Updates clerical intake details (contact, location, description, category, consumer link) for an Open ticket.
+     *
+     * @return array{success: bool, changed: bool, ticket: Ticket}
      */
-    public function updateIntakeDetails(Ticket $ticket, array $validatedData): Ticket
+    public function updateIntakeDetails(Ticket $ticket, array $validatedData): array
     {
         if (! empty($validatedData['link_consumer']) && ! empty($validatedData['account_code'])) {
             $validatedData['consumer_id'] = $this->consumerService->resolveConsumerId($validatedData['account_code']);
@@ -454,7 +456,17 @@ class TicketService
                 ]);
             }
 
-            $lockedTicket->update($validatedData);
+            $lockedTicket->fill($validatedData);
+
+            if ($lockedTicket->isClean()) {
+                return [
+                    'success' => true,
+                    'changed' => false,
+                    'ticket' => $lockedTicket,
+                ];
+            }
+
+            $lockedTicket->save();
 
             if (Auth::check()) {
                 $lockedTicket->remarks()->create([
@@ -464,7 +476,11 @@ class TicketService
                 ]);
             }
 
-            return $lockedTicket;
+            return [
+                'success' => true,
+                'changed' => true,
+                'ticket' => $lockedTicket,
+            ];
         });
     }
 

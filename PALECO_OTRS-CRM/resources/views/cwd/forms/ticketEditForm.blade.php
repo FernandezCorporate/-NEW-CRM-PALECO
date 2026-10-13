@@ -28,6 +28,12 @@
         @if(request()->filled('source') || old('source'))
             <input type="hidden" name="source" value="{{ old('source', request('source')) }}">
         @endif
+        @if(request()->filled('consumer') || old('consumer'))
+            <input type="hidden" name="consumer" value="{{ old('consumer', request('consumer')) }}">
+        @endif
+        @if(request()->filled('parent') || old('parent'))
+            <input type="hidden" name="parent" value="{{ old('parent', request('parent')) }}">
+        @endif
 
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-x-12 gap-y-8">
             
@@ -159,7 +165,7 @@
 
         <!-- Actions -->
         <div class="flex items-center justify-end space-x-3 border-t border-slate-200 pt-6 mt-4">
-            <x-contextual-back :default="route('cwd.tickets.show', $ticket)" label="Cancel" variant="button" />
+            <x-contextual-back :default="route('cwd.tickets.show', array_filter(['ticket' => $ticket, 'source' => request('source'), 'consumer' => request('consumer'), 'parent' => request('parent')]))" label="Cancel" variant="button" />
             <x-btn variant="primary" type="submit" data-loading-text="Updating Ticket...">
                 Save Changes
             </x-btn>

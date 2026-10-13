@@ -126,16 +126,28 @@ class TicketController extends Controller
     {
         Gate::authorize('update', $ticket);
 
+        $redirectUrl = route('cwd.tickets.show', array_filter([
+            'ticket' => $ticket,
+            'source' => $request->input('source'),
+            'consumer' => $request->input('consumer'),
+            'parent' => $request->input('parent'),
+        ]));
+
         try {
-            $this->ticketService->updateIntakeDetails($ticket, $request->validated());
+            $result = $this->ticketService->updateIntakeDetails($ticket, $request->validated());
         } catch (ValidationException $e) {
             $errorMessage = collect($e->errors())->flatten()->first() ?? 'Ticket can no longer be edited.';
 
-            return redirect()->route('cwd.tickets.show', $ticket)
+            return redirect($redirectUrl)
                 ->with('error', $errorMessage);
         }
 
-        return redirect()->route('cwd.tickets.show', $ticket)
+        if (! $result['changed']) {
+            return redirect($redirectUrl)
+                ->with('info', "No changes were detected for ticket {$ticket->ticket_number}.");
+        }
+
+        return redirect($redirectUrl)
             ->with('success', "Ticket {$ticket->ticket_number} intake details successfully updated.");
     }
 

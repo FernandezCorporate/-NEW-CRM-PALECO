@@ -279,6 +279,47 @@ test('cwd officer can update clerical intake details on an open ticket', functio
     expect($ticket->remarks()->where('body', 'Clerical intake details updated.')->exists())->toBeTrue();
 });
 
+test('submitting ticket update without changes redirects with info alert and creates no remarks', function () {
+    $ticket = Ticket::create([
+        'id' => (string) Str::ulid(),
+        'ticket_number' => 'TCK-20261013-0099',
+        'complaint_source' => ComplaintSources::PHONE_CALL->value,
+        'consumer_contact' => '09123456789',
+        'complaint_description' => 'Unchanged description.',
+        'department_id' => $this->dept->id,
+        'category_id' => $this->category->id,
+        'other_category' => 0,
+        'barangay' => 'Tiniguiban',
+        'purok' => 'Purok 1',
+        'street' => null,
+        'landmark' => 'Near Store',
+        'status' => TicketStatus::OPEN->value,
+        'created_by_id' => $this->cwdUser->id,
+        'reported_at' => now(),
+    ]);
+
+    $response = $this->actingAs($this->cwdUser)->put(route('cwd.tickets.update', $ticket), [
+        'complaint_source' => ComplaintSources::PHONE_CALL->value,
+        'consumer_contact' => '09123456789',
+        'complaint_description' => 'Unchanged description.',
+        'department_id' => $this->dept->id,
+        'category_id' => $this->category->id,
+        'other_category' => 0,
+        'barangay' => 'Tiniguiban',
+        'purok' => 'Purok 1',
+        'street' => null,
+        'landmark' => 'Near Store',
+        'link_consumer' => 0,
+    ]);
+
+    $response->assertRedirect(route('cwd.tickets.show', $ticket));
+    $response->assertSessionHas('info', "No changes were detected for ticket {$ticket->ticket_number}.");
+    $response->assertSessionMissing('success');
+
+    // Confirm NO remarks were created
+    expect($ticket->remarks()->count())->toBe(0);
+});
+
 test('cwd officer can link or unlink consumer during clerical update', function () {
     $ticket = Ticket::create([
         'id' => (string) Str::ulid(),
