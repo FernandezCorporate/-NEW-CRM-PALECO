@@ -14,24 +14,7 @@
         
         <!-- Action Buttons -->
         <div class="flex items-center gap-3 flex-wrap">
-            @php
-                $isFromUser = request('source') === 'user' && request('user');
-                $isFromTeam = request('source') === 'team' && request('team');
-                if ($isFromUser) {
-                    $backRoute = route('admin.users.show', ['user' => request('user')]);
-                    $backText = 'Back to User Profile';
-                } elseif ($isFromTeam) {
-                    $backRoute = route('admin.teams.show', ['team' => request('team')]);
-                    $backText = 'Back to Team';
-                } else {
-                    $backRoute = session('department_list_url', route('admin.departments'));
-                    $backText = 'Back to List';
-                }
-            @endphp
-            <a href="{{ $backRoute }}" class="btn btn-secondary px-4 py-2 text-sm shadow-xs" data-loading-text="Loading...">
-                <x-icons.arrow-left class="w-4 h-4 text-slate-500" />
-                <span>{{ $backText }}</span>
-            </a>
+            <x-contextual-back :default="session('department_list_url', route('admin.departments'))" default-label="Back to List" />
             
             @if($dept->trashed())
                 <form action="{{ route('admin.departments.restore', $dept) }}" method="POST" class="inline-block">

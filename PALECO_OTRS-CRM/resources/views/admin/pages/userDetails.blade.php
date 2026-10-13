@@ -21,24 +21,7 @@
         
         <!-- Action Buttons -->
         <div class="flex items-center gap-3 flex-wrap">
-            @php
-                $isFromDept = request('source') === 'department' && request('dept');
-                $isFromTeam = request('source') === 'team' && request('team');
-                if ($isFromDept) {
-                    $backRoute = route('admin.departments.show', ['dept' => request('dept')]);
-                    $backText = 'Back to Department';
-                } elseif ($isFromTeam) {
-                    $backRoute = route('admin.teams.show', array_filter(['team' => request('team'), 'source' => request('dept') ? 'department' : null, 'dept' => request('dept')]));
-                    $backText = 'Back to Team';
-                } else {
-                    $backRoute = session('user_list_url', route('admin.users'));
-                    $backText = 'Back to List';
-                }
-            @endphp
-            <a href="{{ $backRoute }}" class="btn btn-secondary px-4 py-2 text-sm shadow-xs" data-loading-text="Loading...">
-                <x-icons.arrow-left class="w-4 h-4 text-slate-500" />
-                <span>{{ $backText }}</span>
-            </a>
+            <x-contextual-back :default="session('user_list_url', route('admin.users'))" default-label="Back to List" />
             
             @can('update', $user)
                 <a href="{{ route('admin.users.editForm', array_filter(['user' => $user, 'source' => request('source') ?: 'details', 'dept' => request('dept'), 'team' => request('team')])) }}" class="btn btn-primary px-4 py-2 text-sm shadow-xs" data-loading-text="Loading...">

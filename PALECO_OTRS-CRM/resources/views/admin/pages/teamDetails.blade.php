@@ -15,24 +15,7 @@
         
         <!-- Action Buttons -->
         <div class="flex items-center gap-3 flex-wrap">
-            @php
-                $isFromDept = request('source') === 'department' && request('dept');
-                $isFromUser = request('source') === 'user' && request('user');
-                if ($isFromDept) {
-                    $backRoute = route('admin.departments.show', ['dept' => request('dept')]);
-                    $backText = 'Back to Department';
-                } elseif ($isFromUser) {
-                    $backRoute = route('admin.users.show', array_filter(['user' => request('user'), 'source' => request('dept') ? 'department' : null, 'dept' => request('dept')]));
-                    $backText = 'Back to User Profile';
-                } else {
-                    $backRoute = session('team_list_url', route('admin.teams'));
-                    $backText = 'Back to List';
-                }
-            @endphp
-            <a href="{{ $backRoute }}" class="btn btn-secondary px-4 py-2 text-sm shadow-xs" data-loading-text="Loading...">
-                <x-icons.arrow-left class="w-4 h-4 text-slate-500" />
-                <span>{{ $backText }}</span>
-            </a>
+            <x-contextual-back :default="session('team_list_url', route('admin.teams'))" default-label="Back to List" />
             
             <!-- CONTEXT: Check if Team is Soft Deleted -->
             @if($team->trashed())

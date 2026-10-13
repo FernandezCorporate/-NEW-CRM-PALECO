@@ -10,14 +10,7 @@
 
     <!-- Header & Back Button -->
     <header class="flex items-center gap-4 mb-8">
-        @php
-            $isFromTicket = request('source') === 'ticket' && request('ticket');
-            $backRoute = $isFromTicket ? route('cwd.tickets.show', ['ticket' => request('ticket')]) : session('consumer_list_url', route('cwd.consumers'));
-            $backTitle = $isFromTicket ? 'Back to Ticket' : 'Back to Consumers';
-        @endphp
-        <a href="{{ $backRoute }}" title="{{ $backTitle }}" aria-label="{{ $backTitle }}" class="inline-flex items-center justify-center w-10 h-10 rounded-full bg-white border border-slate-200 text-slate-500 hover:text-slate-700 hover:bg-slate-50 transition-colors shadow-2xs focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2">
-            <x-icons.arrow-left class="w-5 h-5" />
-        </a>
+        <x-contextual-back :default="session('consumer_list_url', route('cwd.consumers'))" default-label="Back to Consumers" variant="icon-circle" />
         <div>
             <h1 class="text-2xl lg:text-3xl font-bold text-slate-900">Consumer Profile</h1>
             <p class="text-sm text-slate-500 mt-1">Account and service history</p>

@@ -14,28 +14,7 @@
     <!-- Header Section -->
     <header class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
         <div class="flex items-center gap-4">
-            @php
-                $isFromConsumer = request('source') === 'consumer' && request('consumer');
-                $isFromParent = request('source') === 'parent' && request('parent');
-                $isFromEndorsement = request('source') === 'endorsement' && request('endorsement');
-                if ($isFromConsumer) {
-                    $backRoute = $isAdmin ? route('admin.tickets') : route('cwd.consumers.show', ['consumer' => request('consumer')]);
-                    $backLabel = $isAdmin ? 'Back to Tickets' : 'Back to Consumer Profile';
-                } elseif ($isFromParent) {
-                    $backRoute = $isAdmin ? route('admin.tickets.show', ['ticket' => request('parent')]) : route('cwd.tickets.show', ['ticket' => request('parent')]);
-                    $backLabel = 'Back to Parent Ticket';
-                } elseif ($isFromEndorsement) {
-                    $backRoute = $isAdmin ? route('admin.tickets') : route('cwd.endorsements.show', ['endorsement' => request('endorsement')]);
-                    $backLabel = $isAdmin ? 'Back to Tickets' : 'Back to Endorsement';
-                } else {
-                    $defaultBack = $isAdmin ? route('admin.tickets') : route('cwd.tickets');
-                    $backRoute = session('ticket_list_url', $defaultBack);
-                    $backLabel = 'Back to Tickets';
-                }
-            @endphp
-            <a href="{{ $backRoute }}" aria-label="{{ $backLabel }}" title="{{ $backLabel }}" class="min-h-11 min-w-11 inline-flex items-center justify-center p-2 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors text-slate-500 shadow-2xs">
-                <x-icons.arrow-left class="w-5 h-5" />
-            </a>
+            <x-contextual-back :default="session('ticket_list_url', $isAdmin ? route('admin.tickets') : route('cwd.tickets'))" default-label="Back to Tickets" variant="icon-box" />
             <div>
                 <div class="flex items-center gap-3 flex-wrap">
                     <h1 class="text-2xl font-bold text-slate-900 font-mono tracking-tight">

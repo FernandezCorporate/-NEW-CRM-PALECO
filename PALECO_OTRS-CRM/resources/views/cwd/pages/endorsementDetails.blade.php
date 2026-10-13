@@ -10,15 +10,7 @@
         
         <!-- Back Navigation -->
         <div class="mb-6">
-            @php
-                $isFromTicket = request('source') === 'ticket' && request('ticket');
-                $backRoute = $isFromTicket ? route('cwd.tickets.show', ['ticket' => request('ticket')]) : session('endorsement_list_url', route('cwd.endorsements'));
-                $backLabel = $isFromTicket ? 'Back to Ticket' : 'Back to Endorsements';
-            @endphp
-            <a href="{{ $backRoute }}" class="inline-flex items-center gap-2 text-sm font-medium text-slate-500 hover:text-emerald-700 transition-colors">
-                <x-icons.arrow-left class="w-4 h-4" />
-                <span>{{ $backLabel }}</span>
-            </a>
+            <x-contextual-back :default="session('endorsement_list_url', route('cwd.endorsements'))" default-label="Back to Endorsements" variant="link" />
         </div>
 
         <!-- Validation & Session Prompts Component -->

@@ -18,21 +18,9 @@
             </div>
         </header>
 
-        @php
-            $systemMetrics = [
-                ['Users', $summary['users_total'], 'Total accounts', route('admin.users'), 'bg-emerald-50 text-emerald-600', 'bg-emerald-500', 'users'],
-                ['Active users', $summary['users_active'], 'Enabled accounts', route('admin.users'), 'bg-teal-50 text-teal-600', 'bg-teal-500', 'check-circle'],
-                ['Active departments', $summary['departments_active'], 'Current divisions', route('admin.departments'), 'bg-sky-50 text-sky-600', 'bg-sky-500', 'department'],
-                ['Archived departments', $summary['departments_archived'], 'Retired divisions', route('admin.departments', ['filter' => 'archived']), 'bg-amber-50 text-amber-600', 'bg-amber-500', 'trash'],
-                ['Total tickets', $summary['tickets_total'], 'All service requests', route('admin.monitoring.index'), 'bg-blue-50 text-blue-600', 'bg-blue-600', 'ticket'],
-                ['Active teams', $summary['teams_active'], 'Operational crews', route('admin.teams'), 'bg-violet-50 text-violet-600', 'bg-violet-500', 'team'],
-            ];
-            $systemMetricMax = max(1, ...array_column($systemMetrics, 1));
-        @endphp
-
         <!-- Telemetry Metric Cards Grid -->
         <section class="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 xl:grid-cols-6" aria-label="System totals">
-            @foreach ($systemMetrics as $index => [$label, $value, $description, $url, $tone, $barTone, $icon])
+            @foreach ($summary['system_metrics'] ?? [] as $index => [$label, $value, $description, $url, $tone, $barTone, $icon, $widthPercent])
                 <a href="{{ $url }}" data-animate class="ui-reveal group block" style="--delay: {{ $index * 70 }}ms">
                     <article class="metric-card h-full">
                         <header class="flex items-start justify-between gap-4">
@@ -64,15 +52,15 @@
                         <h2 id="admin-trend-title" class="mt-1 text-xl font-bold text-slate-900">New tickets received</h2>
                     </div>
                     <p class="text-right">
-                        <data class="block text-2xl font-bold text-slate-900" value="{{ array_sum(array_column($overview['trend'], 'total')) }}">
-                            {{ array_sum(array_column($overview['trend'], 'total')) }}
+                        <data class="block text-2xl font-bold text-slate-900" value="{{ $overview['trend_sum'] ?? 0 }}">
+                            {{ $overview['trend_sum'] ?? 0 }}
                         </data>
                         <span class="text-xs text-slate-500">this week</span>
                     </p>
                 </figcaption>
                 <div class="mt-5 chart-columns" role="img" aria-label="Ticket intake over the last seven days">
                     @foreach ($overview['trend'] as $index => $day)
-                        <div class="chart-column" style="--chart-height: {{ max(4, ($day['total'] / $overview['trend_max']) * 100) }}%; --bar-delay: {{ $index * 70 }}ms" title="{{ $day['date'] }}: {{ $day['total'] }} tickets">
+                        <div class="chart-column" style="--chart-height: {{ $day['height_percent'] ?? 4 }}%; --bar-delay: {{ $index * 70 }}ms" title="{{ $day['date'] }}: {{ $day['total'] }} tickets">
                             <span class="chart-value">{{ $day['total'] }}</span>
                             <div class="chart-column-fill"></div>
                         </div>
@@ -89,7 +77,7 @@
                     <h2 id="system-chart-title" class="mt-1 text-xl font-bold text-slate-900">Operational overview</h2>
                 </figcaption>
                 <div class="mt-6 space-y-4" role="img" aria-label="Comparison of users, departments, tickets, and teams">
-                    @foreach ($systemMetrics as $index => [$label, $value, $description, $url, $tone, $barTone])
+                    @foreach ($summary['system_metrics'] ?? [] as $index => [$label, $value, $description, $url, $tone, $barTone, $icon, $widthPercent])
                         <div>
                             <div class="mb-2 flex items-center justify-between gap-4 text-xs">
                                 <span class="truncate font-semibold text-slate-700">{{ $label }}</span>
@@ -98,7 +86,7 @@
                                 </strong>
                             </div>
                             <div class="chart-row-track">
-                                <div class="chart-row-fill {{ $barTone }}" style="--chart-width: {{ ($value / $systemMetricMax) * 100 }}%; --bar-delay: {{ $index * 65 }}ms"></div>
+                                <div class="chart-row-fill {{ $barTone }}" style="--chart-width: {{ $widthPercent }}%; --bar-delay: {{ $index * 65 }}ms"></div>
                             </div>
                         </div>
                     @endforeach
@@ -109,21 +97,9 @@
         <!-- Service Operations Island -->
         <x-dashboard-operations :data="$overview['operations']" />
 
-        @php
-            $controlCatalog = [
-                ['add-user', 'Add new user', 'Create a staff account', route('admin.users.createForm'), 'bg-emerald-50 text-emerald-600', 'plus'],
-                ['users', 'Manage users', 'Review staff accounts', route('admin.users'), 'bg-teal-50 text-teal-600', 'users'],
-                ['departments', 'Departments', 'Maintain service divisions', route('admin.departments'), 'bg-sky-50 text-sky-600', 'department'],
-                ['teams', 'Field teams', 'Coordinate operational crews', route('admin.teams'), 'bg-violet-50 text-violet-600', 'team'],
-                ['categories', 'Ticket categories', 'Organize complaint types', route('admin.ticketCategories'), 'bg-amber-50 text-amber-600', 'category'],
-                ['monitoring', 'System monitoring', 'Review system activity', route('admin.monitoring.index'), 'bg-blue-50 text-blue-600', 'monitoring'],
-            ];
-            $defaultControls = ['add-user', 'monitoring'];
-        @endphp
-
         <!-- Quick Action Panels & Workspace Summary -->
         <section class="admin-action-panels grid gap-6 xl:grid-cols-2">
-            <x-dashboard-controls :control-catalog="$controlCatalog" :default-controls="$defaultControls"
+            <x-dashboard-controls :control-catalog="$summary['admin_controls'] ?? []" :default-controls="['add-user', 'monitoring']"
                 :storage-key="'paleco-admin-controls-' . auth()->id()" title="Administrative control center" />
 
             <aside data-animate class="ui-reveal panel flex flex-col overflow-hidden" style="--delay: 90ms" aria-labelledby="admin-workspace-title">

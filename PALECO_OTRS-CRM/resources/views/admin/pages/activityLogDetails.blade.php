@@ -5,18 +5,9 @@
 @section('title', 'Activity Log #' . $activity->id . ' Details')
 
 @section('content')
-    @php
-        $backRoute = session('monitoring_list_url', route('admin.monitoring.index'));
-        $isAuth = str_starts_with($activity->log_name, 'login_');
-        $authAction = \App\Enums\NonModelActions::tryFrom($activity->log_name);
-    @endphp
-
     <!-- Breadcrumb / Back Navigation -->
     <div class="mb-6">
-        <a href="{{ $backRoute }}" class="action-link inline-flex items-center gap-2 text-sm font-medium text-slate-500 hover:text-slate-800 transition-colors" data-loading-text="Returning...">
-            <x-icons.arrow-left class="w-4 h-4" />
-            <span>Back to System Monitoring</span>
-        </a>
+        <x-contextual-back :default="session('monitoring_list_url', route('admin.monitoring.index'))" label="Back to System Monitoring" variant="link" />
     </div>
 
     <!-- Header Section -->

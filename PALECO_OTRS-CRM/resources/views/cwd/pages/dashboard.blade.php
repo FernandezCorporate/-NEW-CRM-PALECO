@@ -21,17 +21,7 @@
         <livewire:cwd.dashboard-overview />
 
         <section class="cwd-action-panels grid gap-6 xl:grid-cols-2">
-            @php
-                $cwdControls = [
-                    ['tickets', 'Manage tickets', 'View all service requests', route('cwd.tickets'), 'bg-emerald-50 text-emerald-600', 'ticket'],
-                    ['new-ticket', 'New ticket', 'Record a service complaint', route('cwd.tickets.createForm', ['source' => 'dashboard']), 'bg-teal-50 text-teal-600', 'plus'],
-                    ['open-tickets', 'Open tickets', 'Review unassigned requests', route('cwd.tickets', ['status' => 'open']), 'bg-sky-50 text-sky-600', 'ticket'],
-                    ['in-progress', 'Work in progress', 'Follow ongoing field work', route('cwd.tickets', ['status' => 'in_progress']), 'bg-blue-50 text-blue-600', 'clock'],
-                    ['endorsements', 'Review endorsements', 'View all endorsement requests', route('cwd.endorsements'), 'bg-amber-50 text-amber-600', 'endorsement'],
-                    ['pending-endorsements', 'Pending reviews', 'Endorsements awaiting a decision', route('cwd.endorsements', ['status' => 'pending']), 'bg-orange-50 text-orange-600', 'exclamation-triangle'],
-                ];
-            @endphp
-            <x-dashboard-controls :control-catalog="$cwdControls" :default-controls="['tickets', 'endorsements']"
+            <x-dashboard-controls :control-catalog="$overview['cwd_controls'] ?? []" :default-controls="['tickets', 'endorsements']"
                 :storage-key="'paleco-cwd-controls-' . auth()->id()" title="Keep requests moving" eyebrow="Quick actions" />
 
             <aside data-animate class="ui-reveal panel flex flex-col overflow-hidden" style="--delay: 90ms" aria-labelledby="cwd-queue-title">
@@ -40,12 +30,7 @@
                     <h2 id="cwd-queue-title" class="mt-2 text-xl font-bold">Keep an eye on the queue</h2>
                 </div>
                 <ul class="flex flex-1 flex-col divide-y divide-slate-100">
-                    @php $statusTotals = collect($overview['statuses'] ?? [])->pluck('total', 'key'); @endphp
-                    @foreach ([
-                        ['Open tickets', $statusTotals['open'] ?? 0, 'Review newly logged requests', route('cwd.tickets', ['status' => 'open'])],
-                        ['Pending endorsements', $overview['operations']['pending_endorsements'] ?? 0, 'Review requests for rerouting', route('cwd.endorsements', ['status' => 'pending'])],
-                        ['Assigned tickets', $statusTotals['assigned'] ?? 0, 'Follow up with assigned field teams', route('cwd.tickets', ['status' => 'assigned'])],
-                    ] as [$queueLabel, $queueCount, $queueHint, $queueUrl])
+                    @foreach ($overview['queue_items'] ?? [] as [$queueLabel, $queueCount, $queueHint, $queueUrl])
                         <li class="flex flex-1">
                             <a href="{{ $queueUrl }}" class="group flex w-full items-center gap-4 px-6 py-3 md:px-7 transition-colors hover:bg-emerald-50 focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-emerald-600">
                                 <span class="min-w-0 flex-1">

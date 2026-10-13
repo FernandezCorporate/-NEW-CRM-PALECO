@@ -7,10 +7,7 @@
 @section('content')
     <!-- Back Navigation -->
     <div class="mb-6">
-        <a href="{{ session('category_list_url', route('admin.ticketCategories')) }}" class="action-link inline-flex items-center gap-2 text-sm font-medium text-slate-500 hover:text-slate-800 transition-colors">
-            <x-icons.arrow-left class="w-4 h-4" />
-            <span>Back to Categories</span>
-        </a>
+        <x-contextual-back :default="session('category_list_url', route('admin.ticketCategories'))" default-label="Back to Categories" variant="link" />
     </div>
 
     <!-- Category Profile Card -->

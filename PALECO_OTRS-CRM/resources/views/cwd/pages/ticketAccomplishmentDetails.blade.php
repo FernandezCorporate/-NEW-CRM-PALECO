@@ -12,9 +12,7 @@
             @php
                 $ticketRoute = route('cwd.tickets.show', array_filter(['ticket' => $ticket, 'source' => request('source'), 'consumer' => request('consumer'), 'parent' => request('parent')]));
             @endphp
-            <a href="{{ $ticketRoute }}" class="min-h-10 min-w-10 inline-flex items-center justify-center p-2 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors text-slate-500 shadow-2xs" title="Back to Ticket" aria-label="Back to Ticket">
-                <x-icons.arrow-left class="w-5 h-5" />
-            </a>
+            <x-contextual-back :url="$ticketRoute" label="Back to Ticket" variant="icon-box" class="min-h-10 min-w-10" />
             <div>
                 <h1 class="text-2xl font-bold text-slate-900 flex items-center gap-2">
                     Accomplishment Report Details

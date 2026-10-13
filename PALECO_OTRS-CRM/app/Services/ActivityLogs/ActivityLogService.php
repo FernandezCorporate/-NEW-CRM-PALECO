@@ -143,6 +143,12 @@ class ActivityLogService
                 };
             }
 
+            $actorName = $log->causer ? ($log->causer->first_name . ' ' . $log->causer->last_name) : ($log->properties['full_name'] ?? $log->properties['username'] ?? 'System');
+            $actorRole = $log->causer ? $log->causer->role->role_name : ($log->properties['role'] ?? 'Unknown');
+            $log->actor_name = $actorName;
+            $log->actor_role = $actorRole;
+            $log->actor_initials = strtoupper(substr(trim($actorName), 0, 2)) ?: 'SY';
+
             return $log;
         });
 
@@ -178,6 +184,8 @@ class ActivityLogService
             'subject' => $subjectData,
             'client' => $clientData,
             'diff' => $diffData,
+            'isAuth' => str_starts_with($activity->log_name, 'login_'),
+            'authAction' => NonModelActions::tryFrom($activity->log_name),
             'rawAttributeChanges' => json_encode($activity->attribute_changes, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES),
             'rawProperties' => json_encode($activity->properties, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES),
             'rawPayload' => json_encode($activity->toArray(), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES),

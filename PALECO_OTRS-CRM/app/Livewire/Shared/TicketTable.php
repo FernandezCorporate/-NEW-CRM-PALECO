@@ -80,6 +80,7 @@ class TicketTable extends Component
             'categories' => TicketCategory::orderBy('category_name')->get(),
             'departments' => Department::orderBy('dept_name')->get(),
             'statuses' => TicketStatus::cases(),
+            'isAdmin' => auth()->user()?->role?->slug_identifier === 'admin',
         ]);
     }
 }

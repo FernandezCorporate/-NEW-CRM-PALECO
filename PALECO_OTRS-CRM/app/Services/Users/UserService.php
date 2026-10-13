@@ -30,6 +30,10 @@ class UserService
             ->groupBy('role_id')
             ->pluck('total', 'role_id');
 
+        $roles->each(function ($role) use ($rawCounts) {
+            $role->active_count = (int) ($rawCounts->get($role->id) ?? 0);
+        });
+
         $activeCounts = (object) [
             'admin' => $rawCounts->get($roles->where('slug_identifier', 'admin')->first()?->id) ?? 0,
             'cwd' => $rawCounts->get($roles->where('slug_identifier', 'cwd_officer')->first()?->id) ?? 0,

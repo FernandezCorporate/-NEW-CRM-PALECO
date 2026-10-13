@@ -148,11 +148,8 @@
         </div>
 
         <!-- Actions -->
-        @php
-            $cancelRoute = old('source', request('source')) === 'dashboard' ? route('cwd.dashboard') : route('cwd.tickets');
-        @endphp
         <div class="flex items-center justify-end space-x-3 border-t border-slate-200 pt-6 mt-4">
-            <x-btn variant="secondary" href="{{ $cancelRoute }}" data-loading-text="Canceling...">
+            <x-btn variant="secondary" href="{{ old('source', request('source')) === 'dashboard' ? route('cwd.dashboard') : route('cwd.tickets') }}" data-loading-text="Canceling...">
                 Cancel
             </x-btn>
             <x-btn variant="primary" type="submit" data-loading-text="Routing Ticket...">

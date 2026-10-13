@@ -79,12 +79,7 @@
                     @forelse ($tickets as $tkt)
                         <tr class="hover:bg-slate-50/75 transition-colors">
                             <td class="px-6 py-4 align-top">
-                                @php
-                                    $showRoute = auth()->user()?->role?->slug_identifier === 'admin'
-                                        ? route('admin.tickets.show', $tkt)
-                                        : route('cwd.tickets.show', $tkt);
-                                @endphp
-                                <a href="{{ $showRoute }}" class="font-bold text-emerald-700 text-sm hover:underline block" aria-label="View ticket #{{ $tkt->ticket_number }}">
+                                <a href="{{ route($isAdmin ? 'admin.tickets.show' : 'cwd.tickets.show', $tkt) }}" class="font-bold text-emerald-700 text-sm hover:underline block" aria-label="View ticket #{{ $tkt->ticket_number }}">
                                     {{ $tkt->ticket_number }}
                                 </a>
                                 <div class="text-[11px] text-slate-400 mt-0.5">{{ $tkt->reported_at->format('M d, Y') }}</div>
@@ -135,12 +130,7 @@
                                     <div class="text-xs font-bold uppercase tracking-wider text-indigo-600">Child</div>
                                     <div class="font-bold text-emerald-700 text-xs mt-0.5">
                                         @if($tkt->parentTicket)
-                                            @php
-                                                $parentRoute = auth()->user()?->role?->slug_identifier === 'admin'
-                                                    ? route('admin.tickets.show', $tkt->parentTicket)
-                                                    : route('cwd.tickets.show', $tkt->parentTicket);
-                                            @endphp
-                                            <a href="{{ $parentRoute }}" class="hover:underline">
+                                            <a href="{{ route($isAdmin ? 'admin.tickets.show' : 'cwd.tickets.show', $tkt->parentTicket) }}" class="hover:underline">
                                                 {{ $tkt->parentTicket->ticket_number }}
                                             </a>
                                         @else

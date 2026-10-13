@@ -87,19 +87,13 @@
                             <!-- Actor Name & Role -->
                             <td class="px-6 py-4">
                                 <div class="flex items-center gap-3">
-                                    @php
-                                        $actorName = $log->causer ? ($log->causer->first_name . ' ' . $log->causer->last_name) : ($log->properties['full_name'] ?? $log->properties['username'] ?? 'System');
-                                        $actorRole = $log->causer ? $log->causer->role->role_name : ($log->properties['role'] ?? 'Unknown');
-                                        $initials = strtoupper(substr(trim($actorName), 0, 2)) ?: 'SY';
-                                    @endphp
-                                    
                                     <div class="w-9 h-9 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center font-bold text-xs shrink-0 border border-slate-200">
-                                        {{ $initials }}
+                                        {{ $log->actor_initials }}
                                     </div>
                                     <div class="flex flex-col">
-                                        <span class="font-medium text-slate-800">{{ Str::title($actorName) }}</span>
+                                        <span class="font-medium text-slate-800">{{ Str::title($log->actor_name) }}</span>
                                         <span class="text-[11px] font-semibold text-slate-500 uppercase tracking-wider mt-0.5">
-                                            {{ Str::headline($actorRole) }}
+                                            {{ Str::headline($log->actor_role) }}
                                         </span>
                                     </div>
                                 </div>

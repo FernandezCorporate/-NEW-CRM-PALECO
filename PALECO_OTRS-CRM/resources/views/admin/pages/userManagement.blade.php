@@ -22,15 +22,9 @@
     <nav class="record-tabs" aria-label="Filter users by role">
         <a href="{{ route('admin.users', array_merge(request()->except(['filter', 'page']), ['filter' => 'all'])) }}" @if(!request('filter') || request('filter') === 'all') aria-current="page" @endif>All users</a>
         @foreach($roles as $role)
-            @php
-                $countKey = match($role->slug_identifier) {
-                    'admin' => 'admin', 'cwd_officer' => 'cwd',
-                    'supervisor' => 'supervisor', 'field_personnel' => 'field_personnel', default => null,
-                };
-            @endphp
             <a href="{{ route('admin.users', array_merge(request()->except(['filter', 'page']), ['filter' => $role->slug_identifier])) }}" @if(request('filter') === $role->slug_identifier) aria-current="page" @endif>
                 {{ Str::headline($role->role_name) }}
-                @if($countKey)<span>{{ $activeCounts->{$countKey} }} active</span>@endif
+                <span>{{ $role->active_count }} active</span>
             </a>
         @endforeach
     </nav>

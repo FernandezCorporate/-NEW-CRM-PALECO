@@ -33,12 +33,7 @@
                     <span class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Child Tickets ({{ $ticket->childTickets->count() }})</span>
                     <div class="space-y-2 pl-4 border-l-2 border-slate-200 ml-2">
                         @foreach($ticket->childTickets as $child)
-                            @php
-                                $childRoute = $isAdmin
-                                    ? route('admin.tickets.show', ['ticket' => $child, 'source' => 'parent', 'parent' => $ticket->id])
-                                    : route('cwd.tickets.show', ['ticket' => $child, 'source' => 'parent', 'parent' => $ticket->id]);
-                            @endphp
-                            <a href="{{ $childRoute }}" class="block p-3 bg-slate-50 border border-slate-200 rounded-lg hover:border-indigo-300 hover:shadow-xs transition-all group">
+                            <a href="{{ route($isAdmin ? 'admin.tickets.show' : 'cwd.tickets.show', ['ticket' => $child, 'source' => 'parent', 'parent' => $ticket->id]) }}" class="block p-3 bg-slate-50 border border-slate-200 rounded-lg hover:border-indigo-300 hover:shadow-xs transition-all group">
                                 <div class="flex items-center justify-between">
                                     <span class="font-bold text-indigo-600 text-sm group-hover:text-indigo-700 transition-colors">{{ $child->ticket_number }}</span>
                                     <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full border {{ $child->status->badgeClasses() }}">{{ $child->status->label() }}</span>
@@ -54,12 +49,7 @@
             <!-- Current ticket is a CHILD -->
             <div>
                 <span class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Origin / Parent Ticket</span>
-                @php
-                    $parentRoute = $isAdmin
-                        ? route('admin.tickets.show', ['ticket' => $ticket->parentTicket, 'source' => 'child', 'child' => $ticket->id])
-                        : route('cwd.tickets.show', ['ticket' => $ticket->parentTicket, 'source' => 'child', 'child' => $ticket->id]);
-                @endphp
-                <a href="{{ $parentRoute }}" class="block p-3 bg-slate-50 border border-slate-200 rounded-lg hover:border-indigo-300 hover:shadow-xs transition-all group">
+                <a href="{{ route($isAdmin ? 'admin.tickets.show' : 'cwd.tickets.show', ['ticket' => $ticket->parentTicket, 'source' => 'child', 'child' => $ticket->id]) }}" class="block p-3 bg-slate-50 border border-slate-200 rounded-lg hover:border-indigo-300 hover:shadow-xs transition-all group">
                     <div class="flex items-center justify-between">
                         <span class="font-bold text-indigo-600 text-sm group-hover:text-indigo-700 transition-colors">{{ $ticket->parentTicket->ticket_number }}</span>
                         <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full border {{ $ticket->parentTicket->status->badgeClasses() }}">{{ $ticket->parentTicket->status->label() }}</span>
@@ -84,12 +74,7 @@
                     <span class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Sub-Child Tickets ({{ $ticket->childTickets->count() }})</span>
                     <div class="space-y-2 pl-4 border-l-2 border-slate-200 ml-2">
                         @foreach($ticket->childTickets as $subChild)
-                            @php
-                                $subChildRoute = $isAdmin
-                                    ? route('admin.tickets.show', ['ticket' => $subChild, 'source' => 'parent', 'parent' => $ticket->id])
-                                    : route('cwd.tickets.show', ['ticket' => $subChild, 'source' => 'parent', 'parent' => $ticket->id]);
-                            @endphp
-                            <a href="{{ $subChildRoute }}" class="block p-3 bg-slate-50 border border-slate-200 rounded-lg hover:border-indigo-300 hover:shadow-xs transition-all group">
+                            <a href="{{ route($isAdmin ? 'admin.tickets.show' : 'cwd.tickets.show', ['ticket' => $subChild, 'source' => 'parent', 'parent' => $ticket->id]) }}" class="block p-3 bg-slate-50 border border-slate-200 rounded-lg hover:border-indigo-300 hover:shadow-xs transition-all group">
                                 <div class="flex items-center justify-between">
                                     <span class="font-bold text-indigo-600 text-sm group-hover:text-indigo-700 transition-colors">{{ $subChild->ticket_number }}</span>
                                     <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full border {{ $subChild->status->badgeClasses() }}">{{ $subChild->status->label() }}</span>
