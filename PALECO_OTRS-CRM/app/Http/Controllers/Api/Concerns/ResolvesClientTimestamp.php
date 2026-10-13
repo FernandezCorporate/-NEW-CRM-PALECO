@@ -41,10 +41,18 @@ trait ResolvesClientTimestamp
         }
 
         $ticketCreated = $ticket->reported_at ?? $ticket->created_at;
-        if ($ticketCreated && $parsed->isBefore($ticketCreated)) {
-            throw ValidationException::withMessages([
-                'client_timestamp' => 'The client timestamp cannot be earlier than ticket creation date.',
-            ]);
+        if ($ticketCreated) {
+            $driftGraceWindow = $ticketCreated->copy()->subMinutes(3);
+            if ($parsed->isBefore($driftGraceWindow)) {
+                throw ValidationException::withMessages([
+                    'client_timestamp' => 'The client timestamp cannot be earlier than ticket creation date.',
+                ]);
+            }
+
+            // If within the 3-minute backward drift tolerance, clamp safely to ticket creation timestamp
+            if ($parsed->isBefore($ticketCreated)) {
+                $parsed = $ticketCreated->copy();
+            }
         }
 
         return $parsed;

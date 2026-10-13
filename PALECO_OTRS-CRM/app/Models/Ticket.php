@@ -97,7 +97,7 @@ class Ticket extends Model
      */
     public function department(): BelongsTo
     {
-        return $this->belongsTo(Department::class, 'department_id');
+        return $this->belongsTo(Department::class, 'department_id')->withTrashed();
     }
 
     /**
@@ -105,7 +105,7 @@ class Ticket extends Model
      */
     public function team(): BelongsTo
     {
-        return $this->belongsTo(Team::class, 'team_id');
+        return $this->belongsTo(Team::class, 'team_id')->withTrashed();
     }
 
     /**
@@ -113,7 +113,7 @@ class Ticket extends Model
      */
     public function category(): BelongsTo
     {
-        return $this->belongsTo(TicketCategory::class, 'category_id');
+        return $this->belongsTo(TicketCategory::class, 'category_id')->withTrashed();
     }
 
     /**

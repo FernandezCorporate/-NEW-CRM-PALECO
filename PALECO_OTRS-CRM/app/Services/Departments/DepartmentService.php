@@ -2,6 +2,7 @@
 
 namespace App\Services\Departments;
 
+use App\Enums\TicketStatus;
 use App\Models\Department;
 use App\Models\User;
 use Carbon\Carbon;
@@ -98,14 +99,26 @@ class DepartmentService
     // --- DESTRUCTIVE & STATE METHODS ---
 
     /**
-     * Soft-deletes (archives) a department if no active teams, personnel, or tickets are linked.
+     * Soft-deletes (archives) a department if no active teams, personnel, or active tickets are linked.
      */
     public function archiveDepartment(Department $dept): array
     {
-        if ($dept->teams()->exists() || $dept->supervisors()->exists() || $dept->tickets()->exists()) {
+        $hasActiveTickets = $dept->tickets()
+            ->whereIn('status', [
+                TicketStatus::OPEN,
+                TicketStatus::ASSIGNED,
+                TicketStatus::IN_PROGRESS,
+                TicketStatus::PENDING_ENDORSEMENT,
+            ])
+            ->exists();
+
+        $hasActiveTeams = $dept->teams()->whereNull('deleted_at')->exists();
+        $hasActiveSupervisors = $dept->supervisors()->where('is_active', true)->exists();
+
+        if ($hasActiveTickets || $hasActiveTeams || $hasActiveSupervisors) {
             return [
                 'success' => false,
-                'message' => 'Cannot archive this department. It contains active teams, personnel, or history.',
+                'message' => 'Cannot archive this department. It contains active teams, personnel, or active service tickets.',
             ];
         }
 

@@ -26,14 +26,18 @@ class TicketResource extends JsonResource
             'complaint_description' => $this->complaint_description,
             'category_name' => $this->other_category
                                         ? $this->other_category_name
-                                        : $this->category?->category_name,
+                                        : ($this->category?->trashed()
+                                            ? $this->category->category_name . ' (Archived)'
+                                            : $this->category?->category_name),
             'purok' => $this->purok,
             'street' => $this->street,
             'barangay' => $this->barangay,
             'landmark' => $this->landmark,
 
             'team_id' => $this->team_id,
-            'team_name' => $this->team?->team_name,
+            'team_name' => $this->team?->trashed()
+                ? $this->team->team_name . ' (Archived)'
+                : $this->team?->team_name,
             'created_by' => $this->created_by_id,
             'created_by_name' => $this->creator?->full_name,
 

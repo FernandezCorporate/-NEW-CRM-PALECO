@@ -31,7 +31,11 @@
             <div class="p-4 bg-slate-50 border border-slate-200 rounded-lg">
                 <div class="flex items-center justify-between mb-3 border-b border-slate-200/80 pb-2">
                     <span class="font-bold text-slate-900 text-sm">{{ $ticket->team->team_name }}</span>
-                    <span class="text-[10px] bg-slate-200 text-slate-700 px-2 py-0.5 rounded font-bold uppercase tracking-wider">Field Team</span>
+                    @if($ticket->team->trashed())
+                        <span class="text-[10px] bg-amber-100 text-amber-800 border border-amber-300 px-2 py-0.5 rounded font-bold uppercase tracking-wider">Archived Team</span>
+                    @else
+                        <span class="text-[10px] bg-slate-200 text-slate-700 px-2 py-0.5 rounded font-bold uppercase tracking-wider">Field Team</span>
+                    @endif
                 </div>
                 <div class="space-y-2">
                     @forelse($ticket->team->members as $member)

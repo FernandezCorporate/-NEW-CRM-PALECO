@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\EndorsementStatus;
+use App\Enums\TicketStatus;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Model;
@@ -36,6 +37,7 @@ class TicketEndorsement extends Model
     {
         return [
             'status' => EndorsementStatus::class,
+            'pre_endorsement_status' => TicketStatus::class,
             'reviewed_at' => 'datetime',
         ];
     }
@@ -71,7 +73,7 @@ class TicketEndorsement extends Model
      */
     public function suggestedDepartment(): BelongsTo
     {
-        return $this->belongsTo(Department::class, 'suggested_department_id');
+        return $this->belongsTo(Department::class, 'suggested_department_id')->withTrashed();
     }
 
     // --- SCOPES ---

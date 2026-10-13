@@ -2,6 +2,7 @@
 
 namespace App\Services\Categories;
 
+use App\Enums\TicketStatus;
 use App\Models\TicketCategory;
 use Carbon\Carbon;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -80,10 +81,19 @@ class TicketCategoryService
      */
     public function archiveCategory(TicketCategory $category): array
     {
-        if ($category->ticket()->exists()) {
+        $hasActiveTickets = $category->ticket()
+            ->whereIn('status', [
+                TicketStatus::OPEN,
+                TicketStatus::ASSIGNED,
+                TicketStatus::IN_PROGRESS,
+                TicketStatus::PENDING_ENDORSEMENT,
+            ])
+            ->exists();
+
+        if ($hasActiveTickets) {
             return [
                 'success' => false,
-                'message' => 'Cannot archive this category because it is currently assigned to existing service tickets.',
+                'message' => 'Cannot archive this category because it is currently assigned to active service tickets.',
             ];
         }
 

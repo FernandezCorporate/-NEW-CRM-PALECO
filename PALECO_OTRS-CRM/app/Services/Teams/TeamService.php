@@ -361,7 +361,12 @@ class TeamService
             ];
         }
 
-        $hasActiveTickets = $team->ticket()->exists();
+        $hasActiveTickets = $team->ticket()
+            ->whereIn('status', [
+                TicketStatus::ASSIGNED,
+                TicketStatus::IN_PROGRESS,
+            ])
+            ->exists();
 
         if ($hasActiveTickets) {
             return [

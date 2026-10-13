@@ -287,7 +287,12 @@ class TicketService
                 });
             } catch (QueryException $e) {
                 // If collision occurred on unique ticket_number constraint, retry with next sequence
-                if ($attempt < $maxAttempts && $e->errorInfo[1] === 1062) {
+                $isDuplicateKey = ($e->errorInfo[1] ?? null) === 1062
+                    || ($e->errorInfo[1] ?? null) === 19
+                    || str_contains($e->getMessage(), 'Duplicate entry')
+                    || str_contains($e->getMessage(), 'UNIQUE constraint failed');
+
+                if ($attempt < $maxAttempts && $isDuplicateKey) {
                     usleep(50000 * $attempt); // 50ms backoff
 
                     continue;
@@ -302,69 +307,95 @@ class TicketService
 
     /**
      * Manually spawn a child ticket linked directly to the parent ticket.
+     * Retries automatically if a concurrent race condition collides on the child sequence number.
      */
     public function createManualChildTicket(Ticket $parentTicket, array $validatedData): Ticket
     {
-        return DB::transaction(function () use ($parentTicket, $validatedData) {
-            $lockedParent = Ticket::where('id', $parentTicket->id)
-                ->lockForUpdate()
-                ->firstOrFail();
+        $maxAttempts = 3;
+        $attempt = 0;
 
-            if (! is_null($lockedParent->parent_ticket_id)) {
-                throw ValidationException::withMessages([
-                    'parent_ticket_id' => 'Cannot create a child ticket from another child ticket. Only root origin tickets can spawn child tickets.',
-                ]);
+        while ($attempt < $maxAttempts) {
+            $attempt++;
+
+            try {
+                return DB::transaction(function () use ($parentTicket, $validatedData) {
+                    $lockedParent = Ticket::where('id', $parentTicket->id)
+                        ->lockForUpdate()
+                        ->firstOrFail();
+
+                    if (! is_null($lockedParent->parent_ticket_id)) {
+                        throw ValidationException::withMessages([
+                            'parent_ticket_id' => 'Cannot create a child ticket from another child ticket. Only root origin tickets can spawn child tickets.',
+                        ]);
+                    }
+
+                    if ($lockedParent->status === TicketStatus::PENDING_ENDORSEMENT) {
+                        throw ValidationException::withMessages([
+                            'parent_ticket_id' => 'Cannot spawn child tickets from a ticket that is pending endorsement.',
+                        ]);
+                    }
+
+                    $childTicket = Ticket::create([
+                        'ticket_number' => $this->generateChildTicketNumber($lockedParent),
+                        'parent_ticket_id' => $lockedParent->id,
+                        'department_id' => $validatedData['department_id'],
+
+                        'consumer_id' => $lockedParent->consumer_id,
+                        'consumer_contact' => $validatedData['consumer_contact'] ?? $lockedParent->consumer_contact,
+                        'complaint_source' => $lockedParent->complaint_source,
+                        'complaint_description' => $validatedData['complaint_description'],
+
+                        'category_id' => $validatedData['category_id'] ?? null,
+                        'other_category' => $validatedData['other_category'] ?? false,
+                        'other_category_name' => $validatedData['other_category_name'] ?? null,
+
+                        'purok' => $validatedData['purok'] ?? $lockedParent->purok,
+                        'street' => $validatedData['street'] ?? $lockedParent->street,
+                        'barangay' => $validatedData['barangay'] ?? $lockedParent->barangay,
+                        'landmark' => $validatedData['landmark'] ?? $lockedParent->landmark,
+
+                        'status' => TicketStatus::OPEN,
+                        'created_by_id' => Auth::id(),
+                        'reported_at' => now(),
+                    ]);
+
+                    $childTicket->statusLog()->create([
+                        'changed_by_id' => Auth::id(),
+                        'old_status' => null,
+                        'new_status' => TicketStatus::OPEN,
+                    ]);
+
+                    $lockedParent->remarks()->create([
+                        'user_id' => Auth::id(),
+                        'body' => "Child Ticket {$childTicket->ticket_number} was created.",
+                        'is_internal' => true,
+                    ]);
+
+                    // Defer broadcast until after database transaction commits
+                    DB::afterCommit(function () use ($childTicket) {
+                        TicketCreated::dispatch($childTicket->load(['category', 'department']));
+                    });
+
+                    return $childTicket;
+                });
+            } catch (QueryException $e) {
+                // If collision occurred on unique ticket_number constraint, retry with next sequence
+                $isDuplicateKey = ($e->errorInfo[1] ?? null) === 1062
+                    || ($e->errorInfo[1] ?? null) === 19
+                    || str_contains($e->getMessage(), 'Duplicate entry')
+                    || str_contains($e->getMessage(), 'UNIQUE constraint failed');
+
+                if ($attempt < $maxAttempts && $isDuplicateKey) {
+                    usleep(50000 * $attempt); // 50ms backoff
+
+                    continue;
+                }
+
+                throw $e;
             }
+        }
 
-            if ($lockedParent->status === TicketStatus::PENDING_ENDORSEMENT) {
-                throw ValidationException::withMessages([
-                    'parent_ticket_id' => 'Cannot spawn child tickets from a ticket that is pending endorsement.',
-                ]);
-            }
-
-            $childTicket = Ticket::create([
-                'ticket_number' => $this->generateChildTicketNumber($lockedParent),
-                'parent_ticket_id' => $lockedParent->id,
-                'department_id' => $validatedData['department_id'],
-
-                'consumer_id' => $lockedParent->consumer_id,
-                'consumer_contact' => $validatedData['consumer_contact'] ?? $lockedParent->consumer_contact,
-                'complaint_source' => $lockedParent->complaint_source,
-                'complaint_description' => $validatedData['complaint_description'],
-
-                'category_id' => $validatedData['category_id'] ?? null,
-                'other_category' => $validatedData['other_category'] ?? false,
-                'other_category_name' => $validatedData['other_category_name'] ?? null,
-
-                'purok' => $validatedData['purok'] ?? $lockedParent->purok,
-                'street' => $validatedData['street'] ?? $lockedParent->street,
-                'barangay' => $validatedData['barangay'] ?? $lockedParent->barangay,
-                'landmark' => $validatedData['landmark'] ?? $lockedParent->landmark,
-
-                'status' => TicketStatus::OPEN,
-                'created_by_id' => Auth::id(),
-                'reported_at' => now(),
-            ]);
-
-            $childTicket->statusLog()->create([
-                'changed_by_id' => Auth::id(),
-                'old_status' => null,
-                'new_status' => TicketStatus::OPEN,
-            ]);
-
-            $lockedParent->remarks()->create([
-                'user_id' => Auth::id(),
-                'body' => "Child Ticket {$childTicket->ticket_number} was created.",
-                'is_internal' => true,
-            ]);
-
-            // Defer broadcast until after database transaction commits
-            DB::afterCommit(function () use ($childTicket) {
-                TicketCreated::dispatch($childTicket->load(['category', 'department']));
-            });
-
-            return $childTicket;
-        });
+        throw new \RuntimeException('Failed to generate a unique child ticket sequence number after multiple attempts.');
     }
 
     /**

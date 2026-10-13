@@ -109,11 +109,17 @@
                             <td class="px-6 py-4 align-top">
                                 <div class="text-sm text-slate-800 font-medium">
                                     {{ $tkt->other_category ? $tkt->other_category_name : ($tkt->category->category_name ?? 'Unspecified') }}
+                                    @if(! $tkt->other_category && $tkt->category?->trashed())
+                                        <span class="text-[10px] text-slate-400 font-normal italic">(Archived)</span>
+                                    @endif
                                 </div>
                             </td>
                             <td class="px-6 py-4 align-top text-center">
                                 <x-badge variant="emerald">
                                     {{ $tkt->department->dept_name ?? 'Unassigned' }}
+                                    @if($tkt->department?->trashed())
+                                        <span class="text-[10px] text-emerald-800 font-normal italic">(Archived)</span>
+                                    @endif
                                 </x-badge>
                             </td>
                             <td class="px-6 py-4 align-top text-center">

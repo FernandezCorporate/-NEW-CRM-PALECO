@@ -76,12 +76,18 @@
                 <!-- Category -->
                 <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-50 border border-slate-200 text-slate-700 text-xs font-semibold shadow-2xs">
                     <x-icons.category class="w-3.5 h-3.5 text-slate-400" />
-                    {{ $ticket->other_category ? $ticket->other_category_name : ($ticket->category->category_name ?? 'Unspecified') }}
+                    <span>{{ $ticket->other_category ? $ticket->other_category_name : ($ticket->category->category_name ?? 'Unspecified') }}</span>
+                    @if(! $ticket->other_category && $ticket->category?->trashed())
+                        <span class="text-[10px] bg-slate-200 text-slate-600 px-1.5 py-0.5 rounded font-medium italic">Archived</span>
+                    @endif
                 </span>
                 <!-- Department -->
                 <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-semibold shadow-2xs">
                     <x-icons.department class="w-3.5 h-3.5" />
-                    {{ $ticket->department->dept_name ?? 'Unassigned' }}
+                    <span>{{ $ticket->department->dept_name ?? 'Unassigned' }}</span>
+                    @if($ticket->department?->trashed())
+                        <span class="text-[10px] bg-emerald-200 text-emerald-800 px-1.5 py-0.5 rounded font-medium italic">Archived</span>
+                    @endif
                 </span>
             </div>
 
@@ -221,7 +227,12 @@
             @forelse($ticket->assignments as $assignment)
                 <tr>
                     <td class="history-date"><time datetime="{{ $assignment->created_at->toIso8601String() }}">{{ $assignment->created_at->format('M d, Y') }}<small>{{ $assignment->created_at->format('h:i A') }}</small></time></td>
-                    <td><strong>{{ $assignment->team->team_name ?? 'Unknown team' }}</strong></td>
+                    <td>
+                        <strong>{{ $assignment->team->team_name ?? 'Unknown team' }}</strong>
+                        @if($assignment->team?->trashed())
+                            <span class="ml-1 text-[10px] bg-slate-100 text-slate-500 border border-slate-200 px-1.5 py-0.5 rounded font-normal italic">Archived</span>
+                        @endif
+                    </td>
                     <td>{{ $assignment->assigner->full_name ?? 'Unknown user' }}</td>
                     <td class="history-date">
                         @if($assignment->unassigned_at)
