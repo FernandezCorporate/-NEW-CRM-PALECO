@@ -95,7 +95,7 @@
             @endif
 
             <!-- Confirmation Form -->
-            <form action="{{ $action }}" method="POST" class="flex flex-col-reverse sm:flex-row justify-center gap-3">
+            <form action="{{ $action }}" method="POST">
                 @csrf
                 @if(strtoupper($method) !== 'POST')
                     @method($method)
@@ -107,16 +107,24 @@
                     @endif
                 @endforeach
 
-                <x-btn variant="secondary" href="{{ $cancelRoute }}" class="action-link w-full sm:w-auto" data-loading-text="Canceling...">
-                    Cancel
-                </x-btn>
+                @if(isset($formInputs))
+                    <div class="mb-6 text-left">
+                        {{ $formInputs }}
+                    </div>
+                @endif
 
-                <x-btn :variant="$variantConfig['btnVariant']" type="submit" class="w-full sm:w-auto" :data-loading-text="$loadingText">
-                    @if(isset($confirmIcon))
-                        {{ $confirmIcon }}
-                    @endif
-                    <span>{{ $confirmText }}</span>
-                </x-btn>
+                <div class="flex flex-col-reverse sm:flex-row justify-center gap-3">
+                    <x-btn variant="secondary" href="{{ $cancelRoute }}" class="action-link w-full sm:w-auto" data-loading-text="Canceling...">
+                        Cancel
+                    </x-btn>
+
+                    <x-btn :variant="$variantConfig['btnVariant']" type="submit" class="w-full sm:w-auto" :data-loading-text="$loadingText">
+                        @if(isset($confirmIcon))
+                            {{ $confirmIcon }}
+                        @endif
+                        <span>{{ $confirmText }}</span>
+                    </x-btn>
+                </div>
             </form>
         </div>
     </section>

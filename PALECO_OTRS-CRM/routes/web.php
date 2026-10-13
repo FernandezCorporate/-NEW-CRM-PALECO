@@ -161,6 +161,8 @@ Route::middleware(['auth', CheckIfActive::class])->group(function () {
         Route::prefix('tickets')->group(function () {
             Route::get('/', [TicketController::class, 'index'])->name('admin.tickets');
             Route::get('/{ticket}', [TicketController::class, 'show'])->name('admin.tickets.show')->whereUlid('ticket');
+            Route::get('/{ticket}/force-close', [TicketController::class, 'forceCloseConfirm'])->name('admin.tickets.forceCloseConfirm')->whereUlid('ticket');
+            Route::post('/{ticket}/force-close', [TicketController::class, 'forceClose'])->name('admin.tickets.forceClose')->whereUlid('ticket');
         });
 
         Route::prefix('system-monitoring')->group(function () {
@@ -194,7 +196,9 @@ Route::middleware(['auth', CheckIfActive::class])->group(function () {
             Route::put('/{ticket}', [TicketController::class, 'update'])->name('cwd.tickets.update')->whereUlid('ticket');
             Route::get('/{ticket}/children/create', [TicketController::class, 'childTicketForm'])->name('cwd.tickets.children.createForm')->whereUlid('ticket');
             Route::post('/{ticket}/children', [TicketController::class, 'storeChild'])->name('cwd.tickets.children.store')->whereUlid('ticket');
+            Route::get('/{ticket}/cancel', [TicketController::class, 'cancelConfirm'])->name('cwd.tickets.cancelConfirm')->whereUlid('ticket');
             Route::post('/{ticket}/cancel', [TicketController::class, 'cancel'])->name('cwd.tickets.cancel')->whereUlid('ticket');
+            Route::get('/{ticket}/force-close', [TicketController::class, 'forceCloseConfirm'])->name('cwd.tickets.forceCloseConfirm')->whereUlid('ticket');
             Route::post('/{ticket}/force-close', [TicketController::class, 'forceClose'])->name('cwd.tickets.forceClose')->whereUlid('ticket');
             Route::get('/{ticket}/accomplishments/{accomplishment}', [TicketAccomplishmentController::class, 'show'])->name('cwd.tickets.accomplishments.show')->whereUlid('ticket')->whereNumber('accomplishment');
         });

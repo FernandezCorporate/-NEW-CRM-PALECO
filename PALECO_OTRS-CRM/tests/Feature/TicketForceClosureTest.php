@@ -304,6 +304,65 @@ test('cwd officer can force-close an assigned ticket with freely typed justifica
     expect($activity->causer_id)->toBe($this->cwdUser->id);
 });
 
+test('authorized cwd user and admin can view force close confirmation page', function () {
+    $ticket = Ticket::create([
+        'id' => (string) Str::ulid(),
+        'ticket_number' => 'TCK-20261013-FC-CONFIRM',
+        'complaint_source' => ComplaintSources::PHONE_CALL->value,
+        'consumer_contact' => '09123456789',
+        'complaint_description' => 'Test force close prompt.',
+        'department_id' => $this->dept->id,
+        'category_id' => $this->category->id,
+        'barangay' => 'Tiniguiban',
+        'status' => TicketStatus::ASSIGNED->value,
+        'created_by_id' => $this->cwdUser->id,
+        'reported_at' => now(),
+    ]);
+
+    // CWD Officer
+    $cwdResponse = $this->actingAs($this->cwdUser)
+        ->get(route('cwd.tickets.forceCloseConfirm', $ticket));
+    $cwdResponse->assertOk();
+    $cwdResponse->assertSee('Force Close Service Ticket?');
+    $cwdResponse->assertSee('closure_reason');
+
+    // Admin
+    $adminResponse = $this->actingAs($this->adminUser)
+        ->get(route('admin.tickets.forceCloseConfirm', $ticket));
+    $adminResponse->assertOk();
+    $adminResponse->assertSee('Force Close Service Ticket?');
+    $adminResponse->assertSee('closure_reason');
+});
+
+test('admin can force close ticket and is redirected to admin ticket show', function () {
+    $ticket = Ticket::create([
+        'id' => (string) Str::ulid(),
+        'ticket_number' => 'TCK-20261013-ADMIN-FC',
+        'complaint_source' => ComplaintSources::PHONE_CALL->value,
+        'consumer_contact' => '09123456789',
+        'complaint_description' => 'Test admin force close.',
+        'department_id' => $this->dept->id,
+        'category_id' => $this->category->id,
+        'barangay' => 'Tiniguiban',
+        'status' => TicketStatus::ASSIGNED->value,
+        'created_by_id' => $this->adminUser->id,
+        'reported_at' => now(),
+    ]);
+
+    $response = $this->actingAs($this->adminUser)
+        ->post(route('admin.tickets.forceClose', $ticket), [
+            'closure_reason' => 'Administrative intervention: line clear.',
+        ]);
+
+    $response->assertRedirect(route('admin.tickets.show', $ticket));
+    $response->assertSessionHas('success');
+
+    $ticket->refresh();
+    expect($ticket->status)->toBe(TicketStatus::CLOSED);
+    expect($ticket->is_force_closed)->toBeTrue();
+    expect($ticket->closed_by_id)->toBe($this->adminUser->id);
+});
+
 test('force closure is permitted from in-progress, resolved, and endorsed statuses', function () {
     $service = app(TicketService::class);
 

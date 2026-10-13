@@ -153,6 +153,18 @@ class TicketController extends Controller
     }
 
     /*
+     * Renders full-page confirmation prompt for cancelling an open ticket.
+     */
+    public function cancelConfirm(Ticket $ticket): View
+    {
+        Gate::authorize('cancel', $ticket);
+
+        return view('cwd.prompts.ticketCancelConfirm', [
+            'ticket' => $ticket,
+        ]);
+    }
+
+    /*
      * Validates and processes the cancellation of an open or assigned service ticket.
      */
     public function cancel(CancelTicketRequest $request, Ticket $ticket): RedirectResponse
@@ -173,22 +185,40 @@ class TicketController extends Controller
     }
 
     /*
+     * Renders full-page confirmation prompt for administratively force-closing an active ticket.
+     */
+    public function forceCloseConfirm(Ticket $ticket): View
+    {
+        Gate::authorize('forceClose', $ticket);
+
+        $isAdmin = auth()->user()?->role?->slug_identifier === 'admin';
+
+        return view('shared.prompts.ticketForceCloseConfirm', [
+            'ticket' => $ticket,
+            'isAdmin' => $isAdmin,
+        ]);
+    }
+
+    /*
      * Validates and processes administrative force-closure of an active service ticket.
      */
     public function forceClose(ForceCloseTicketRequest $request, Ticket $ticket): RedirectResponse
     {
         Gate::authorize('forceClose', $ticket);
 
+        $isAdmin = $request->user()?->role?->slug_identifier === 'admin';
+        $redirectRoute = $isAdmin ? 'admin.tickets.show' : 'cwd.tickets.show';
+
         try {
             $this->ticketService->forceCloseTicket($ticket, $request->validated(), $request->user());
         } catch (ValidationException $e) {
             $errorMessage = collect($e->errors())->flatten()->first() ?? 'Ticket cannot be force-closed.';
 
-            return redirect()->route('cwd.tickets.show', $ticket)
+            return redirect()->route($redirectRoute, $ticket)
                 ->with('error', $errorMessage);
         }
 
-        return redirect()->route('cwd.tickets.show', $ticket)
+        return redirect()->route($redirectRoute, $ticket)
             ->with('success', "Ticket {$ticket->ticket_number} has been administratively force-closed.");
     }
 }

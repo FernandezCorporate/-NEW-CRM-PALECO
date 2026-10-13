@@ -266,6 +266,29 @@ test('cwd officer can cancel an open ticket with freely typed reason via web', f
     expect(TicketRemark::where('ticket_id', $ticket->id)->count())->toBe(0);
 });
 
+test('authorized cwd user can view ticket cancel confirmation page', function () {
+    $ticket = Ticket::create([
+        'id' => (string) Str::ulid(),
+        'ticket_number' => 'TCK-20261013-CONFIRM-1',
+        'complaint_source' => ComplaintSources::PHONE_CALL->value,
+        'consumer_contact' => '09123456789',
+        'complaint_description' => 'Test cancellation prompt.',
+        'department_id' => $this->dept->id,
+        'category_id' => $this->category->id,
+        'barangay' => 'San Pedro',
+        'status' => TicketStatus::OPEN->value,
+        'created_by_id' => $this->cwdUser->id,
+        'reported_at' => now(),
+    ]);
+
+    $response = $this->actingAs($this->cwdUser)
+        ->get(route('cwd.tickets.cancelConfirm', $ticket));
+
+    $response->assertOk();
+    $response->assertSee('Cancel Service Ticket?');
+    $response->assertSee('cancellation_reason');
+});
+
 test('only open tickets can be cancelled; assigned tickets cannot be cancelled', function () {
     $assignedTicket = Ticket::create([
         'id' => (string) Str::ulid(),
