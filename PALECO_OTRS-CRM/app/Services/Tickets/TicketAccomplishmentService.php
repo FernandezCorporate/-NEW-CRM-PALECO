@@ -127,6 +127,35 @@ class TicketAccomplishmentService
                     ->lockForUpdate()
                     ->firstOrFail();
 
+                // Concurrency safety under pessimistic row lock
+                if ($lockedTicket->status === TicketStatus::RESOLVED) {
+                    $existingReport = $lockedTicket->accomplishments()
+                        ->where('accomplished_by_id', $worker->id)
+                        ->latest('id')
+                        ->first();
+                    if ($existingReport) {
+                        return $existingReport->load(['accomplishedBy', 'approvedBy', 'rejectedBy', 'photos']);
+                    }
+                }
+
+                if ($lockedTicket->status === TicketStatus::PENDING_ENDORSEMENT) {
+                    throw ValidationException::withMessages([
+                        'status' => 'Ticket is locked pending inter-departmental endorsement review.',
+                    ]);
+                }
+
+                if ($lockedTicket->status !== TicketStatus::IN_PROGRESS) {
+                    throw ValidationException::withMessages([
+                        'status' => 'Only tickets that are currently in progress can be marked as accomplished.',
+                    ]);
+                }
+
+                if ($lockedTicket->accomplishments()->where('status', TicketAccomplishmentStatus::PENDING)->exists()) {
+                    throw ValidationException::withMessages([
+                        'status' => 'This ticket already has a pending accomplishment report under supervisor review.',
+                    ]);
+                }
+
                 $oldStatus = $lockedTicket->status;
 
                 $report = $lockedTicket->accomplishments()->create([

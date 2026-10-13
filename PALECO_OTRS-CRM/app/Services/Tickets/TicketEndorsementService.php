@@ -112,10 +112,22 @@ class TicketEndorsementService
             ]);
         }
 
-        return DB::transaction(function () use ($ticket, $data, $supervisor) {
+        return DB::transaction(function () use ($ticket, $data, $supervisor, $allowedStatuses) {
             $lockedTicket = Ticket::where('id', $ticket->id)
                 ->lockForUpdate()
                 ->firstOrFail();
+
+            if (! in_array($lockedTicket->status, $allowedStatuses, true)) {
+                throw ValidationException::withMessages([
+                    'status' => 'Tickets that are resolved, closed, or locked in an endorsement workflow cannot be endorsed.',
+                ]);
+            }
+
+            if ($lockedTicket->endorsements()->where('status', EndorsementStatus::PENDING->value)->exists()) {
+                throw ValidationException::withMessages([
+                    'status' => 'This ticket already has a pending endorsement request.',
+                ]);
+            }
 
             $oldStatus = $lockedTicket->status;
 

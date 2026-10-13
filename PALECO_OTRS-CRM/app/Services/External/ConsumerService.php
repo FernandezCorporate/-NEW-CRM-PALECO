@@ -58,6 +58,11 @@ class ConsumerService
 
             return $syncedConsumer->id;
         } catch (Exception $e) {
+            $existingConsumer = Consumer::where('acct_code', $accountCode)->first();
+            if ($existingConsumer) {
+                return $existingConsumer->id;
+            }
+
             if ($consumer) {
                 return $consumer->id;
             }

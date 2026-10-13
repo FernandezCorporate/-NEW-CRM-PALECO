@@ -81,25 +81,38 @@ class TicketCategoryService
      */
     public function archiveCategory(TicketCategory $category): array
     {
-        $hasActiveTickets = $category->ticket()
-            ->whereIn('status', [
-                TicketStatus::OPEN,
-                TicketStatus::ASSIGNED,
-                TicketStatus::IN_PROGRESS,
-                TicketStatus::PENDING_ENDORSEMENT,
-            ])
-            ->exists();
+        return DB::transaction(function () use ($category) {
+            $lockedCategory = TicketCategory::where('id', $category->id)
+                ->lockForUpdate()
+                ->first();
 
-        if ($hasActiveTickets) {
-            return [
-                'success' => false,
-                'message' => 'Cannot archive this category because it is currently assigned to active service tickets.',
-            ];
-        }
+            if (! $lockedCategory || $lockedCategory->trashed()) {
+                return [
+                    'success' => false,
+                    'message' => 'Conflict: This category has already been archived by an administrator.',
+                ];
+            }
 
-        $category->delete();
+            $hasActiveTickets = $lockedCategory->ticket()
+                ->whereIn('status', [
+                    TicketStatus::OPEN,
+                    TicketStatus::ASSIGNED,
+                    TicketStatus::IN_PROGRESS,
+                    TicketStatus::PENDING_ENDORSEMENT,
+                ])
+                ->exists();
 
-        return ['success' => true, 'message' => 'Category archived successfully.'];
+            if ($hasActiveTickets) {
+                return [
+                    'success' => false,
+                    'message' => 'Cannot archive this category because it is currently assigned to active service tickets.',
+                ];
+            }
+
+            $lockedCategory->delete();
+
+            return ['success' => true, 'message' => 'Category archived successfully.'];
+        });
     }
 
     /**

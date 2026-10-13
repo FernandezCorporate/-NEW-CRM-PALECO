@@ -103,31 +103,44 @@ class DepartmentService
      */
     public function archiveDepartment(Department $dept): array
     {
-        $hasActiveTickets = $dept->tickets()
-            ->whereIn('status', [
-                TicketStatus::OPEN,
-                TicketStatus::ASSIGNED,
-                TicketStatus::IN_PROGRESS,
-                TicketStatus::PENDING_ENDORSEMENT,
-            ])
-            ->exists();
+        return DB::transaction(function () use ($dept) {
+            $lockedDept = Department::where('id', $dept->id)
+                ->lockForUpdate()
+                ->first();
 
-        $hasActiveTeams = $dept->teams()->whereNull('deleted_at')->exists();
-        $hasActiveSupervisors = $dept->supervisors()->where('is_active', true)->exists();
+            if (! $lockedDept || $lockedDept->trashed()) {
+                return [
+                    'success' => false,
+                    'message' => 'Conflict: This department has already been archived by an administrator.',
+                ];
+            }
 
-        if ($hasActiveTickets || $hasActiveTeams || $hasActiveSupervisors) {
+            $hasActiveTickets = $lockedDept->tickets()
+                ->whereIn('status', [
+                    TicketStatus::OPEN,
+                    TicketStatus::ASSIGNED,
+                    TicketStatus::IN_PROGRESS,
+                    TicketStatus::PENDING_ENDORSEMENT,
+                ])
+                ->exists();
+
+            $hasActiveTeams = $lockedDept->teams()->whereNull('deleted_at')->exists();
+            $hasActiveSupervisors = $lockedDept->supervisors()->where('is_active', true)->exists();
+
+            if ($hasActiveTickets || $hasActiveTeams || $hasActiveSupervisors) {
+                return [
+                    'success' => false,
+                    'message' => 'Cannot archive this department. It contains active teams, personnel, or active service tickets.',
+                ];
+            }
+
+            $lockedDept->delete();
+
             return [
-                'success' => false,
-                'message' => 'Cannot archive this department. It contains active teams, personnel, or active service tickets.',
+                'success' => true,
+                'message' => 'Department archived successfully.',
             ];
-        }
-
-        $dept->delete();
-
-        return [
-            'success' => true,
-            'message' => 'Department archived successfully.',
-        ];
+        });
     }
 
     /**

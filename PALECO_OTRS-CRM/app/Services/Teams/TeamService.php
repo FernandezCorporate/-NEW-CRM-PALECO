@@ -354,34 +354,40 @@ class TeamService
      */
     public function archiveTeam(Team $team): array
     {
-        if ($team->trashed()) {
+        return DB::transaction(function () use ($team) {
+            $lockedTeam = Team::where('id', $team->id)
+                ->lockForUpdate()
+                ->first();
+
+            if (! $lockedTeam || $lockedTeam->trashed()) {
+                return [
+                    'success' => false,
+                    'message' => 'Conflict: This team has already been archived by an administrator.',
+                ];
+            }
+
+            $hasActiveTickets = $lockedTeam->ticket()
+                ->whereIn('status', [
+                    TicketStatus::ASSIGNED,
+                    TicketStatus::IN_PROGRESS,
+                ])
+                ->exists();
+
+            if ($hasActiveTickets) {
+                return [
+                    'success' => false,
+                    'message' => 'Cannot archive team. They currently have active assigned service tickets.',
+                ];
+            }
+
+            $lockedTeam->delete();
+
             return [
-                'success' => false,
-                'message' => 'Conflict: This team has already been archived by an administrator.',
+                'success' => true,
+                'message' => 'Team archived successfully.',
+                'team' => $lockedTeam,
             ];
-        }
-
-        $hasActiveTickets = $team->ticket()
-            ->whereIn('status', [
-                TicketStatus::ASSIGNED,
-                TicketStatus::IN_PROGRESS,
-            ])
-            ->exists();
-
-        if ($hasActiveTickets) {
-            return [
-                'success' => false,
-                'message' => 'Cannot archive team. They currently have active assigned service tickets.',
-            ];
-        }
-
-        $team->delete();
-
-        return [
-            'success' => true,
-            'message' => 'Team archived successfully.',
-            'team' => $team,
-        ];
+        });
     }
 
     /**
