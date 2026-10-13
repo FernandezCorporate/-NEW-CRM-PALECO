@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\Tickets;
 
 use App\Http\Controllers\Api\Concerns\ResolvesClientTimestamp;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Tickets\ForceCloseTicketRequest;
 use App\Http\Resources\Api\TicketDetailedResource;
 use App\Http\Resources\Api\TicketHistoryResource;
 use App\Http\Resources\Api\TicketResource;
@@ -100,6 +101,22 @@ class TicketController extends Controller
             'success' => true,
             'message' => "Work has started on ticket {$updatedTicket->ticket_number}.",
             'data' => new TicketResource($updatedTicket),
+        ], Response::HTTP_OK);
+    }
+
+    /*
+     * Administratively force-closes an active service ticket via supervisor mobile action.
+     */
+    public function forceClose(ForceCloseTicketRequest $request, Ticket $ticket): JsonResponse
+    {
+        Gate::authorize('forceClose', $ticket);
+
+        $closedTicket = $this->ticketService->forceCloseTicket($ticket, $request->validated(), $request->user());
+
+        return response()->json([
+            'success' => true,
+            'message' => "Ticket {$closedTicket->ticket_number} has been administratively force-closed.",
+            'data' => new TicketDetailedResource($closedTicket),
         ], Response::HTTP_OK);
     }
 }

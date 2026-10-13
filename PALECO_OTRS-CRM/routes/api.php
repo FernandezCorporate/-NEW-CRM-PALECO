@@ -58,6 +58,7 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::post('/{ticket}/endorse', [TicketEndorsementController::class, 'endorse']);
 
             Route::post('/{ticket}/accomplishments/{accomplishment}/verify', [TicketAccomplishmentController::class, 'verify']);
+            Route::post('/{ticket}/force-close', [TicketController::class, 'forceClose'])->whereUlid('ticket');
 
             Route::get('/{ticket}/history', [TicketController::class, 'history'])->whereUlid('ticket');
         });

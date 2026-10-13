@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Web\Tickets;
 use App\Concerns\ResolvesSmartRedirects;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Tickets\CancelTicketRequest;
+use App\Http\Requests\Tickets\ForceCloseTicketRequest;
 use App\Http\Requests\Tickets\StoreChildTicketRequest;
 use App\Http\Requests\Tickets\StoreTicketRequest;
 use App\Http\Requests\Tickets\UpdateTicketIntakeRequest;
@@ -169,6 +170,26 @@ class TicketController extends Controller
 
         return redirect()->route('cwd.tickets.show', $ticket)
             ->with('success', "Ticket {$ticket->ticket_number} has been successfully cancelled.");
+    }
+
+    /*
+     * Validates and processes administrative force-closure of an active service ticket.
+     */
+    public function forceClose(ForceCloseTicketRequest $request, Ticket $ticket): RedirectResponse
+    {
+        Gate::authorize('forceClose', $ticket);
+
+        try {
+            $this->ticketService->forceCloseTicket($ticket, $request->validated(), $request->user());
+        } catch (ValidationException $e) {
+            $errorMessage = collect($e->errors())->flatten()->first() ?? 'Ticket cannot be force-closed.';
+
+            return redirect()->route('cwd.tickets.show', $ticket)
+                ->with('error', $errorMessage);
+        }
+
+        return redirect()->route('cwd.tickets.show', $ticket)
+            ->with('success', "Ticket {$ticket->ticket_number} has been administratively force-closed.");
     }
 }
 

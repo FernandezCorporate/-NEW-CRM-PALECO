@@ -19,7 +19,7 @@
             </p>
         </div>
         
-        @can('ticketForm', App\Models\Ticket::class)
+        @can('access-cwd_officer')
             <x-btn href="{{ route('cwd.tickets.createForm') }}" variant="primary" class="action-link" data-loading-text="Loading...">
                 <x-icons.plus class="w-4 h-4 mr-1.5" />
                 New Ticket

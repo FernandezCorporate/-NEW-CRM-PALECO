@@ -161,7 +161,7 @@
                                     {{ $ticket->department->dept_name ?? 'Unassigned' }}
                                 </td>
                                 <td class="px-6 py-4 text-slate-600 whitespace-nowrap">
-                                    {{ \Carbon\Carbon::parse($ticket->reported_at)->format('M d, Y h:i A') }}
+                                    {{ $ticket->reported_at ? $ticket->reported_at->format('M d, Y h:i A') : 'N/A' }}
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold border {{ $ticket->status->badgeClasses() }}">

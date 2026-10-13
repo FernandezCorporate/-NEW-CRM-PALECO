@@ -11,7 +11,7 @@
 
 @section('content')
 
-<div x-data="{ cancelModalOpen: false }">
+<div x-data="{ cancelModalOpen: false, forceCloseModalOpen: false }">
 
     <x-alert />
 
@@ -34,6 +34,12 @@
                     @if($ticket->parent_ticket_id)
                         <span class="text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-200 px-2.5 py-0.5 rounded-full uppercase tracking-wider">
                             Child Ticket
+                        </span>
+                    @endif
+
+                    @if($ticket->status->value === 'closed' && $ticket->is_force_closed)
+                        <span class="text-xs font-bold bg-amber-100 text-amber-800 border border-amber-300 px-2.5 py-0.5 rounded-full uppercase tracking-wider">
+                            Force Closed
                         </span>
                     @endif
 
@@ -95,10 +101,17 @@
                     <span>Cancel Ticket</span>
                 </button>
             @endcan
+
+            @can('forceClose', $ticket)
+                <button type="button" @click="forceCloseModalOpen = true" class="btn bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 text-xs py-2 px-3.5 shadow-xs transition-colors">
+                    <x-icons.exclamation-triangle class="w-4 h-4 text-amber-600" />
+                    <span>Force Close</span>
+                </button>
+            @endcan
         </div>
     </header>
 
-    @if($ticket->status === \App\Enums\TicketStatus::CANCELLED)
+    @if($ticket->status->value === 'cancelled')
         <div class="mb-6 p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-900 shadow-xs">
             <div class="flex items-start gap-3">
                 <div class="p-2 rounded-lg bg-rose-100 text-rose-700 shrink-0 mt-0.5">
@@ -117,6 +130,34 @@
                     </div>
                     <div class="mt-1 text-sm text-rose-800">
                         <span class="font-semibold text-rose-900">Reason:</span> <span class="whitespace-pre-wrap break-words">{{ $ticket->cancellation_reason ?? 'Cancelled by dispatcher' }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    @if($ticket->status->value === 'closed' && $ticket->is_force_closed)
+        <div class="mb-6 p-4 rounded-xl bg-amber-50/80 border border-amber-200 text-amber-950 shadow-xs">
+            <div class="flex items-start gap-3">
+                <div class="p-2 rounded-lg bg-amber-100 text-amber-700 shrink-0 mt-0.5">
+                    <x-icons.exclamation-triangle class="w-5 h-5" />
+                </div>
+                <div class="flex-grow min-w-0">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                        <h2 class="text-sm font-bold uppercase tracking-wider text-amber-900">
+                            Administrative Force Closure
+                        </h2>
+                        @if($ticket->closed_at)
+                            <span class="text-xs text-amber-700 font-medium">
+                                Closed on {{ $ticket->closed_at->format('M d, Y h:i A') }}
+                                @if($ticket->closedBy)
+                                    by {{ $ticket->closedBy->first_name }} {{ $ticket->closedBy->last_name }}
+                                @endif
+                            </span>
+                        @endif
+                    </div>
+                    <div class="mt-1 text-sm text-amber-900">
+                        <span class="font-semibold text-amber-950">Justification:</span> <span class="whitespace-pre-wrap break-words">{{ $ticket->closure_reason ?? 'Administratively closed by supervisor' }}</span>
                     </div>
                 </div>
             </div>
@@ -234,6 +275,11 @@
                             <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold border {{ $log->new_status->badgeClasses() }}">
                                 {{ $log->new_status->label() }}
                             </span>
+                            @if($ticket->is_force_closed && $log->new_status->value === 'closed')
+                                <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-300">
+                                    Force Closed
+                                </span>
+                            @endif
                         </div>
                     </td>
                     <td>{{ $log->updater->full_name ?? 'System' }}</td>
@@ -260,7 +306,7 @@
                         @if($assignment->unassigned_at)
                             <time datetime="{{ $assignment->unassigned_at->toIso8601String() }}">{{ $assignment->unassigned_at->format('M d, Y') }}<small>{{ $assignment->unassigned_at->format('h:i A') }}</small></time>
                         @else
-                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold border {{ \App\Enums\TicketStatus::ASSIGNED->badgeClasses() }}">Active Handover</span>
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold border bg-purple-50 text-purple-700 border-purple-200">Active Handover</span>
                         @endif
                     </td>
                 </tr>
@@ -375,6 +421,72 @@
                             </button>
                             <button type="submit" class="btn bg-rose-600 hover:bg-rose-700 text-white text-xs py-2 px-4 shadow-xs">
                                 Confirm Cancellation
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    @endcan
+
+    @can('forceClose', $ticket)
+        <!-- Force Closure Modal Dialog -->
+        <div x-cloak x-show="forceCloseModalOpen" class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="force-close-modal-title" role="dialog" aria-modal="true">
+            <!-- Backdrop -->
+            <div x-show="forceCloseModalOpen" 
+                x-transition:enter="ease-out duration-200" 
+                x-transition:enter-start="opacity-0" 
+                x-transition:enter-end="opacity-100" 
+                x-transition:leave="ease-in duration-150" 
+                x-transition:leave-start="opacity-100" 
+                x-transition:leave-end="opacity-0" 
+                @click="forceCloseModalOpen = false" 
+                class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs transition-opacity"></div>
+
+            <div class="flex min-h-full items-center justify-center p-4 text-center sm:p-0">
+                <div x-show="forceCloseModalOpen" 
+                    x-transition:enter="ease-out duration-200" 
+                    x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" 
+                    x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100" 
+                    x-transition:leave="ease-in duration-150" 
+                    x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100" 
+                    x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" 
+                    @keydown.escape.window="forceCloseModalOpen = false"
+                    class="relative transform overflow-hidden rounded-2xl bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg border border-slate-200">
+                    
+                    <form action="{{ route('cwd.tickets.forceClose', $ticket) }}" method="POST">
+                        @csrf
+                        <div class="p-6">
+                            <div class="flex items-start gap-4">
+                                <div class="p-3 rounded-full bg-amber-100 text-amber-700 shrink-0">
+                                    <x-icons.exclamation-triangle class="w-6 h-6" />
+                                </div>
+                                <div class="flex-grow min-w-0">
+                                    <h3 id="force-close-modal-title" class="text-lg font-bold text-slate-900">
+                                        Force Close Service Ticket
+                                    </h3>
+                                    <p class="text-sm text-slate-500 mt-1">
+                                        Are you sure you want to administratively close ticket <strong class="font-mono text-slate-800">{{ $ticket->ticket_number }}</strong>? This will release any active field crew assignment and immediately conclude this ticket without lineman sign-off.
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div class="mt-6 space-y-4">
+                                <div>
+                                    <label for="closure_reason" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                                        Closure Justification <span class="text-amber-600">*</span>
+                                    </label>
+                                    <textarea name="closure_reason" id="closure_reason" rows="3" required placeholder="Type the operational justification (e.g. consumer refused entry/signature, resolved by third-party, hazard prevents completion)..." class="form-input w-full rounded-lg border border-slate-300 text-sm p-3 bg-white focus:border-amber-500 focus:ring-2 focus:ring-amber-200 outline-none leading-relaxed placeholder:text-slate-400"></textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-slate-50 px-6 py-4 flex flex-col-reverse sm:flex-row sm:justify-end gap-3 border-t border-slate-200/80">
+                            <button type="button" @click="forceCloseModalOpen = false" class="btn btn-secondary text-xs py-2 px-4">
+                                Keep Ticket Active
+                            </button>
+                            <button type="submit" class="btn bg-amber-600 hover:bg-amber-700 text-white text-xs py-2 px-4 shadow-xs">
+                                Confirm Force Close
                             </button>
                         </div>
                     </form>

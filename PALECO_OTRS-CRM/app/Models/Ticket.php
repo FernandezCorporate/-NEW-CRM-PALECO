@@ -39,6 +39,9 @@ class Ticket extends Model
         'team_id',
         'status',
         'cancellation_reason',
+        'is_force_closed',
+        'closure_reason',
+        'closed_by_id',
         'started_at',
         'closed_at',
         'cancelled_at',
@@ -63,6 +66,9 @@ class Ticket extends Model
         'created_by_id',
         'status',
         'cancellation_reason',
+        'is_force_closed',
+        'closure_reason',
+        'closed_by_id',
         'started_at',
         'reported_at',
         'resolved_at',
@@ -84,6 +90,7 @@ class Ticket extends Model
             'complaint_source' => ComplaintSources::class,
             'other_category' => 'boolean',
             'status' => TicketStatus::class,
+            'is_force_closed' => 'boolean',
             'started_at' => 'datetime',
             'reported_at' => 'datetime',
             'resolved_at' => 'datetime',
@@ -135,6 +142,14 @@ class Ticket extends Model
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by_id');
+    }
+
+    /**
+     * The user who closed or force-closed this ticket.
+     */
+    public function closedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'closed_by_id');
     }
 
     /**
@@ -413,13 +428,6 @@ class Ticket extends Model
      */
     protected function getCustomActivityDescription(string $eventName): ?string
     {
-        if ($eventName === 'updated' && $this->wasChanged('team_id')) {
-            $action = $this->getOriginal('team_id') === null ? 'assigned' : 'reassigned';
-            if ($this->status !== TicketStatus::PENDING_ENDORSEMENT) {
-                return "Ticket {$this->ticket_number} has been {$action} to a field team.";
-            }
-        }
-
         if ($eventName === 'updated' && $this->wasChanged('status')) {
             if ($this->getOriginal('status') === TicketStatus::PENDING_ENDORSEMENT && $this->status !== TicketStatus::ENDORSED) {
                 return "The endorsement request was rejected. Ticket {$this->ticket_number} has been returned to its previous state.";
@@ -446,11 +454,22 @@ class Ticket extends Model
             }
 
             if ($this->status === TicketStatus::CLOSED) {
+                if ($this->is_force_closed) {
+                    return "Ticket {$this->ticket_number} was administratively force-closed.";
+                }
+
                 return "Ticket {$this->ticket_number} has been verified and closed.";
             }
 
             if ($this->status === TicketStatus::CANCELLED) {
                 return "Ticket {$this->ticket_number} has been cancelled.";
+            }
+        }
+
+        if ($eventName === 'updated' && $this->wasChanged('team_id') && ! is_null($this->team_id)) {
+            $action = $this->getOriginal('team_id') === null ? 'assigned' : 'reassigned';
+            if ($this->status !== TicketStatus::PENDING_ENDORSEMENT) {
+                return "Ticket {$this->ticket_number} has been {$action} to a field team.";
             }
         }
 

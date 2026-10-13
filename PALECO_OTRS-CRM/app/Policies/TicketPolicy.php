@@ -73,6 +73,10 @@ class TicketPolicy
             return Response::deny('Cannot spawn child tickets from a cancelled ticket.');
         }
 
+        if ($ticket->status === TicketStatus::CLOSED) {
+            return Response::deny('Cannot spawn child tickets from a closed ticket.');
+        }
+
         return Response::allow();
     }
 
@@ -269,6 +273,57 @@ class TicketPolicy
 
         if ($ticket->status !== TicketStatus::OPEN) {
             return Response::deny('Ticket can only be cancelled while in Open status. Once assigned to a team or dispatched, cancellation is locked.');
+        }
+
+        return Response::allow();
+    }
+
+    /*
+     * Determine whether the user can administratively force-close the service ticket.
+     * Permitted to CWD officers, department supervisors (scoped), and administrators.
+     * Allowed strictly from ASSIGNED, IN_PROGRESS, RESOLVED, or ENDORSED status.
+     * Forbidden when OPEN (must cancel) or PENDING_ENDORSEMENT (in-flight review locked).
+     */
+    public function forceClose(User $user, Ticket $ticket): Response
+    {
+        if ($ticket->trashed()) {
+            return Response::denyAsNotFound('The requested ticket was not found.');
+        }
+
+        $roleSlug = $user->role->slug_identifier;
+        if (! in_array($roleSlug, ['cwd_officer', 'supervisor', 'admin'], true)) {
+            return Response::deny('You are not authorized to force-close tickets.');
+        }
+
+        if ($roleSlug === 'supervisor' && $user->department_id !== $ticket->department_id) {
+            return Response::denyAsNotFound('The requested ticket was not found.');
+        }
+
+        if ($ticket->status === TicketStatus::CLOSED) {
+            return Response::deny('This ticket is already closed.');
+        }
+
+        if ($ticket->status === TicketStatus::CANCELLED) {
+            return Response::deny('Cancelled tickets cannot be force-closed.');
+        }
+
+        if ($ticket->status === TicketStatus::OPEN) {
+            return Response::deny('Open tickets must be cancelled via the cancellation workflow, not force-closed.');
+        }
+
+        if ($ticket->status === TicketStatus::PENDING_ENDORSEMENT) {
+            return Response::deny('Tickets pending endorsement review cannot be force-closed. Complete the transfer decision first.');
+        }
+
+        $allowedStatuses = [
+            TicketStatus::ASSIGNED,
+            TicketStatus::IN_PROGRESS,
+            TicketStatus::RESOLVED,
+            TicketStatus::ENDORSED,
+        ];
+
+        if (! in_array($ticket->status, $allowedStatuses, true)) {
+            return Response::deny('Ticket cannot be force-closed from its current status.');
         }
 
         return Response::allow();
