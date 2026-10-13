@@ -2,11 +2,14 @@
 
 namespace App\Services\Users;
 
+use App\Enums\TicketStatus;
 use App\Models\AccountRole;
 use App\Models\TeamRole;
+use App\Models\Ticket;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 /**
  * Service handling administration-level User queries, mutations, and status transitions.
@@ -116,9 +119,20 @@ class UserService
     public function toggleUserStatus(User $user, bool $isActive): void
     {
         DB::transaction(function () use ($user, $isActive) {
-            $user->is_active = $isActive;
-
             if (! $isActive) {
+                if ($user->role->slug_identifier === 'field_personnel') {
+                    $hasActiveTickets = Ticket::query()
+                        ->whereIn('team_id', $user->teams()->pluck('teams.id'))
+                        ->whereIn('status', [TicketStatus::ASSIGNED, TicketStatus::IN_PROGRESS])
+                        ->exists();
+
+                    if ($hasActiveTickets) {
+                        throw ValidationException::withMessages([
+                            'user' => 'Cannot deactivate user while their assigned crew has active tickets assigned or in progress. Please reassign the active tickets or remove the user from the active crew first.',
+                        ]);
+                    }
+                }
+
                 $user->tokens()->delete();
 
                 if ($user->role->slug_identifier === 'field_personnel') {
@@ -126,6 +140,7 @@ class UserService
                 }
             }
 
+            $user->is_active = $isActive;
             $user->save();
         });
     }

@@ -34,14 +34,14 @@
             </dd>
         </dl>
 
-        <footer class="flex gap-3 border-t border-slate-100 pt-6">
+        <footer class="flex items-center gap-3 border-t border-slate-100 pt-6 flex-wrap">
             @if(!$category->trashed())
-                <a href="{{ route('admin.ticketCategories.editForm', ['category' => $category, 'source' => 'details']) }}" class="action-link btn btn-primary text-sm shadow-xs" data-loading-text="Loading...">
+                <a href="{{ route('admin.ticketCategories.editForm', ['category' => $category, 'source' => 'details']) }}" class="btn btn-primary px-4 py-2 text-sm shadow-xs" data-loading-text="Loading...">
                     <x-icons.pencil class="w-4 h-4" />
                     <span>Edit Category</span>
                 </a>
-                <a href="{{ route('admin.ticketCategories.deleteConfirm', ['category' => $category, 'source' => 'details']) }}" class="action-link btn btn-secondary text-rose-700 hover:bg-rose-50 hover:border-rose-300 text-sm shadow-2xs" data-loading-text="Loading...">
-                    <x-icons.trash class="w-4 h-4" />
+                <a href="{{ route('admin.ticketCategories.deleteConfirm', ['category' => $category, 'source' => 'details']) }}" class="btn btn-secondary text-rose-700 hover:bg-rose-50 hover:border-rose-300 border-rose-200 px-4 py-2 text-sm shadow-xs" data-loading-text="Loading...">
+                    <x-icons.trash class="w-4 h-4 text-rose-600" />
                     <span>Archive Category</span>
                 </a>
             @endif

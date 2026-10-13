@@ -14,7 +14,7 @@
         </div>
         
         <!-- Action Buttons -->
-        <div class="flex items-center gap-3">
+        <div class="flex items-center gap-3 flex-wrap">
             @php
                 $isFromDept = request('source') === 'department' && request('dept');
                 $isFromUser = request('source') === 'user' && request('user');
@@ -29,8 +29,8 @@
                     $backText = 'Back to List';
                 }
             @endphp
-            <a href="{{ $backRoute }}" class="action-link btn btn-secondary text-sm shadow-2xs" data-loading-text="Loading...">
-                <x-icons.arrow-left class="w-4 h-4" />
+            <a href="{{ $backRoute }}" class="btn btn-secondary px-4 py-2 text-sm shadow-xs" data-loading-text="Loading...">
+                <x-icons.arrow-left class="w-4 h-4 text-slate-500" />
                 <span>{{ $backText }}</span>
             </a>
             
@@ -39,23 +39,23 @@
                 <form action="{{ route('admin.teams.restore', $team) }}" method="POST" class="inline-block">
                     @csrf
                     @method('PATCH')
-                    <button type="submit" class="btn btn-secondary text-indigo-700 hover:bg-indigo-50 hover:border-indigo-300 text-sm shadow-2xs" data-loading-text="Restoring...">
-                        <x-icons.arrow-path class="w-4 h-4" />
+                    <button type="submit" class="btn btn-secondary text-indigo-700 hover:bg-indigo-50 hover:border-indigo-300 border-indigo-200 px-4 py-2 text-sm shadow-xs" data-loading-text="Restoring...">
+                        <x-icons.arrow-path class="w-4 h-4 text-indigo-600" />
                         <span>Restore</span>
                     </button>
                 </form>
-                <a href="{{ route('admin.teams.forceDeleteConfirm', $team) }}" class="action-link btn btn-danger text-sm shadow-xs" data-loading-text="Loading...">
+                <a href="{{ route('admin.teams.forceDeleteConfirm', $team) }}" class="btn btn-danger px-4 py-2 text-sm shadow-xs" data-loading-text="Loading...">
                     <x-icons.trash class="w-4 h-4" />
                     <span>Force Delete</span>
                 </a>
             @else
-                <a href="{{ route('admin.teams.editForm', array_filter(['team' => $team, 'source' => request('source') ?: 'details', 'dept' => request('dept'), 'user' => request('user')])) }}" class="action-link btn btn-primary text-sm shadow-xs" data-loading-text="Loading...">
+                <a href="{{ route('admin.teams.editForm', array_filter(['team' => $team, 'source' => request('source') ?: 'details', 'dept' => request('dept'), 'user' => request('user')])) }}" class="btn btn-primary px-4 py-2 text-sm shadow-xs" data-loading-text="Loading...">
                     <x-icons.pencil class="w-4 h-4" />
                     <span>Edit</span>
                 </a>
 
-                <a href="{{ route('admin.teams.deleteConfirm', array_filter(['team' => $team, 'source' => request('source') ?: 'details', 'dept' => request('dept'), 'user' => request('user')])) }}" class="action-link btn btn-secondary text-rose-700 hover:bg-rose-50 hover:border-rose-300 text-sm shadow-2xs" data-loading-text="Loading...">
-                    <x-icons.trash class="w-4 h-4" />
+                <a href="{{ route('admin.teams.deleteConfirm', array_filter(['team' => $team, 'source' => request('source') ?: 'details', 'dept' => request('dept'), 'user' => request('user')])) }}" class="btn btn-secondary text-rose-700 hover:bg-rose-50 hover:border-rose-300 border-rose-200 px-4 py-2 text-sm shadow-xs" data-loading-text="Loading...">
+                    <x-icons.trash class="w-4 h-4 text-rose-600" />
                     <span>Archive</span>
                 </a>
             @endif

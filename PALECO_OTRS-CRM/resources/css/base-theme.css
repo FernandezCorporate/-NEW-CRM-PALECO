@@ -6,6 +6,9 @@
         --paleco-600: #09975d;
         --paleco-500: #12ad6b;
     }
+    html {
+        scrollbar-gutter: stable;
+    }
     body {
         color: #17221d;
         background-color: #f5f7f6;

@@ -20,7 +20,7 @@
         </div>
         
         <!-- Action Buttons -->
-        <div class="flex items-center gap-3">
+        <div class="flex items-center gap-3 flex-wrap">
             @php
                 $isFromDept = request('source') === 'department' && request('dept');
                 $isFromTeam = request('source') === 'team' && request('team');
@@ -35,13 +35,13 @@
                     $backText = 'Back to List';
                 }
             @endphp
-            <a href="{{ $backRoute }}" class="action-link btn btn-secondary text-sm shadow-2xs" data-loading-text="Loading...">
-                <x-icons.arrow-left class="w-4 h-4" />
+            <a href="{{ $backRoute }}" class="btn btn-secondary px-4 py-2 text-sm shadow-xs" data-loading-text="Loading...">
+                <x-icons.arrow-left class="w-4 h-4 text-slate-500" />
                 <span>{{ $backText }}</span>
             </a>
             
             @can('update', $user)
-                <a href="{{ route('admin.users.editForm', array_filter(['user' => $user, 'source' => request('source') ?: 'details', 'dept' => request('dept'), 'team' => request('team')])) }}" class="action-link btn btn-primary text-sm shadow-xs" data-loading-text="Loading...">
+                <a href="{{ route('admin.users.editForm', array_filter(['user' => $user, 'source' => request('source') ?: 'details', 'dept' => request('dept'), 'team' => request('team')])) }}" class="btn btn-primary px-4 py-2 text-sm shadow-xs" data-loading-text="Loading...">
                     <x-icons.pencil class="w-4 h-4" />
                     <span>Edit User</span>
                 </a>
@@ -49,15 +49,15 @@
 
             @if($user->is_active)
                 @can('deactivateConfirm', $user)
-                    <a href="{{ route('admin.users.deactivateConfirm', array_filter(['user' => $user, 'source' => request('source') ?: 'details', 'dept' => request('dept'), 'team' => request('team')])) }}" class="action-link btn btn-secondary text-amber-700 hover:bg-amber-50 hover:border-amber-300 text-sm shadow-2xs" data-loading-text="Loading...">
-                        <x-icons.exclamation-triangle class="w-4 h-4" />
+                    <a href="{{ route('admin.users.deactivateConfirm', array_filter(['user' => $user, 'source' => request('source') ?: 'details', 'dept' => request('dept'), 'team' => request('team')])) }}" class="btn btn-secondary text-amber-700 hover:bg-amber-50 hover:border-amber-300 border-amber-200 px-4 py-2 text-sm shadow-xs" data-loading-text="Loading...">
+                        <x-icons.exclamation-triangle class="w-4 h-4 text-amber-600" />
                         <span>Deactivate</span>
                     </a>
                 @endcan
             @else
                 @can('reactivateConfirm', $user)
-                    <a href="{{ route('admin.users.reactivateConfirm', array_filter(['user' => $user, 'source' => request('source') ?: 'details', 'dept' => request('dept'), 'team' => request('team')])) }}" class="action-link btn btn-secondary text-indigo-700 hover:bg-indigo-50 hover:border-indigo-300 text-sm shadow-2xs" data-loading-text="Loading...">
-                        <x-icons.arrow-path class="w-4 h-4" />
+                    <a href="{{ route('admin.users.reactivateConfirm', array_filter(['user' => $user, 'source' => request('source') ?: 'details', 'dept' => request('dept'), 'team' => request('team')])) }}" class="btn btn-secondary text-indigo-700 hover:bg-indigo-50 hover:border-indigo-300 border-indigo-200 px-4 py-2 text-sm shadow-xs" data-loading-text="Loading...">
+                        <x-icons.arrow-path class="w-4 h-4 text-indigo-600" />
                         <span>Reactivate</span>
                     </a>
                 @endcan

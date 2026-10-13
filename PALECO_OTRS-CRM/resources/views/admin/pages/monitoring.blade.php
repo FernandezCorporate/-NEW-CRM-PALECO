@@ -106,9 +106,9 @@
                             </td>
 
                             <!-- Module & Event Tags -->
-                            <td class="px-6 py-4">
+                            <td class="px-6 py-4 whitespace-nowrap">
                                 <div class="flex flex-col items-start gap-1.5">
-                                    <span class="border text-[11px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wide {{ $log->module_badge_class }}">
+                                    <span class="border text-[11px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wide whitespace-nowrap inline-flex items-center {{ $log->module_badge_class }}">
                                         {{ $log->module_label }}
                                     </span>
                                     

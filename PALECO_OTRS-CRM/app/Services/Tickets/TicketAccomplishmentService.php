@@ -83,6 +83,12 @@ class TicketAccomplishmentService
             }
         }
 
+        if ($ticket->status === TicketStatus::PENDING_ENDORSEMENT) {
+            throw ValidationException::withMessages([
+                'status' => 'Ticket is locked pending inter-departmental endorsement review.',
+            ]);
+        }
+
         if ($ticket->status !== TicketStatus::IN_PROGRESS) {
             throw ValidationException::withMessages([
                 'status' => 'Only tickets that are currently in progress can be marked as accomplished.',

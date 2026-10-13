@@ -33,7 +33,7 @@
                             rows="3" 
                             required 
                             placeholder="Add an operational update, dispatch instructions, or customer communication note..." 
-                            class="w-full text-sm rounded-lg border-slate-300 bg-white focus:border-emerald-600 focus:ring-2 focus:ring-emerald-500/20 p-3.5 shadow-2xs transition-colors placeholder:text-slate-400 text-slate-800"></textarea>
+                            class="form-input w-full min-h-[96px] text-sm rounded-lg border border-slate-300 bg-white hover:border-slate-400 focus:border-emerald-600 focus:ring-2 focus:ring-emerald-500/20 p-3.5 shadow-xs transition-all placeholder:text-slate-400 text-slate-800 outline-none @error('body') !border-rose-500 !ring-2 !ring-rose-500/20 @enderror"></textarea>
                         @error('body')
                             <p class="text-xs text-rose-500 mt-1 font-medium">{{ $message }}</p>
                         @enderror

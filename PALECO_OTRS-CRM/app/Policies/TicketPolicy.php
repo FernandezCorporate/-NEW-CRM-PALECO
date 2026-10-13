@@ -2,6 +2,7 @@
 
 namespace App\Policies;
 
+use App\Enums\TicketStatus;
 use App\Models\Ticket;
 use App\Models\User;
 use Illuminate\Auth\Access\Response;
@@ -56,9 +57,19 @@ class TicketPolicy
             return Response::deny('This action is unauthorized.');
         }
 
-        return ! $ticket->trashed()
-            ? Response::allow()
-            : Response::denyAsNotFound('The requested ticket was not found.');
+        if ($ticket->trashed()) {
+            return Response::denyAsNotFound('The requested ticket was not found.');
+        }
+
+        if (! is_null($ticket->parent_ticket_id)) {
+            return Response::deny('Subordinate child tickets cannot spawn further child sub-tasks. Only root origin tickets can spawn child tickets.');
+        }
+
+        if ($ticket->status === TicketStatus::PENDING_ENDORSEMENT) {
+            return Response::deny('Cannot spawn child tickets from a ticket that is pending endorsement.');
+        }
+
+        return Response::allow();
     }
 
     /*
@@ -86,6 +97,10 @@ class TicketPolicy
     {
         if ($user->role->slug_identifier !== 'supervisor') {
             return Response::deny('Only supervisors can assign tickets.');
+        }
+
+        if ($ticket->status === TicketStatus::PENDING_ENDORSEMENT) {
+            return Response::deny('Ticket is locked pending inter-departmental endorsement review.');
         }
 
         return $user->department_id === $ticket->department_id
@@ -124,6 +139,10 @@ class TicketPolicy
             return Response::deny('Only field personnel can start tickets.');
         }
 
+        if ($ticket->status === TicketStatus::PENDING_ENDORSEMENT) {
+            return Response::deny('Ticket is locked pending inter-departmental endorsement review.');
+        }
+
         return $user->teams()->where('teams.id', $ticket->team_id)->exists()
             ? Response::allow()
             : Response::denyAsNotFound('The requested ticket was not found.');
@@ -136,6 +155,10 @@ class TicketPolicy
     {
         if ($user->role->slug_identifier !== 'field_personnel') {
             return Response::deny('Only field personnel can submit accomplishments for tickets.');
+        }
+
+        if ($ticket->status === TicketStatus::PENDING_ENDORSEMENT) {
+            return Response::deny('Ticket is locked pending inter-departmental endorsement review.');
         }
 
         return $user->teams()->where('teams.id', $ticket->team_id)->exists()

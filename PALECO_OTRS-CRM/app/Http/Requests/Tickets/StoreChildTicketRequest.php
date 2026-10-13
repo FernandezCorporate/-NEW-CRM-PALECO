@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Tickets;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 /**
  * Validates incoming HTTP requests for creating a dedicated child ticket.
@@ -41,7 +42,11 @@ class StoreChildTicketRequest extends FormRequest
             'complaint_description' => ['required', 'string', 'min:5'],
 
             'other_category' => ['boolean'],
-            'category_id' => ['required_if:other_category,false', 'nullable', 'exists:ticket_categories,id'],
+            'category_id' => [
+                'required_if:other_category,false',
+                'nullable',
+                Rule::exists('ticket_categories', 'id')->whereNull('deleted_at'),
+            ],
             'other_category_name' => ['required_if:other_category,true', 'nullable', 'string', 'max:255'],
 
             'consumer_contact' => ['nullable', 'string', 'regex:/^(09|\+639)\d{9}$/'],

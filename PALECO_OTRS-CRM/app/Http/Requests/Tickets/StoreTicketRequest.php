@@ -4,6 +4,7 @@ namespace App\Http\Requests\Tickets;
 
 use App\Enums\ComplaintSources;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Enum;
 
 /**
@@ -55,7 +56,11 @@ class StoreTicketRequest extends FormRequest
 
             // Dynamic Category Requirements
             'other_category' => ['boolean'],
-            'category_id' => ['required_if:other_category,false', 'nullable', 'exists:ticket_categories,id'],
+            'category_id' => [
+                'required_if:other_category,false',
+                'nullable',
+                Rule::exists('ticket_categories', 'id')->whereNull('deleted_at'),
+            ],
             'other_category_name' => ['required_if:other_category,true', 'nullable', 'string', 'max:255'],
 
             // Consumer Linking Requirements

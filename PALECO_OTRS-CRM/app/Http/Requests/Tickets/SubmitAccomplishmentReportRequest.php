@@ -53,4 +53,41 @@ class SubmitAccomplishmentReportRequest extends FormRequest
             'photos.*.image' => 'All evidence files must be valid images (JPEG/PNG).',
         ];
     }
+
+    /**
+     * Configure additional validator checks for aggregate batch upload size.
+     */
+    public function withValidator($validator): void
+    {
+        $validator->after(function ($validator) {
+            $totalBytes = 0;
+            $maxBatchBytes = 30 * 1024 * 1024; // 30 MB aggregate upload limit
+
+            if ($this->hasFile('signature')) {
+                $sig = $this->file('signature');
+                if ($sig instanceof \Illuminate\Http\UploadedFile && $sig->isValid()) {
+                    $totalBytes += $sig->getSize();
+                }
+            }
+
+            if ($this->hasFile('photos')) {
+                $photos = $this->file('photos');
+                if (is_array($photos)) {
+                    foreach ($photos as $photo) {
+                        if ($photo instanceof \Illuminate\Http\UploadedFile && $photo->isValid()) {
+                            $totalBytes += $photo->getSize();
+                        }
+                    }
+                }
+            }
+
+            if ($totalBytes > $maxBatchBytes) {
+                $totalMb = round($totalBytes / (1024 * 1024), 2);
+                $validator->errors()->add(
+                    'photos',
+                    "The total batch upload size ({$totalMb} MB) exceeds the maximum allowed limit of 30 MB. Please reduce the number or file size of attachments."
+                );
+            }
+        });
+    }
 }

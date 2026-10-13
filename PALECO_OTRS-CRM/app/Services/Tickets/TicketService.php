@@ -310,6 +310,18 @@ class TicketService
                 ->lockForUpdate()
                 ->firstOrFail();
 
+            if (! is_null($lockedParent->parent_ticket_id)) {
+                throw ValidationException::withMessages([
+                    'parent_ticket_id' => 'Cannot create a child ticket from another child ticket. Only root origin tickets can spawn child tickets.',
+                ]);
+            }
+
+            if ($lockedParent->status === TicketStatus::PENDING_ENDORSEMENT) {
+                throw ValidationException::withMessages([
+                    'parent_ticket_id' => 'Cannot spawn child tickets from a ticket that is pending endorsement.',
+                ]);
+            }
+
             $childTicket = Ticket::create([
                 'ticket_number' => $this->generateChildTicketNumber($lockedParent),
                 'parent_ticket_id' => $lockedParent->id,
@@ -362,6 +374,12 @@ class TicketService
      */
     public function assignTicket(Ticket $ticket, string $teamId, User $assigner, ?string $reason = null): Ticket
     {
+        if ($ticket->status === TicketStatus::PENDING_ENDORSEMENT) {
+            throw ValidationException::withMessages([
+                'status' => 'Ticket is locked pending inter-departmental endorsement review.',
+            ]);
+        }
+
         $allowedStatuses = [
             TicketStatus::OPEN,
             TicketStatus::ASSIGNED,
@@ -377,6 +395,16 @@ class TicketService
         if ($ticket->team_id === $teamId) {
             throw ValidationException::withMessages([
                 'team_id' => 'This ticket is already assigned to the selected team. No changes were made.',
+            ]);
+        }
+
+        $team = Team::where('id', $teamId)
+            ->whereNull('deleted_at')
+            ->first();
+
+        if (! $team || ($ticket->department_id && $team->department_id !== $ticket->department_id)) {
+            throw ValidationException::withMessages([
+                'team_id' => 'The selected team is invalid, archived, or does not belong to the ticket\'s department.',
             ]);
         }
 
@@ -437,6 +465,12 @@ class TicketService
             // Idempotency safety: If already in progress, return ticket safely without throwing error
             if ($lockedTicket->status === TicketStatus::IN_PROGRESS) {
                 return $lockedTicket->fresh(['category']);
+            }
+
+            if ($lockedTicket->status === TicketStatus::PENDING_ENDORSEMENT) {
+                throw ValidationException::withMessages([
+                    'status' => 'Ticket is locked pending inter-departmental endorsement review.',
+                ]);
             }
 
             if ($lockedTicket->status !== TicketStatus::ASSIGNED) {

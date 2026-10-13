@@ -30,21 +30,21 @@
 
                     <!-- Module / Category Badge -->
                     @if($authAction)
-                        <span class="border text-[11px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wide {{ $authAction->badgeClasses() }}">{{ $authAction->label() }}</span>
+                        <span class="border text-[11px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wide whitespace-nowrap inline-flex items-center {{ $authAction->badgeClasses() }}">{{ $authAction->label() }}</span>
                     @elseif($isAuth)
-                        <span class="bg-indigo-50 border border-indigo-200 text-indigo-700 text-[11px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wide">Authentication</span>
+                        <span class="bg-indigo-50 border border-indigo-200 text-indigo-700 text-[11px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wide whitespace-nowrap inline-flex items-center">Authentication</span>
                     @elseif($activity->log_name === 'Tickets')
-                        <span class="bg-blue-50 border border-blue-200 text-blue-700 text-[11px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wide">Tickets</span>
+                        <span class="bg-blue-50 border border-blue-200 text-blue-700 text-[11px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wide whitespace-nowrap inline-flex items-center">Tickets</span>
                     @elseif($activity->log_name === 'Users')
-                        <span class="bg-emerald-50 border border-emerald-200 text-emerald-700 text-[11px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wide">Users</span>
+                        <span class="bg-emerald-50 border border-emerald-200 text-emerald-700 text-[11px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wide whitespace-nowrap inline-flex items-center">Users</span>
                     @elseif($activity->log_name === 'Teams')
-                        <span class="bg-purple-50 border border-purple-200 text-purple-700 text-[11px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wide">Teams</span>
+                        <span class="bg-purple-50 border border-purple-200 text-purple-700 text-[11px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wide whitespace-nowrap inline-flex items-center">Teams</span>
                     @elseif($activity->log_name === 'Department')
-                        <span class="bg-amber-50 border border-amber-200 text-amber-700 text-[11px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wide">Departments</span>
+                        <span class="bg-amber-50 border border-amber-200 text-amber-700 text-[11px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wide whitespace-nowrap inline-flex items-center">Departments</span>
                     @elseif($activity->log_name === 'TicketCategory')
-                        <span class="bg-teal-50 border border-teal-200 text-teal-700 text-[11px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wide">Categories</span>
+                        <span class="bg-teal-50 border border-teal-200 text-teal-700 text-[11px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wide whitespace-nowrap inline-flex items-center">Categories</span>
                     @else
-                        <span class="bg-slate-100 border border-slate-200 text-slate-700 text-[11px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wide">{{ $activity->log_name }}</span>
+                        <span class="bg-slate-100 border border-slate-200 text-slate-700 text-[11px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wide whitespace-nowrap inline-flex items-center">{{ $activity->log_name }}</span>
                     @endif
 
                     <!-- Event Verb Badge -->

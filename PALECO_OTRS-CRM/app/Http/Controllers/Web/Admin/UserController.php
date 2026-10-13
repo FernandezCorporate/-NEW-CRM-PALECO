@@ -3,15 +3,18 @@
 namespace App\Http\Controllers\Web\Admin;
 
 use App\Concerns\ResolvesSmartRedirects;
+use App\Enums\TicketStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Users\StoreUserRequest;
 use App\Http\Requests\Users\UpdateUserRequest;
 use App\Models\AccountRole;
 use App\Models\Department;
+use App\Models\Ticket;
 use App\Models\User;
 use App\Services\Users\UserService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Validation\ValidationException;
 
 /*
  * Manages the lifecycle and web interfaces for system User Accounts.
@@ -132,6 +135,17 @@ class UserController extends Controller
             return redirect()->route('admin.users')->with('info', 'This account is already deactivated.');
         }
 
+        if ($user->role->slug_identifier === 'field_personnel') {
+            $hasActiveTickets = Ticket::query()
+                ->whereIn('team_id', $user->teams()->pluck('teams.id'))
+                ->whereIn('status', [TicketStatus::ASSIGNED, TicketStatus::IN_PROGRESS])
+                ->exists();
+
+            if ($hasActiveTickets) {
+                return redirect()->back()->with('error', 'Cannot deactivate user while their assigned crew has active tickets assigned or in progress. Please reassign the active tickets or remove the user from the active crew first.');
+            }
+        }
+
         Gate::authorize('deactivateConfirm', $user);
 
         return view('admin.prompts.userDeactivateConfirm', ['userAccount' => $user]);
@@ -144,7 +158,12 @@ class UserController extends Controller
         }
 
         Gate::authorize('deactivate', $user);
-        $this->userService->toggleUserStatus($user, false);
+
+        try {
+            $this->userService->toggleUserStatus($user, false);
+        } catch (ValidationException $e) {
+            return redirect()->back()->with('error', $e->getMessage())->withErrors($e->errors());
+        }
 
         $redirectRoute = $this->resolveSmartRedirect($request, 'admin.users', [
             'details' => function (Request $req) use ($user) {

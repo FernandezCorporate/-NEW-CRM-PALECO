@@ -129,7 +129,7 @@
                                 <!-- CWD Note -->
                                 <div>
                                     <label for="rejection_reason" class="block text-sm font-medium text-slate-700 mb-1">CWD Note / Remarks <span class="text-xs text-rose-600 font-normal ml-1">(Required for Rejection)</span></label>
-                                    <textarea name="rejection_reason" id="rejection_reason" rows="3" class="w-full border-slate-300 rounded-md shadow-2xs focus:border-emerald-600 focus:ring-emerald-500/20 text-sm @error('rejection_reason') border-red-500 ring-red-500 @enderror" placeholder="Provide resolution notes, coordination instructions, or reason for denial...">{{ old('rejection_reason') }}</textarea>
+                                    <textarea name="rejection_reason" id="rejection_reason" rows="3" class="form-input w-full min-h-[96px] border border-slate-300 rounded-lg p-3 text-sm text-slate-800 placeholder:text-slate-400 bg-white hover:border-slate-400 focus:border-emerald-600 focus:ring-2 focus:ring-emerald-500/20 shadow-xs transition-all outline-none @error('rejection_reason') !border-rose-500 !ring-2 !ring-rose-500/20 @enderror" placeholder="Provide resolution notes, coordination instructions, or reason for denial...">{{ old('rejection_reason') }}</textarea>
                                 </div>
 
                                 <!-- Action Buttons (Zero-JS Route Parameter Bypass) -->
@@ -137,8 +137,8 @@
                                     <button type="submit" 
                                             formmethod="POST"
                                             formaction="{{ route('cwd.endorsements.decide', ['endorsement' => $endorsement, 'status' => $rejectValue->value]) }}"
-                                            class="btn btn-secondary text-rose-700 hover:bg-rose-50 hover:border-rose-300 flex-1 py-3 text-sm font-bold shadow-2xs">
-                                        <x-icons.x-mark class="w-5 h-5 mr-1" />
+                                            class="btn btn-secondary text-rose-700 hover:bg-rose-50 hover:border-rose-300 border-rose-200 flex-1 py-3 text-sm font-bold shadow-xs">
+                                        <x-icons.x-mark class="w-5 h-5 mr-1 text-rose-600" />
                                         Reject Endorsement
                                     </button>
                                     

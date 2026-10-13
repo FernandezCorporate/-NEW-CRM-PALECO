@@ -51,12 +51,13 @@ class UpdateTeamRequest extends FormRequest
             ],
             'team_desc' => ['nullable', 'string', 'max:255'],
             'shift_start' => ['required', 'date_format:H:i'],
-            'shift_end' => ['required', 'date_format:H:i'],
+            'shift_end' => ['required', 'date_format:H:i', 'different:shift_start'],
             'department_id' => ['required', Rule::exists('departments', 'id')],
 
             'members' => ['nullable', 'array'],
             'members.*.user_id' => [
                 'required',
+                'distinct',
                 Rule::exists('users', 'id')->where(function ($query) {
                     $query->whereIn('role_id', function ($subQuery) {
                         $subQuery->select('id')->from('account_roles')->where('slug_identifier', 'field_personnel');
@@ -84,13 +85,49 @@ class UpdateTeamRequest extends FormRequest
             'shift_start.date_format' => 'The shift start time must be in a valid 24-hour HH:MM format.',
             'shift_end.required' => 'Please specify the end time for the team\'s shift.',
             'shift_end.date_format' => 'The shift end time must be in a valid 24-hour HH:MM format.',
+            'shift_end.different' => 'The shift end time cannot be the same as the shift start time (0-minute shifts are invalid).',
             'department_id.required' => 'A department must be assigned to this team.',
             'department_id.exists' => 'The selected department is invalid.',
             'members.array' => 'The members list must be formatted correctly.',
             'members.*.user_id.required' => 'A user must be selected to be added as a member.',
+            'members.*.user_id.distinct' => 'Duplicate team members cannot be added to the same crew.',
             'members.*.user_id.exists' => 'One or more of the selected members are not valid Field Personnel.',
             'members.*.team_role_id.required' => 'A team role must be assigned to each member.',
             'members.*.team_role_id.exists' => 'The selected team role is invalid.',
         ];
+    }
+
+    /**
+     * Configure additional validator checks for member shift overlaps.
+     */
+    public function withValidator($validator): void
+    {
+        $validator->after(function ($validator) {
+            $shiftStart = $this->input('shift_start');
+            $shiftEnd = $this->input('shift_end');
+            $members = $this->input('members', []);
+
+            if (! $shiftStart || ! $shiftEnd || $shiftStart === $shiftEnd || empty($members)) {
+                return;
+            }
+
+            try {
+                $team = $this->route('team');
+                $teamId = $team instanceof \App\Models\Team ? $team->id : (string) $team;
+
+                app(\App\Services\Teams\TeamService::class)->validateMemberShiftOverlaps(
+                    $members,
+                    $shiftStart,
+                    $shiftEnd,
+                    $teamId
+                );
+            } catch (\Illuminate\Validation\ValidationException $e) {
+                foreach ($e->errors() as $key => $messages) {
+                    foreach ($messages as $message) {
+                        $validator->errors()->add($key, $message);
+                    }
+                }
+            }
+        });
     }
 }
