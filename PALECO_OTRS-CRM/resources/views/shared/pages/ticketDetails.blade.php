@@ -70,6 +70,13 @@
                 </span>
             </div>
 
+            @can('update', $ticket)
+                <a href="{{ route('cwd.tickets.editForm', array_filter(['ticket' => $ticket, 'source' => request('source'), 'consumer' => request('consumer'), 'parent' => request('parent')])) }}" class="btn btn-secondary text-xs py-2 px-3.5 shadow-xs">
+                    <x-icons.pencil class="w-4 h-4 text-slate-500" />
+                    <span>Edit Details</span>
+                </a>
+            @endcan
+
             <!-- Distinct Action Button for Child Ticket (Mutating Action: CWD Only) -->
             @can('createChild', $ticket)
                 <a href="{{ route('cwd.tickets.children.createForm', array_filter(['ticket' => $ticket, 'source' => request('source'), 'consumer' => request('consumer')])) }}" class="btn bg-indigo-600 hover:bg-indigo-700 text-white text-xs py-2 px-3.5 shadow-xs">

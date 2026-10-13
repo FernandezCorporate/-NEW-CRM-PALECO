@@ -80,6 +80,27 @@ class TicketPolicy
         return $user->role->slug_identifier === 'cwd_officer';
     }
 
+    /*
+     * Determine whether the user can modify clerical intake details for this ticket.
+     * Permitted strictly to CWD officers and only while the ticket is in OPEN status.
+     */
+    public function update(User $user, Ticket $ticket): Response
+    {
+        if ($user->role->slug_identifier !== 'cwd_officer') {
+            return Response::deny('Only CWD officers can edit ticket intake details.');
+        }
+
+        if ($ticket->trashed()) {
+            return Response::denyAsNotFound('The requested ticket was not found.');
+        }
+
+        if ($ticket->status !== TicketStatus::OPEN) {
+            return Response::deny('Ticket intake details can only be edited while in Open status. Once assigned to a team or in progress, details are locked to prevent operational dispatch conflicts.');
+        }
+
+        return Response::allow();
+    }
+
     // --- MOBILE SUPERVISOR & FIELD PERSONNEL PERMISSIONS ---
 
     /*

@@ -6,11 +6,13 @@ use App\Concerns\ResolvesSmartRedirects;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Tickets\StoreChildTicketRequest;
 use App\Http\Requests\Tickets\StoreTicketRequest;
+use App\Http\Requests\Tickets\UpdateTicketIntakeRequest;
 use App\Models\Ticket;
 use App\Services\Tickets\TicketService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 /*
@@ -71,6 +73,19 @@ class TicketController extends Controller
     }
 
     /*
+     * Renders the dynamic Ticket Intake Edit Form for modifying clerical data while the ticket is OPEN.
+     */
+    public function editForm(Request $request, Ticket $ticket): View
+    {
+        Gate::authorize('update', $ticket);
+
+        $result = $this->ticketService->loadTicketEditForm($ticket);
+        $result['source'] = $request->query('source');
+
+        return view('cwd.forms.ticketEditForm', $result);
+    }
+
+    /*
      * Renders the child ticket creation form populated with parent ticket details and routing options.
      */
     public function childTicketForm(Ticket $ticket): View
@@ -100,6 +115,26 @@ class TicketController extends Controller
 
         return redirect($destination)
             ->with('success', "Service Ticket {$ticket->ticket_number} successfully registered and queued.");
+    }
+
+    /*
+     * Validates and updates clerical intake details on an existing Open ticket.
+     */
+    public function update(UpdateTicketIntakeRequest $request, Ticket $ticket): RedirectResponse
+    {
+        Gate::authorize('update', $ticket);
+
+        try {
+            $this->ticketService->updateIntakeDetails($ticket, $request->validated());
+        } catch (ValidationException $e) {
+            $errorMessage = collect($e->errors())->flatten()->first() ?? 'Ticket can no longer be edited.';
+
+            return redirect()->route('cwd.tickets.show', $ticket)
+                ->with('error', $errorMessage);
+        }
+
+        return redirect()->route('cwd.tickets.show', $ticket)
+            ->with('success', "Ticket {$ticket->ticket_number} intake details successfully updated.");
     }
 
     /*

@@ -125,6 +125,19 @@ class TicketService
         ];
     }
 
+    /**
+     * Load initial dataset options for editing clerical intake details of an existing ticket.
+     */
+    public function loadTicketEditForm(Ticket $ticket): array
+    {
+        $ticket->loadMissing(['category', 'department', 'consumer']);
+        $sources = ComplaintSources::cases();
+        $categories = TicketCategory::orderBy('category_name')->get();
+        $departments = Department::orderBy('dept_name')->get();
+
+        return compact('ticket', 'sources', 'categories', 'departments');
+    }
+
     // --- MOBILE QUERY METHODS ---
 
     /**
@@ -399,6 +412,50 @@ class TicketService
     }
 
     /**
+     * Updates clerical intake details (contact, location, description, category, consumer link) for an Open ticket.
+     */
+    public function updateIntakeDetails(Ticket $ticket, array $validatedData): Ticket
+    {
+        if (! empty($validatedData['link_consumer']) && ! empty($validatedData['account_code'])) {
+            $validatedData['consumer_id'] = $this->consumerService->resolveConsumerId($validatedData['account_code']);
+        } else {
+            $validatedData['consumer_id'] = null;
+        }
+
+        unset($validatedData['link_consumer'], $validatedData['account_code']);
+
+        if (! empty($validatedData['other_category'])) {
+            $validatedData['category_id'] = null;
+        } else {
+            $validatedData['other_category_name'] = null;
+        }
+
+        return DB::transaction(function () use ($ticket, $validatedData) {
+            $lockedTicket = Ticket::where('id', $ticket->id)
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            if ($lockedTicket->status !== TicketStatus::OPEN) {
+                throw ValidationException::withMessages([
+                    'status' => 'This ticket is no longer in Open status (it may have been assigned to a crew or processed concurrently) and can no longer be edited.',
+                ]);
+            }
+
+            $lockedTicket->update($validatedData);
+
+            if (Auth::check()) {
+                $lockedTicket->remarks()->create([
+                    'user_id' => Auth::id(),
+                    'body' => 'Clerical intake details updated.',
+                    'is_internal' => true,
+                ]);
+            }
+
+            return $lockedTicket;
+        });
+    }
+
+    /**
      * Reassigns an operational ticket to a target team, closing previous assignment timestamps.
      *
      * @throws ValidationException
@@ -439,10 +496,28 @@ class TicketService
             ]);
         }
 
-        return DB::transaction(function () use ($ticket, $teamId, $assigner, $reason) {
+        return DB::transaction(function () use ($ticket, $team, $teamId, $assigner, $reason, $allowedStatuses) {
             $lockedTicket = Ticket::where('id', $ticket->id)
                 ->lockForUpdate()
                 ->firstOrFail();
+
+            if (! in_array($lockedTicket->status, $allowedStatuses, true)) {
+                throw ValidationException::withMessages([
+                    'status' => 'Tickets that are resolved, closed, or has a pending endorsement cannot be reassigned.',
+                ]);
+            }
+
+            if ($lockedTicket->status === TicketStatus::PENDING_ENDORSEMENT) {
+                throw ValidationException::withMessages([
+                    'status' => 'Ticket is locked pending inter-departmental endorsement review.',
+                ]);
+            }
+
+            if ($lockedTicket->department_id && $team->department_id !== $lockedTicket->department_id) {
+                throw ValidationException::withMessages([
+                    'team_id' => 'The selected team does not belong to the ticket\'s department (the ticket may have been re-routed concurrently).',
+                ]);
+            }
 
             $oldStatus = $lockedTicket->status;
 
