@@ -4,6 +4,9 @@ namespace App\Services\Tickets;
 
 use App\Enums\EndorsementStatus;
 use App\Enums\TicketStatus;
+use App\Events\TicketCreated;
+use App\Events\TicketEndorsementDecided;
+use App\Events\TicketEndorsementInitiated;
 use App\Models\Department;
 use App\Models\Team;
 use App\Models\Ticket;
@@ -150,6 +153,11 @@ class TicketEndorsementService
                 'status' => TicketStatus::PENDING_ENDORSEMENT,
             ]);
 
+            DB::afterCommit(function () use ($endorsement) {
+                $endorsement->load(['ticket', 'suggestedDepartment', 'creator']);
+                event(new TicketEndorsementInitiated($endorsement));
+            });
+
             return $endorsement;
         });
     }
@@ -236,6 +244,12 @@ class TicketEndorsementService
                             'old_status' => null,
                             'new_status' => TicketStatus::OPEN,
                         ]);
+
+                        DB::afterCommit(function () use ($lockedEndorsement, $childTicket) {
+                            $lockedEndorsement->load(['ticket', 'reviewer', 'suggestedDepartment']);
+                            event(new TicketCreated($childTicket));
+                            event(new TicketEndorsementDecided($lockedEndorsement, $childTicket->id, $childTicket->ticket_number));
+                        });
                     } else {
                         $oldStatus = $parentTicket->status;
                         $rawPreStatus = $lockedEndorsement->pre_endorsement_status;
@@ -278,6 +292,11 @@ class TicketEndorsementService
                             'old_status' => $oldStatus,
                             'new_status' => $targetStatus,
                         ]);
+
+                        DB::afterCommit(function () use ($lockedEndorsement) {
+                            $lockedEndorsement->load(['ticket', 'reviewer', 'suggestedDepartment']);
+                            event(new TicketEndorsementDecided($lockedEndorsement));
+                        });
                     }
 
                     return ['success' => true];

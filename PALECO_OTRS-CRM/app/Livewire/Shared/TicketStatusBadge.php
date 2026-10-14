@@ -24,6 +24,8 @@ class TicketStatusBadge extends Component
     #[On('echo-private:cwd.operations,.TicketVerifiedAndClosed')]
     #[On('echo-private:cwd.operations,.TicketCancelled')]
     #[On('echo-private:cwd.operations,.TicketForceClosed')]
+    #[On('echo-private:cwd.operations,.TicketEndorsementInitiated')]
+    #[On('echo-private:cwd.operations,.TicketEndorsementDecided')]
     public function handleStatusChange($event = null): void
     {
         if ($event && isset($event['ticket_id']) && $event['ticket_id'] !== $this->ticket->id) {

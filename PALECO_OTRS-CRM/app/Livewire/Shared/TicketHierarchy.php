@@ -32,6 +32,8 @@ class TicketHierarchy extends Component
     #[On('echo-private:cwd.operations,.TicketVerifiedAndClosed')]
     #[On('echo-private:cwd.operations,.TicketCancelled')]
     #[On('echo-private:cwd.operations,.TicketForceClosed')]
+    #[On('echo-private:cwd.operations,.TicketEndorsementInitiated')]
+    #[On('echo-private:cwd.operations,.TicketEndorsementDecided')]
     public function handleHierarchyUpdate($event = null): void
     {
         if ($event && isset($event['ticket_id'])) {
