@@ -4,7 +4,9 @@ namespace App\Services\Tickets;
 
 use App\Enums\ComplaintSources;
 use App\Enums\TicketStatus;
+use App\Events\TicketAssigned;
 use App\Events\TicketCreated;
+use App\Events\TicketWorkStarted;
 use App\Models\Department;
 use App\Models\Team;
 use App\Models\Ticket;
@@ -579,12 +581,19 @@ class TicketService
                 'status' => TicketStatus::ASSIGNED,
             ]);
 
-            return $lockedTicket->fresh([
+            $freshTicket = $lockedTicket->fresh([
                 'category',
                 'team',
+                'department',
                 'activeAssignment.team',
                 'activeAssignment.assigner.role',
             ]);
+
+            DB::afterCommit(function () use ($freshTicket) {
+                TicketAssigned::dispatch($freshTicket);
+            });
+
+            return $freshTicket;
         });
     }
 
@@ -638,7 +647,13 @@ class TicketService
                 'synced_at' => $isOffline ? now() : null,
             ]);
 
-            return $lockedTicket->fresh(['category']);
+            $freshTicket = $lockedTicket->fresh(['category', 'team', 'department']);
+
+            DB::afterCommit(function () use ($freshTicket) {
+                TicketWorkStarted::dispatch($freshTicket);
+            });
+
+            return $freshTicket;
         });
     }
 

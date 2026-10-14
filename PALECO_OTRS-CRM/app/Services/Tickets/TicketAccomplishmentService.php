@@ -4,6 +4,9 @@ namespace App\Services\Tickets;
 
 use App\Enums\TicketAccomplishmentStatus;
 use App\Enums\TicketStatus;
+use App\Events\TicketAccomplished;
+use App\Events\TicketVerifiedAndClosed;
+use App\Events\TicketWorkStarted;
 use App\Models\Ticket;
 use App\Models\TicketAccomplishment;
 use App\Models\TicketStatusLog;
@@ -205,6 +208,12 @@ class TicketAccomplishmentService
 
                 $lockedTicket->update($ticketUpdate);
 
+                $freshTicket = $lockedTicket->fresh(['category', 'team', 'department']);
+
+                DB::afterCommit(function () use ($freshTicket) {
+                    TicketAccomplished::dispatch($freshTicket);
+                });
+
                 return $report;
             });
         } catch (\Exception $e) {
@@ -269,6 +278,12 @@ class TicketAccomplishmentService
                     'new_status' => TicketStatus::CLOSED,
                     'changed_by_id' => $supervisor->id,
                 ]);
+
+                $freshTicket = $lockedTicket->fresh(['category', 'team', 'department']);
+
+                DB::afterCommit(function () use ($freshTicket) {
+                    TicketVerifiedAndClosed::dispatch($freshTicket);
+                });
             }
 
             if ($data['status'] === TicketAccomplishmentStatus::REJECTED->value) {
@@ -289,6 +304,12 @@ class TicketAccomplishmentService
                     'new_status' => TicketStatus::IN_PROGRESS,
                     'changed_by_id' => $supervisor->id,
                 ]);
+
+                $freshTicket = $lockedTicket->fresh(['category', 'team', 'department']);
+
+                DB::afterCommit(function () use ($freshTicket) {
+                    TicketWorkStarted::dispatch($freshTicket);
+                });
             }
 
             return $lockedAccomplishment->fresh(['accomplishedBy', 'rejectedBy', 'approvedBy', 'photos']);

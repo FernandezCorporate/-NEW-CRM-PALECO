@@ -65,6 +65,15 @@ class TicketTable extends Component
         $this->resetPage();
     }
 
+    #[On('echo-private:cwd.operations,.TicketAssigned')]
+    #[On('echo-private:cwd.operations,.TicketWorkStarted')]
+    #[On('echo-private:cwd.operations,.TicketAccomplished')]
+    #[On('echo-private:cwd.operations,.TicketVerifiedAndClosed')]
+    public function handleStatusUpdated($event = null): void
+    {
+        // Trigger component re-render so status badges and assigned teams update in real time
+    }
+
     public function render()
     {
         $tickets = Ticket::with(['category', 'department', 'consumer', 'parentTicket'])

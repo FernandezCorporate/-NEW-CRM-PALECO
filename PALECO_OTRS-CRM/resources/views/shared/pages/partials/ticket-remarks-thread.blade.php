@@ -1,6 +1,6 @@
 @props(['ticket', 'isAdmin'])
 
-<div id="remark-history" data-tab-panel="remark-history" role="tabpanel" aria-labelledby="tab-remark-history" class="ticket-history-section border border-slate-200 rounded-xl bg-white shadow-xs overflow-hidden mb-6 hidden">
+<div id="remark-history" wire:ignore data-tab-panel="remark-history" role="tabpanel" aria-labelledby="tab-remark-history" class="ticket-history-section border border-slate-200 rounded-xl bg-white shadow-xs overflow-hidden mb-6 hidden">
     <header class="ticket-history-heading border-b border-slate-100 bg-slate-50/50">
         <div>
             <h3 id="remark-history-heading">Activity remarks & notes <span class="ticket-history-count">{{ number_format($ticket->remarks->count()) }}</span></h3>

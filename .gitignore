@@ -2,3 +2,7 @@
 node_modules/
 vendor/
 .env
+
+# Standalone Mobile Simulator
+mobile-simulator/
+

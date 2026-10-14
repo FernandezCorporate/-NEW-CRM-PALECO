@@ -1,16 +1,11 @@
 /**
  * Single-responsibility tab controller for Ticket Details Activity & History.
  * Controls dynamic visibility across history tables and the communication remarks thread.
+ * Synchronized with Livewire DOM morphing for real-time WebSocket updates.
  */
 const initHistoryTabs = () => {
     const nav = document.querySelector('.ticket-history-nav');
     if (!nav) return;
-
-    const tabs = Array.from(nav.querySelectorAll('[data-tab-target], a[href^="#"]'));
-    if (!tabs.length) return;
-
-    const panels = Array.from(document.querySelectorAll('[data-tab-panel]'));
-    if (!panels.length) return;
 
     const getTargetId = (tab) => {
         return tab.getAttribute('data-tab-target') || tab.getAttribute('href')?.replace('#', '');
@@ -19,12 +14,15 @@ const initHistoryTabs = () => {
     const activateTab = (targetId, updateHash = true) => {
         if (!targetId) return;
 
+        const currentTabs = Array.from(nav.querySelectorAll('[data-tab-target], a[href^="#"]'));
+        const currentPanels = Array.from(document.querySelectorAll('[data-tab-panel]'));
+
         // Verify target panel exists
-        const targetPanel = panels.find((panel) => panel.getAttribute('data-tab-panel') === targetId || panel.id === targetId);
+        const targetPanel = currentPanels.find((panel) => panel.getAttribute('data-tab-panel') === targetId || panel.id === targetId);
         if (!targetPanel) return;
 
         // Toggle Tabs
-        tabs.forEach((tab) => {
+        currentTabs.forEach((tab) => {
             const isMatch = getTargetId(tab) === targetId;
             tab.setAttribute('aria-selected', isMatch ? 'true' : 'false');
             if (isMatch) {
@@ -35,7 +33,7 @@ const initHistoryTabs = () => {
         });
 
         // Toggle Panels
-        panels.forEach((panel) => {
+        currentPanels.forEach((panel) => {
             const isMatch = panel.getAttribute('data-tab-panel') === targetId || panel.id === targetId;
             if (isMatch) {
                 panel.classList.remove('hidden');
@@ -55,29 +53,43 @@ const initHistoryTabs = () => {
         }
     };
 
-    // Attach click listeners to tabs
-    tabs.forEach((tab) => {
-        tab.addEventListener('click', (e) => {
+    // Attach delegated click listener to nav to avoid duplicate listeners on Livewire re-renders
+    if (!nav._historyTabsBound) {
+        nav.addEventListener('click', (e) => {
+            const tab = e.target.closest('[data-tab-target], a[href^="#"]');
+            if (!tab) return;
             e.preventDefault();
             const targetId = getTargetId(tab);
             activateTab(targetId, true);
         });
-    });
+        nav._historyTabsBound = true;
+    }
 
-    // Resolve initial active tab from URL hash, defaulting to first tab
-    const initialHash = window.location.hash ? window.location.hash.replace('#', '') : null;
-    const hasMatchingInitialPanel = initialHash && panels.some((panel) => panel.getAttribute('data-tab-panel') === initialHash || panel.id === initialHash);
+    // Resolve active tab from URL hash, defaulting to first tab
+    const syncActiveTab = () => {
+        const tabs = Array.from(nav.querySelectorAll('[data-tab-target], a[href^="#"]'));
+        const panels = Array.from(document.querySelectorAll('[data-tab-panel]'));
+        if (!tabs.length || !panels.length) return;
 
-    const defaultTargetId = hasMatchingInitialPanel ? initialHash : getTargetId(tabs[0]);
-    activateTab(defaultTargetId, false);
+        const initialHash = window.location.hash ? window.location.hash.replace('#', '') : null;
+        const hasMatchingInitialPanel = initialHash && panels.some((panel) => panel.getAttribute('data-tab-panel') === initialHash || panel.id === initialHash);
+
+        const defaultTargetId = hasMatchingInitialPanel ? initialHash : getTargetId(tabs[0]);
+        activateTab(defaultTargetId, false);
+    };
+
+    syncActiveTab();
 
     // React to hashchange events
-    window.addEventListener('hashchange', () => {
-        const hash = window.location.hash.replace('#', '');
-        if (hash) {
-            activateTab(hash, false);
-        }
-    });
+    if (!window._historyTabsHashBound) {
+        window.addEventListener('hashchange', () => {
+            const hash = window.location.hash.replace('#', '');
+            if (hash) {
+                activateTab(hash, false);
+            }
+        });
+        window._historyTabsHashBound = true;
+    }
 };
 
 if (document.readyState === 'loading') {
@@ -85,3 +97,15 @@ if (document.readyState === 'loading') {
 } else {
     initHistoryTabs();
 }
+
+document.addEventListener('livewire:initialized', () => {
+    if (typeof Livewire !== 'undefined' && Livewire.hook) {
+        Livewire.hook('commit', ({ succeed }) => {
+            succeed(() => {
+                requestAnimationFrame(() => {
+                    initHistoryTabs();
+                });
+            });
+        });
+    }
+});

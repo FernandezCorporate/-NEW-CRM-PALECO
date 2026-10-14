@@ -15,8 +15,11 @@ class DashboardOverview extends Component
         $this->overview = $service->ticketOverview();
     }
 
-    // FIXED: Added the '.' before TicketCreated so Echo resolves the App\Events namespace
     #[On('echo-private:cwd.operations,.TicketCreated')]
+    #[On('echo-private:cwd.operations,.TicketAssigned')]
+    #[On('echo-private:cwd.operations,.TicketWorkStarted')]
+    #[On('echo-private:cwd.operations,.TicketAccomplished')]
+    #[On('echo-private:cwd.operations,.TicketVerifiedAndClosed')]
     public function refreshMetrics(WebDashboardService $service)
     {
         $this->overview = $service->ticketOverview();
