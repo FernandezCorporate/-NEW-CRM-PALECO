@@ -304,7 +304,7 @@ test('cwd officer can force-close an assigned ticket with freely typed justifica
     expect($activity->causer_id)->toBe($this->cwdUser->id);
 });
 
-test('authorized cwd user and admin can view force close confirmation page', function () {
+test('authorized cwd user can view force close confirmation page while admin is forbidden', function () {
     $ticket = Ticket::create([
         'id' => (string) Str::ulid(),
         'ticket_number' => 'TCK-20261013-FC-CONFIRM',
@@ -326,15 +326,13 @@ test('authorized cwd user and admin can view force close confirmation page', fun
     $cwdResponse->assertSee('Force Close Service Ticket?');
     $cwdResponse->assertSee('closure_reason');
 
-    // Admin
+    // Admin cannot access CWD force close confirm
     $adminResponse = $this->actingAs($this->adminUser)
-        ->get(route('admin.tickets.forceCloseConfirm', $ticket));
-    $adminResponse->assertOk();
-    $adminResponse->assertSee('Force Close Service Ticket?');
-    $adminResponse->assertSee('closure_reason');
+        ->get(route('cwd.tickets.forceCloseConfirm', $ticket));
+    $adminResponse->assertForbidden();
 });
 
-test('admin can force close ticket and is redirected to admin ticket show', function () {
+test('admin cannot force close ticket and is forbidden', function () {
     $ticket = Ticket::create([
         'id' => (string) Str::ulid(),
         'ticket_number' => 'TCK-20261013-ADMIN-FC',
@@ -350,17 +348,15 @@ test('admin can force close ticket and is redirected to admin ticket show', func
     ]);
 
     $response = $this->actingAs($this->adminUser)
-        ->post(route('admin.tickets.forceClose', $ticket), [
+        ->post(route('cwd.tickets.forceClose', $ticket), [
             'closure_reason' => 'Administrative intervention: line clear.',
         ]);
 
-    $response->assertRedirect(route('admin.tickets.show', $ticket));
-    $response->assertSessionHas('success');
+    $response->assertForbidden();
 
     $ticket->refresh();
-    expect($ticket->status)->toBe(TicketStatus::CLOSED);
-    expect($ticket->is_force_closed)->toBeTrue();
-    expect($ticket->closed_by_id)->toBe($this->adminUser->id);
+    expect($ticket->status)->toBe(TicketStatus::ASSIGNED);
+    expect($ticket->is_force_closed)->toBeFalse();
 });
 
 test('force closure is permitted from in-progress, resolved, and endorsed statuses', function () {
@@ -506,13 +502,13 @@ test('validation fails when closure justification is missing or shorter than 3 c
         ->assertSessionHasErrors('closure_reason');
 });
 
-test('supervisor can force-close ticket within own department via mobile api', function () {
+test('only cwd officer is authorized to force-close tickets; supervisor and field personnel are forbidden', function () {
     $ticket = Ticket::create([
         'id' => (string) Str::ulid(),
-        'ticket_number' => 'TCK-MOB-001',
+        'ticket_number' => 'TCK-ROLE-FC-001',
         'complaint_source' => ComplaintSources::PHONE_CALL->value,
         'consumer_contact' => '09123456789',
-        'complaint_description' => 'Mobile force-close target.',
+        'complaint_description' => 'Force close target for role checks.',
         'department_id' => $this->dept->id,
         'category_id' => $this->category->id,
         'team_id' => $this->team->id,
@@ -522,66 +518,37 @@ test('supervisor can force-close ticket within own department via mobile api', f
         'reported_at' => now(),
     ]);
 
-    Sanctum::actingAs($this->supervisorUser);
+    // 1. Policy checks: Only CWD is allowed
+    expect(Gate::forUser($this->cwdUser)->allows('forceClose', $ticket))->toBeTrue();
+    expect(Gate::forUser($this->supervisorUser)->allows('forceClose', $ticket))->toBeFalse();
+    expect(Gate::forUser($this->adminUser)->allows('forceClose', $ticket))->toBeFalse();
+    expect(Gate::forUser($this->fieldUser)->allows('forceClose', $ticket))->toBeFalse();
 
-    $response = $this->postJson("/api/tickets/{$ticket->id}/force-close", [
-        'closure_reason' => 'Hazardous power line contact with private trees. Consumer refused trimming.',
-    ]);
+    // 2. Service level enforcement: Non-CWD throws ValidationException
+    $service = app(TicketService::class);
 
-    $response->assertOk()
-        ->assertJsonPath('success', true)
-        ->assertJsonPath('data.status', TicketStatus::CLOSED->value);
+    expect(fn () => $service->forceCloseTicket($ticket, [
+        'closure_reason' => 'Supervisor unauthorized attempt',
+    ], $this->supervisorUser))->toThrow(ValidationException::class);
 
-    $ticket->refresh();
-    expect($ticket->status)->toBe(TicketStatus::CLOSED);
-    expect($ticket->is_force_closed)->toBeTrue();
-    expect($ticket->closed_by_id)->toBe($this->supervisorUser->id);
-});
+    expect(fn () => $service->forceCloseTicket($ticket, [
+        'closure_reason' => 'Admin unauthorized attempt',
+    ], $this->adminUser))->toThrow(ValidationException::class);
 
-test('supervisor cannot force-close ticket belonging to another department', function () {
-    $foreignTicket = Ticket::create([
-        'id' => (string) Str::ulid(),
-        'ticket_number' => 'TCK-FOREIGN-001',
-        'complaint_source' => ComplaintSources::PHONE_CALL->value,
-        'consumer_contact' => '09123456789',
-        'complaint_description' => 'Foreign dept ticket.',
-        'department_id' => $this->otherDept->id,
-        'category_id' => $this->category->id,
-        'barangay' => 'Tiniguiban',
-        'status' => TicketStatus::ASSIGNED->value,
-        'created_by_id' => $this->cwdUser->id,
-        'reported_at' => now(),
-    ]);
+    expect(fn () => $service->forceCloseTicket($ticket, [
+        'closure_reason' => 'Field lineman unauthorized attempt',
+    ], $this->fieldUser))->toThrow(ValidationException::class);
 
-    Sanctum::actingAs($this->supervisorUser);
+    // 3. Web route enforcement: Non-CWD gets 403 Forbidden
+    $this->actingAs($this->supervisorUser)
+        ->post(route('cwd.tickets.forceClose', $ticket), [
+            'closure_reason' => 'Supervisor attempt',
+        ])->assertForbidden();
 
-    $response = $this->postJson("/api/tickets/{$foreignTicket->id}/force-close", [
-        'closure_reason' => 'Attempted unauthorized closure',
-    ]);
-
-    $response->assertNotFound();
-});
-
-test('field personnel cannot force-close tickets', function () {
-    $ticket = Ticket::create([
-        'id' => (string) Str::ulid(),
-        'ticket_number' => 'TCK-FIELD-001',
-        'complaint_source' => ComplaintSources::PHONE_CALL->value,
-        'consumer_contact' => '09123456789',
-        'complaint_description' => 'Field target.',
-        'department_id' => $this->dept->id,
-        'category_id' => $this->category->id,
-        'barangay' => 'Tiniguiban',
-        'status' => TicketStatus::IN_PROGRESS->value,
-        'created_by_id' => $this->cwdUser->id,
-        'reported_at' => now(),
-    ]);
-
-    Sanctum::actingAs($this->fieldUser);
-
-    $this->postJson("/api/tickets/{$ticket->id}/force-close", [
-        'closure_reason' => 'Lineman tried to force close',
-    ])->assertForbidden();
+    $this->actingAs($this->fieldUser)
+        ->post(route('cwd.tickets.forceClose', $ticket), [
+            'closure_reason' => 'Lineman attempt',
+        ])->assertForbidden();
 });
 
 test('cannot force-close parent ticket while any subordinate child tickets are NOT exactly closed or cancelled', function () {

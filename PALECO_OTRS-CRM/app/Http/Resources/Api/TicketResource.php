@@ -24,16 +24,36 @@ class TicketResource extends JsonResource
 
             'ticket_subject' => $this->subject,
             'complaint_description' => $this->complaint_description,
+
+            // Department Silo
+            'department_id' => $this->department_id,
+            'department_name' => $this->department?->trashed()
+                ? $this->department->dept_name . ' (Archived)'
+                : $this->department?->dept_name,
+
+            // Category Details
+            'category_id' => $this->category_id,
             'category_name' => $this->other_category
-                                        ? $this->other_category_name
-                                        : ($this->category?->trashed()
-                                            ? $this->category->category_name . ' (Archived)'
-                                            : $this->category?->category_name),
+                ? $this->other_category_name
+                : ($this->category?->trashed()
+                    ? $this->category->category_name . ' (Archived)'
+                    : $this->category?->category_name),
+            'is_other_category' => (bool) $this->other_category,
+            'other_category_name' => $this->other_category_name,
+
+            // Hierarchy
+            'is_child' => ! empty($this->parent_ticket_id),
+            'parent_ticket_id' => $this->parent_ticket_id,
+            'parent_ticket_number' => $this->parentTicket?->ticket_number,
+            'child_tickets_count' => $this->child_tickets_count ?? 0,
+
+            // Location
             'purok' => $this->purok,
             'street' => $this->street,
             'barangay' => $this->barangay,
             'landmark' => $this->landmark,
 
+            // Team & Dispatcher
             'team_id' => $this->team_id,
             'team_name' => $this->team?->trashed()
                 ? $this->team->team_name . ' (Archived)'
@@ -41,19 +61,25 @@ class TicketResource extends JsonResource
             'created_by' => $this->created_by_id,
             'created_by_name' => $this->creator?->full_name,
 
-            // FORMATTING APPLIED HERE
+            // Timestamps
             'reported_at' => $this->reported_at?->format('M d, Y h:i A'),
             'started_at' => $this->started_at?->format('M d, Y h:i A'),
             'resolved_at' => $this->resolved_at?->format('M d, Y h:i A'),
             'closed_at' => $this->closed_at?->format('M d, Y h:i A'),
-
             'created_at' => $this->created_at?->format('M d, Y h:i A'),
             'updated_at' => $this->updated_at?->format('M d, Y h:i A'),
 
+            // Lifecycle & Exceptions
             'status' => $this->status?->value ?? $this->status,
-            'child_tickets_count' => $this->child_tickets_count ?? 0,
+            'is_force_closed' => (bool) ($this->is_force_closed ?? false),
+            'closure_reason' => $this->closure_reason,
+            'cancellation_reason' => $this->cancellation_reason,
+            'cancelled_at' => $this->cancelled_at?->format('M d, Y h:i A'),
+
+            // Offline Sync Telemetry
             'is_offline_synced' => (bool) ($this->is_offline_synced ?? false),
             'synced_at' => $this->synced_at?->format('M d, Y h:i A'),
+            'client_started_at' => $this->client_started_at?->format('M d, Y h:i A'),
 
             'active_assignment' => $this->whenLoaded('activeAssignment', function () {
                 if (! $this->activeAssignment) {

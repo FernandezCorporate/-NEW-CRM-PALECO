@@ -1,7 +1,7 @@
 @php
-    $layout = $isAdmin ? 'admin.base.base' : 'cwd.base.base';
-    $cancelRoute = $isAdmin ? route('admin.tickets.show', $ticket) : route('cwd.tickets.show', $ticket);
-    $actionRoute = $isAdmin ? route('admin.tickets.forceClose', $ticket) : route('cwd.tickets.forceClose', $ticket);
+    $layout = 'cwd.base.base';
+    $cancelRoute = route('cwd.tickets.show', $ticket);
+    $actionRoute = route('cwd.tickets.forceClose', $ticket);
 @endphp
 
 @extends($layout)

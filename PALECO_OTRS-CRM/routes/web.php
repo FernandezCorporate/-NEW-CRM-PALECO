@@ -161,8 +161,6 @@ Route::middleware(['auth', CheckIfActive::class])->group(function () {
         Route::prefix('tickets')->group(function () {
             Route::get('/', [TicketController::class, 'index'])->name('admin.tickets');
             Route::get('/{ticket}', [TicketController::class, 'show'])->name('admin.tickets.show')->whereUlid('ticket');
-            Route::get('/{ticket}/force-close', [TicketController::class, 'forceCloseConfirm'])->name('admin.tickets.forceCloseConfirm')->whereUlid('ticket');
-            Route::post('/{ticket}/force-close', [TicketController::class, 'forceClose'])->name('admin.tickets.forceClose')->whereUlid('ticket');
         });
 
         Route::prefix('system-monitoring')->group(function () {

@@ -375,17 +375,26 @@ Includes real-time global status counters in the pagination `meta` block.
       "id": "01JM4C7W1ABCDEF1234567890",
       "ticket_number": "2026-0042",
       "consumer_contact": "09189876543",
-      "complaint_source": "Phone Call",
+      "complaint_source": "phone_call",
       "ticket_subject": "Low Voltage Complaint - Brgy. San Pedro",
       "complaint_description": "Transformer tripping intermittently during peak load hours.",
+      "department_id": 1,
+      "department_name": "Technical Services Department",
+      "category_id": 4,
       "category_name": "Power Quality / Voltage Problem",
+      "is_other_category": false,
+      "other_category_name": null,
+      "is_child": false,
+      "parent_ticket_id": null,
+      "parent_ticket_number": null,
+      "child_tickets_count": 0,
       "purok": "Purok 3",
       "street": "Malvar Street",
       "barangay": "San Pedro",
       "landmark": "Near San Pedro Chapel",
       "team_id": "01JM4BT01TEAM1234567890",
       "team_name": "Alpha Response Crew",
-      "created_by": 5,
+      "created_by": "01JM4ABCDE1234567890",
       "created_by_name": "Dispatcher Jane",
       "reported_at": "Oct 06, 2026 09:15 AM",
       "started_at": "Oct 06, 2026 10:00 AM",
@@ -393,8 +402,14 @@ Includes real-time global status counters in the pagination `meta` block.
       "closed_at": null,
       "created_at": "Oct 06, 2026 09:15 AM",
       "updated_at": "Oct 06, 2026 10:00 AM",
-      "status": "In Progress",
-      "child_tickets_count": 0
+      "status": "in_progress",
+      "is_force_closed": false,
+      "closure_reason": null,
+      "cancellation_reason": null,
+      "cancelled_at": null,
+      "is_offline_synced": false,
+      "synced_at": null,
+      "client_started_at": null
     }
   ],
   "links": {
@@ -418,7 +433,8 @@ Includes real-time global status counters in the pagination `meta` block.
       "resolved": 4,
       "closed": 2,
       "pending_endorsement": 1,
-      "endorsed": 0
+      "endorsed": 0,
+      "cancelled": 0
     }
   },
   "success": true
@@ -428,7 +444,7 @@ Includes real-time global status counters in the pagination `meta` block.
 ---
 
 ### 6.2. Get Ticket Detailed Information
-Returns the full ticket details including complainant particulars, assigned crew, status logs timeline, and linked child tickets.
+Returns the full ticket details including complainant particulars, assigned crew, status logs timeline, parent/child hierarchy, force closure / cancellation exceptions, and linked child tickets.
 
 - **Method:** `GET`
 - **URL:** `/api/tickets/{ticket}`
@@ -447,18 +463,31 @@ Returns the full ticket details including complainant particulars, assigned crew
   "data": {
     "id": "01JM4C7W1ABCDEF1234567890",
     "ticket_number": "2026-0042",
-    "status": "In Progress",
+    "status": "in_progress",
+    "department_id": 1,
+    "department_name": "Technical Services Department",
+    "is_child": false,
+    "parent_ticket_id": null,
+    "parent_ticket_number": null,
     "reported_at": "Oct 06, 2026 09:15 AM",
     "started_at": "Oct 06, 2026 10:00 AM",
     "resolved_at": null,
     "closed_at": null,
+    "is_force_closed": false,
+    "closure_reason": null,
+    "closed_by": null,
+    "cancellation_reason": null,
+    "cancelled_at": null,
+    "is_offline_synced": false,
+    "synced_at": null,
+    "client_started_at": null,
     "creator": {
-      "id": 5,
+      "id": "01JM4ABCDE1234567890",
       "name": "Jane Dispatcher",
       "role": "Call Center Agent"
     },
     "consumer": {
-      "id": 1042,
+      "id": "01JM4CONSUMER1234567890",
       "acct_no": "01-2345-6789",
       "acct_code": "RES-01",
       "name": "Maria Santos",
@@ -467,11 +496,17 @@ Returns the full ticket details including complainant particulars, assigned crew
       "meter_serial": "PAL-998811"
     },
     "complaint": {
-      "source": "Phone Call",
+      "source": "phone_call",
       "consumer_contact": "09189876543",
+      "category_id": 4,
       "category_name": "Power Quality / Voltage Problem",
+      "is_other_category": false,
+      "other_category_name": null,
       "description": "Transformer tripping intermittently during peak load hours.",
       "full_address": "Purok 3, Malvar Street, San Pedro, Puerto Princesa City",
+      "purok": "Purok 3",
+      "street": "Malvar Street",
+      "barangay": "San Pedro",
       "landmark": "Near San Pedro Chapel"
     },
     "team": {
@@ -480,8 +515,8 @@ Returns the full ticket details including complainant particulars, assigned crew
       "shift_start": "08:00",
       "shift_end": "17:00",
       "personnel": [
-        { "id": 22, "name": "Pedro Lineman" },
-        { "id": 23, "name": "Juan Electrician" }
+        { "id": "01JM4USER12345678901234", "name": "Pedro Lineman" },
+        { "id": "01JM4USER12345678901235", "name": "Juan Electrician" }
       ]
     },
     "active_assignment": {
@@ -495,15 +530,15 @@ Returns the full ticket details including complainant particulars, assigned crew
     "status_logs": [
       {
         "id": 101,
-        "old_status": "Open",
-        "new_status": "Assigned",
+        "old_status": "open",
+        "new_status": "assigned",
         "changed_by_name": "John Doe",
         "created_at": "Oct 06, 2026 09:30 AM"
       },
       {
         "id": 102,
-        "old_status": "Assigned",
-        "new_status": "In Progress",
+        "old_status": "assigned",
+        "new_status": "in_progress",
         "changed_by_name": "Pedro Lineman",
         "created_at": "Oct 06, 2026 10:00 AM"
       }

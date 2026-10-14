@@ -20,10 +20,41 @@ class TicketDetailedResource extends JsonResource
             'id' => $this->id,
             'ticket_number' => $this->ticket_number,
             'status' => $this->status?->value ?? $this->status,
+
+            // Department Silo
+            'department_id' => $this->department_id,
+            'department_name' => $this->department?->trashed()
+                ? $this->department->dept_name . ' (Archived)'
+                : $this->department?->dept_name,
+
+            // Hierarchy Navigation
+            'is_child' => ! empty($this->parent_ticket_id),
+            'parent_ticket_id' => $this->parent_ticket_id,
+            'parent_ticket_number' => $this->parentTicket?->ticket_number,
+
+            // Timestamps
             'reported_at' => $this->reported_at?->format('M d, Y h:i A'),
             'started_at' => $this->started_at?->format('M d, Y h:i A'),
             'resolved_at' => $this->resolved_at?->format('M d, Y h:i A'),
             'closed_at' => $this->closed_at?->format('M d, Y h:i A'),
+
+            // Exception Workflows: Force Closure
+            'is_force_closed' => (bool) ($this->is_force_closed ?? false),
+            'closure_reason' => $this->closure_reason,
+            'closed_by' => $this->closed_by_id ? [
+                'id' => $this->closed_by_id,
+                'name' => $this->closedBy?->full_name,
+                'role' => $this->closedBy?->role?->role_name,
+            ] : null,
+
+            // Exception Workflows: Cancellation
+            'cancellation_reason' => $this->cancellation_reason,
+            'cancelled_at' => $this->cancelled_at?->format('M d, Y h:i A'),
+
+            // Offline Sync Telemetry
+            'is_offline_synced' => (bool) ($this->is_offline_synced ?? false),
+            'synced_at' => $this->synced_at?->format('M d, Y h:i A'),
+            'client_started_at' => $this->client_started_at?->format('M d, Y h:i A'),
 
             // Eager-loaded Dispatcher/Creator
             'creator' => $this->whenLoaded('creator', function () {
@@ -48,27 +79,41 @@ class TicketDetailedResource extends JsonResource
             'complaint' => [
                 'source' => $this->complaint_source?->value ?? $this->complaint_source,
                 'consumer_contact' => $this->consumer_contact,
+                'category_id' => $this->category_id,
                 'category_name' => $this->other_category
                     ? $this->other_category_name
-                    : $this->category?->category_name,
+                    : ($this->category?->trashed()
+                        ? $this->category->category_name . ' (Archived)'
+                        : $this->category?->category_name),
+                'is_other_category' => (bool) $this->other_category,
+                'other_category_name' => $this->other_category_name,
                 'description' => $this->complaint_description,
                 'full_address' => $this->subject,
+                'purok' => $this->purok,
+                'street' => $this->street,
+                'barangay' => $this->barangay,
                 'landmark' => $this->landmark,
             ],
 
             // Eager-loaded Team with Members
             'team' => $this->when($this->team_id !== null, function () {
+                if (! $this->team) {
+                    return null;
+                }
+
                 return [
                     'id' => $this->team->id,
-                    'team_name' => $this->team->team_name,
+                    'team_name' => $this->team->trashed()
+                        ? $this->team->team_name . ' (Archived)'
+                        : $this->team->team_name,
                     'shift_start' => $this->team->shift_start?->format('H:i'),
                     'shift_end' => $this->team->shift_end?->format('H:i'),
-                    'personnel' => $this->team->members->map(function ($member) {
+                    'personnel' => $this->team->members ? $this->team->members->map(function ($member) {
                         return [
                             'id' => $member->id,
                             'name' => $member->full_name,
                         ];
-                    }),
+                    }) : [],
                 ];
             }),
 

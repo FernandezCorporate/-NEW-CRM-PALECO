@@ -280,7 +280,7 @@ class TicketPolicy
 
     /*
      * Determine whether the user can administratively force-close the service ticket.
-     * Permitted to CWD officers, department supervisors (scoped), and administrators.
+     * Permitted strictly to CWD officers.
      * Allowed strictly from ASSIGNED, IN_PROGRESS, RESOLVED, or ENDORSED status.
      * Forbidden when OPEN (must cancel) or PENDING_ENDORSEMENT (in-flight review locked).
      */
@@ -290,13 +290,8 @@ class TicketPolicy
             return Response::denyAsNotFound('The requested ticket was not found.');
         }
 
-        $roleSlug = $user->role->slug_identifier;
-        if (! in_array($roleSlug, ['cwd_officer', 'supervisor', 'admin'], true)) {
-            return Response::deny('You are not authorized to force-close tickets.');
-        }
-
-        if ($roleSlug === 'supervisor' && $user->department_id !== $ticket->department_id) {
-            return Response::denyAsNotFound('The requested ticket was not found.');
+        if ($user->role->slug_identifier !== 'cwd_officer') {
+            return Response::deny('Only CWD officers are authorized to force-close tickets.');
         }
 
         if ($ticket->status === TicketStatus::CLOSED) {

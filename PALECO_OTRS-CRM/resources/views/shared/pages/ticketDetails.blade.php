@@ -115,7 +115,7 @@
                 @endcan
 
                 @can('forceClose', $ticket)
-                    <a href="{{ $isAdmin ? route('admin.tickets.forceCloseConfirm', $ticket) : route('cwd.tickets.forceCloseConfirm', $ticket) }}" class="btn bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 text-xs py-2 px-3.5 shadow-2xs transition-colors">
+                    <a href="{{ route('cwd.tickets.forceCloseConfirm', $ticket) }}" class="btn bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 text-xs py-2 px-3.5 shadow-2xs transition-colors">
                         <x-icons.exclamation-triangle class="w-4 h-4 text-amber-600" />
                         <span>Force Close</span>
                     </a>

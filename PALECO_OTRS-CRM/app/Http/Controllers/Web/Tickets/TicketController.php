@@ -203,11 +203,8 @@ class TicketController extends Controller
     {
         Gate::authorize('forceClose', $ticket);
 
-        $isAdmin = auth()->user()?->role?->slug_identifier === 'admin';
-
         return view('shared.prompts.ticketForceCloseConfirm', [
             'ticket' => $ticket,
-            'isAdmin' => $isAdmin,
         ]);
     }
 
@@ -218,19 +215,16 @@ class TicketController extends Controller
     {
         Gate::authorize('forceClose', $ticket);
 
-        $isAdmin = $request->user()?->role?->slug_identifier === 'admin';
-        $redirectRoute = $isAdmin ? 'admin.tickets.show' : 'cwd.tickets.show';
-
         try {
             $this->ticketService->forceCloseTicket($ticket, $request->validated(), $request->user());
         } catch (ValidationException $e) {
             $errorMessage = collect($e->errors())->flatten()->first() ?? 'Ticket cannot be force-closed.';
 
-            return redirect()->route($redirectRoute, $ticket)
+            return redirect()->route('cwd.tickets.show', $ticket)
                 ->with('error', $errorMessage);
         }
 
-        return redirect()->route($redirectRoute, $ticket)
+        return redirect()->route('cwd.tickets.show', $ticket)
             ->with('success', "Ticket {$ticket->ticket_number} has been administratively force-closed.");
     }
 }

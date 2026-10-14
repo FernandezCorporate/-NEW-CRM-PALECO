@@ -146,7 +146,7 @@ class TicketService
     public function getInboxTickets(User $user, array $params): LengthAwarePaginator
     {
         $query = Ticket::query()
-            ->with('category')
+            ->with(['category', 'department', 'parentTicket', 'team', 'creator'])
             ->withCount('childTickets');
 
         if ($user->role->slug_identifier === 'supervisor') {
@@ -206,6 +206,9 @@ class TicketService
     {
         return $ticket->load([
             'category',
+            'department',
+            'parentTicket',
+            'closedBy.role',
             'creator.role',
             'team.members',
             'activeAssignment.team',
@@ -712,16 +715,9 @@ class TicketService
                 ->lockForUpdate()
                 ->firstOrFail();
 
-            $roleSlug = $actor->role->slug_identifier;
-            if (! in_array($roleSlug, ['cwd_officer', 'supervisor', 'admin'], true)) {
+            if ($actor->role->slug_identifier !== 'cwd_officer') {
                 throw ValidationException::withMessages([
-                    'actor' => 'You are not authorized to force-close tickets.',
-                ]);
-            }
-
-            if ($roleSlug === 'supervisor' && $actor->department_id !== $lockedTicket->department_id) {
-                throw ValidationException::withMessages([
-                    'actor' => 'Supervisors can only force-close tickets within their assigned department.',
+                    'actor' => 'Only CWD Officers are authorized to force-close tickets.',
                 ]);
             }
 
@@ -812,7 +808,7 @@ class TicketService
                 'category',
                 'department',
                 'team',
-                'closedBy',
+                'closedBy.role',
                 'statusLog.updater',
             ]);
         });
