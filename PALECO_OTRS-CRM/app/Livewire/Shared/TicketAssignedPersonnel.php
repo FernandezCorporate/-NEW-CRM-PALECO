@@ -21,6 +21,8 @@ class TicketAssignedPersonnel extends Component
 
     #[On('echo-private:cwd.operations,.TicketAssigned')]
     #[On('echo-private:cwd.operations,.TicketVerifiedAndClosed')]
+    #[On('echo-private:cwd.operations,.TicketForceClosed')]
+    #[On('echo-private:cwd.operations,.TicketCancelled')]
     public function handleAssignmentChange($event = null): void
     {
         if ($event && isset($event['ticket_id']) && $event['ticket_id'] !== $this->ticket->id) {

@@ -69,6 +69,8 @@ class TicketTable extends Component
     #[On('echo-private:cwd.operations,.TicketWorkStarted')]
     #[On('echo-private:cwd.operations,.TicketAccomplished')]
     #[On('echo-private:cwd.operations,.TicketVerifiedAndClosed')]
+    #[On('echo-private:cwd.operations,.TicketCancelled')]
+    #[On('echo-private:cwd.operations,.TicketForceClosed')]
     public function handleStatusUpdated($event = null): void
     {
         // Trigger component re-render so status badges and assigned teams update in real time

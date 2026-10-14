@@ -5,7 +5,9 @@ namespace App\Services\Tickets;
 use App\Enums\ComplaintSources;
 use App\Enums\TicketStatus;
 use App\Events\TicketAssigned;
+use App\Events\TicketCancelled;
 use App\Events\TicketCreated;
+use App\Events\TicketForceClosed;
 use App\Events\TicketWorkStarted;
 use App\Models\Department;
 use App\Models\Team;
@@ -706,6 +708,8 @@ class TicketService
                 'cancelled_at' => now(),
             ]);
 
+            DB::afterCommit(fn () => event(new TicketCancelled($lockedTicket)));
+
             return $lockedTicket->fresh([
                 'category',
                 'department',
@@ -818,6 +822,8 @@ class TicketService
                 'new_status' => TicketStatus::CLOSED->value,
                 'changed_by_id' => $actor->id,
             ]);
+
+            DB::afterCommit(fn () => event(new TicketForceClosed($lockedTicket)));
 
             return $lockedTicket->fresh([
                 'category',
