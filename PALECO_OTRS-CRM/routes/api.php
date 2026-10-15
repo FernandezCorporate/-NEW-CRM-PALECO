@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\Tickets\TicketAccomplishmentController;
 use App\Http\Controllers\Api\Tickets\TicketAssignmentController;
 use App\Http\Controllers\Api\Tickets\TicketController;
 use App\Http\Controllers\Api\Tickets\TicketEndorsementController;
+use Illuminate\Support\Facades\Broadcast;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -28,6 +29,8 @@ Route::post('/login', [AuthController::class, 'login'])->middleware('guest');
  * Authenticated API Endpoints
  * Strictly guarded by Laravel Sanctum; requires a valid Bearer token in the header.
  */
+Broadcast::routes(['middleware' => ['auth:sanctum']]);
+
 Route::middleware('auth:sanctum')->group(function () {
 
     // --- SHARED MOBILE ENDPOINTS (Supervisor & Field Personnel) ---
