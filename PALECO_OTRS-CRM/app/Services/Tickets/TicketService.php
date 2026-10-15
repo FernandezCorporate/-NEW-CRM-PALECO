@@ -806,14 +806,13 @@ class TicketService
                 ->whereNull('unassigned_at')
                 ->update(['unassigned_at' => now()]);
 
-            // Update ticket to CLOSED with force-closure audit attributes
+            // Update ticket to CLOSED with force-closure audit attributes (preserving assigned team for audit & crew visibility)
             $lockedTicket->update([
                 'status' => TicketStatus::CLOSED,
                 'is_force_closed' => true,
                 'closure_reason' => trim($data['closure_reason']),
                 'closed_by_id' => $actor->id,
                 'closed_at' => now(),
-                'team_id' => null,
             ]);
 
             // Create immutable status transition log
