@@ -253,7 +253,9 @@ test('TicketAssigned event broadcasts on cwd.operations with complete operationa
     $this->ticket->update(['status' => TicketStatus::ASSIGNED, 'team_id' => $this->team->id]);
     $event = new TicketAssigned($this->ticket);
 
-    expect($event->broadcastOn()->name)->toBe('private-cwd.operations')
+    $channels = collect($event->broadcastOn())->map(fn ($c) => $c->name)->all();
+    expect($channels)->toContain('private-cwd.operations')
+        ->and($channels)->toContain('private-team.'.$this->team->id)
         ->and($event->broadcastAs())->toBe('TicketAssigned')
         ->and($event->broadcastWith())->toMatchArray([
             'ticket_id' => $this->ticket->id,
@@ -269,7 +271,9 @@ test('TicketWorkStarted event broadcasts on cwd.operations with complete operati
     $this->ticket->update(['status' => TicketStatus::IN_PROGRESS, 'team_id' => $this->team->id, 'started_at' => now()]);
     $event = new TicketWorkStarted($this->ticket);
 
-    expect($event->broadcastOn()->name)->toBe('private-cwd.operations')
+    $channels = collect($event->broadcastOn())->map(fn ($c) => $c->name)->all();
+    expect($channels)->toContain('private-cwd.operations')
+        ->and($channels)->toContain('private-team.'.$this->team->id)
         ->and($event->broadcastAs())->toBe('TicketWorkStarted')
         ->and($event->broadcastWith())->toMatchArray([
             'ticket_id' => $this->ticket->id,
@@ -284,7 +288,9 @@ test('TicketAccomplished event broadcasts on cwd.operations with complete operat
     $this->ticket->update(['status' => TicketStatus::RESOLVED, 'team_id' => $this->team->id, 'resolved_at' => now()]);
     $event = new TicketAccomplished($this->ticket);
 
-    expect($event->broadcastOn()->name)->toBe('private-cwd.operations')
+    $channels = collect($event->broadcastOn())->map(fn ($c) => $c->name)->all();
+    expect($channels)->toContain('private-cwd.operations')
+        ->and($channels)->toContain('private-team.'.$this->team->id)
         ->and($event->broadcastAs())->toBe('TicketAccomplished')
         ->and($event->broadcastWith())->toMatchArray([
             'ticket_id' => $this->ticket->id,
@@ -299,7 +305,9 @@ test('TicketVerifiedAndClosed event broadcasts on cwd.operations with complete o
     $this->ticket->update(['status' => TicketStatus::CLOSED, 'team_id' => $this->team->id, 'closed_at' => now()]);
     $event = new TicketVerifiedAndClosed($this->ticket);
 
-    expect($event->broadcastOn()->name)->toBe('private-cwd.operations')
+    $channels = collect($event->broadcastOn())->map(fn ($c) => $c->name)->all();
+    expect($channels)->toContain('private-cwd.operations')
+        ->and($channels)->toContain('private-team.'.$this->team->id)
         ->and($event->broadcastAs())->toBe('TicketVerifiedAndClosed')
         ->and($event->broadcastWith())->toMatchArray([
             'ticket_id' => $this->ticket->id,

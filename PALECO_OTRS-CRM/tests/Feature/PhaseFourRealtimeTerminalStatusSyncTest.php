@@ -233,7 +233,8 @@ test('TicketCancelled event broadcasts on cwd.operations with complete terminal 
 
     $event = new TicketCancelled($this->ticket);
 
-    expect($event->broadcastOn()->name)->toBe('private-cwd.operations')
+    $channels = collect($event->broadcastOn())->map(fn ($c) => $c->name)->all();
+    expect($channels)->toContain('private-cwd.operations')
         ->and($event->broadcastAs())->toBe('TicketCancelled')
         ->and($event->broadcastWith())->toMatchArray([
             'ticket_id' => $this->ticket->id,
@@ -255,7 +256,8 @@ test('TicketForceClosed event broadcasts on cwd.operations with complete force-c
 
     $event = new TicketForceClosed($this->ticket);
 
-    expect($event->broadcastOn()->name)->toBe('private-cwd.operations')
+    $channels = collect($event->broadcastOn())->map(fn ($c) => $c->name)->all();
+    expect($channels)->toContain('private-cwd.operations')
         ->and($event->broadcastAs())->toBe('TicketForceClosed')
         ->and($event->broadcastWith())->toMatchArray([
             'ticket_id' => $this->ticket->id,

@@ -17,17 +17,35 @@ class TicketForceClosed implements ShouldBroadcastNow
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
+    public ?string $targetTeamId;
+
     /**
      * Create a new event instance.
      */
-    public function __construct(public Ticket $ticket) {}
+    public function __construct(public Ticket $ticket, ?string $teamId = null)
+    {
+        $this->targetTeamId = $teamId ?? $ticket->team_id;
+    }
 
     /**
      * Get the channels the event should broadcast on.
+     *
+     * @return array<int, \Illuminate\Broadcasting\Channel>
      */
-    public function broadcastOn(): Channel
+    public function broadcastOn(): array
     {
-        return new PrivateChannel('cwd.operations');
+        $channels = [new PrivateChannel('cwd.operations')];
+
+        $teamId = $this->targetTeamId ?? $this->ticket->team_id;
+        if ($teamId) {
+            $channels[] = new PrivateChannel('team.'.$teamId);
+        }
+
+        if ($this->ticket->department_id) {
+            $channels[] = new PrivateChannel('department.'.$this->ticket->department_id);
+        }
+
+        return $channels;
     }
 
     /**
@@ -39,6 +57,7 @@ class TicketForceClosed implements ShouldBroadcastNow
             'ticket_id' => $this->ticket->id,
             'ticket_number' => $this->ticket->ticket_number,
             'parent_ticket_id' => $this->ticket->parent_ticket_id,
+            'team_id' => $this->targetTeamId ?? $this->ticket->team_id,
             'status' => $this->ticket->status->value,
             'status_label' => $this->ticket->status->label(),
             'is_force_closed' => (bool) $this->ticket->is_force_closed,

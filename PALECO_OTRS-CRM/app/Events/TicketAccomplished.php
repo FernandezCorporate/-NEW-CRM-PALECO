@@ -24,10 +24,22 @@ class TicketAccomplished implements ShouldBroadcastNow
 
     /**
      * Get the channels the event should broadcast on.
+     *
+     * @return array<int, \Illuminate\Broadcasting\Channel>
      */
-    public function broadcastOn(): Channel
+    public function broadcastOn(): array
     {
-        return new PrivateChannel('cwd.operations');
+        $channels = [new PrivateChannel('cwd.operations')];
+
+        if ($this->ticket->team_id) {
+            $channels[] = new PrivateChannel('team.'.$this->ticket->team_id);
+        }
+
+        if ($this->ticket->department_id) {
+            $channels[] = new PrivateChannel('department.'.$this->ticket->department_id);
+        }
+
+        return $channels;
     }
 
     /**

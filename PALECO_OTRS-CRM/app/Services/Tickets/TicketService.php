@@ -799,6 +799,7 @@ class TicketService
             }
 
             $oldStatus = $lockedTicket->status;
+            $assignedTeamId = $lockedTicket->team_id;
 
             // Close active field team assignment immediately
             $lockedTicket->assignments()
@@ -823,7 +824,7 @@ class TicketService
                 'changed_by_id' => $actor->id,
             ]);
 
-            DB::afterCommit(fn () => event(new TicketForceClosed($lockedTicket)));
+            DB::afterCommit(fn () => event(new TicketForceClosed($lockedTicket, $assignedTeamId)));
 
             return $lockedTicket->fresh([
                 'category',
