@@ -285,6 +285,8 @@ test('storing CWD ticket with source dashboard redirects to dashboard with flash
         'complaint_source' => ComplaintSources::PHONE_CALL->value,
         'department_id' => $this->dept->id,
         'category_id' => $this->category->id,
+        'purok' => 'Purok 1',
+        'street' => 'Rizal Avenue',
         'barangay' => 'San Jose',
         'complaint_description' => 'Blown transformer in street corner.',
         'source' => 'dashboard',
@@ -305,6 +307,8 @@ test('storing CWD ticket without source redirects to ticket list', function () {
         'complaint_source' => ComplaintSources::WALK_IN->value,
         'department_id' => $this->dept->id,
         'category_id' => $this->category->id,
+        'purok' => 'Purok 2',
+        'street' => 'National Highway',
         'barangay' => 'San Pedro',
         'complaint_description' => 'Low voltage reported.',
     ];

@@ -50,8 +50,8 @@ class StoreChildTicketRequest extends FormRequest
             'other_category_name' => ['required_if:other_category,true', 'nullable', 'string', 'max:255'],
 
             'consumer_contact' => ['nullable', 'string', 'regex:/^(09|\+639)\d{9}$/'],
-            'purok' => ['nullable', 'string', 'max:255'],
-            'street' => ['nullable', 'string', 'max:255'],
+            'purok' => ['required', 'string', 'max:255'],
+            'street' => ['required', 'string', 'max:255'],
             'barangay' => ['required', 'string', 'max:255'],
             'landmark' => ['nullable', 'string', 'max:255'],
         ];
@@ -78,6 +78,8 @@ class StoreChildTicketRequest extends FormRequest
             'other_category_name.max' => 'The custom category name cannot exceed 255 characters.',
 
             'consumer_contact.regex' => 'The contact number must be a valid 11-digit mobile number (e.g., 09123456789).',
+            'purok.required' => 'The Purok field is required for location routing.',
+            'street.required' => 'The Street field is required for location routing.',
             'barangay.required' => 'The Barangay selection is required for technical field location routing.',
         ];
     }

@@ -291,7 +291,7 @@ test('submitting ticket update without changes redirects with info alert and cre
         'other_category' => 0,
         'barangay' => 'Tiniguiban',
         'purok' => 'Purok 1',
-        'street' => null,
+        'street' => 'National Highway',
         'landmark' => 'Near Store',
         'status' => TicketStatus::OPEN->value,
         'created_by_id' => $this->cwdUser->id,
@@ -307,7 +307,7 @@ test('submitting ticket update without changes redirects with info alert and cre
         'other_category' => 0,
         'barangay' => 'Tiniguiban',
         'purok' => 'Purok 1',
-        'street' => null,
+        'street' => 'National Highway',
         'landmark' => 'Near Store',
         'link_consumer' => 0,
     ]);
@@ -344,6 +344,8 @@ test('cwd officer can link or unlink consumer during clerical update', function 
         'department_id' => $this->dept->id,
         'category_id' => $this->category->id,
         'other_category' => 0,
+        'purok' => 'Purok 1',
+        'street' => 'National Highway',
         'barangay' => 'Tiniguiban',
         'link_consumer' => 1,
         'account_code' => $this->consumer->acct_code,
@@ -360,6 +362,8 @@ test('cwd officer can link or unlink consumer during clerical update', function 
         'department_id' => $this->dept->id,
         'category_id' => $this->category->id,
         'other_category' => 0,
+        'purok' => 'Purok 1',
+        'street' => 'National Highway',
         'barangay' => 'Tiniguiban',
         'link_consumer' => 0,
     ]);
@@ -395,6 +399,8 @@ test('updating ticket intake details is strictly forbidden when ticket is assign
         'department_id' => $this->dept->id,
         'category_id' => $this->category->id,
         'other_category' => 0,
+        'purok' => 'Purok 1',
+        'street' => 'National Highway',
         'barangay' => 'Tiniguiban',
         'link_consumer' => 0,
     ]);
@@ -434,6 +440,8 @@ test('non-cwd roles cannot access the ticket edit form or perform updates', func
             'department_id' => $this->dept->id,
             'category_id' => $this->category->id,
             'other_category' => 0,
+            'purok' => 'Purok 1',
+            'street' => 'National Highway',
             'barangay' => 'Tiniguiban',
             'link_consumer' => 0,
         ])
@@ -503,6 +511,8 @@ test('ticket update controller catches concurrency validation exception and redi
         'department_id' => $this->dept->id,
         'category_id' => $this->category->id,
         'other_category' => 0,
+        'purok' => 'Purok 1',
+        'street' => 'National Highway',
         'barangay' => 'Tiniguiban',
         'link_consumer' => 0,
     ]);

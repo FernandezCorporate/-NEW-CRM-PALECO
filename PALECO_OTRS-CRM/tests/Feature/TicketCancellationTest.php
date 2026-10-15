@@ -512,6 +512,8 @@ test('cannot spawn child ticket from a cancelled parent ticket via web or servic
             'department_id' => $this->dept->id,
             'category_id' => $this->category->id,
             'complaint_description' => 'Attempted child creation.',
+            'purok' => 'Purok 1',
+            'street' => 'National Highway',
             'barangay' => 'Tiniguiban',
         ])
         ->assertForbidden();
@@ -522,6 +524,8 @@ test('cannot spawn child ticket from a cancelled parent ticket via web or servic
         'department_id' => $this->dept->id,
         'category_id' => $this->category->id,
         'complaint_description' => 'Attempted child creation.',
+        'purok' => 'Purok 1',
+        'street' => 'National Highway',
         'barangay' => 'Tiniguiban',
     ]))->toThrow(ValidationException::class);
 });

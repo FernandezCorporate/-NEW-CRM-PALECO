@@ -31,8 +31,8 @@ return new class extends Migration
             $table->boolean('other_category')->default(false);
             $table->string('other_category_name')->nullable();
 
-            $table->string('purok')->nullable();
-            $table->string('street')->nullable();
+            $table->string('purok');
+            $table->string('street');
             $table->string('barangay');
             $table->string('landmark')->nullable();
 
@@ -42,10 +42,19 @@ return new class extends Migration
             $table->foreignUlid('created_by_id')->constrained('users');
 
             $table->string('status', 30)->default('open');
+            $table->text('cancellation_reason')->nullable();
+            $table->boolean('is_force_closed')->default(false);
+            $table->text('closure_reason')->nullable();
+            $table->boolean('is_offline_synced')->default(false);
+            $table->timestamp('synced_at')->nullable();
+
             $table->timestamp('reported_at')->nullable();
             $table->timestamp('started_at')->nullable();
+            $table->timestamp('client_started_at')->nullable();
             $table->timestamp('resolved_at')->nullable();
             $table->timestamp('closed_at')->nullable();
+            $table->foreignUlid('closed_by_id')->nullable()->constrained('users')->nullOnDelete();
+            $table->timestamp('cancelled_at')->nullable();
 
             $table->softDeletes();
             $table->timestamps();
@@ -71,7 +80,6 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        // --- UPDATED TABLE ---
         Schema::create('ticket_endorsements', function (Blueprint $table) {
             $table->ulid('id')->primary();
             $table->foreignUlid('ticket_id')->constrained('tickets')->cascadeOnDelete();
@@ -97,11 +105,16 @@ return new class extends Migration
 
             $table->text('remarks');
             $table->timestamp('accomplished_at');
+            $table->timestamp('client_accomplished_at')->nullable();
 
             $table->string('consumer_name')->nullable();
             $table->string('signature_path')->nullable();
 
             $table->string('status', 30)->default('pending');
+            $table->boolean('is_offline_synced')->default(false);
+            $table->timestamp('synced_at')->nullable();
+            $table->string('idempotency_key', 64)->nullable()->index('idx_accomplishment_idempotency_key');
+
             $table->foreignUlid('approved_by_id')->nullable()->constrained('users')->nullOnDelete();
             $table->foreignUlid('rejected_by_id')->nullable()->constrained('users')->nullOnDelete();
             $table->text('rejection_reason')->nullable();
@@ -129,10 +142,26 @@ return new class extends Migration
 
             $table->index(['ticket_id', 'created_at']);
         });
+
+        Schema::create('idempotency_records', function (Blueprint $table) {
+            $table->ulid('id')->primary();
+            $table->foreignUlid('user_id')->constrained('users')->cascadeOnDelete();
+            $table->string('idempotency_key', 64);
+            $table->string('endpoint_path', 255);
+            $table->string('request_hash', 64);
+            $table->string('status', 30)->default('in_progress');
+            $table->unsignedInteger('response_code')->nullable();
+            $table->json('response_body')->nullable();
+            $table->timestamp('expires_at')->index();
+            $table->timestamps();
+
+            $table->unique(['user_id', 'idempotency_key'], 'uniq_user_idempotency_key');
+        });
     }
 
     public function down(): void
     {
+        Schema::dropIfExists('idempotency_records');
         Schema::dropIfExists('ticket_remarks');
         Schema::dropIfExists('accomplishment_photos');
         Schema::dropIfExists('ticket_accomplishments');

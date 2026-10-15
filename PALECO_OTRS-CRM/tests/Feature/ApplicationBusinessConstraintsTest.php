@@ -295,6 +295,8 @@ test('Constraint 5: StoreTicketRequest and StoreChildTicketRequest reject soft-d
         'consumer_contact' => '09123456789',
         'complaint_source' => ComplaintSources::WALK_IN->value,
         'complaint_description' => 'Valid complaint description',
+        'purok' => 'Purok 1',
+        'street' => 'Rizal Avenue',
         'barangay' => 'San Pedro',
         'department_id' => $dept->id,
         'other_category' => false,
@@ -313,6 +315,8 @@ test('Constraint 5: StoreTicketRequest and StoreChildTicketRequest reject soft-d
     $childInvalid = [
         'department_id' => $dept->id,
         'complaint_description' => 'Valid sub-task description',
+        'purok' => 'Purok 1',
+        'street' => 'Rizal Avenue',
         'barangay' => 'San Pedro',
         'other_category' => false,
         'category_id' => $deletedCategory->id,

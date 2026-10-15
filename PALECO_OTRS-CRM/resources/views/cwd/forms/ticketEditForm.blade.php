@@ -107,12 +107,12 @@
                     
                     <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                         <div>
-                            <label for="purok" class="block text-xs font-semibold text-slate-600 mb-1.5">Purok</label>
-                            <input type="text" name="purok" id="purok" value="{{ old('purok', $ticket->purok) }}" class="form-input text-sm" placeholder="e.g., Ipil-Ipil">
+                            <x-form.label for="purok" :required="true">Purok</x-form.label>
+                            <x-form.input name="purok" id="purok" :value="old('purok', $ticket->purok)" placeholder="e.g., Ipil-Ipil" required />
                         </div>
                         <div>
-                            <label for="street" class="block text-xs font-semibold text-slate-600 mb-1.5">Street</label>
-                            <input type="text" name="street" id="street" value="{{ old('street', $ticket->street) }}" class="form-input text-sm" placeholder="e.g., National Highway">
+                            <x-form.label for="street" :required="true">Street</x-form.label>
+                            <x-form.input name="street" id="street" :value="old('street', $ticket->street)" placeholder="e.g., National Highway" required />
                         </div>
                     </div>
 

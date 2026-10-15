@@ -47,8 +47,8 @@ class StoreTicketRequest extends FormRequest
             'complaint_description' => ['required', 'string', 'min:5'],
 
             // Address Details
-            'purok' => ['nullable', 'string', 'max:255'],
-            'street' => ['nullable', 'string', 'max:255'],
+            'purok' => ['required', 'string', 'max:255'],
+            'street' => ['required', 'string', 'max:255'],
             'barangay' => ['required', 'string', 'max:255'],
             'landmark' => ['nullable', 'string', 'max:255'],
 
@@ -88,9 +88,11 @@ class StoreTicketRequest extends FormRequest
             'complaint_description.string' => 'The complaint description must be a valid text string.',
             'complaint_description.min' => 'The complaint description must be at least 5 characters long.',
 
+            'purok.required' => 'The Purok field is required for location routing.',
             'purok.string' => 'The purok must be a valid text string.',
             'purok.max' => 'The purok cannot exceed 255 characters.',
 
+            'street.required' => 'The Street field is required for location routing.',
             'street.string' => 'The street must be a valid text string.',
             'street.max' => 'The street cannot exceed 255 characters.',
 
