@@ -156,7 +156,7 @@ class TicketEndorsementService
 
             DB::afterCommit(function () use ($endorsement) {
                 $endorsement->load(['ticket', 'suggestedDepartment', 'creator']);
-                event(new TicketEndorsementInitiated($endorsement));
+                rescue(fn () => event(new TicketEndorsementInitiated($endorsement)), report: true);
             });
 
             return $endorsement;
@@ -248,8 +248,8 @@ class TicketEndorsementService
 
                         DB::afterCommit(function () use ($lockedEndorsement, $childTicket) {
                             $lockedEndorsement->load(['ticket', 'reviewer', 'suggestedDepartment']);
-                            event(new TicketCreated($childTicket));
-                            event(new TicketEndorsementDecided($lockedEndorsement, $childTicket->id, $childTicket->ticket_number));
+                            rescue(fn () => event(new TicketCreated($childTicket)), report: true);
+                            rescue(fn () => event(new TicketEndorsementDecided($lockedEndorsement, $childTicket->id, $childTicket->ticket_number)), report: true);
                         });
                     } else {
                         $oldStatus = $parentTicket->status;
@@ -296,7 +296,7 @@ class TicketEndorsementService
 
                         DB::afterCommit(function () use ($lockedEndorsement) {
                             $lockedEndorsement->load(['ticket', 'reviewer', 'suggestedDepartment']);
-                            event(new TicketEndorsementDecided($lockedEndorsement));
+                            rescue(fn () => event(new TicketEndorsementDecided($lockedEndorsement)), report: true);
                         });
                     }
 

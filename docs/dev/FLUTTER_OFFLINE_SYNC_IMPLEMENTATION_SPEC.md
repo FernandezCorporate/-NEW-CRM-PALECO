@@ -46,6 +46,10 @@ When field personnel perform critical maintenance, two key operations occur:
 
 In an online-only app, these actions fail immediately in dead zones. With this **Offline-Asynchronous Module**, the mobile application writes actions and images to local device storage, optimistically renders the ticket as progressed, and automatically syncs the payload when cellular connectivity is restored.
 
+> [!IMPORTANT]
+> **Scope Boundary: Notes / Remarks (`/remarks`) Are Online-Only**  
+> Offline-asynchronous store-and-forward queueing applies **strictly and exclusively** to `start` and `accomplish`. Ticket remarks (`POST /api/tickets/{ticket}/remarks`) are interactive operational communications and **must not be queued in the offline outbox**. When the device is offline, the mobile app should disable the submit button or prompt the user: *"An active internet connection is required to post remarks."*
+
 ---
 
 ## 2. High-Level Architecture & Data Flow

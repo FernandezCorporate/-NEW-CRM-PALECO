@@ -302,7 +302,7 @@ class TicketService
 
                     // Defer broadcast until after database transaction commits
                     DB::afterCommit(function () use ($ticket) {
-                        TicketCreated::dispatch($ticket->load(['category', 'department']));
+                        rescue(fn () => TicketCreated::dispatch($ticket->load(['category', 'department'])), report: true);
                     });
 
                     return $ticket;
@@ -407,7 +407,7 @@ class TicketService
 
                     // Defer broadcast until after database transaction commits
                     DB::afterCommit(function () use ($childTicket) {
-                        TicketCreated::dispatch($childTicket->load(['category', 'department']));
+                        rescue(fn () => TicketCreated::dispatch($childTicket->load(['category', 'department'])), report: true);
                     });
 
                     return $childTicket;
@@ -593,7 +593,7 @@ class TicketService
             ]);
 
             DB::afterCommit(function () use ($freshTicket) {
-                TicketAssigned::dispatch($freshTicket);
+                rescue(fn () => TicketAssigned::dispatch($freshTicket), report: true);
             });
 
             return $freshTicket;
@@ -653,7 +653,7 @@ class TicketService
             $freshTicket = $lockedTicket->fresh(['category', 'team', 'department']);
 
             DB::afterCommit(function () use ($freshTicket) {
-                TicketWorkStarted::dispatch($freshTicket);
+                rescue(fn () => TicketWorkStarted::dispatch($freshTicket), report: true);
             });
 
             return $freshTicket;
@@ -709,7 +709,9 @@ class TicketService
                 'cancelled_at' => now(),
             ]);
 
-            DB::afterCommit(fn () => event(new TicketCancelled($lockedTicket)));
+            DB::afterCommit(function () use ($lockedTicket) {
+                rescue(fn () => event(new TicketCancelled($lockedTicket)), report: true);
+            });
 
             return $lockedTicket->fresh([
                 'category',
@@ -824,7 +826,9 @@ class TicketService
                 'changed_by_id' => $actor->id,
             ]);
 
-            DB::afterCommit(fn () => event(new TicketForceClosed($lockedTicket, $assignedTeamId)));
+            DB::afterCommit(function () use ($lockedTicket, $assignedTeamId) {
+                rescue(fn () => event(new TicketForceClosed($lockedTicket, $assignedTeamId)), report: true);
+            });
 
             return $lockedTicket->fresh([
                 'category',

@@ -212,7 +212,7 @@ class TicketAccomplishmentService
                 $freshTicket = $lockedTicket->fresh(['category', 'team', 'department']);
 
                 DB::afterCommit(function () use ($freshTicket) {
-                    TicketAccomplished::dispatch($freshTicket);
+                    rescue(fn () => TicketAccomplished::dispatch($freshTicket), report: true);
                 });
 
                 return $report;
@@ -283,7 +283,7 @@ class TicketAccomplishmentService
                 $freshTicket = $lockedTicket->fresh(['category', 'team', 'department']);
 
                 DB::afterCommit(function () use ($freshTicket) {
-                    TicketVerifiedAndClosed::dispatch($freshTicket);
+                    rescue(fn () => TicketVerifiedAndClosed::dispatch($freshTicket), report: true);
                 });
             }
 
@@ -309,7 +309,7 @@ class TicketAccomplishmentService
                 $freshTicket = $lockedTicket->fresh(['category', 'team', 'department']);
 
                 DB::afterCommit(function () use ($freshTicket) {
-                    TicketWorkStarted::dispatch($freshTicket);
+                    rescue(fn () => TicketWorkStarted::dispatch($freshTicket), report: true);
                 });
             }
 

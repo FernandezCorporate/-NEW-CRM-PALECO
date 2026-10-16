@@ -122,10 +122,10 @@ Below is the complete logic map of all broadcasted events, detailing who trigger
 - **Triggered By:** Web Desk or Mobile Supervisor (`POST /tickets/{ticket}/assign` or `POST /api/tickets/{ticket}/assign`).
 - **Target Channel:** `private-team.{teamId}` and `private-cwd.operations`
 - **Audience on Mobile:** Linemen assigned to that specific team.
-- **Payload Data Contains:** Complete ticket object with `id`, `ticket_number`, `category`, address/purok/street details, priority, and assignment remarks.
+- **Payload Data Contains:** Lightweight notification summary (`ticket_id`, `ticket_number`, `parent_ticket_id`, `status`, `status_label`, `team_id`, `team_name`, `department`, `updated_at`).
 - **Under the Hood Mobile Logic:**
-  1. Parse the incoming ticket object from `event.data`.
-  2. Insert or prepend the new ticket model into the local state management store (e.g., Active Tickets list).
+  1. Parse the incoming notification summary from `event.data`.
+  2. Fetch full ticket details via `GET /api/tickets/{ticket_id}` or update the existing ticket entry in local state.
   3. Trigger an in-app non-intrusive floating push toast: *"⚡ New Dispatch Order: Ticket #TCK-XXXX assigned to your crew."*
   4. Increment the unread counter badge on the "My Tasks" or "Dispatches" tab.
   5. Play a subtle haptic feedback vibration.
@@ -148,7 +148,7 @@ Below is the complete logic map of all broadcasted events, detailing who trigger
 
 ### Event 3: `TicketAccomplished` (Field Proof Submitted)
 - **Fired When:** Lineman completes field repair, captures photo proofs and consumer signature, and taps "Submit Accomplishment".
-- **Triggered By:** Mobile API (`POST /api/tickets/{ticket}/accomplishments`).
+- **Triggered By:** Mobile API (`POST /api/tickets/{ticket}/accomplish`).
 - **Target Channel:** `private-department.{departmentId}` and `private-cwd.operations`
 - **Audience on Mobile:** **Department Supervisors**.
 - **Payload Data Contains:** Ticket ID, ticket number, status `resolved`, and accomplishment summary (photos count, remarks, consumer name).
