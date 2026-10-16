@@ -82,7 +82,7 @@ class UpdateTicketIntakeRequest extends FormRequest
     {
         return [
             'complaint_source.required' => 'Please indicate the source of the complaint.',
-            'complaint_source.Illuminate\Validation\Rules\Enum' => 'The selected complaint source is invalid.',
+            'complaint_source.' . Enum::class => 'The selected complaint source is invalid.',
             'consumer_contact.regex' => 'The contact number must be a valid 11-digit mobile number (e.g., 09123456789).',
 
             'complaint_description.required' => 'You must provide a clear description of the utility complaint details.',

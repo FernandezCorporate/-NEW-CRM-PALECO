@@ -29,10 +29,14 @@
                 <h2 id="consumer-profile-heading" class="text-2xl font-bold text-slate-900">{{ $consumer->name }}</h2>
             </div>
             
-            @if($consumer->status === 'A')
+            @if(in_array($consumer->status, ['A', 'Active']))
                 <span class="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 tracking-wide uppercase">Active</span>
+            @elseif(in_array($consumer->status, ['D', 'Deactivated']))
+                <span class="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200 tracking-wide uppercase">Deactivated</span>
+            @elseif(in_array($consumer->status, ['I', 'Inactive']))
+                <span class="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-bold bg-slate-100 text-slate-700 border border-slate-200 tracking-wide uppercase">Inactive</span>
             @else
-                <span class="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200 tracking-wide uppercase">Suspended</span>
+                <span class="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-bold bg-zinc-100 text-zinc-700 border border-zinc-200 tracking-wide uppercase">{{ $consumer->status ?: 'Unknown' }}</span>
             @endif
         </div>
 

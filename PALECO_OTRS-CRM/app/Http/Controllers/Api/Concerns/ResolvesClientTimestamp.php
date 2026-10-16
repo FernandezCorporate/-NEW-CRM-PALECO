@@ -6,6 +6,7 @@ use App\Models\Ticket;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+use Throwable;
 
 /**
  * Provides client timestamp extraction and guardrail validations for offline-asynchronous syncing.
@@ -28,7 +29,7 @@ trait ResolvesClientTimestamp
 
         try {
             $parsed = Carbon::parse($raw);
-        } catch (\Throwable) {
+        } catch (Throwable) {
             throw ValidationException::withMessages([
                 'client_timestamp' => 'The client timestamp format is invalid. Must be a valid ISO-8601 string.',
             ]);

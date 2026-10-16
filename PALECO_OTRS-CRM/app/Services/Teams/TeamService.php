@@ -8,6 +8,7 @@ use App\Models\Team;
 use App\Models\TeamRole;
 use App\Models\User;
 use Carbon\Carbon;
+use DateTimeInterface;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -220,10 +221,10 @@ class TeamService
 
         foreach ($users as $user) {
             foreach ($user->teams as $otherTeam) {
-                $otherStart = $otherTeam->shift_start instanceof \DateTimeInterface
+                $otherStart = $otherTeam->shift_start instanceof DateTimeInterface
                     ? $otherTeam->shift_start->format('H:i')
                     : substr((string) $otherTeam->shift_start, 0, 5);
-                $otherEnd = $otherTeam->shift_end instanceof \DateTimeInterface
+                $otherEnd = $otherTeam->shift_end instanceof DateTimeInterface
                     ? $otherTeam->shift_end->format('H:i')
                     : substr((string) $otherTeam->shift_end, 0, 5);
 
@@ -289,8 +290,8 @@ class TeamService
                 ];
             }
 
-            $targetShiftStart = $teamDetails['shift_start'] ?? ($lockedTeam->shift_start instanceof \DateTimeInterface ? $lockedTeam->shift_start->format('H:i') : substr((string) $lockedTeam->shift_start, 0, 5));
-            $targetShiftEnd = $teamDetails['shift_end'] ?? ($lockedTeam->shift_end instanceof \DateTimeInterface ? $lockedTeam->shift_end->format('H:i') : substr((string) $lockedTeam->shift_end, 0, 5));
+            $targetShiftStart = $teamDetails['shift_start'] ?? ($lockedTeam->shift_start instanceof DateTimeInterface ? $lockedTeam->shift_start->format('H:i') : substr((string) $lockedTeam->shift_start, 0, 5));
+            $targetShiftEnd = $teamDetails['shift_end'] ?? ($lockedTeam->shift_end instanceof DateTimeInterface ? $lockedTeam->shift_end->format('H:i') : substr((string) $lockedTeam->shift_end, 0, 5));
 
             $this->validateMemberShiftOverlaps($assignedMembers, $targetShiftStart, $targetShiftEnd, $lockedTeam->id);
 

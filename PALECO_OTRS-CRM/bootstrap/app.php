@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\HandleIdempotency;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Foundation\Application;
@@ -21,7 +22,7 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
-            'idempotent' => \App\Http\Middleware\HandleIdempotency::class,
+            'idempotent' => HandleIdempotency::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

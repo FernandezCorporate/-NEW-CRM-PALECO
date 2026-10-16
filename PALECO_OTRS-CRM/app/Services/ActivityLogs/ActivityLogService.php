@@ -3,8 +3,12 @@
 namespace App\Services\ActivityLogs;
 
 use App\Enums\NonModelActions;
+use Carbon\Carbon;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Str;
 use Spatie\Activitylog\Models\Activity;
+use Throwable;
 
 /**
  * Manages the retrieval, filtering, and presentation formatting of system audit activity logs.
@@ -167,7 +171,7 @@ class ActivityLogService
         $subject = $activity->subject;
         $isSubjectDeleted = false;
         if (! $subject && $activity->subject_type && $activity->subject_id && class_exists($activity->subject_type)) {
-            if (in_array(\Illuminate\Database\Eloquent\SoftDeletes::class, class_uses_recursive($activity->subject_type), true)) {
+            if (in_array(SoftDeletes::class, class_uses_recursive($activity->subject_type), true)) {
                 $subject = ($activity->subject_type)::withTrashed()->find($activity->subject_id);
                 $isSubjectDeleted = (bool) ($subject?->trashed());
             }
@@ -246,7 +250,7 @@ class ActivityLogService
                 'TicketCategory' => route('admin.ticketCategories.show', ['category' => $subject->getKey()]),
                 default => null,
             };
-        } catch (\Throwable) {
+        } catch (Throwable) {
             return null;
         }
     }
@@ -278,9 +282,9 @@ class ActivityLogService
         }
 
         return [
-            'name' => \Illuminate\Support\Str::title($name),
+            'name' => Str::title($name),
             'username' => $username,
-            'role' => \Illuminate\Support\Str::headline($role),
+            'role' => Str::headline($role),
             'email' => $email,
             'contact' => $contact,
             'initials' => $initials,
@@ -379,7 +383,7 @@ class ActivityLogService
 
                 $rows[] = [
                     'key' => $key,
-                    'label' => \Illuminate\Support\Str::headline(str_replace('_', ' ', $key)),
+                    'label' => Str::headline(str_replace('_', ' ', $key)),
                     'old_raw' => $oldVal,
                     'new_raw' => $newVal,
                     'old_display' => $this->formatDiffValue($oldVal),
@@ -392,7 +396,7 @@ class ActivityLogService
             foreach ($metadata as $key => $val) {
                 $rows[] = [
                     'key' => $key,
-                    'label' => \Illuminate\Support\Str::headline(str_replace('_', ' ', $key)),
+                    'label' => Str::headline(str_replace('_', ' ', $key)),
                     'old_raw' => null,
                     'new_raw' => $val,
                     'old_display' => null,
@@ -429,8 +433,8 @@ class ActivityLogService
 
         if (is_string($value) && preg_match('/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/', $value)) {
             try {
-                return \Carbon\Carbon::parse($value)->format('M d, Y h:i A');
-            } catch (\Throwable) {
+                return Carbon::parse($value)->format('M d, Y h:i A');
+            } catch (Throwable) {
                 return (string) $value;
             }
         }

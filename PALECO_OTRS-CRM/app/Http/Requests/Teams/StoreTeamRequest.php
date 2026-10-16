@@ -2,8 +2,10 @@
 
 namespace App\Http\Requests\Teams;
 
+use App\Services\Teams\TeamService;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 /**
  * Validates incoming HTTP requests for creating a new operational team
@@ -108,12 +110,12 @@ class StoreTeamRequest extends FormRequest
             }
 
             try {
-                app(\App\Services\Teams\TeamService::class)->validateMemberShiftOverlaps(
+                app(TeamService::class)->validateMemberShiftOverlaps(
                     $members,
                     $shiftStart,
                     $shiftEnd
                 );
-            } catch (\Illuminate\Validation\ValidationException $e) {
+            } catch (ValidationException $e) {
                 foreach ($e->errors() as $key => $messages) {
                     foreach ($messages as $message) {
                         $validator->errors()->add($key, $message);

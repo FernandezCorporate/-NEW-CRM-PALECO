@@ -25,6 +25,7 @@ use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
+use RuntimeException;
 
 /**
  * Encapsulates the core service ticket lifecycle:
@@ -323,7 +324,7 @@ class TicketService
             }
         }
 
-        throw new \RuntimeException('Failed to generate a unique ticket sequence number after multiple attempts.');
+        throw new RuntimeException('Failed to generate a unique ticket sequence number after multiple attempts.');
     }
 
     /**
@@ -428,7 +429,7 @@ class TicketService
             }
         }
 
-        throw new \RuntimeException('Failed to generate a unique child ticket sequence number after multiple attempts.');
+        throw new RuntimeException('Failed to generate a unique child ticket sequence number after multiple attempts.');
     }
 
     /**

@@ -2,8 +2,11 @@
 
 namespace App\Http\Requests\Teams;
 
+use App\Models\Team;
+use App\Services\Teams\TeamService;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 /**
  * Validates incoming HTTP requests for updating an existing team
@@ -113,15 +116,15 @@ class UpdateTeamRequest extends FormRequest
 
             try {
                 $team = $this->route('team');
-                $teamId = $team instanceof \App\Models\Team ? $team->id : (string) $team;
+                $teamId = $team instanceof Team ? $team->id : (string) $team;
 
-                app(\App\Services\Teams\TeamService::class)->validateMemberShiftOverlaps(
+                app(TeamService::class)->validateMemberShiftOverlaps(
                     $members,
                     $shiftStart,
                     $shiftEnd,
                     $teamId
                 );
-            } catch (\Illuminate\Validation\ValidationException $e) {
+            } catch (ValidationException $e) {
                 foreach ($e->errors() as $key => $messages) {
                     foreach ($messages as $message) {
                         $validator->errors()->add($key, $message);

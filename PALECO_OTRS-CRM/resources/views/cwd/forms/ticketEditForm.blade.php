@@ -134,32 +134,7 @@
             </fieldset>
 
             <!-- CRM Integration: Consumer Link -->
-            <fieldset class="col-span-1 lg:col-span-2 pt-6 mt-2 border-t border-slate-200">
-                <legend class="text-sm font-bold text-slate-900 mb-4">CRM Integration</legend>
-                
-                <div class="flex items-start mb-4">
-                    <div class="flex h-5 items-center">
-                        <input id="link_consumer" name="link_consumer" type="checkbox" value="1" {{ old('link_consumer', (bool)$ticket->consumer_id) ? 'checked' : '' }} class="h-4 w-4 rounded border-slate-300 text-paleco-600 focus:ring-paleco-600">
-                    </div>
-                    <div class="ml-3 text-sm">
-                        <label for="link_consumer" class="font-semibold text-slate-700 select-none cursor-pointer">Link to an existing consumer account</label>
-                        <p class="text-slate-500">Enable this to query the cooperative's billing system and attach the consumer's official profile to this ticket.</p>
-                    </div>
-                </div>
-
-                <div id="account_code_container" class="{{ old('link_consumer', (bool)$ticket->consumer_id) ? 'block' : 'hidden' }} max-w-md ml-7 mt-3">
-                    <x-form.label for="account_code" :required="true">Account Code</x-form.label>
-                    <div class="flex gap-2">
-                        <input type="text" name="account_code" id="account_code" value="{{ old('account_code', $ticket->consumer?->acct_code) }}" class="form-input" placeholder="e.g., 02-0504-8538">
-                        <button type="button" id="verify_consumer_btn" class="btn btn-secondary shrink-0">Verify</button>
-                    </div>
-
-                    <!-- Dynamic Preview Box -->
-                    <div id="consumer_preview" class="hidden mt-3 p-3 rounded-lg border text-sm"></div>
-
-                    <p class="mt-1.5 text-xs text-slate-500">The system will verify this exact code against the database before updating the ticket.</p>
-                </div>
-            </fieldset>
+            @include('cwd.forms.partials.consumerLinkSection')
 
         </div>
 

@@ -43,10 +43,14 @@
                     <div class="flex justify-between items-start mb-4">
                         <h2 class="text-lg font-bold text-slate-900 leading-tight pr-2 group-hover:text-emerald-700 transition-colors">{{ $consumer->name }}</h2>
                         
-                        @if($consumer->status === 'A')
+                        @if(in_array($consumer->status, ['A', 'Active']))
                             <x-badge variant="emerald">Active</x-badge>
+                        @elseif(in_array($consumer->status, ['D', 'Deactivated']))
+                            <x-badge variant="amber">Deactivated</x-badge>
+                        @elseif(in_array($consumer->status, ['I', 'Inactive']))
+                            <x-badge variant="slate">Inactive</x-badge>
                         @else
-                            <x-badge variant="rose">Suspended</x-badge>
+                            <x-badge variant="zinc">{{ $consumer->status ?: 'Unknown' }}</x-badge>
                         @endif
                     </div>
 

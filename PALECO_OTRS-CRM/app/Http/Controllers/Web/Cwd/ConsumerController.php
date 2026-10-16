@@ -9,6 +9,7 @@ use App\Services\External\ConsumerService as ExternalConsumerService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 use Throwable;
@@ -76,6 +77,51 @@ class ConsumerController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Unable to verify account code with billing service.',
+            ], 500);
+        }
+    }
+
+    /*
+     * Performs a multi-criteria search against the external billing API (restricted to Puerto Princesa: paleco_db).
+     * Supports searching by last name (or Lastname,Firstname) or by meter serial number.
+     */
+    public function search(Request $request): JsonResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'lastname' => ['required_without:meter_serial', 'nullable', 'string', 'min:2', 'max:100'],
+            'meter_serial' => ['required_without:lastname', 'nullable', 'string', 'min:2', 'max:100'],
+        ], [
+            'lastname.required_without' => 'Please provide a last name to search.',
+            'meter_serial.required_without' => 'Please provide a meter serial number to search.',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => $validator->errors()->first('lastname') ?: ($validator->errors()->first('meter_serial') ?: 'Invalid search parameters.'),
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        try {
+            $validated = $validator->validated();
+            $results = $this->externalConsumerService->searchAccounts(
+                $validated['lastname'] ?? null,
+                $validated['meter_serial'] ?? null,
+                30
+            );
+
+            return response()->json([
+                'success' => true,
+                'data' => $results['data'],
+                'has_more' => $results['has_more'],
+                'count' => count($results['data']),
+                'source' => $results['source'] ?? 'api',
+            ]);
+        } catch (Throwable $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unable to search consumer accounts with billing service.',
             ], 500);
         }
     }

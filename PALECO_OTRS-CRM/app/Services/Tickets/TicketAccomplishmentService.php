@@ -12,6 +12,7 @@ use App\Models\TicketAccomplishment;
 use App\Models\TicketStatusLog;
 use App\Models\User;
 use Carbon\Carbon;
+use Exception;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -216,7 +217,7 @@ class TicketAccomplishmentService
 
                 return $report;
             });
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             if ($signaturePath) {
                 Storage::disk('public')->delete($signaturePath);
             }

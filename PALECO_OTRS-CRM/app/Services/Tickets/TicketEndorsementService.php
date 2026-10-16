@@ -19,6 +19,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
+use RuntimeException;
 
 /**
  * Encapsulates the cross-department endorsement workflow:
@@ -318,7 +319,7 @@ class TicketEndorsementService
             }
         }
 
-        throw new \RuntimeException('Failed to process endorsement due to concurrent ticket sequence collision.');
+        throw new RuntimeException('Failed to process endorsement due to concurrent ticket sequence collision.');
     }
 
     // --- PRIVATE HELPER METHODS ---

@@ -29,8 +29,8 @@
 
             <div>
                 <dt class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Status</dt>
-                <dd class="text-sm font-bold {{ $ticket->consumer->status === 'A' ? 'text-emerald-600' : 'text-rose-600' }}">
-                    {{ $ticket->consumer->status === 'A' ? 'Active' : ($ticket->consumer->status ?? 'Unknown') }}
+                <dd class="text-sm font-bold {{ in_array($ticket->consumer->status, ['A', 'Active']) ? 'text-emerald-600' : (in_array($ticket->consumer->status, ['D', 'Deactivated']) ? 'text-amber-600' : (in_array($ticket->consumer->status, ['I', 'Inactive']) ? 'text-slate-600' : 'text-zinc-600')) }}">
+                    {{ in_array($ticket->consumer->status, ['A', 'Active']) ? 'Active' : (in_array($ticket->consumer->status, ['D', 'Deactivated']) ? 'Deactivated' : (in_array($ticket->consumer->status, ['I', 'Inactive']) ? 'Inactive' : ($ticket->consumer->status ?: 'Unknown'))) }}
                 </dd>
             </div>
 

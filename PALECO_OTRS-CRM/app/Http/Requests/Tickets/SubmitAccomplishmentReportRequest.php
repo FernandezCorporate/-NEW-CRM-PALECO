@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Tickets;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Http\UploadedFile;
 
 /*
  * Validates the submission payload for a ticket accomplishment report.
@@ -65,7 +66,7 @@ class SubmitAccomplishmentReportRequest extends FormRequest
 
             if ($this->hasFile('signature')) {
                 $sig = $this->file('signature');
-                if ($sig instanceof \Illuminate\Http\UploadedFile && $sig->isValid()) {
+                if ($sig instanceof UploadedFile && $sig->isValid()) {
                     $totalBytes += $sig->getSize();
                 }
             }
@@ -74,7 +75,7 @@ class SubmitAccomplishmentReportRequest extends FormRequest
                 $photos = $this->file('photos');
                 if (is_array($photos)) {
                     foreach ($photos as $photo) {
-                        if ($photo instanceof \Illuminate\Http\UploadedFile && $photo->isValid()) {
+                        if ($photo instanceof UploadedFile && $photo->isValid()) {
                             $totalBytes += $photo->getSize();
                         }
                     }

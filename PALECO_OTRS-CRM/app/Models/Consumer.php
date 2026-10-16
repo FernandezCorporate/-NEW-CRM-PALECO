@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -23,6 +24,29 @@ class Consumer extends Model
         'status',
         'meter_serial',
     ];
+
+    // --- ACCESSORS & MUTATORS ---
+
+    /**
+     * Ensure consumer status is always stored and accessed as human-readable text.
+     */
+    protected function status(): Attribute
+    {
+        return Attribute::make(
+            get: fn (?string $value) => match (strtoupper(trim($value ?? ''))) {
+                'A', 'ACTIVE' => 'Active',
+                'D', 'DEACTIVATED' => 'Deactivated',
+                'I', 'INACTIVE' => 'Inactive',
+                default => empty($value) ? 'Unknown' : (in_array(ucfirst(strtolower($value)), ['Active', 'Deactivated', 'Inactive']) ? ucfirst(strtolower($value)) : 'Unknown'),
+            },
+            set: fn (?string $value) => match (strtoupper(trim($value ?? ''))) {
+                'A', 'ACTIVE' => 'Active',
+                'D', 'DEACTIVATED' => 'Deactivated',
+                'I', 'INACTIVE' => 'Inactive',
+                default => 'Unknown',
+            },
+        );
+    }
 
     // --- RELATIONSHIPS ---
 
@@ -52,5 +76,31 @@ class Consumer extends Model
                 ->orWhere('acct_no', 'like', $term)
                 ->orWhere('acct_code', 'like', $term);
         });
+    }
+
+    /**
+     * Search consumers by name (supporting Lastname,Firstname) or meter serial.
+     */
+    public function scopeSearchByNameAndMeter(Builder $query, ?string $lastName = null, ?string $meterSerial = null): Builder
+    {
+        if (! empty($lastName)) {
+            $lastName = trim($lastName);
+
+            if (str_contains($lastName, ',')) {
+                [$last, $first] = array_map('trim', explode(',', $lastName, 2));
+                $query->where('name', 'like', "%{$last}%");
+                if (! empty($first)) {
+                    $query->where('name', 'like', "%{$first}%");
+                }
+            } else {
+                $query->where('name', 'like', "%{$lastName}%");
+            }
+        }
+
+        if (! empty($meterSerial)) {
+            $query->where('meter_serial', 'like', '%' . trim($meterSerial) . '%');
+        }
+
+        return $query;
     }
 }
