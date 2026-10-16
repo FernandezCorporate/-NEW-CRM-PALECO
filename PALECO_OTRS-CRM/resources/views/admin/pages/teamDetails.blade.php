@@ -5,6 +5,11 @@
 @section('title', 'Team Details')
 
 @section('content')
+    <!-- Back Navigation -->
+    <div class="mb-6">
+        <x-contextual-back :default="session('team_list_url', route('admin.teams'))" default-label="Back to Teams" variant="link" />
+    </div>
+
     <!-- Page Header -->
     <header class="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
@@ -15,7 +20,6 @@
         
         <!-- Action Buttons -->
         <div class="flex items-center gap-3 flex-wrap">
-            <x-contextual-back :default="session('team_list_url', route('admin.teams'))" default-label="Back to List" />
             
             <!-- CONTEXT: Check if Team is Soft Deleted -->
             @if($team->trashed())
@@ -135,186 +139,146 @@
         </section>
     </div>
 
-    <!-- Middle Section: Members Table -->
-    <section class="bg-white border border-slate-200 rounded-xl shadow-xs overflow-hidden mb-6" aria-labelledby="team-roster-heading">
-        
-        <div class="px-6 py-5 border-b border-slate-200 bg-slate-50 flex justify-between items-center">
-            <h2 id="team-roster-heading" class="text-base font-bold text-slate-800">Team Roster</h2>
-            <span class="bg-emerald-100 text-emerald-700 text-xs font-bold px-2.5 py-1 rounded-full">
-                {{ $members->total() }} {{ Str::plural('Member', $members->total()) }}
-            </span>
-        </div>
+    <!-- Record Tabs Section -->
+    <section class="ticket-history-tabs mt-8" aria-labelledby="team-records-title">
+        <header class="ticket-history-header mb-4">
+            <p class="eyebrow text-xs font-bold text-emerald-700 uppercase tracking-wider">Team records</p>
+            <h2 id="team-records-title" class="text-xl font-bold text-slate-900 tracking-tight mt-1 font-sans">Roster & assigned tickets</h2>
+            <p class="text-sm text-slate-500 mt-1">Review active personnel members and service tickets currently assigned to this team.</p>
+        </header>
 
-        <div class="overflow-x-auto">
-            <table class="w-full text-left border-collapse">
-                <caption class="sr-only">Team Roster for {{ $team->team_name }}</caption>
-                <thead>
-                    <tr class="bg-white border-b border-slate-200 text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                        <th scope="col" class="px-6 py-4">Member</th>
-                        <th scope="col" class="px-6 py-4">Team Role</th>
-                        <th scope="col" class="px-6 py-4">Date Added</th>
-                        <th scope="col" class="px-6 py-4 text-right">Actions</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-slate-100">
-                    @forelse ($members as $member)
-                        <tr class="hover:bg-slate-50/75 transition-colors group">
-                            
-                            <!-- Detailed Member Column (Avatar + Full Name + Email) -->
-                            <td class="px-6 py-4">
-                                <div class="flex items-center gap-3">
-                                    <div class="w-10 h-10 rounded-full bg-emerald-50 text-emerald-700 flex items-center justify-center font-bold text-sm shrink-0 border border-emerald-100">
-                                        {{ $member->avatar_initials }}
-                                    </div>
-                                    <div class="flex flex-col">
-                                        <span class="font-medium text-slate-800">{{ $member->full_name }}</span>
-                                        <span class="text-xs text-slate-500 flex items-center gap-1 mt-0.5">
-                                            @if($member->email)
-                                                <svg class="w-3 h-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
-                                                {{ $member->email }}
-                                            @else
-                                                <span class="italic text-slate-400">No email provided</span>
-                                            @endif
-                                        </span>
-                                    </div>
-                                </div>
-                            </td>
-                            
-                            <!-- Team Role Column -->
-                            <td class="px-6 py-4">
-                                <span class="bg-blue-50 text-blue-700 border border-blue-200 text-[11px] font-bold px-2.5 py-1 rounded-full tracking-wide uppercase">
-                                    {{ $member->assigned_role_name }}
-                                </span>
-                            </td>
-                            
-                            <!-- Date Added Column -->
-                            <td class="px-6 py-4 text-sm text-slate-600 font-medium">
-                                {{ $member->pivot->created_at->format('M d, Y') }}
-                            </td>
+        <nav class="ticket-history-nav" aria-label="Team records tabs" role="tablist">
+            <a href="#roster-tab" role="tab" id="tab-roster" data-tab-target="roster-tab" aria-controls="roster-tab" aria-selected="true" aria-current="page">
+                Team roster <span>{{ $members->total() }}</span>
+            </a>
+            <a href="#tickets-tab" role="tab" id="tab-tickets" data-tab-target="tickets-tab" aria-controls="tickets-tab" aria-selected="false">
+                Assigned tickets <span>{{ $assignedTickets->total() }}</span>
+            </a>
+        </nav>
 
-                            <td class="px-6 py-4 text-right">
-                                <a href="{{ route('admin.users.show', array_filter(['user' => $member, 'source' => 'team', 'team' => $team->id, 'dept' => request('dept')])) }}" class="inline-flex p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="View Member Profile">
-                                    <x-icons.eye class="w-5 h-5" />
-                                    <span class="sr-only">View {{ $member->full_name }} profile</span>
+        <!-- 1. Team Roster Tab Panel -->
+        <x-ticket-history-table 
+            id="roster-tab" 
+            title="Team Roster" 
+            description="Active field personnel and assigned operational roles for {{ $team->team_name }}."
+            :count="$members->total()" 
+            :columns="['Member', 'Team Role', 'Date Added', 'Actions']"
+            back-href="#team-records-title"
+            back-label="Back to tabs ↑"
+            caption="Team roster for {{ $team->team_name }}"
+        >
+            @forelse ($members as $member)
+                <tr>
+                    <td>
+                        <div class="flex items-center gap-3">
+                            <div class="w-9 h-9 rounded-full bg-emerald-50 text-emerald-700 flex items-center justify-center font-bold text-xs shrink-0 border border-emerald-100">
+                                {{ $member->avatar_initials }}
+                            </div>
+                            <div class="flex flex-col">
+                                <a href="{{ route('admin.users.show', array_filter(['user' => $member, 'source' => 'team', 'team' => $team->id, 'dept' => request('dept')])) }}" class="font-bold text-emerald-700 text-sm hover:underline">
+                                    {{ $member->full_name }}
                                 </a>
-                            </td>
-                        </tr>
-                    @empty
-                        <tr>
-                            <td colspan="4" class="px-6 py-12 text-center border-2 border-dashed border-slate-100 rounded-lg m-4">
-                                <div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-slate-50 mb-3 text-slate-400">
-                                    <x-icons.users class="w-6 h-6" />
-                                </div>
-                                <h3 class="text-sm font-semibold text-slate-800">No members assigned</h3>
-                                <p class="text-xs text-slate-500 mt-1">There are currently no users assigned to this team roster.</p>
-                            </td>
-                        </tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
-
-        <!-- Pagination -->
-        @if($members->hasPages())
-            <div class="px-6 py-4 border-t border-slate-100 bg-white">
-                {{ $members->onEachSide(0)->links() }}
-            </div>
-        @endif
-    </section>
-
-    <!-- Lower Section: Full-Width Tickets Table -->
-    <section class="bg-white border border-slate-200 rounded-xl shadow-xs overflow-hidden mb-6" aria-labelledby="team-tickets-heading">
-        
-        <div class="px-6 py-5 border-b border-slate-200 bg-slate-50 flex justify-between items-center">
-            <div>
-                <h2 id="team-tickets-heading" class="text-base font-bold text-slate-800">Assigned Tickets</h2>
-                <p class="text-xs text-slate-500 mt-1">Service tickets currently assigned to this team</p>
-            </div>
-            
-            @if(method_exists($assignedTickets, 'total') && $assignedTickets->total() > 0)
-                <span class="bg-indigo-100 text-indigo-700 text-xs font-bold px-2.5 py-1 rounded-full">
-                    {{ $assignedTickets->total() }} {{ Str::plural('Ticket', $assignedTickets->total()) }}
-                </span>
-            @endif
-        </div>
-
-        <div class="overflow-x-auto">
-            <table class="w-full text-left border-collapse min-w-[1000px]">
-                <caption class="sr-only">Service tickets assigned to {{ $team->team_name }}</caption>
-                <thead>
-                    <tr class="bg-white border-b border-slate-200 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-                        <th scope="col" class="px-6 py-4 w-40">Ticket ID</th>
-                        <th scope="col" class="px-6 py-4 w-40">Source</th>
-                        <th scope="col" class="px-6 py-4 w-56">Full Address</th>
-                        <th scope="col" class="px-6 py-4 w-48">Landmark</th>
-                        <th scope="col" class="px-6 py-4 w-48">Nature of Complaint</th>
-                        <th scope="col" class="px-6 py-4 w-32 text-center">Status</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-slate-100">
-                    @forelse ($assignedTickets as $ticket)
-                        <tr class="hover:bg-slate-50/75 transition-colors">
-                            
-                            <!-- Ticket ID & Date -->
-                            <td class="px-6 py-4 align-top">
-                                <div class="font-bold text-emerald-600 text-sm">{{ $ticket->ticket_number }}</div>
-                                <div class="text-[11px] text-slate-400 mt-0.5">{{ $ticket->reported_at->format('M d, Y') }}</div>
-                            </td>
-
-                            <!-- Source -->
-                            <td class="px-6 py-4 align-top">
-                                <div class="text-sm text-slate-800 font-medium">{{ $ticket->complaint_source->label() }}</div>
-                            </td>
-
-                            <!-- Full Address -->
-                            <td class="px-6 py-4 align-top">
-                                <div class="text-sm text-slate-800">
-                                    {{ implode(', ', array_filter([$ticket->purok, $ticket->street, $ticket->barangay])) }}
-                                </div>
-                            </td>
-
-                            <!-- Landmark -->
-                            <td class="px-6 py-4 align-top">
-                                <div class="text-sm text-slate-600">
-                                    {{ $ticket->landmark ?? '—' }}
-                                </div>
-                            </td>
-
-                            <!-- Nature of Complaint -->
-                            <td class="px-6 py-4 align-top">
-                                <div class="text-sm text-slate-800 font-medium">
-                                    {{ $ticket->other_category ? $ticket->other_category_name : ($ticket->category->category_name ?? 'Unspecified') }}
-                                </div>
-                            </td>
-
-                            <!-- Ticket Status -->
-                            <td class="px-6 py-4 align-top text-center">
-                                <span class="inline-flex items-center justify-center px-2.5 py-1 rounded-full border {{ $ticket->status->badgeClasses() }} text-[11px] font-bold">
-                                    {{ $ticket->status->label() }}
+                                <span class="text-xs text-slate-500 flex items-center gap-1 mt-0.5">
+                                    @if($member->email)
+                                        <svg class="w-3 h-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                                        {{ $member->email }}
+                                    @else
+                                        <span class="italic text-slate-400">No email provided</span>
+                                    @endif
                                 </span>
-                            </td>
-                
-                        </tr>
-                    @empty
-                        <tr>
-                            <td colspan="6" class="px-6 py-16 text-center border-2 border-dashed border-slate-200 rounded-lg">
-                                <div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-slate-50 mb-3 text-slate-400">
-                                    <x-icons.ticket class="w-6 h-6" />
-                                </div>
-                                <h3 class="text-sm font-bold text-slate-900">No tickets assigned</h3>
-                                <p class="text-xs text-slate-500 mt-1">There are currently no active tickets routed to this team.</p>
-                            </td>
-                        </tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        <span class="bg-blue-50 text-blue-700 border border-blue-200 text-[11px] font-bold px-2.5 py-1 rounded-full tracking-wide uppercase">
+                            {{ $member->assigned_role_name }}
+                        </span>
+                    </td>
+                    <td class="history-date">
+                        <time datetime="{{ $member->pivot->created_at->toIso8601String() }}">
+                            {{ $member->pivot->created_at->format('M d, Y') }}
+                            <small>{{ $member->pivot->created_at->format('h:i A') }}</small>
+                        </time>
+                    </td>
+                    <td class="text-center">
+                        <x-btn href="{{ route('admin.users.show', array_filter(['user' => $member, 'source' => 'team', 'team' => $team->id, 'dept' => request('dept')])) }}" variant="secondary" size="sm" class="action-link inline-flex items-center gap-1.5 shadow-2xs" aria-label="View member {{ $member->full_name }} profile">
+                            <x-icons.eye class="w-3.5 h-3.5 text-slate-500" />
+                            <span>View</span>
+                        </x-btn>
+                    </td>
+                </tr>
+            @empty
+                <tr>
+                    <td colspan="4" class="history-empty">
+                        <strong>No members assigned</strong>
+                        <span>There are currently no users assigned to this team roster.</span>
+                    </td>
+                </tr>
+            @endforelse
 
-        <!-- Ticket Pagination (If Paginated) -->
-        @if(method_exists($assignedTickets, 'hasPages') && $assignedTickets->hasPages())
-            <div class="px-6 py-4 border-t border-slate-100 bg-white">
-                {{ $assignedTickets->onEachSide(0)->links() }}
-            </div>
-        @endif
+            @if($members->hasPages())
+                <x-slot:footer>
+                    {{ $members->fragment('roster-tab')->onEachSide(0)->links() }}
+                </x-slot:footer>
+            @endif
+        </x-ticket-history-table>
+
+        <!-- 2. Assigned Tickets Tab Panel -->
+        <x-ticket-history-table 
+            id="tickets-tab" 
+            title="Assigned Tickets" 
+            description="Service tickets and complaint tasks currently assigned to {{ $team->team_name }}."
+            :count="$assignedTickets->total()" 
+            :columns="['Ticket ID', 'Source', 'Full Address', 'Landmark', 'Nature of Complaint', 'Status']"
+            back-href="#team-records-title"
+            back-label="Back to tabs ↑"
+            caption="Service tickets assigned to {{ $team->team_name }}"
+            table-class="min-w-[55rem]"
+        >
+            @forelse ($assignedTickets as $ticket)
+                <tr>
+                    <td class="history-date">
+                        <a href="{{ route('admin.tickets.show', $ticket) }}" class="font-bold text-emerald-700 text-sm hover:underline font-mono" aria-label="View ticket #{{ $ticket->ticket_number }}">
+                            {{ $ticket->ticket_number }}
+                        </a>
+                        <small>{{ $ticket->reported_at->format('M d, Y') }}</small>
+                    </td>
+                    <td>
+                        <span class="text-sm text-slate-800 font-medium">{{ $ticket->complaint_source->label() }}</span>
+                    </td>
+                    <td>
+                        <span class="text-sm text-slate-800">
+                            {{ implode(', ', array_filter([$ticket->purok, $ticket->street, $ticket->barangay])) }}
+                        </span>
+                    </td>
+                    <td>
+                        <span class="text-sm text-slate-600">{{ $ticket->landmark ?? '—' }}</span>
+                    </td>
+                    <td>
+                        <span class="text-sm text-slate-800 font-medium">
+                            {{ $ticket->other_category ? $ticket->other_category_name : ($ticket->category->category_name ?? 'Unspecified') }}
+                        </span>
+                    </td>
+                    <td class="text-center">
+                        <span class="inline-flex items-center justify-center px-2.5 py-1 rounded-full border {{ $ticket->status->badgeClasses() }} text-[11px] font-bold tracking-wide">
+                            {{ $ticket->status->label() }}
+                        </span>
+                    </td>
+                </tr>
+            @empty
+                <tr>
+                    <td colspan="6" class="history-empty">
+                        <strong>No tickets assigned</strong>
+                        <span>There are currently no active tickets routed to this team.</span>
+                    </td>
+                </tr>
+            @endforelse
+
+            @if(method_exists($assignedTickets, 'hasPages') && $assignedTickets->hasPages())
+                <x-slot:footer>
+                    {{ $assignedTickets->fragment('tickets-tab')->onEachSide(0)->links() }}
+                </x-slot:footer>
+            @endif
+        </x-ticket-history-table>
     </section>
 @endsection

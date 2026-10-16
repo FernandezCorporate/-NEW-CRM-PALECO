@@ -50,10 +50,7 @@
 <div class="max-w-2xl mx-auto mt-10">
     <!-- Back / Cancel Link -->
     <div class="mb-6">
-        <a href="{{ $cancelRoute }}" class="action-link inline-flex items-center text-sm font-medium text-slate-500 hover:text-slate-800 transition-colors" data-loading-text="Returning...">
-            <x-icons.arrow-left class="w-4 h-4 mr-1.5" />
-            <span>{{ $backLabel }}</span>
-        </a>
+        <x-contextual-back :url="$cancelRoute" :label="$backLabel" variant="link" />
     </div>
 
     <!-- Alert Dialog Card -->

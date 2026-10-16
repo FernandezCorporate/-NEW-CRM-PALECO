@@ -86,11 +86,21 @@
             <tr>
                 <td class="history-date"><time datetime="{{ $endorsement->created_at->toIso8601String() }}">{{ $endorsement->created_at->format('M d, Y') }}<small>{{ $endorsement->created_at->format('h:i A') }}</small></time></td>
                 <td>{{ $endorsement->creator->full_name ?? 'Unknown user' }}</td>
-                <td>{{ $endorsement->suggestedDepartment->dept_name ?? 'Not specified' }}</td>
+                <td>
+                    <span class="{{ $endorsement->suggestedDepartment ? 'text-slate-800 font-medium' : 'text-slate-400 italic' }}">
+                        {{ $endorsement->suggestedDepartment->dept_name ?? 'Not specified' }}
+                        @if($endorsement->suggestedDepartment?->trashed())
+                            <span class="text-[10px] text-slate-400 font-normal not-italic ml-1">(Archived)</span>
+                        @endif
+                    </span>
+                </td>
                 <td><span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold border {{ $endorsement->status->badgeClasses() }}">{{ $endorsement->status->label() }}</span></td>
                 <td>
                     @if(! $isAdmin)
-                        <a class="history-report-link" href="{{ route('cwd.endorsements.show', ['endorsement' => $endorsement, 'source' => 'ticket', 'ticket' => $ticket->id]) }}">View endorsement<span class="sr-only"> request</span><span aria-hidden="true"> ↗</span></a>
+                        <x-btn href="{{ route('cwd.endorsements.show', ['endorsement' => $endorsement, 'source' => 'ticket', 'ticket' => $ticket->id]) }}" variant="secondary" size="sm" class="action-link inline-flex items-center gap-1.5 shadow-2xs" aria-label="View endorsement request">
+                            <x-icons.eye class="w-3.5 h-3.5 text-slate-500" />
+                            <span>View</span>
+                        </x-btn>
                     @else
                         <span class="text-xs text-slate-500 font-medium">Recorded</span>
                     @endif
@@ -112,7 +122,10 @@
                 <td class="history-remarks">{{ $acc->remarks ?: 'No remarks provided.' }}</td>
                 <td>
                     @if(! $isAdmin)
-                        <a class="history-report-link" href="{{ route('cwd.tickets.accomplishments.show', array_filter(['ticket' => $ticket, 'accomplishment' => $acc, 'source' => $source, 'consumer' => $consumer, 'parent' => $parent])) }}">View report<span class="sr-only"> by {{ $acc->accomplishedBy->full_name ?? 'unknown user' }} on {{ $acc->accomplished_at->format('M d, Y h:i A') }}</span><span aria-hidden="true"> ↗</span></a>
+                        <x-btn href="{{ route('cwd.tickets.accomplishments.show', array_filter(['ticket' => $ticket, 'accomplishment' => $acc, 'source' => $source, 'consumer' => $consumer, 'parent' => $parent])) }}" variant="secondary" size="sm" class="action-link inline-flex items-center gap-1.5 shadow-2xs" aria-label="View field accomplishment report by {{ $acc->accomplishedBy->full_name ?? 'unknown user' }} on {{ $acc->accomplished_at->format('M d, Y h:i A') }}">
+                            <x-icons.eye class="w-3.5 h-3.5 text-slate-500" />
+                            <span>View</span>
+                        </x-btn>
                     @else
                         <span class="text-xs text-slate-500 font-medium">Recorded</span>
                     @endif

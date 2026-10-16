@@ -4,23 +4,33 @@
 @section('title', 'Create Child Ticket - ' . $parentTicket->ticket_number)
 
 @section('content')
-<article class="card max-w-5xl mx-auto my-6 p-6 sm:p-10">
-    
-    <!-- Header -->
-    <header class="mb-6">
-        <div class="flex items-center gap-3">
-            <a href="{{ route('cwd.tickets.show', $parentTicket) }}" class="p-2 text-slate-500 hover:text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors" title="Back to parent ticket">
-                <x-icons.arrow-left class="w-5 h-5" />
-            </a>
-            <div>
-                <h1 class="text-2xl font-bold text-slate-900 flex items-center gap-2">
-                    Create Child Ticket
-                    <x-badge variant="indigo">Sub-Task Order</x-badge>
-                </h1>
-                <p class="text-sm text-slate-500 mt-0.5">Spawn a subordinate service ticket linked to parent ticket <span class="font-bold text-slate-700">{{ $parentTicket->ticket_number }}</span>.</p>
-            </div>
-        </div>
-    </header>
+@php
+    $source = old('source', request('source'));
+    $consumerId = old('consumer', request('consumer'));
+    $cancelRoute = route('cwd.tickets.show', array_filter([
+        'ticket' => $parentTicket,
+        'source' => $source,
+        'consumer' => $consumerId,
+    ]));
+    $backLabel = 'Back to Parent Ticket';
+@endphp
+
+<div class="max-w-5xl mx-auto my-6 space-y-4">
+    <!-- Back Navigation -->
+    <div>
+        <x-contextual-back :url="$cancelRoute" :label="$backLabel" variant="link" />
+    </div>
+
+    <article class="card p-6 sm:p-10">
+        
+        <!-- Header -->
+        <header class="mb-6">
+            <h1 class="text-2xl font-bold text-slate-900 flex items-center gap-2">
+                Create Child Ticket
+                <x-badge variant="indigo">Sub-Task Order</x-badge>
+            </h1>
+            <p class="text-sm text-slate-500 mt-0.5">Spawn a subordinate service ticket linked to parent ticket <span class="font-bold text-slate-700">{{ $parentTicket->ticket_number }}</span>.</p>
+        </header>
 
     <!-- Parent Ticket Reference Card -->
     <section class="mb-8 p-5 bg-slate-50 border border-slate-200 rounded-xl" aria-label="Parent ticket reference summary">
@@ -57,6 +67,12 @@
 
     <form action="{{ route('cwd.tickets.children.store', $parentTicket) }}" method="POST" autocomplete="off" class="space-y-8">
         @csrf
+        @if($source)
+            <input type="hidden" name="source" value="{{ $source }}">
+        @endif
+        @if($consumerId)
+            <input type="hidden" name="consumer" value="{{ $consumerId }}">
+        @endif
 
         <!-- Section 1: Classification & Contact -->
         <fieldset class="space-y-6">
@@ -179,7 +195,7 @@
 
         <!-- Actions -->
         <div class="flex items-center justify-end space-x-3 border-t border-slate-200 pt-6 mt-4">
-            <x-btn variant="secondary" href="{{ route('cwd.tickets.show', $parentTicket) }}" class="action-link">
+            <x-btn variant="secondary" href="{{ $cancelRoute }}" class="action-link">
                 Cancel
             </x-btn>
             <x-btn variant="primary" type="submit">
@@ -188,5 +204,6 @@
             </x-btn>
         </div>
     </form>
-</article>
+    </article>
+</div>
 @endsection

@@ -5,14 +5,40 @@
 @section('title', isset($user) ? 'Edit User Account' : 'Create New User Account')
 
 @section('content')
-    <header class="mb-6">
+@php
+    $source = old('source', request('source'));
+    $deptId = old('dept', request('dept', $user->department_id ?? null));
+    $teamId = old('team', request('team'));
+    $cancelRoute = match($source) {
+        'details' => isset($user) 
+            ? route('admin.users.show', array_filter(['user' => $user, 'source' => $teamId ? 'team' : ($deptId ? 'department' : null), 'team' => $teamId, 'dept' => $deptId])) 
+            : route('admin.users'),
+        'team' => $teamId ? route('admin.teams.show', ['team' => $teamId]) : (isset($user) ? route('admin.users.show', ['user' => $user]) : session('user_list_url', route('admin.users'))),
+        'department' => $deptId ? route('admin.departments.show', ['dept' => $deptId]) : session('user_list_url', route('admin.users')),
+        default => session('user_list_url', route('admin.users')),
+    };
+    $backLabel = match($source) {
+        'details' => 'Back to User Profile',
+        'team' => 'Back to Team',
+        'department' => 'Back to Department',
+        default => 'Back to Users',
+    };
+@endphp
+
+<div class="max-w-4xl mx-auto py-4 space-y-6">
+    <!-- Back Navigation -->
+    <div>
+        <x-contextual-back :url="$cancelRoute" :label="$backLabel" variant="link" />
+    </div>
+
+    <header class="mb-2">
         <h1 class="text-2xl font-bold text-slate-800">{{ isset($user) ? 'Edit User Account' : 'New User Account' }}</h1>
         <p class="text-sm text-slate-500 mt-1">{{ isset($user) ? 'Update the details of an existing user account' : 'Fill out the information below to register a new user.'}}</p>
     </header>
 
     <x-alert />
 
-    <article class="card max-w-5xl overflow-hidden">
+    <article class="card overflow-hidden">
         <form method="POST" action="{{ isset($user) ? route('admin.users.update', ['user' => $user]) : route('admin.users.store') }}">
             @csrf
             @isset($user)
@@ -193,20 +219,6 @@
                 @endif
             </div>
 
-            @php
-                $source = old('source', request('source'));
-                $deptId = old('dept', request('dept', $user->department_id ?? null));
-                $teamId = old('team', request('team'));
-                $cancelRoute = match($source) {
-                    'details' => isset($user) 
-                        ? route('admin.users.show', array_filter(['user' => $user, 'source' => $teamId ? 'team' : ($deptId ? 'department' : null), 'team' => $teamId, 'dept' => $deptId])) 
-                        : route('admin.users'),
-                    'team' => $teamId ? route('admin.teams.show', ['team' => $teamId]) : (isset($user) ? route('admin.users.show', ['user' => $user]) : session('user_list_url', route('admin.users'))),
-                    'department' => $deptId ? route('admin.departments.show', ['dept' => $deptId]) : session('user_list_url', route('admin.users')),
-                    default => session('user_list_url', route('admin.users')),
-                };
-            @endphp
-
             <div class="card-footer px-6 md:px-8 py-4 bg-slate-50 border-t border-slate-200 flex items-center justify-end gap-3">
                 <x-btn variant="secondary" href="{{ $cancelRoute }}" data-loading-text="Canceling...">
                     Cancel
@@ -218,4 +230,5 @@
             </div>
         </form>
     </article>
+</div>
 @endsection

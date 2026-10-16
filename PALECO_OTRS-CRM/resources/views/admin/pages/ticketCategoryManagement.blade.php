@@ -62,54 +62,75 @@
     </div>
 
     <!-- List View -->
-    <div id="list-view-container" class="bg-white border border-slate-200 rounded-xl shadow-xs overflow-hidden mb-4">
+    <div id="list-view-container" class="bg-white border border-slate-200 rounded-xl shadow-xs overflow-hidden mb-6">
+        <div class="px-6 py-5 border-b border-slate-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+            <div>
+                <h2 class="text-lg font-bold text-slate-900">Ticket categories <span class="record-count ml-2">{{ number_format($categories->total()) }}</span></h2>
+                <p class="text-xs text-slate-500 mt-0.5">Classification taxonomy, issue tagging, and routing rules</p>
+            </div>
+        </div>
+
         <div class="overflow-x-auto">
-            <table class="system-table w-full text-left border-collapse">
+            <table class="system-table w-full text-left border-collapse min-w-[900px]">
                 <caption class="sr-only">Ticket categories directory and usage metrics</caption>
                 <thead>
-                    <tr class="bg-slate-50 border-b border-slate-200 text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                        <th scope="col" class="px-6 py-4">Category Name</th>
-                        <th scope="col" class="px-6 py-4">Description</th>
-                        <th scope="col" class="px-6 py-4">Usage Volume</th>
-                        <th scope="col" class="px-6 py-4">Date Created</th>
-                        <th scope="col" class="px-6 py-4 text-right">Actions</th>
+                    <tr class="bg-slate-50 border-b border-slate-200 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                        <th scope="col" class="px-6 py-4 w-60">Category Name</th>
+                        <th scope="col" class="px-6 py-4 w-80">Description</th>
+                        <th scope="col" class="px-6 py-4 w-36 text-center">Usage Volume</th>
+                        <th scope="col" class="px-6 py-4 w-40">Date Created</th>
+                        <th scope="col" class="px-6 py-4 w-36 text-center">Actions</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100">
                     @forelse ($categories as $category)
-                        <tr class="hover:bg-slate-50 transition-colors">
-                            <td class="px-6 py-4 font-bold text-slate-900">{{ $category->category_name }}</td>
-                            <td class="px-6 py-4 text-slate-500 text-sm max-w-xs truncate" title="{{ $category->category_desc }}">{{ $category->category_desc ?? '—' }}</td>
-                            
-                            <!-- Dynamic Ticket Count Display -->
-                            <td class="px-6 py-4">
-                                <x-badge variant="indigo">
-                                    {{ $category->ticket_count }} Tickets
-                                </x-badge>
+                        <tr class="hover:bg-slate-50/75 transition-colors">
+                            <td class="px-6 py-4 align-top">
+                                <a href="{{ route('admin.ticketCategories.show', $category) }}" class="font-bold text-emerald-700 text-sm hover:underline">
+                                    {{ $category->category_name }}
+                                </a>
+                                @if($category->trashed())
+                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200 ml-1.5">Archived</span>
+                                @endif
+                            </td>
+                            <td class="px-6 py-4 align-top text-slate-600 text-sm max-w-xs" title="{{ $category->category_desc }}">
+                                {{ $category->category_desc ?? '—' }}
                             </td>
                             
-                            <td class="px-6 py-4 text-slate-500 text-sm">{{ $category->created_at?->format('M d, Y') ?? 'N/A' }}</td>
-                            <td class="px-6 py-4 text-right">
-                                <div class="flex items-center justify-end gap-2">
-                                    <a href="{{ route('admin.ticketCategories.show', $category) }}" class="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="View Details" aria-label="View details for {{ $category->category_name }}">
-                                        <x-icons.eye class="w-5 h-5" />
+                            <!-- Dynamic Ticket Count Display -->
+                            <td class="px-6 py-4 align-top text-center">
+                                <span class="inline-flex items-center justify-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200">
+                                    {{ $category->ticket_count }} {{ Str::plural('Ticket', $category->ticket_count) }}
+                                </span>
+                            </td>
+                            
+                            <td class="px-6 py-4 align-top">
+                                <div class="text-sm text-slate-800 font-medium">{{ $category->created_at?->format('M d, Y') ?? 'N/A' }}</div>
+                                @if($category->created_at)
+                                    <div class="text-[11px] text-slate-400 mt-0.5">{{ $category->created_at->format('h:i A') }}</div>
+                                @endif
+                            </td>
+                            <td class="px-6 py-4 align-top text-center">
+                                <div class="flex items-center justify-center gap-1.5">
+                                    <a href="{{ route('admin.ticketCategories.show', $category) }}" class="action-link p-1.5 text-slate-400 hover:text-emerald-700 hover:bg-slate-100 rounded-lg transition-colors" title="View Details" aria-label="View details for {{ $category->category_name }}">
+                                        <x-icons.eye class="w-4 h-4" />
                                     </a>
                                     @if($category->trashed())
                                         <form action="{{ route('admin.ticketCategories.restore', $category->id) }}" method="POST" class="inline-block">
                                             @csrf @method('PATCH')
-                                            <button type="submit" class="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors" title="Restore" aria-label="Restore {{ $category->category_name }}">
-                                                <x-icons.arrow-path class="w-5 h-5" />
+                                            <button type="submit" class="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors" title="Restore" aria-label="Restore {{ $category->category_name }}">
+                                                <x-icons.arrow-path class="w-4 h-4" />
                                             </button>
                                         </form>
-                                        <a href="{{ route('admin.ticketCategories.forceDeleteConfirm', $category) }}" class="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors" title="Permanently Delete" aria-label="Permanently delete {{ $category->category_name }}">
-                                            <x-icons.trash class="w-5 h-5" />
+                                        <a href="{{ route('admin.ticketCategories.forceDeleteConfirm', $category) }}" class="action-link p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors" title="Permanently Delete" aria-label="Permanently delete {{ $category->category_name }}">
+                                            <x-icons.trash class="w-4 h-4" />
                                         </a>
                                     @else
-                                        <a href="{{ route('admin.ticketCategories.editForm', ['category' => $category, 'source' => 'list']) }}" class="p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors" title="Edit" aria-label="Edit {{ $category->category_name }}">
-                                            <x-icons.pencil class="w-5 h-5" />
+                                        <a href="{{ route('admin.ticketCategories.editForm', ['category' => $category, 'source' => 'list']) }}" class="action-link p-1.5 text-slate-400 hover:text-emerald-700 hover:bg-slate-100 rounded-lg transition-colors" title="Edit" aria-label="Edit {{ $category->category_name }}">
+                                            <x-icons.pencil class="w-4 h-4" />
                                         </a>
-                                        <a href="{{ route('admin.ticketCategories.deleteConfirm', ['category' => $category, 'source' => 'list']) }}" class="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors" title="Archive" aria-label="Archive {{ $category->category_name }}">
-                                            <x-icons.trash class="w-5 h-5" />
+                                        <a href="{{ route('admin.ticketCategories.deleteConfirm', ['category' => $category, 'source' => 'list']) }}" class="action-link p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors" title="Archive" aria-label="Archive {{ $category->category_name }}">
+                                            <x-icons.trash class="w-4 h-4" />
                                         </a>
                                     @endif
                                 </div>
@@ -117,11 +138,11 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="5" class="px-6 py-12 text-center text-slate-500">
+                            <td colspan="5" class="px-6 py-16 text-center border-2 border-dashed border-slate-200 rounded-lg">
                                 <div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-slate-50 mb-3">
                                     <x-icons.category class="w-6 h-6 text-slate-400" />
                                 </div>
-                                <h3 class="text-sm font-semibold text-slate-800">No categories found</h3>
+                                <h3 class="text-sm font-bold text-slate-900">No categories found</h3>
                                 <p class="text-xs text-slate-500 mt-1">Adjust your search or filter to find what you're looking for.</p>
                             </td>
                         </tr>
@@ -136,7 +157,9 @@
         @foreach ($categories as $category)
             <article class="bg-white border border-slate-200 rounded-xl p-6 shadow-xs flex flex-col h-full relative">
                 <div class="flex justify-between items-start mb-4 gap-4">
-                    <h3 class="text-lg font-bold text-slate-900 leading-tight">{{ $category->category_name }}</h3>
+                    <div class="min-w-0 flex-1">
+                        <h3 class="text-lg font-bold text-slate-900 leading-tight break-words">{{ $category->category_name }}</h3>
+                    </div>
                     <div class="flex items-center gap-1 shrink-0 bg-slate-50 p-1 rounded-lg border border-slate-100">
                         <a href="{{ route('admin.ticketCategories.show', $category) }}" class="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-100 rounded-md transition-colors" aria-label="View details for {{ $category->category_name }}">
                             <x-icons.eye class="w-4 h-4" />
@@ -179,5 +202,5 @@
         @endforeach
     </div>
 
-    <div class="mt-6">{{ $categories->onEachSide(0)->links() }}</div>
+    <div class="mt-4">{{ $categories->onEachSide(0)->links() }}</div>
 @endsection

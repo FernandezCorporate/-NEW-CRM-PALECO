@@ -58,7 +58,7 @@
                     <tr class="bg-slate-50 border-b border-slate-200 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
                         <th scope="col" class="px-6 py-4 w-[22%]">Ticket</th>
                         <th scope="col" class="px-6 py-4 w-[23%]">Supervisor</th>
-                        <th scope="col" class="px-6 py-4 w-[18%] text-center">Target Dept</th>
+                        <th scope="col" class="px-6 py-4 w-[18%]">Target Dept</th>
                         <th scope="col" class="px-6 py-4 w-[17%]">Requested</th>
                         <th scope="col" class="px-6 py-4 w-[10%] text-center">Status</th>
                         <th scope="col" class="px-6 py-4 w-[10%] text-center">Action</th>
@@ -87,15 +87,21 @@
                             </td>
 
                             <!-- Target Department -->
-                            <td class="px-6 py-4 align-top text-center">
-                                <x-badge variant="slate">
-                                    {{ $endorsement->suggestedDepartment?->dept_name ?? 'Unassigned' }}
-                                </x-badge>
+                            <td class="px-6 py-4 align-top">
+                                <div class="text-sm font-medium leading-snug {{ $endorsement->suggestedDepartment ? 'text-slate-800' : 'text-slate-400 italic' }}">
+                                    {{ $endorsement->suggestedDepartment->dept_name ?? 'Unassigned' }}
+                                    @if($endorsement->suggestedDepartment?->trashed())
+                                        <span class="text-[10px] text-slate-400 font-normal not-italic ml-1">(Archived)</span>
+                                    @endif
+                                </div>
                             </td>
 
                             <!-- Requested Date -->
                             <td class="px-6 py-4 align-top">
-                                <div class="text-sm text-slate-800">{{ $endorsement->created_at->format('Y-m-d H:i') }}</div>
+                                <time datetime="{{ $endorsement->created_at->toIso8601String() }}">
+                                    <div class="text-sm text-slate-800 font-medium">{{ $endorsement->created_at->format('M d, Y') }}</div>
+                                    <div class="text-[11px] text-slate-400 mt-0.5">{{ $endorsement->created_at->format('h:i A') }}</div>
+                                </time>
                             </td>
 
                             <!-- Status Badge -->
@@ -107,8 +113,9 @@
 
                             <!-- Action -->
                             <td class="px-6 py-4 align-top text-center">
-                                <x-btn href="{{ route('cwd.endorsements.show', $endorsement) }}" variant="secondary" size="sm" class="action-link" aria-label="Review endorsement request for ticket {{ $endorsement->ticket->ticket_number ?? 'N/A' }}">
-                                    Review
+                                <x-btn href="{{ route('cwd.endorsements.show', $endorsement) }}" variant="secondary" size="sm" class="action-link inline-flex items-center gap-1.5 shadow-2xs" aria-label="Review endorsement request for ticket {{ $endorsement->ticket->ticket_number ?? 'N/A' }}">
+                                    <x-icons.eye class="w-3.5 h-3.5 text-slate-500" />
+                                    <span>Review</span>
                                 </x-btn>
                             </td>
                 

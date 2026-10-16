@@ -5,14 +5,30 @@
 @section('title', isset($category) ? 'Edit Category' : 'Create New Category')
 
 @section('content')
-    <header class="mb-8">
+@php
+    $source = old('source', request('source'));
+    $cancelRoute = ($source === 'details' && isset($category))
+        ? route('admin.ticketCategories.show', $category)
+        : session('category_list_url', route('admin.ticketCategories'));
+    $backLabel = ($source === 'details' && isset($category))
+        ? 'Back to Category Details'
+        : 'Back to Categories';
+@endphp
+
+<div class="max-w-2xl mx-auto py-4 space-y-6">
+    <!-- Back Navigation -->
+    <div>
+        <x-contextual-back :url="$cancelRoute" :label="$backLabel" variant="link" />
+    </div>
+
+    <header class="mb-2">
         <h1 class="text-2xl font-bold text-slate-800">{{ isset($category) ? 'Edit Category' : 'Create New Category' }}</h1>
         <p class="text-sm text-slate-500 mt-1">{{ isset($category) ? 'Update the details of this category.' : 'Add a new ticket category.' }}</p>
     </header>
 
     <x-alert />
 
-    <article class="card max-w-2xl overflow-hidden">
+    <article class="card overflow-hidden">
         <form action="{{ isset($category) ? route('admin.ticketCategories.update', ['category' => $category, 'source' => request('source')]) : route('admin.ticketCategories.store') }}" method="POST">
             @csrf
 
@@ -52,12 +68,6 @@
                 </fieldset>
             </div>
 
-            @php
-                $cancelRoute = (old('source', request('source')) === 'details' && isset($category))
-                    ? route('admin.ticketCategories.show', $category)
-                    : session('category_list_url', route('admin.ticketCategories'));
-            @endphp
-
             <div class="card-footer px-6 md:px-8 py-4 bg-slate-50 border-t border-slate-200 flex items-center justify-end gap-3">
                 <x-btn variant="secondary" href="{{ $cancelRoute }}" data-loading-text="Canceling...">
                     Cancel
@@ -69,4 +79,5 @@
             </div>
         </form>
     </article>
+</div>
 @endsection

@@ -4,22 +4,46 @@
 @section('title', 'Edit Ticket - ' . $ticket->ticket_number)
 
 @section('content')
-<article class="card max-w-5xl mx-auto my-6 p-6 sm:p-10">
-    
-    <header class="mb-8">
-        <div class="flex items-center gap-3">
-            <span class="font-mono text-xs font-bold bg-slate-100 text-slate-700 px-2.5 py-1 rounded border border-slate-200">
-                {{ $ticket->ticket_number }}
-            </span>
-            <span class="text-xs font-bold px-2.5 py-0.5 rounded-full border {{ $ticket->status->badgeClasses() }}">
-                {{ $ticket->status->label() }}
-            </span>
-        </div>
-        <h1 class="text-2xl font-bold text-slate-900 mt-2">Edit service ticket</h1>
-        <p class="text-sm text-slate-500 mt-1">Correct clerical typos in contact information, location, complaint description, or category assignment.</p>
-    </header>
+@php
+    $source = old('source', request('source'));
+    $consumerId = old('consumer', request('consumer'));
+    $parentId = old('parent', request('parent'));
+    $cancelRoute = route('cwd.tickets.show', array_filter([
+        'ticket' => $ticket,
+        'source' => $source,
+        'consumer' => $consumerId,
+        'parent' => $parentId,
+    ]));
+    $backLabel = match($source) {
+        'dashboard' => 'Back to Dashboard',
+        'consumer' => 'Back to Consumer Profile',
+        'parent' => 'Back to Parent Ticket',
+        default => 'Back to Ticket Details',
+    };
+@endphp
 
-    <x-alert />
+<div class="max-w-5xl mx-auto my-6 space-y-4">
+    <!-- Back Navigation -->
+    <div>
+        <x-contextual-back :url="$cancelRoute" :label="$backLabel" variant="link" />
+    </div>
+
+    <article class="card p-6 sm:p-10">
+        
+        <header class="mb-8">
+            <div class="flex items-center gap-3">
+                <span class="font-mono text-xs font-bold bg-slate-100 text-slate-700 px-2.5 py-1 rounded border border-slate-200">
+                    {{ $ticket->ticket_number }}
+                </span>
+                <span class="text-xs font-bold px-2.5 py-0.5 rounded-full border {{ $ticket->status->badgeClasses() }}">
+                    {{ $ticket->status->label() }}
+                </span>
+            </div>
+            <h1 class="text-2xl font-bold text-slate-900 mt-2">Edit service ticket</h1>
+            <p class="text-sm text-slate-500 mt-1">Correct clerical typos in contact information, location, complaint description, or category assignment.</p>
+        </header>
+
+        <x-alert />
 
     <form action="{{ route('cwd.tickets.update', $ticket) }}" method="POST" autocomplete="off" class="space-y-8">
         @csrf
@@ -173,12 +197,15 @@
 
         <!-- Actions -->
         <div class="flex items-center justify-end space-x-3 border-t border-slate-200 pt-6 mt-4">
-            <x-contextual-back :default="route('cwd.tickets.show', array_filter(['ticket' => $ticket, 'source' => request('source'), 'consumer' => request('consumer'), 'parent' => request('parent')]))" label="Cancel" variant="button" />
+            <x-btn variant="secondary" href="{{ $cancelRoute }}" data-loading-text="Canceling...">
+                Cancel
+            </x-btn>
             <x-btn variant="primary" type="submit" data-loading-text="Updating Ticket...">
                 Save Changes
             </x-btn>
         </div>
     </form>
 </article>
+</div>
 @endsection
 

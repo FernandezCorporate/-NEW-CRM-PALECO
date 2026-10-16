@@ -15,13 +15,16 @@
 
     <x-alert />
 
+    <!-- Back Navigation -->
+    <div class="mb-6">
+        <x-contextual-back :default="session('ticket_list_url', $isAdmin ? route('admin.tickets') : route('cwd.tickets'))" default-label="Back to Tickets" variant="link" />
+    </div>
+
     <!-- Header Section: Clean Identity & Informational Metadata -->
     <header class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-6">
-        <div class="flex items-center gap-4 min-w-0">
-            <x-contextual-back :default="session('ticket_list_url', $isAdmin ? route('admin.tickets') : route('cwd.tickets'))" default-label="Back to Tickets" variant="icon-box" />
-            <div class="min-w-0">
-                <div class="flex items-center gap-3 flex-wrap">
-                    <h1 class="text-2xl font-bold text-slate-900 font-mono tracking-tight whitespace-nowrap">
+        <div class="min-w-0">
+            <div class="flex items-center gap-3 flex-wrap">
+                <h1 class="text-2xl font-bold text-slate-900 font-mono tracking-tight whitespace-nowrap">
                         {{ $ticket->ticket_number }}
                     </h1>
                     
@@ -47,7 +50,6 @@
                     @endif
                 </div>
                 <p class="text-sm text-slate-600 mt-1 font-medium leading-relaxed">{{ $ticket->subject }}</p>
-            </div>
         </div>
 
         <!-- Informational Metadata Pills -->

@@ -8,13 +8,15 @@
 
     @include('cwd.prompts.alert')
 
-    <!-- Header & Back Button -->
-    <header class="flex items-center gap-4 mb-8">
-        <x-contextual-back :default="session('consumer_list_url', route('cwd.consumers'))" default-label="Back to Consumers" variant="icon-circle" />
-        <div>
-            <h1 class="text-2xl lg:text-3xl font-bold text-slate-900">Consumer Profile</h1>
-            <p class="text-sm text-slate-500 mt-1">Account and service history</p>
-        </div>
+    <!-- Back Navigation -->
+    <div class="mb-6">
+        <x-contextual-back :default="session('consumer_list_url', route('cwd.consumers'))" default-label="Back to Consumers" variant="link" />
+    </div>
+
+    <!-- Header Section -->
+    <header class="mb-8">
+        <h1 class="text-2xl lg:text-3xl font-bold text-slate-900">Consumer Profile</h1>
+        <p class="text-sm text-slate-500 mt-1">Account and service history</p>
     </header>
 
     <!-- Main Profile Card -->

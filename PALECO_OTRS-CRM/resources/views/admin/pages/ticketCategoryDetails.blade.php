@@ -61,10 +61,10 @@
         </div>
 
         <div class="overflow-x-auto">
-            <table class="w-full text-left border-collapse min-w-[1000px]">
+            <table class="system-table w-full text-left border-collapse min-w-[1000px]">
                 <caption class="sr-only">Tickets logged under {{ $category->category_name }}</caption>
                 <thead>
-                    <tr class="bg-white border-b border-slate-200 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                    <tr class="bg-slate-50 border-b border-slate-200 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
                         <th scope="col" class="px-6 py-4 w-40">Ticket ID</th>
                         <th scope="col" class="px-6 py-4 w-40">Source</th>
                         <th scope="col" class="px-6 py-4 w-56">Full Address</th>
@@ -76,7 +76,9 @@
                     @forelse ($assignedTickets as $ticket)
                         <tr class="hover:bg-slate-50/75 transition-colors">
                             <td class="px-6 py-4 align-top">
-                                <div class="font-bold text-emerald-600 text-sm">{{ $ticket->ticket_number }}</div>
+                                <a href="{{ route('admin.tickets.show', $ticket) }}" class="font-bold text-emerald-700 text-sm hover:underline" aria-label="View ticket #{{ $ticket->ticket_number }}">
+                                    {{ $ticket->ticket_number }}
+                                </a>
                                 <div class="text-[11px] text-slate-400 mt-0.5">{{ $ticket->reported_at->format('M d, Y') }}</div>
                             </td>
 
@@ -97,7 +99,7 @@
                             </td>
 
                             <td class="px-6 py-4 align-top text-center">
-                                <span class="inline-flex items-center justify-center px-2.5 py-1 rounded-full border {{ $ticket->status->badgeClasses() }} text-[11px] font-bold">
+                                <span class="inline-flex items-center justify-center px-2.5 py-1 rounded-full border {{ $ticket->status->badgeClasses() }} text-[11px] font-bold tracking-wide">
                                     {{ $ticket->status->label() }}
                                 </span>
                             </td>

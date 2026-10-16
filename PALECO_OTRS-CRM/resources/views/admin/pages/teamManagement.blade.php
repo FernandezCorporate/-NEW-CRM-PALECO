@@ -91,49 +91,63 @@
     @if($teams->count() > 0)
         <!-- LIST VIEW -->
         <div id="list-view-container" class="bg-white border border-slate-200 rounded-xl shadow-xs overflow-hidden mb-6 block">
+            <div class="px-6 py-5 border-b border-slate-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                <div>
+                    <h2 class="text-lg font-bold text-slate-900">Teams directory <span class="record-count ml-2">{{ number_format($teams->total()) }}</span></h2>
+                    <p class="text-xs text-slate-500 mt-0.5">Field operations and dispatch response teams</p>
+                </div>
+            </div>
+
             <div class="overflow-x-auto">
-                <table class="system-table w-full text-left border-collapse">
+                <table class="system-table w-full text-left border-collapse min-w-[950px]">
                     <caption class="sr-only">Field response teams directory</caption>
                     <thead>
-                        <tr class="bg-slate-50 border-b border-slate-200 text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                            <th scope="col" class="px-6 py-4">Team Name</th>
-                            <th scope="col" class="px-6 py-4">Department</th>
-                            <th scope="col" class="px-6 py-4">Shift Schedule</th>
-                            <th scope="col" class="px-6 py-4">Members</th>
-                            <th scope="col" class="px-6 py-4">Tickets</th>
-                            <th scope="col" class="px-6 py-4 text-right">Actions</th>
+                        <tr class="bg-slate-50 border-b border-slate-200 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                            <th scope="col" class="px-6 py-4 w-60">Team Name</th>
+                            <th scope="col" class="px-6 py-4 w-52">Department</th>
+                            <th scope="col" class="px-6 py-4 w-48">Shift Schedule</th>
+                            <th scope="col" class="px-6 py-4 w-28 text-center">Members</th>
+                            <th scope="col" class="px-6 py-4 w-28 text-center">Tickets</th>
+                            <th scope="col" class="px-6 py-4 w-36 text-center">Actions</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100">
                         @foreach($teams as $team)
-                            <tr class="hover:bg-slate-50 transition-colors">
-                                <td class="px-6 py-4">
-                                    <div class="font-bold text-slate-900">{{ $team->team_name }}</div>
+                            <tr class="hover:bg-slate-50/75 transition-colors">
+                                <td class="px-6 py-4 align-top">
+                                    <a href="{{ route('admin.teams.show', ['team' => $team]) }}" class="font-bold text-emerald-700 text-sm hover:underline">
+                                        {{ $team->team_name }}
+                                    </a>
+                                    @if($team->team_desc)
+                                        <div class="text-xs text-slate-500 mt-0.5 line-clamp-1">{{ $team->team_desc }}</div>
+                                    @endif
                                 </td>
-                                <td class="px-6 py-4 text-sm text-slate-700">
-                                    {{ $team->department->dept_name ?? 'Unassigned' }}
+                                <td class="px-6 py-4 align-top">
+                                    <div class="text-sm font-medium leading-snug {{ $team->department ? 'text-slate-800' : 'text-slate-400 italic' }}">
+                                        {{ $team->department->dept_name ?? 'Unassigned' }}
+                                    </div>
                                 </td>
-                                <td class="px-6 py-4 text-sm text-slate-700">
+                                <td class="px-6 py-4 align-top text-sm text-slate-700">
                                     <span class="inline-flex items-center gap-1.5 bg-slate-100 text-slate-700 px-2.5 py-1 rounded-md text-xs font-medium border border-slate-200">
-                                        <x-icons.clock class="w-3.5 h-3.5" />
+                                        <x-icons.clock class="w-3.5 h-3.5 text-slate-500" />
                                         {{ $team->shift_start->format('h:i A') }} - {{ $team->shift_end->format('h:i A') }}
                                     </span>
                                 </td>
-                                <td class="px-6 py-4 text-sm text-slate-700">
-                                    <x-badge variant="emerald">
+                                <td class="px-6 py-4 align-top text-center">
+                                    <span class="inline-flex items-center justify-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
                                         {{ $team->members_count }}
-                                    </x-badge>
+                                    </span>
                                 </td>
-                                <td class="px-6 py-4 text-sm text-slate-700">
-                                    <x-badge variant="emerald">
+                                <td class="px-6 py-4 align-top text-center">
+                                    <span class="inline-flex items-center justify-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
                                         {{ $team->ticket_count }}
-                                    </x-badge>
+                                    </span>
                                 </td>
-                                <td class="px-6 py-4 text-right">
-                                    <div class="flex items-center justify-end gap-2">
+                                <td class="px-6 py-4 align-top text-center">
+                                    <div class="flex items-center justify-center gap-1.5">
                                         <!-- View -->
-                                        <a href="{{ route('admin.teams.show', ['team' => $team]) }}" class="action-link p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="View Team Details" aria-label="View details for {{ $team->team_name }}">
-                                            <x-icons.eye class="w-5 h-5" />
+                                        <a href="{{ route('admin.teams.show', ['team' => $team]) }}" class="action-link p-1.5 text-slate-400 hover:text-emerald-700 hover:bg-slate-100 rounded-lg transition-colors" title="View Team Details" aria-label="View details for {{ $team->team_name }}">
+                                            <x-icons.eye class="w-4 h-4" />
                                         </a>
 
                                         @if($team->trashed())
@@ -141,22 +155,22 @@
                                             <form action="{{ route('admin.teams.restore', ['team' => $team]) }}" method="POST" class="inline-block">
                                                 @csrf
                                                 @method('PATCH')
-                                                <button type="submit" class="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors" title="Restore Team" aria-label="Restore {{ $team->team_name }}">
-                                                    <x-icons.arrow-path class="w-5 h-5" />
+                                                <button type="submit" class="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors" title="Restore Team" aria-label="Restore {{ $team->team_name }}">
+                                                    <x-icons.arrow-path class="w-4 h-4" />
                                                 </button>
                                             </form>
                                             <!-- Force Delete -->
-                                            <a href="{{ route('admin.teams.forceDeleteConfirm', ['team' => $team]) }}" class="action-link p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors" title="Permanently Delete Team" aria-label="Permanently delete {{ $team->team_name }}">
-                                                <x-icons.trash class="w-5 h-5" />
+                                            <a href="{{ route('admin.teams.forceDeleteConfirm', ['team' => $team]) }}" class="action-link p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors" title="Permanently Delete Team" aria-label="Permanently delete {{ $team->team_name }}">
+                                                <x-icons.trash class="w-4 h-4" />
                                             </a>
                                         @else
                                             <!-- Edit -->
-                                            <a href="{{ route('admin.teams.editForm', ['team' => $team, 'source' => 'list']) }}" class="action-link p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors" title="Edit Team" aria-label="Edit {{ $team->team_name }}">
-                                                <x-icons.pencil class="w-5 h-5" />
+                                            <a href="{{ route('admin.teams.editForm', ['team' => $team, 'source' => 'list']) }}" class="action-link p-1.5 text-slate-400 hover:text-emerald-700 hover:bg-slate-100 rounded-lg transition-colors" title="Edit Team" aria-label="Edit {{ $team->team_name }}">
+                                                <x-icons.pencil class="w-4 h-4" />
                                             </a>
                                             <!-- Archive -->
-                                            <a href="{{ route('admin.teams.deleteConfirm', ['team' => $team, 'source' => 'list']) }}" class="action-link p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors" title="Archive Team" aria-label="Archive {{ $team->team_name }}">
-                                                <x-icons.trash class="w-5 h-5" />
+                                            <a href="{{ route('admin.teams.deleteConfirm', ['team' => $team, 'source' => 'list']) }}" class="action-link p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors" title="Archive Team" aria-label="Archive {{ $team->team_name }}">
+                                                <x-icons.trash class="w-4 h-4" />
                                             </a>
                                         @endif
                                     </div>
@@ -169,24 +183,19 @@
         </div>
 
         <!-- CARD VIEW -->
-        <div id="card-view-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6 hidden">
+        <div id="card-view-container" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 mb-6 hidden">
             @foreach($teams as $team)
                 <article class="bg-white border border-slate-200 rounded-xl shadow-xs p-6 hover:shadow-sm transition-shadow flex flex-col h-full relative">
 
-                    <!-- Header & Actions -->
-                    <div class="flex justify-between items-start mb-4 gap-4">
-                        <div class="pr-2">
-                            <h3 class="text-lg font-bold text-slate-900 leading-tight">{{ $team->team_name }}</h3>
-                            <div class="mt-1">
-                                <x-badge variant="slate">
-                                    {{ $team->department->dept_name ?? 'Unassigned' }}
-                                </x-badge>
-                            </div>
+                    <!-- Header (Title & Actions) -->
+                    <div class="flex justify-between items-start mb-2 gap-3">
+                        <div class="min-w-0 flex-1">
+                            <h3 class="text-lg font-bold text-slate-900 leading-tight break-words">{{ $team->team_name }}</h3>
                         </div>
                         
                         <div class="flex items-center gap-1 shrink-0 bg-slate-50 p-1 rounded-lg border border-slate-100">
                             <!-- View -->
-                            <a href="{{ route('admin.teams.show', ['team' => $team]) }}" class="action-link p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-100 rounded-md transition-colors" title="View Team Details" aria-label="View details for {{ $team->team_name }}">
+                            <a href="{{ route('admin.teams.show', ['team' => $team]) }}" class="action-link p-1.5 text-slate-400 hover:text-emerald-700 hover:bg-slate-100 rounded-md transition-colors" title="View Team Details" aria-label="View details for {{ $team->team_name }}">
                                 <x-icons.eye class="w-4 h-4" />
                             </a>
                             
@@ -205,15 +214,22 @@
                                 </a>
                             @else
                                 <!-- Edit -->
-                                <a href="{{ route('admin.teams.editForm', ['team' => $team, 'source' => 'card']) }}" class="action-link p-1.5 text-slate-400 hover:text-emerald-600 hover:bg-emerald-100 rounded-md transition-colors" title="Edit Team" aria-label="Edit {{ $team->team_name }}">
+                                <a href="{{ route('admin.teams.editForm', ['team' => $team, 'source' => 'card']) }}" class="action-link p-1.5 text-slate-400 hover:text-emerald-700 hover:bg-emerald-50 rounded-md transition-colors" title="Edit Team" aria-label="Edit {{ $team->team_name }}">
                                     <x-icons.pencil class="w-4 h-4" />
                                 </a>
                                 <!-- Archive -->
-                                <a href="{{ route('admin.teams.deleteConfirm', ['team' => $team, 'source' => 'card']) }}" class="action-link p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-100 rounded-md transition-colors" title="Archive Team" aria-label="Archive {{ $team->team_name }}">
+                                <a href="{{ route('admin.teams.deleteConfirm', ['team' => $team, 'source' => 'card']) }}" class="action-link p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-md transition-colors" title="Archive Team" aria-label="Archive {{ $team->team_name }}">
                                     <x-icons.trash class="w-4 h-4" />
                                 </a>
                             @endif
                         </div>
+                    </div>
+
+                    <!-- Department Pill -->
+                    <div class="mb-4">
+                        <x-badge variant="slate" class="whitespace-normal text-left inline-block leading-relaxed max-w-full">
+                            {{ $team->department->dept_name ?? 'Unassigned' }}
+                        </x-badge>
                     </div>
                     
                     @if($team->team_desc)
@@ -241,12 +257,12 @@
             {{ $teams->links() }}
         </div>
     @else
-        <div class="bg-white border border-slate-200 rounded-xl p-12 text-center shadow-xs">
-            <div class="mx-auto h-16 w-16 bg-slate-100 rounded-full flex items-center justify-center mb-4">
-                <x-icons.team class="h-8 w-8 text-slate-400" />
+        <div class="bg-white border border-slate-200 rounded-xl p-16 text-center shadow-xs mb-6">
+            <div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-slate-50 mb-3">
+                <x-icons.team class="w-6 h-6 text-slate-400" />
             </div>
-            <h3 class="text-lg font-bold text-slate-900 mb-1">No teams found</h3>
-            <p class="text-slate-500 mb-6">There are no teams matching your current filters or search query.</p>
+            <h3 class="text-sm font-bold text-slate-900">No teams found</h3>
+            <p class="text-xs text-slate-500 mt-1">Adjust your search or filter to find what you're looking for.</p>
         </div>
     @endif
 @endsection

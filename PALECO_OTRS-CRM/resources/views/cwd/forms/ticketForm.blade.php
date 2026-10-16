@@ -4,20 +4,44 @@
 @section('title', 'New Ticket')
 
 @section('content')
-<article class="card max-w-5xl mx-auto my-6 p-6 sm:p-10">
-    
-    <header class="mb-8">
-        <h1 class="text-2xl font-bold text-slate-900">New service ticket</h1>
-        <p class="text-sm text-slate-500 mt-1">Record the complaint, choose the responsible department, and confirm the incident location.</p>
-    </header>
+@php
+    $source = old('source', request('source'));
+    $consumerId = old('consumer', request('consumer'));
+    $cancelRoute = match($source) {
+        'dashboard' => route('cwd.dashboard'),
+        'consumer' => $consumerId ? route('cwd.consumers.show', ['consumer' => $consumerId]) : session('ticket_list_url', route('cwd.tickets')),
+        default => session('ticket_list_url', route('cwd.tickets')),
+    };
+    $backLabel = match($source) {
+        'dashboard' => 'Back to Dashboard',
+        'consumer' => 'Back to Consumer Profile',
+        default => 'Back to Tickets',
+    };
+@endphp
 
-    <x-alert />
+<div class="max-w-5xl mx-auto my-6 space-y-4">
+    <!-- Back Navigation -->
+    <div>
+        <x-contextual-back :url="$cancelRoute" :label="$backLabel" variant="link" />
+    </div>
 
-    <form action="{{ route('cwd.tickets.store') }}" method="POST" autocomplete="off" class="space-y-8">
-        @csrf
-        @if(request()->filled('source') || old('source'))
-            <input type="hidden" name="source" value="{{ old('source', request('source')) }}">
-        @endif
+    <article class="card p-6 sm:p-10">
+        
+        <header class="mb-8">
+            <h1 class="text-2xl font-bold text-slate-900">New service ticket</h1>
+            <p class="text-sm text-slate-500 mt-1">Record the complaint, choose the responsible department, and confirm the incident location.</p>
+        </header>
+
+        <x-alert />
+
+        <form action="{{ route('cwd.tickets.store') }}" method="POST" autocomplete="off" class="space-y-8">
+            @csrf
+            @if(request()->filled('source') || old('source'))
+                <input type="hidden" name="source" value="{{ old('source', request('source')) }}">
+            @endif
+            @if(request()->filled('consumer') || old('consumer'))
+                <input type="hidden" name="consumer" value="{{ old('consumer', request('consumer')) }}">
+            @endif
 
         <!-- Section 1: Complaint Classification & Intake Channel -->
         <fieldset class="space-y-6">
@@ -157,7 +181,7 @@
 
         <!-- Actions -->
         <div class="flex items-center justify-end space-x-3 border-t border-slate-200 pt-6 mt-4">
-            <x-btn variant="secondary" href="{{ old('source', request('source')) === 'dashboard' ? route('cwd.dashboard') : route('cwd.tickets') }}" data-loading-text="Canceling...">
+            <x-btn variant="secondary" href="{{ $cancelRoute }}" data-loading-text="Canceling...">
                 Cancel
             </x-btn>
             <x-btn variant="primary" type="submit" data-loading-text="Routing Ticket...">
@@ -166,4 +190,5 @@
         </div>
     </form>
 </article>
+</div>
 @endsection

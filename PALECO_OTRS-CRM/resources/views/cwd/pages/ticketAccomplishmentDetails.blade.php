@@ -6,21 +6,24 @@
 
 @section('content')
 
+    @php
+        $ticketRoute = route('cwd.tickets.show', array_filter(['ticket' => $ticket, 'source' => request('source'), 'consumer' => request('consumer'), 'parent' => request('parent')]));
+    @endphp
+
+    <!-- Back Navigation -->
+    <div class="mb-6">
+        <x-contextual-back :url="$ticketRoute" label="Back to Ticket" variant="link" />
+    </div>
+
     <!-- Header Section -->
     <header class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
-        <div class="flex items-center gap-4">
-            @php
-                $ticketRoute = route('cwd.tickets.show', array_filter(['ticket' => $ticket, 'source' => request('source'), 'consumer' => request('consumer'), 'parent' => request('parent')]));
-            @endphp
-            <x-contextual-back :url="$ticketRoute" label="Back to Ticket" variant="icon-box" class="min-h-10 min-w-10" />
-            <div>
-                <h1 class="text-2xl font-bold text-slate-900 flex items-center gap-2">
-                    Accomplishment Report Details
-                </h1>
-                <p class="text-sm text-slate-500 mt-1">
-                    Ticket: <a href="{{ $ticketRoute }}" class="text-emerald-700 hover:underline font-semibold">{{ $ticket->ticket_number }}</a> • Field Worker: {{ $accomplishment->accomplishedBy->fullName ?? 'Unknown' }}
-                </p>
-            </div>
+        <div>
+            <h1 class="text-2xl font-bold text-slate-900 flex items-center gap-2">
+                Accomplishment Report Details
+            </h1>
+            <p class="text-sm text-slate-500 mt-1">
+                Ticket: <a href="{{ $ticketRoute }}" class="text-emerald-700 hover:underline font-semibold">{{ $ticket->ticket_number }}</a> • Field Worker: {{ $accomplishment->accomplishedBy->fullName ?? 'Unknown' }}
+            </p>
         </div>
     </header>
 

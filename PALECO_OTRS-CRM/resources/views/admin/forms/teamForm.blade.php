@@ -5,14 +5,40 @@
 @section('title', isset($team) ? 'Edit Team' : 'Create New Team')
 
 @section('content')
-    <header class="mb-6">
+@php
+    $source = old('source', request('source'));
+    $deptId = old('dept', request('dept', $team->department_id ?? null));
+    $userId = old('user', request('user'));
+    $cancelRoute = match($source) {
+        'details' => isset($team) 
+            ? route('admin.teams.show', array_filter(['team' => $team, 'source' => $userId ? 'user' : ($deptId ? 'department' : null), 'user' => $userId, 'dept' => $deptId])) 
+            : route('admin.teams'),
+        'user' => $userId ? route('admin.users.show', ['user' => $userId]) : (isset($team) ? route('admin.teams.show', ['team' => $team]) : session('team_list_url', route('admin.teams'))),
+        'department' => $deptId ? route('admin.departments.show', ['dept' => $deptId]) : session('team_list_url', route('admin.teams')),
+        default => session('team_list_url', route('admin.teams')),
+    };
+    $backLabel = match($source) {
+        'details' => 'Back to Team Details',
+        'department' => 'Back to Department',
+        'user' => 'Back to User Profile',
+        default => 'Back to Teams',
+    };
+@endphp
+
+<div class="max-w-4xl mx-auto py-4 space-y-6">
+    <!-- Back Navigation -->
+    <div>
+        <x-contextual-back :url="$cancelRoute" :label="$backLabel" variant="link" />
+    </div>
+
+    <header class="mb-2">
         <h1 class="text-2xl font-bold text-slate-800">{{ isset($team) ? 'Edit Team' : 'New Team' }}</h1>
         <p class="text-sm text-slate-500 mt-1">{{ isset($team) ? 'Update the details and roster of this existing team.' : 'Fill out the information below to register a new field team and assign members.' }}</p>
     </header>
 
     <x-alert />
 
-    <article class="card max-w-4xl overflow-hidden">
+    <article class="card overflow-hidden">
         <form action="{{ isset($team) ? route('admin.teams.update', $team) : route('admin.teams.store') }}" method="POST">
             @csrf
             @isset($team)
@@ -36,7 +62,7 @@
                     <legend class="sr-only">Team Identity & Department</legend>
                     <div class="border-b border-slate-200 pb-2 flex items-center justify-between">
                         <h2 class="text-sm font-bold text-slate-900 flex items-center gap-2">
-                            <x-icons.user-group class="w-4 h-4 text-emerald-600" />
+                            <x-icons.team class="w-4 h-4 text-emerald-600" />
                             <span>Team Identity & Department</span>
                         </h2>
                         <span class="text-xs text-slate-500"><span class="text-rose-500 font-bold">*</span> Required field</span>
@@ -182,20 +208,6 @@
                 </template>
             </div>
 
-            @php
-                $source = old('source', request('source'));
-                $deptId = old('dept', request('dept', $team->department_id ?? null));
-                $userId = old('user', request('user'));
-                $cancelRoute = match($source) {
-                    'details' => isset($team) 
-                        ? route('admin.teams.show', array_filter(['team' => $team, 'source' => $userId ? 'user' : ($deptId ? 'department' : null), 'user' => $userId, 'dept' => $deptId])) 
-                        : route('admin.teams'),
-                    'user' => $userId ? route('admin.users.show', ['user' => $userId]) : (isset($team) ? route('admin.teams.show', ['team' => $team]) : session('team_list_url', route('admin.teams'))),
-                    'department' => $deptId ? route('admin.departments.show', ['dept' => $deptId]) : session('team_list_url', route('admin.teams')),
-                    default => session('team_list_url', route('admin.teams')),
-                };
-            @endphp
-
             <div class="card-footer px-6 md:px-8 py-4 bg-slate-50 border-t border-slate-200 flex items-center justify-end gap-3">
                 <x-btn variant="secondary" href="{{ $cancelRoute }}" data-loading-text="Canceling...">
                     Cancel
@@ -207,4 +219,5 @@
             </div>
         </form>
     </article>
+</div>
 @endsection
