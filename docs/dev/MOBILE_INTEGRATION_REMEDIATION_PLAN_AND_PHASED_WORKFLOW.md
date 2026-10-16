@@ -96,47 +96,54 @@ flowchart TD
 
 ---
 
-### Phase 2: Multi-Crew Real-Time Routing & Profile Alignment (Medium Priority)
+### Phase 2: Multi-Crew Real-Time Routing, Profile Alignment & Reassignment Policy (Completed)
 
-**Objective:** Prevent ghost tickets on reassigned crews and ensure field personnel profiles display their team's department.
+**Objective:** Prevent ghost tickets on reassigned crews, enforce strict operational lifecycle policies for ticket assignment/reassignment, update the mobile simulator UI, and ensure field personnel profiles display their team's department.
 
-#### Phase 2.1: Multi-Crew Reassignment Notification (Item 4)
-- **Problem:** When a ticket is reassigned from Team A to Team B, `TicketAssigned` broadcasts only to `private-team.{$ticket->team_id}` (Team B). Team A's mobile phones never receive any event and keep the ticket on their screens, risking duplicate work.
-- **Remediation:**
+#### Phase 2.1: Multi-Crew Reassignment Notification & Policy Enforcement (Item 4)
+- **Problem:** When a ticket was reassigned from Team A to Team B, `TicketAssigned` broadcasted only to `private-team.{$ticket->team_id}` (Team B). Team A's mobile phones never received any event and kept the ticket on their screens, risking duplicate work. Furthermore, reassignment was previously unconstrained, allowing illegal state mutations such as reassigning tickets that were already in progress.
+- **Strict Reassignment Policy Implementation:**
+  1. **Status Guards:** Initial assignment is restricted strictly to `OPEN` tickets. Ticket reassignment is restricted strictly to `ASSIGNED` tickets.
+  2. **In-Progress Guard:** Tickets in `IN_PROGRESS` status can **never** be reassigned. Once a crew begins work on site, reassignment is locked to prevent operational disruption and race conditions. Attempting to reassign returns `HTTP 422 Unprocessable Content`.
+  3. **Policy Gate:** Added `TicketPolicy::assign()` guard restricting assignment/reassignment to open and assigned statuses.
+- **Dual WebSocket Broadcast Implementation:**
   1. In [`app/Events/TicketAssigned.php`](file:///c:/Users/allen/Desktop/Capstone/-NEW-CRM-PALECO/PALECO_OTRS-CRM/app/Events/TicketAssigned.php):
-     - Accept optional `public ?string $previousTeamId = null` in the constructor.
-     - In `broadcastOn()`, if `$this->previousTeamId && $this->previousTeamId !== $this->ticket->team_id`, add `new PrivateChannel('team.'.$this->previousTeamId)`.
-  2. In `TicketService::assignTicket()`:
-     - Capture `$previousTeamId = $lockedTicket->team_id;` before the database update.
-     - Dispatch `TicketAssigned::dispatch($freshTicket, $previousTeamId);`.
-  3. When Team A receives the event, their app detects that the ticket's active `team_id` is no longer Team A, and automatically removes it from their active work order list.
+     - Added `public ?string $previousTeamId = null` to the constructor.
+     - In `broadcastOn()`, when `$this->previousTeamId && $this->previousTeamId !== $this->ticket->team_id`, broadcasts to both `private-team.{$this->ticket->team_id}` AND `private-team.{$this->previousTeamId}`.
+     - In `broadcastWith()`, exposed `'previous_team_id' => $this->previousTeamId`.
+  2. In [`app/Services/Tickets/TicketService.php`](file:///c:/Users/allen/Desktop/Capstone/-NEW-CRM-PALECO/PALECO_OTRS-CRM/app/Services/Tickets/TicketService.php):
+     - Captured `$previousTeamId = $lockedTicket->team_id;` before the database update.
+     - Dispatched `TicketAssigned::dispatch($freshTicket, $previousTeamId);`.
+- **Mobile Simulator UI Enhancements:**
+  1. Replaced single static button with dynamic "Assign Crew" (for `open` tickets) and "Reassign Crew" (for `assigned` tickets).
+  2. For `in_progress`, `resolved`, or `closed` tickets, assignment/reassignment buttons are completely hidden.
+  3. Reassignment modal header explicitly displays "Reassign Crew", disables the currently assigned team in the dropdown, and enforces mandatory reason input.
 
 #### Phase 2.2: Field Personnel Department Profile Mapping (Item 5)
-- **Problem:** Linemen have `users.department_id = null` because their department is determined by their operational team (`teams.department_id`). `GET /api/user/profile` returns `"department": null`, and the teams array lacks department names.
+- **Problem:** Linemen have `users.department_id = null` because their department is determined by their operational team (`teams.department_id`). `GET /api/user/profile` returned `"department": null`, and the teams array lacked department metadata.
 - **Remediation:**
-  1. In [`app/Services/Users/ProfileService.php`](file:///c:/Users/allen/Desktop/Capstone/-NEW-CRM-PALECO/PALECO_OTRS-CRM/app/Services/Users/ProfileService.php):
-     - Change `$user->load('teams');` to `$user->load(['teams.department']);`.
+  1. In [`app/Services/Users/ProfileService.php`](file:///c:/Users/allen/Desktop/Capstone/-NEW-CRM-PALECO/PALECO_OTRS-CRM/app/Services/Users/ProfileService.php) and [`app/Services/Auth/MobileAuthService.php`](file:///c:/Users/allen/Desktop/Capstone/-NEW-CRM-PALECO/PALECO_OTRS-CRM/app/Services/Auth/MobileAuthService.php):
+     - Eager-loaded `teams.department`.
   2. In [`app/Http/Resources/Api/UserResource.php`](file:///c:/Users/allen/Desktop/Capstone/-NEW-CRM-PALECO/PALECO_OTRS-CRM/app/Http/Resources/Api/UserResource.php):
-     - Inside the `teams` mapping, expose `'department_id' => $team->department_id` and `'department' => $team->department?->dept_name`.
+     - Inside `teams[]`: exposed `'department_id' => $team->department_id` and `'department' => $team->department?->name`.
+     - Root profile fallback: if `$this->department_id` is null, falls back to `$this->teams->first()?->department_id` and team department name.
 
 ---
 
-### Phase 3: Offline Sync Deadlock Prevention & Idempotency Hygiene (Low Priority)
+### Phase 3: Offline Sync Deadlock Prevention & Idempotency Hygiene (Completed)
 
-**Objective:** Eliminate permanent sync deadlocks caused by slow device clocks, protect idempotency keys from tampering, and automate database cleanup.
+**Objective:** Eliminate permanent sync deadlocks caused by device clock skew, enforce lifecycle chronological order, protect idempotency keys from payload tampering, and automate database cleanup.
 
-#### Phase 3.1: Backward Phone Clock Drift Clamping (Item 9)
-- **Problem:** If a lineman's phone clock is 4 minutes behind the server clock and they start work right after ticket creation, their client timestamp precedes the ticket's `reported_at`. Currently, `ResolvesClientTimestamp` throws an HTTP 422 validation error after 3 minutes of drift. Because the offline action is immutable on the device, every sync retry fails with 422, deadlocking the device queue.
+#### Phase 3.1: Lifecycle-Aware Clock Drift Clamping (Item 9)
+- **Problem:** If a lineman's phone clock is behind the server clock, the recorded client timestamp could precede earlier lifecycle milestones. A naive timestamp check might fail with HTTP 422, deadlocking an immutable offline outbox queue.
 - **Remediation:**
   1. In [`app/Http/Controllers/Api/Concerns/ResolvesClientTimestamp.php`](file:///c:/Users/allen/Desktop/Capstone/-NEW-CRM-PALECO/PALECO_OTRS-CRM/app/Http/Controllers/Api/Concerns/ResolvesClientTimestamp.php):
-     - Replace the hard 422 exception with automatic clamping:
-     ```php
-     $ticketCreated = $ticket->reported_at ?? $ticket->created_at;
-     if ($ticketCreated && $parsed->isBefore($ticketCreated)) {
-         $parsed = $ticketCreated->copy();
-     }
-     ```
-  2. This guarantees that minor device clock drift can **never** cause a permanent sync deadlock.
+     - Validated that client timestamps strictly cannot precede ticket creation (`reported_at` or `created_at`).
+     - Implemented **Lifecycle-Aware Clamping**:
+       - When starting work (`/start` on an `assigned` ticket): If the client timestamp is earlier than the assignment timestamp (`activeAssignment->created_at`), it is clamped forward to `assigned_at`, guaranteeing that `started_at >= assigned_at`.
+       - When accomplishing work (`/accomplish` on an `in_progress` ticket): If the client timestamp is earlier than `started_at`, it is clamped forward to `started_at`, guaranteeing that `resolved_at >= started_at`.
+     - If client timestamp exceeds +5 minutes into the future, it is clamped to `now()`.
+  2. This guarantees mathematical lifecycle chronology: $\text{created\_at} \le \text{assigned\_at} \le \text{started\_at} \le \text{resolved\_at}$.
 
 #### Phase 3.2: Idempotency Key Request Fingerprint Validation (Item 7)
 - **Problem:** `HandleIdempotency` saves a `request_hash`, but if a key is reused with a completely different endpoint or payload, the middleware replays the old response before checking the hash.
@@ -191,7 +198,7 @@ flowchart TD
 | Phase | Tasks / Items | Verification Method | Pass Criteria |
 | :--- | :--- | :--- | :--- |
 | **Phase 1** | Items 1 & 2 (Broadcast rescue & Upload limits) | Kill Reverb daemon, call `/start` and `/accomplish`. Upload 10-photo batch. | HTTP 200/201 returned; no 500 error; DB commits safely; photos persist. |
-| **Phase 2** | Items 4 & 5 (Reassignment channel & Department profile) | Reassign ticket from Team 1 to Team 2. Call `GET /api/user/profile` as lineman. | Event sent on both `team.1` and `team.2`. Profile includes `teams[].department`. |
-| **Phase 3** | Items 6, 7, 9 (Clock drift, hash check, pruning) | Send action with client timestamp 10m before ticket creation. Send same key with different body. Run `model:prune`. | Action clamped to ticket creation time (HTTP 200); hash mismatch returns 422; expired records pruned. |
+| **Phase 2** | Items 4 & 5 (Reassignment channel, Reassignment Policy & Department profile) | Reassign ticket from Team 1 to Team 2. Attempt reassignment on in-progress ticket. Call `GET /api/user/profile` as lineman. | Event sent on both `team.1` and `team.2`. In-progress reassignment blocked with 422. Profile includes `teams[].department` and root fallback. |
+| **Phase 3** | Items 6, 7, 9 (Lifecycle clock drift, hash check, pruning) | Send action with client timestamp before assignment/start. Send same key with different body. Run `model:prune`. | Action clamped to assignment/start milestone (HTTP 200); hash mismatch returns 422; expired records pruned. |
 | **Phase 4** | Item 10 & Dropped Items 3/8 policy | Inspect `FLUTTER_REALTIME_WEBSOCKET_SPECIFICATION.md` and `FLUTTER_OFFLINE_SYNC_IMPLEMENTATION_SPEC.md`. | Routes match `routes/api.php`; remarks confirmed online-only. |
 

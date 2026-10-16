@@ -117,18 +117,42 @@ The system enforces strict multi-guard separation:
 
 Below is the complete logic map of all broadcasted events, detailing who triggers them, who hears them, and what the mobile application must do under the hood.
 
-### Event 1: `TicketAssigned` (New Work Order Dispatch)
-- **Fired When:** Supervisor or CWD assigns/dispatches a ticket to a field team.
+### Event 1: `TicketAssigned` (Work Order Dispatch & Multi-Crew Reassignment)
+- **Fired When:** Supervisor or CWD assigns an open ticket or reassigns an assigned ticket to a field team.
 - **Triggered By:** Web Desk or Mobile Supervisor (`POST /tickets/{ticket}/assign` or `POST /api/tickets/{ticket}/assign`).
-- **Target Channel:** `private-team.{teamId}` and `private-cwd.operations`
-- **Audience on Mobile:** Linemen assigned to that specific team.
-- **Payload Data Contains:** Lightweight notification summary (`ticket_id`, `ticket_number`, `parent_ticket_id`, `status`, `status_label`, `team_id`, `team_name`, `department`, `updated_at`).
+- **Policy Guard:** Initial assignment requires ticket status `open`. Reassignment requires status `assigned`. Tickets in `in_progress` status **cannot** be reassigned.
+- **Target Channels:**
+  - **Initial Assignment:** `private-team.{teamId}` and `private-cwd.operations`
+  - **Reassignment (Displacement):** Broadcasts concurrently to **both** `private-team.{teamId}` (newly assigned crew) and `private-team.{previousTeamId}` (displaced crew), plus `private-cwd.operations`.
+- **Audience on Mobile:** Linemen of the target team (and displaced linemen of the previous team on reassignment).
+- **Payload Data Contains:** Lightweight notification summary:
+  ```json
+  {
+    "ticket_id": "01JM4C7W1ABCDEF1234567890",
+    "ticket_number": "2026-0042",
+    "parent_ticket_id": null,
+    "status": "assigned",
+    "status_label": "Assigned",
+    "team_id": "01JM4BT02TEAM9876543210",
+    "team_name": "Bravo Hotline Team",
+    "previous_team_id": "01JM4BT01TEAM1234567890",
+    "department": "Engineering and Technical Operations",
+    "updated_at": "Oct 06, 2026 10:15 AM"
+  }
+  ```
 - **Under the Hood Mobile Logic:**
   1. Parse the incoming notification summary from `event.data`.
-  2. Fetch full ticket details via `GET /api/tickets/{ticket_id}` or update the existing ticket entry in local state.
-  3. Trigger an in-app non-intrusive floating push toast: *"⚡ New Dispatch Order: Ticket #TCK-XXXX assigned to your crew."*
-  4. Increment the unread counter badge on the "My Tasks" or "Dispatches" tab.
-  5. Play a subtle haptic feedback vibration.
+  2. **Branch by Recipient Team:**
+     - **For the newly assigned crew (`team_id == user.active_team_id`):**
+       - Fetch full ticket details via `GET /api/tickets/{ticket_id}` or insert/update ticket entry in local state.
+       - Render floating toast: *"⚡ New Dispatch Order: Ticket #TCK-XXXX assigned to your crew."*
+       - Increment the unread counter badge on the "My Tasks" / "Dispatches" tab.
+       - Trigger a subtle haptic vibration.
+     - **For the displaced crew (`previous_team_id == user.active_team_id`):**
+       - Instantly evict/remove the ticket from the crew's active tasks list in local state.
+       - Render floating toast: *"ℹ️ Ticket #TCK-XXXX was reassigned to another crew."*
+       - Decrement the active dispatches counter badge.
+       - If the lineman was currently viewing that ticket's detail screen, pop back to the inbox list.
 
 ---
 

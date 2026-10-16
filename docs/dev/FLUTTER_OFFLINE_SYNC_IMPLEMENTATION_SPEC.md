@@ -623,7 +623,9 @@ class SyncStatusBadge extends StatelessWidget {
 | **Out-of-Order Execution Risk** | User taps Start at 9:30 AM and Accomplish at 11:15 AM while offline. | The sync engine groups actions by `ticketId` and **awaits** completion of `/start` before firing `/accomplish`. Out-of-order execution is mathematically impossible. |
 | **Device Reboot / OS App Kill** | Device powers down while lineman is in remote mountains. | Because queue records are in Isar/SQLite and media files are in `getApplicationDocumentsDirectory()`, all data survives reboots. The worker resumes on next app launch. |
 | **422 Unprocessable Content** | A validation rule fails on backend (e.g. invalid photo format). | The action status changes to `failed` and logs `lastErrorMessage`. Subsequent tickets continue syncing without stalling the queue. |
-| **Clock Skew between Device and Server** | Lineman's phone clock is 2 minutes fast or slow. | Backend allows up to **+5 minutes in the future**. The sync engine sends UTC ISO-8601 strings (`.toUtc().toIso8601String()`). |
+| **Clock Skew between Device and Server** | Lineman's phone clock is fast or slow. | Backend applies **lifecycle-aware clamping**: Forward drift > +5 min is clamped to server `now()`. Backward drift for `/start` is clamped to assignment time (`started_at >= assigned_at`); backward drift for `/accomplish` is clamped to work start (`resolved_at >= started_at`). Sync never stalls on clock drift. |
+| **Idempotency Fingerprint Mismatch** | App or corrupted queue reuses an existing `X-Idempotency-Key` with a different payload or endpoint. | Backend detects hash mismatch and returns `422 Unprocessable Content`. Mobile sync engine transitions action to `failed` to prevent corrupted state. |
+| **Idempotency Cache Storage Growth** | Offline payloads and responses accumulate over time in `idempotency_records`. | Server runs daily scheduled `model:prune` sweeping expired records (> 7 days). Client does not need to manage server cache lifecycle. |
 
 ---
 

@@ -32,7 +32,7 @@ The PALECO OTRS-CRM Mobile API delivers a robust, stateless interface designed s
 - **Encapsulated Business Logic:** Controllers function as thin HTTP orchestrators; all validation, state transitions, transactions, and guards reside within domain Form Requests and dedicated Service classes.
 - **Role-Based Access Control (RBAC):** Guarded at both route-level middleware and Gate policies (`access-supervisor`, `access-field_personnel`).
 - **Data Privacy & Scoping:** Supervisor accounts can only query tickets and teams belonging to their assigned department. Field personnel can only access tickets assigned to their active team memberships. Web-only administrative roles (Admin, CWD) are blocked at login.
-- **Offline-Asynchronous Resilience:** Field personnel endpoints (`/start` and `/accomplish`) support store-and-forward offline execution via `X-Idempotency-Key` (UUIDv4) and `X-Client-Timestamp` (ISO-8601). Network drops and automatic retries are handled idempotently without duplicate records or 422 conflicts (`X-Cache: HIT`).
+- **Offline-Asynchronous Resilience:** Field personnel endpoints (`/start` and `/accomplish`) support store-and-forward offline execution via `X-Idempotency-Key` (UUIDv4) and `X-Client-Timestamp` (ISO-8601). Network drops and automatic retries are handled idempotently without duplicate records (`X-Cache: HIT`). Key re-use with differing payloads is cryptographically detected and rejected (`HTTP 422`), expired records are pruned automatically on a daily schedule, and client clock skew is gracefully resolved via lifecycle-aware clamping (`started_at >= assigned_at`, `resolved_at >= started_at`).
 
 ---
 
@@ -279,8 +279,9 @@ Fetches the profile details, department affiliation, and role meta for the activ
 - **Headers:** `Authorization: Bearer <token>`, `Accept: application/json`
 
 > [!NOTE]
-> **Role-Aware Hydration:**
-> - When authenticated as **Field Personnel** (`role_slug: "field_personnel"`), the response conditionally eager-loads and exposes the `teams` array with active assignments and team roles.
+> **Role-Aware Hydration & Department Fallback:**
+> - When authenticated as **Field Personnel** (`role_slug: "field_personnel"`), the response conditionally eager-loads and exposes the `teams` array with active assignments, team roles, and each team's respective `department_id` and `department`.
+> - If a field personnel record has `department_id: null` on the user row, the top-level `department_id` and `department` automatically fall back to the department of their first assigned team.
 > - When authenticated as a **Supervisor** (`role_slug: "supervisor"`), the `teams` key is automatically omitted from the payload.
 
 #### Response Example: Field Personnel (`200 OK`)
@@ -311,7 +312,9 @@ Fetches the profile details, department affiliation, and role meta for the activ
         "shift_start": "08:00",
         "shift_end": "17:00",
         "team_role_id": 1,
-        "role_name": "Team Leader"
+        "role_name": "Team Leader",
+        "department_id": 2,
+        "department": "Engineering and Technical Operations"
       }
     ]
   }
@@ -609,6 +612,12 @@ Transitions an assigned ticket to `In Progress` status upon field crew arrival o
 }
 ```
 
+#### Timestamp Resolution & Lifecycle Clamping
+When `X-Client-Timestamp` or `client_timestamp` is provided:
+1. **Creation Floor:** Timestamps strictly earlier than the ticket's creation date (`reported_at` or `created_at`) are rejected with `HTTP 422`.
+2. **Lifecycle Clamping (`started_at >= assigned_at`):** If the lineman's phone clock is behind and records a start time prior to when the supervisor dispatched the ticket (`activeAssignment->created_at`), the server automatically clamps `started_at` forward to the assignment timestamp. This ensures strict chronological order without failing the sync request.
+3. **Future Skew Ceiling:** Timestamps more than 5 minutes into the future are clamped to current server time (`now()`).
+
 #### Error Response: `422 Unprocessable Content` (Client Timestamp Validation)
 ```json
 {
@@ -619,6 +628,15 @@ Transitions an assigned ticket to `In Progress` status upon field crew arrival o
       "The client timestamp cannot be earlier than ticket creation date."
     ]
   }
+}
+```
+
+#### Error Response: `422 Unprocessable Content` (Idempotency Key Reuse Mismatch)
+*Returned if the same `X-Idempotency-Key` is re-sent with a differing request URL or payload.*
+```json
+{
+  "success": false,
+  "message": "The idempotency key has already been used with different request parameters."
 }
 ```
 
@@ -709,6 +727,9 @@ Retrieves all public remarks/comments posted on the ticket. Internal administrat
 ### 7.2. Create Ticket Remark
 Posts a new public remark to the ticket timeline.
 
+> [!IMPORTANT]
+> **Online-Only Operational Boundary:** Ticket remarks are strictly online-only interactive communications. Unlike `/start` and `/accomplish`, remarks do **not** support offline queueing, idempotency keys, or client-side timestamps. When a mobile device is in an offline dead zone, the remarks UI must disable the submit button and instruct the user: *"An active internet connection is required to post remarks."*
+
 - **Method:** `POST`
 - **URL:** `/api/tickets/{ticket}/remarks`
 - **Access Level:** Authenticated (`auth:sanctum`)
@@ -788,7 +809,16 @@ Retrieves the list of operational teams in the supervisor's department, includin
 ---
 
 ### 8.2. Assign / Reassign Ticket
-Assigns or reassigns a service ticket to a designated team. If the ticket is being reassigned from an existing team, a mandatory `reason` is required.
+Assigns or reassigns a service ticket to a designated team within the supervisor's department.
+
+> [!IMPORTANT]
+> **Strict Lifecycle Reassignment Policy:**
+> - **Initial Assignment:** Permitted strictly when ticket status is `OPEN`.
+> - **Reassignment:** Permitted strictly when ticket status is `ASSIGNED`.
+> - **In-Progress Tickets Prohibited:** Tickets in `IN_PROGRESS` status can **never** be reassigned. Once a field crew commences work on site, the ticket is actively being addressed and reassignment is locked. Attempting to reassign returns `HTTP 422 Unprocessable Content`.
+> - **Terminal & Frozen States Prohibited:** Tickets in `RESOLVED`, `CLOSED`, or `PENDING_ENDORSEMENT` cannot be assigned or reassigned.
+> - **Reason Requirement:** A non-empty `reason` (max 1000 characters) is **mandatory** when reassigning (`ASSIGNED` status), and optional on initial assignment (`OPEN` status).
+> - **Target Team:** The ticket cannot be reassigned to the currently assigned team (returns `HTTP 422`).
 
 - **Method:** `POST`
 - **URL:** `/api/tickets/{ticket}/assign`
@@ -798,8 +828,8 @@ Assigns or reassigns a service ticket to a designated team. If the ticket is bei
 #### Request Body
 | Field | Type | Required | Description |
 | :--- | :--- | :--- | :--- |
-| `team_id` | `string` | **Yes** | ID of the target team. |
-| `reason` | `string` | Conditional | **Required** if reassigning from an existing team; optional on initial assignment. Max 1000 characters. |
+| `team_id` | `string` | **Yes** | ID of the target team within the supervisor's department. |
+| `reason` | `string` | Conditional | **Required** if reassigning an already assigned ticket; optional on initial assignment. Max 1000 characters. |
 
 #### Request Example
 ```json
@@ -828,6 +858,19 @@ Assigns or reassigns a service ticket to a designated team. If the ticket is bei
       "reason": "Previous crew called to an emergency feeder outage.",
       "assigned_at": "Oct 06, 2026 10:15 AM"
     }
+  }
+}
+```
+
+#### Error Response: `422 Unprocessable Content` (In-Progress Ticket Reassignment Blocked)
+```json
+{
+  "success": false,
+  "message": "Cannot reassign an in-progress ticket. Field crews are actively addressing this issue.",
+  "errors": {
+    "status": [
+      "Cannot reassign an in-progress ticket. Field crews are actively addressing this issue."
+    ]
   }
 }
 ```
@@ -1065,6 +1108,12 @@ Submits an accomplishment report with required photo evidence (1–10 images) an
 }
 ```
 
+#### Timestamp Resolution & Lifecycle Clamping
+When `X-Client-Timestamp` or `client_timestamp` is provided:
+1. **Creation Floor:** Timestamps strictly earlier than the ticket's creation date (`reported_at` or `created_at`) are rejected with `HTTP 422`.
+2. **Lifecycle Clamping (`resolved_at >= started_at`):** If the lineman's phone clock is slow and records an accomplishment time prior to `ticket.started_at` (or `activeAssignment->created_at`), the server automatically clamps `resolved_at` forward to `started_at`. This guarantees that accomplishment never precedes work start without failing the upload.
+3. **Future Skew Ceiling:** Timestamps more than 5 minutes into the future are clamped to current server time (`now()`).
+
 #### Error Response: `422 Unprocessable Content` (Client Timestamp Chronology)
 ```json
 {
@@ -1075,6 +1124,15 @@ Submits an accomplishment report with required photo evidence (1–10 images) an
       "The client timestamp cannot be earlier than ticket creation date."
     ]
   }
+}
+```
+
+#### Error Response: `422 Unprocessable Content` (Idempotency Key Reuse Mismatch)
+*Returned if the same `X-Idempotency-Key` is re-sent with differing files, remarks, or request parameters.*
+```json
+{
+  "success": false,
+  "message": "The idempotency key has already been used with different request parameters."
 }
 ```
 
