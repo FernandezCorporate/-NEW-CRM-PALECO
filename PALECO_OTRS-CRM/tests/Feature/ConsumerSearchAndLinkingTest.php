@@ -328,3 +328,44 @@ test('Ticket creation successfully links consumer selected from search', functio
     expect($consumer->status)->toBe('Active');
     expect($consumer->name)->toBe('FERNANDEZ, ALLEN GLENN');
 });
+
+test('Ticket creation gracefully uses fallback consumer payload when external billing API fails', function () {
+    Http::fake([
+        'https://api.paleco.net/api/v1/account/*' => Http::response([
+            'success' => false,
+            'message' => 'Unable to connect to the external billing database.',
+        ], 500),
+    ]);
+
+    $ticketPayload = [
+        'consumer_contact' => '09123456789',
+        'complaint_source' => ComplaintSources::WALK_IN->value,
+        'complaint_description' => 'Low voltage fluctuation at residence.',
+        'purok' => 'Purok Masagana',
+        'street' => 'Rizal Avenue',
+        'barangay' => 'Tiniguiban',
+        'department_id' => $this->department->id,
+        'category_id' => $this->category->id,
+        'other_category' => false,
+        'link_consumer' => true,
+        'account_code' => '02-0504-9999',
+        'consumer_name' => 'DELA CRUZ, JUAN P.',
+        'consumer_no' => '88889999',
+        'consumer_meter' => 'MTR-554433',
+        'consumer_address' => 'BGY. TINIGUIBAN, PUERTO PRINCESA CITY',
+        'consumer_status' => 'Active',
+    ];
+
+    $response = $this->actingAs($this->cwdOfficer)
+        ->post(route('cwd.tickets.store'), $ticketPayload);
+
+    $response->assertRedirect();
+    $response->assertSessionHasNoErrors();
+
+    $consumer = Consumer::where('acct_code', '02-0504-9999')->first();
+    expect($consumer)->not->toBeNull();
+    expect($consumer->name)->toBe('DELA CRUZ, JUAN P.');
+    expect($consumer->acct_no)->toBe('88889999');
+    expect($consumer->meter_serial)->toBe('MTR-554433');
+    expect($consumer->status)->toBe('Active');
+});

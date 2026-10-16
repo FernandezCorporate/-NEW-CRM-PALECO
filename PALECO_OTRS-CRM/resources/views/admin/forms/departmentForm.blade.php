@@ -30,18 +30,32 @@
                 <input type="hidden" name="team" value="{{ old('team', request('team')) }}">
             @endif    
 
-            <div class="card-body space-y-6">
-                <div>
-                    <x-form.label for="dept_name" :required="true">Department Name</x-form.label>
-                    <x-form.input name="dept_name" id="dept_name" :value="$dept->dept_name ?? null" required placeholder="Enter Department Name" />
-                    <x-form.error name="dept_name" />
-                </div>
+            <div class="p-6 md:p-8 space-y-6">
+                <fieldset class="space-y-5">
+                    <legend class="sr-only">Department Information</legend>
+                    <div class="border-b border-slate-200 pb-2 flex items-center justify-between">
+                        <h2 class="text-sm font-bold text-slate-900 flex items-center gap-2">
+                            <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+                            <span>Department Details</span>
+                        </h2>
+                        <span class="text-xs text-slate-500"><span class="text-rose-500 font-bold">*</span> Required field</span>
+                    </div>
 
-                <div>
-                    <x-form.label for="dept_desc">Department Description</x-form.label>
-                    <x-form.textarea name="dept_desc" id="dept_desc" :value="$dept->dept_desc ?? null" placeholder="Enter Department Description" rows="4" />
-                    <p class="mt-1.5 text-[11px] text-slate-400">Optional. Briefly describe the responsibilities of this department.</p>
-                </div>
+                    <div class="space-y-5">
+                        <div>
+                            <x-form.label for="dept_name" :required="true">Department Name</x-form.label>
+                            <x-form.input name="dept_name" id="dept_name" :value="$dept->dept_name ?? null" required placeholder="e.g., Technical Services Department" />
+                            <x-form.error name="dept_name" />
+                        </div>
+
+                        <div>
+                            <x-form.label for="dept_desc">Department Description</x-form.label>
+                            <x-form.textarea name="dept_desc" id="dept_desc" :value="$dept->dept_desc ?? null" placeholder="Briefly describe the operational scope and responsibilities of this department..." rows="4" />
+                            <p class="mt-1.5 text-[11px] text-slate-400">Optional. Summarize the role of this unit within PALECO operations.</p>
+                            <x-form.error name="dept_desc" />
+                        </div>
+                    </div>
+                </fieldset>
             </div>
 
             @php
@@ -58,12 +72,13 @@
                 };
             @endphp
 
-            <div class="card-footer flex items-center justify-end gap-3">
+            <div class="card-footer px-6 md:px-8 py-4 bg-slate-50 border-t border-slate-200 flex items-center justify-end gap-3">
                 <x-btn variant="secondary" href="{{ $cancelRoute }}" data-loading-text="Canceling...">
                     Cancel
                 </x-btn>
                 <x-btn variant="primary" type="submit" data-loading-text="Saving...">
-                    Save Department
+                    <x-icons.check-circle class="w-4 h-4" />
+                    <span>{{ isset($dept) ? 'Update Department' : 'Save Department' }}</span>
                 </x-btn>
             </div>
         </form>

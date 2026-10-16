@@ -121,3 +121,22 @@
     flex-shrink: 0;
     margin: 0 !important;
 }
+
+/* -----------------------------------------
+   HTML5 Validation Bubble Anchoring
+   Positions the hidden select over the visible control so native
+   validation tooltips anchor cleanly over the dropdown.
+----------------------------------------- */
+select.tomselected.ts-hidden-accessible {
+    position: absolute !important;
+    left: 0 !important;
+    bottom: 0 !important;
+    width: 100% !important;
+    height: 42px !important;
+    clip: auto !important;
+    -webkit-clip-path: none !important;
+    clip-path: none !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+    z-index: -1 !important;
+}

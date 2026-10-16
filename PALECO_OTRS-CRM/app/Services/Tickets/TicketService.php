@@ -272,10 +272,28 @@ class TicketService
     public function createCwdTicket(array $validatedData): Ticket
     {
         if (! empty($validatedData['link_consumer']) && ! empty($validatedData['account_code'])) {
-            $validatedData['consumer_id'] = $this->consumerService->resolveConsumerId($validatedData['account_code']);
+            $fallbackData = [
+                'acct_code' => $validatedData['account_code'],
+                'name' => $validatedData['consumer_name'] ?? null,
+                'acct_no' => $validatedData['consumer_no'] ?? null,
+                'meter_serial' => $validatedData['consumer_meter'] ?? null,
+                'address' => $validatedData['consumer_address'] ?? null,
+                'status' => $validatedData['consumer_status'] ?? null,
+            ];
+            $validatedData['consumer_id'] = $this->consumerService->resolveConsumerId($validatedData['account_code'], $fallbackData);
         } else {
             $validatedData['consumer_id'] = null;
         }
+
+        unset(
+            $validatedData['link_consumer'],
+            $validatedData['account_code'],
+            $validatedData['consumer_name'],
+            $validatedData['consumer_no'],
+            $validatedData['consumer_meter'],
+            $validatedData['consumer_address'],
+            $validatedData['consumer_status']
+        );
 
         $maxAttempts = 3;
         $attempt = 0;
@@ -440,12 +458,28 @@ class TicketService
     public function updateIntakeDetails(Ticket $ticket, array $validatedData): array
     {
         if (! empty($validatedData['link_consumer']) && ! empty($validatedData['account_code'])) {
-            $validatedData['consumer_id'] = $this->consumerService->resolveConsumerId($validatedData['account_code']);
+            $fallbackData = [
+                'acct_code' => $validatedData['account_code'],
+                'name' => $validatedData['consumer_name'] ?? null,
+                'acct_no' => $validatedData['consumer_no'] ?? null,
+                'meter_serial' => $validatedData['consumer_meter'] ?? null,
+                'address' => $validatedData['consumer_address'] ?? null,
+                'status' => $validatedData['consumer_status'] ?? null,
+            ];
+            $validatedData['consumer_id'] = $this->consumerService->resolveConsumerId($validatedData['account_code'], $fallbackData);
         } else {
             $validatedData['consumer_id'] = null;
         }
 
-        unset($validatedData['link_consumer'], $validatedData['account_code']);
+        unset(
+            $validatedData['link_consumer'],
+            $validatedData['account_code'],
+            $validatedData['consumer_name'],
+            $validatedData['consumer_no'],
+            $validatedData['consumer_meter'],
+            $validatedData['consumer_address'],
+            $validatedData['consumer_status']
+        );
 
         if (! empty($validatedData['other_category'])) {
             $validatedData['category_id'] = null;

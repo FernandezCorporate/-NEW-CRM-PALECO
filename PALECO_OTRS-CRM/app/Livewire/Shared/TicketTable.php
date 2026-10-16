@@ -80,6 +80,17 @@ class TicketTable extends Component
 
     public function render()
     {
+        $statusCounts = Ticket::query()
+            ->search($this->search)
+            ->filterByCategory($this->filter)
+            ->filterByDepartment($this->department)
+            ->selectRaw('status, count(*) as total')
+            ->groupBy('status')
+            ->pluck('total', 'status')
+            ->toArray();
+
+        $totalCount = array_sum($statusCounts);
+
         $tickets = Ticket::with(['category', 'department', 'consumer', 'parentTicket'])
             ->search($this->search)
             ->filterByCategory($this->filter)
@@ -93,6 +104,8 @@ class TicketTable extends Component
             'categories' => TicketCategory::orderBy('category_name')->get(),
             'departments' => Department::orderBy('dept_name')->get(),
             'statuses' => TicketStatus::cases(),
+            'statusCounts' => $statusCounts,
+            'totalCount' => $totalCount,
             'isAdmin' => auth()->user()?->role?->slug_identifier === 'admin',
         ]);
     }

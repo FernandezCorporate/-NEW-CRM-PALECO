@@ -272,5 +272,20 @@
         font-weight: 500;
         color: #e11d48;
     }
+
+    /* Form In-Flight Freeze State */
+    form.is-submitting {
+        pointer-events: none !important;
+        user-select: none !important;
+        opacity: 0.72 !important;
+        cursor: wait !important;
+    }
+
+    form.is-submitting input,
+    form.is-submitting select,
+    form.is-submitting textarea,
+    form.is-submitting button {
+        cursor: wait !important;
+    }
 }
 

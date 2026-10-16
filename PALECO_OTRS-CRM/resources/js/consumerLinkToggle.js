@@ -46,11 +46,34 @@ const initConsumerLinkToggle = () => {
     const selectedAddress = document.getElementById('selected_consumer_address');
     const selectedStatusBadge = document.getElementById('selected_consumer_status_badge');
 
+    // Hidden fallback data fields
+    const hiddenName = document.getElementById('hidden_consumer_name');
+    const hiddenNo = document.getElementById('hidden_consumer_no');
+    const hiddenMeter = document.getElementById('hidden_consumer_meter');
+    const hiddenAddress = document.getElementById('hidden_consumer_address');
+    const hiddenStatus = document.getElementById('hidden_consumer_status');
+
     if (!filterSelect || !linkConsumerInput || !accountCodeInput || !container) {
         return;
     }
 
+    const parentForm = container.closest('form');
     let activeConsumer = null;
+
+    const formatAccountCode = (val) => {
+        let clean = (val || '').trim().replace(/\s+/g, '-');
+        if (/^\d{10}$/.test(clean)) {
+            clean = clean.replace(/^(\d{2})(\d{4})(\d{4})$/, '$1-$2-$3');
+        }
+        return clean;
+    };
+
+    const notifyFormChanged = () => {
+        if (parentForm) {
+            parentForm.dispatchEvent(new CustomEvent('ticket-form:revalidate', { bubbles: true }));
+            parentForm.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+    };
 
     // Helper: Normalize status badge classes
     const getStatusBadgeClasses = (status) => {
@@ -101,6 +124,12 @@ const initConsumerLinkToggle = () => {
         accountCodeInput.value = consumer.acct_code;
         linkConsumerInput.value = '1';
 
+        if (hiddenName) hiddenName.value = consumer.name || '';
+        if (hiddenNo) hiddenNo.value = consumer.acct_no || '';
+        if (hiddenMeter) hiddenMeter.value = consumer.meter_serial || '';
+        if (hiddenAddress) hiddenAddress.value = consumer.address || '';
+        if (hiddenStatus) hiddenStatus.value = consumer.status || '';
+
         if (inputAccountCode) inputAccountCode.value = consumer.acct_code;
         if (selectedName) selectedName.textContent = consumer.name;
         if (selectedCode) selectedCode.textContent = consumer.acct_code;
@@ -119,12 +148,20 @@ const initConsumerLinkToggle = () => {
         if (panelsContainer) panelsContainer.classList.add('hidden');
         if (selectedCard) selectedCard.classList.remove('hidden');
         container.classList.remove('hidden');
+        notifyFormChanged();
     };
 
     // Helper: Unlink / remove currently selected consumer
     const unlinkConsumer = () => {
         activeConsumer = null;
         accountCodeInput.value = '';
+        if (inputAccountCode) inputAccountCode.value = '';
+
+        if (hiddenName) hiddenName.value = '';
+        if (hiddenNo) hiddenNo.value = '';
+        if (hiddenMeter) hiddenMeter.value = '';
+        if (hiddenAddress) hiddenAddress.value = '';
+        if (hiddenStatus) hiddenStatus.value = '';
 
         if (selectedCard) selectedCard.classList.add('hidden');
 
@@ -139,6 +176,7 @@ const initConsumerLinkToggle = () => {
             if (panelsContainer) panelsContainer.classList.remove('hidden');
             applyFilterMode(filterSelect.value);
         }
+        notifyFormChanged();
     };
 
     // Helper: Apply active filter mode from dropdown
@@ -154,6 +192,7 @@ const initConsumerLinkToggle = () => {
             container.classList.add('hidden');
             if (selectedCard) selectedCard.classList.add('hidden');
             if (panelsContainer) panelsContainer.classList.add('hidden');
+            notifyFormChanged();
             return;
         }
 
@@ -164,6 +203,7 @@ const initConsumerLinkToggle = () => {
         if (accountCodeInput.value && selectedCard && !selectedCard.classList.contains('hidden')) {
             clearInputRequirements();
             if (panelsContainer) panelsContainer.classList.add('hidden');
+            notifyFormChanged();
             return;
         }
 
@@ -177,6 +217,10 @@ const initConsumerLinkToggle = () => {
             if (panelLastname) panelLastname.classList.add('hidden');
             if (panelMeterSerial) panelMeterSerial.classList.add('hidden');
 
+            const val = inputAccountCode ? formatAccountCode(inputAccountCode.value) : '';
+            accountCodeInput.value = val;
+            linkConsumerInput.value = val ? '1' : '0';
+
             if (inputAccountCode) {
                 inputAccountCode.required = true;
                 inputAccountCode.focus();
@@ -185,6 +229,9 @@ const initConsumerLinkToggle = () => {
             if (panelLastname) panelLastname.classList.remove('hidden');
             if (panelAccountCode) panelAccountCode.classList.add('hidden');
             if (panelMeterSerial) panelMeterSerial.classList.add('hidden');
+
+            accountCodeInput.value = activeConsumer ? activeConsumer.acct_code : '';
+            linkConsumerInput.value = activeConsumer ? '1' : '0';
 
             if (searchLastnameInput) {
                 searchLastnameInput.required = true;
@@ -195,11 +242,16 @@ const initConsumerLinkToggle = () => {
             if (panelAccountCode) panelAccountCode.classList.add('hidden');
             if (panelLastname) panelLastname.classList.add('hidden');
 
+            accountCodeInput.value = activeConsumer ? activeConsumer.acct_code : '';
+            linkConsumerInput.value = activeConsumer ? '1' : '0';
+
             if (searchMeterSerialInput) {
                 searchMeterSerialInput.required = true;
                 searchMeterSerialInput.focus();
             }
         }
+
+        notifyFormChanged();
     };
 
     // Feedback Helpers
@@ -480,21 +532,24 @@ const initConsumerLinkToggle = () => {
     };
 
     // --- FORM SUBMIT GUARDRAIL ---
-    // If user chose a search filter but never selected an account, prevent submission and prompt them
-    const parentForm = container.closest('form');
     if (parentForm) {
         parentForm.addEventListener('submit', (e) => {
-            if (filterSelect.value !== 'none' && !accountCodeInput.value) {
-                e.preventDefault();
+            if (filterSelect.value !== 'none') {
                 if (filterSelect.value === 'account_code') {
-                    showAccountCodeFeedback('error', 'Please verify and link a PALECO account code before submitting.');
-                    if (inputAccountCode) inputAccountCode.focus();
-                } else if (filterSelect.value === 'lastname') {
+                    const code = inputAccountCode ? formatAccountCode(inputAccountCode.value) : '';
+                    if (!code) {
+                        e.preventDefault();
+                        showAccountCodeFeedback('error', 'Please enter a PALECO account code.');
+                        if (inputAccountCode) inputAccountCode.focus();
+                    } else {
+                        accountCodeInput.value = code;
+                        linkConsumerInput.value = '1';
+                    }
+                } else if (!accountCodeInput.value) {
+                    e.preventDefault();
                     showSearchFeedback('error', 'Please search and select a matching consumer account to attach.');
-                    if (searchLastnameInput) searchLastnameInput.focus();
-                } else if (filterSelect.value === 'meter_serial') {
-                    showSearchFeedback('error', 'Please search and select a matching consumer account to attach.');
-                    if (searchMeterSerialInput) searchMeterSerialInput.focus();
+                    if (filterSelect.value === 'lastname' && searchLastnameInput) searchLastnameInput.focus();
+                    if (filterSelect.value === 'meter_serial' && searchMeterSerialInput) searchMeterSerialInput.focus();
                 }
             }
         });
@@ -517,6 +572,14 @@ const initConsumerLinkToggle = () => {
     }
 
     if (inputAccountCode) {
+        inputAccountCode.addEventListener('input', () => {
+            const val = formatAccountCode(inputAccountCode.value);
+            accountCodeInput.value = val;
+            linkConsumerInput.value = val ? '1' : '0';
+            clearFeedbackAndResults();
+            notifyFormChanged();
+        });
+
         inputAccountCode.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') {
                 e.preventDefault();

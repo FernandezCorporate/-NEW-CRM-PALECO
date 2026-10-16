@@ -2,16 +2,35 @@
     $currentConsumer = $ticket->consumer ?? null;
     $hasLinkedConsumer = (bool) old('link_consumer', $currentConsumer ? true : false);
     $initialAccountCode = old('account_code', $currentConsumer?->acct_code ?? '');
-    $consumerSelected = !empty($initialAccountCode) && $hasLinkedConsumer;
-    $initialFilter = old('consumer_search_filter', $consumerSelected ? 'account_code' : 'none');
+
+    $selectedConsumer = $currentConsumer;
+    if (!$selectedConsumer && !empty($initialAccountCode)) {
+        $selectedConsumer = \App\Models\Consumer::where('acct_code', $initialAccountCode)->first();
+    }
+    if (!$selectedConsumer && old('consumer_name')) {
+        $selectedConsumer = (object) [
+            'name' => old('consumer_name'),
+            'acct_code' => $initialAccountCode,
+            'acct_no' => old('consumer_no', ''),
+            'meter_serial' => old('consumer_meter', ''),
+            'address' => old('consumer_address', ''),
+            'status' => old('consumer_status', 'Active'),
+        ];
+    }
+
+    $consumerSelected = !empty($selectedConsumer?->name) && $hasLinkedConsumer;
+    $initialFilter = old('consumer_search_filter', $consumerSelected ? 'account_code' : (!empty($initialAccountCode) ? 'account_code' : 'none'));
 @endphp
 
-<!-- CRM Integration: Consumer Link -->
-<fieldset class="col-span-1 lg:col-span-2 pt-6 mt-2 border-t border-slate-200">
+<!-- Consumer Link -->
+<fieldset class="pt-6 border-t border-slate-200">
     <div class="flex items-center justify-between mb-4">
         <div>
-            <legend class="text-sm font-bold text-slate-900">CRM Integration</legend>
-            <p class="text-xs text-slate-500 mt-0.5">Attach an official PALECO consumer profile to this incident ticket.</p>
+            <legend class="text-sm font-bold text-slate-900 flex items-center gap-2">
+                <x-icons.user class="w-4 h-4 text-emerald-600" />
+                <span>Consumer Link</span>
+            </legend>
+            <p class="text-xs text-slate-500 mt-0.5">Attach an official PALECO consumer profile to this incident ticket, or proceed with no consumer linked.</p>
         </div>
     </div>
     
@@ -44,6 +63,11 @@
     <!-- Hidden Form Submission Inputs -->
     <input type="hidden" name="link_consumer" id="link_consumer" value="{{ $hasLinkedConsumer ? '1' : '0' }}">
     <input type="hidden" name="account_code" id="account_code" value="{{ $initialAccountCode }}">
+    <input type="hidden" name="consumer_name" id="hidden_consumer_name" value="{{ old('consumer_name', $selectedConsumer?->name ?? '') }}">
+    <input type="hidden" name="consumer_no" id="hidden_consumer_no" value="{{ old('consumer_no', $selectedConsumer?->acct_no ?? '') }}">
+    <input type="hidden" name="consumer_meter" id="hidden_consumer_meter" value="{{ old('consumer_meter', $selectedConsumer?->meter_serial ?? '') }}">
+    <input type="hidden" name="consumer_address" id="hidden_consumer_address" value="{{ old('consumer_address', $selectedConsumer?->address ?? '') }}">
+    <input type="hidden" name="consumer_status" id="hidden_consumer_status" value="{{ old('consumer_status', $selectedConsumer?->status ?? '') }}">
 
     <!-- Interactive Container (Visible when a filter or account is active) -->
     <div id="crm_integration_container" class="{{ $initialFilter !== 'none' || $consumerSelected ? '' : 'hidden' }} mt-3 p-4 rounded-xl border border-slate-200 bg-slate-50/70 transition-all duration-200">
@@ -56,20 +80,20 @@
                         <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider bg-emerald-100 text-emerald-800 border border-emerald-300">
                             Linked Account
                         </span>
-                        <span id="selected_consumer_status_badge" class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider {{ ($currentConsumer && $currentConsumer->status === 'Active') ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : (($currentConsumer && $currentConsumer->status === 'Deactivated') ? 'bg-amber-50 text-amber-700 border border-amber-200' : 'bg-slate-100 text-slate-700 border border-slate-200') }}">
-                            {{ $currentConsumer ? $currentConsumer->status : 'Active' }}
+                        <span id="selected_consumer_status_badge" class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider {{ ($selectedConsumer && $selectedConsumer->status === 'Active') ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : (($selectedConsumer && $selectedConsumer->status === 'Deactivated') ? 'bg-amber-50 text-amber-700 border border-amber-200' : 'bg-slate-100 text-slate-700 border border-slate-200') }}">
+                            {{ $selectedConsumer ? $selectedConsumer->status : 'Active' }}
                         </span>
                     </div>
                     <h4 id="selected_consumer_name" class="text-base font-bold text-slate-900 leading-snug">
-                        {{ $currentConsumer ? $currentConsumer->name : '' }}
+                        {{ $selectedConsumer ? $selectedConsumer->name : '' }}
                     </h4>
                     <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-600 font-mono">
-                        <span>Acct Code: <strong id="selected_consumer_code" class="text-slate-900">{{ $currentConsumer ? $currentConsumer->acct_code : '' }}</strong></span>
-                        <span>Acct #: <strong id="selected_consumer_no" class="text-slate-900">{{ $currentConsumer ? $currentConsumer->acct_no : '' }}</strong></span>
-                        <span>Meter: <strong id="selected_consumer_meter" class="text-slate-900">{{ $currentConsumer ? ($currentConsumer->meter_serial ?: 'N/A') : 'N/A' }}</strong></span>
+                        <span>Acct Code: <strong id="selected_consumer_code" class="text-slate-900">{{ $selectedConsumer ? $selectedConsumer->acct_code : '' }}</strong></span>
+                        <span>Acct #: <strong id="selected_consumer_no" class="text-slate-900">{{ $selectedConsumer ? $selectedConsumer->acct_no : '' }}</strong></span>
+                        <span>Meter: <strong id="selected_consumer_meter" class="text-slate-900">{{ $selectedConsumer ? ($selectedConsumer->meter_serial ?: 'N/A') : 'N/A' }}</strong></span>
                     </div>
                     <p id="selected_consumer_address" class="text-xs text-slate-600 pt-1 leading-normal">
-                        {{ $currentConsumer ? $currentConsumer->address : '' }}
+                        {{ $selectedConsumer ? $selectedConsumer->address : '' }}
                     </p>
                 </div>
                 <div class="shrink-0 flex sm:flex-col gap-2 pt-1 sm:pt-0">
@@ -98,7 +122,14 @@
                     </div>
                     <p class="mt-1 text-[11px] text-slate-500">Format: <span class="font-mono">XX-XXXX-XXXX</span>. Fast, exact lookup directly from PALECO billing.</p>
                 </div>
-                <div id="account_code_feedback" class="hidden text-xs p-2.5 rounded-lg border"></div>
+                <div id="account_code_feedback" class="{{ $errors->has('account_code') ? 'text-xs p-2.5 rounded-lg border bg-rose-50 border-rose-200 text-rose-700' : 'hidden text-xs p-2.5 rounded-lg border' }}">
+                    @error('account_code')
+                        <div class="flex items-center gap-2">
+                            <svg class="w-4 h-4 text-rose-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            <span>{{ $message }}</span>
+                        </div>
+                    @enderror
+                </div>
             </div>
 
             <!-- FILTER 2: Search by Last Name Panel -->

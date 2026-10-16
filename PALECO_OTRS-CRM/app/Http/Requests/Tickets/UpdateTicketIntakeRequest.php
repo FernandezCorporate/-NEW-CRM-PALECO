@@ -72,6 +72,11 @@ class UpdateTicketIntakeRequest extends FormRequest
                 'string',
                 'regex:/^\d{2}-\d{4}-\d{4}$/',
             ],
+            'consumer_name' => ['nullable', 'string', 'max:255'],
+            'consumer_no' => ['nullable', 'string', 'max:255'],
+            'consumer_meter' => ['nullable', 'string', 'max:255'],
+            'consumer_address' => ['nullable', 'string', 'max:500'],
+            'consumer_status' => ['nullable', 'string', 'max:50'],
         ];
     }
 

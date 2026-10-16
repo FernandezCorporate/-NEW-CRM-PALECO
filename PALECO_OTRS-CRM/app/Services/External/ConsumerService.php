@@ -161,9 +161,10 @@ class ConsumerService
 
     /**
      * Resolve consumer ID for ticket submission pipeline.
-     * Refreshes consumer details if stale (> 7 days) and falls back to local record if external API is unreachable.
+     * Refreshes consumer details if stale (> 7 days) and falls back to local record or verified search payload
+     * if external API is unreachable.
      */
-    public function resolveConsumerId(string $accountCode): string
+    public function resolveConsumerId(string $accountCode, array $fallbackData = []): string
     {
         $consumer = Consumer::where('acct_code', $accountCode)->first();
 
@@ -185,6 +186,12 @@ class ConsumerService
 
             if ($consumer) {
                 return $consumer->id;
+            }
+
+            if (! empty($fallbackData['name']) && ! empty($fallbackData['acct_code'])) {
+                $syncedConsumer = $this->syncConsumer($fallbackData);
+
+                return $syncedConsumer->id;
             }
 
             throw $e;

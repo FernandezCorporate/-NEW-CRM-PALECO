@@ -24,3 +24,5 @@ import './system-fields';
 import './livewire-animations';
 import './tomselect-filters';
 import './smart-navigation';
+import './form-validation-scroll';
+import './form-submit-lock';

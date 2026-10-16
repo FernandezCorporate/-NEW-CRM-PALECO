@@ -103,6 +103,12 @@ const initTeamInlines = () => {
         
         toggleEmptyState();
         syncDisabledOptions();
+
+        const form = container.closest('form');
+        if (form) {
+            form.dispatchEvent(new Event('input', { bubbles: true }));
+            form.dispatchEvent(new Event('change', { bubbles: true }));
+        }
     });
 
     container.addEventListener('click', (e) => {
@@ -128,6 +134,12 @@ const initTeamInlines = () => {
             
             toggleEmptyState();
             syncDisabledOptions();
+
+            const form = container.closest('form');
+            if (form) {
+                form.dispatchEvent(new Event('input', { bubbles: true }));
+                form.dispatchEvent(new Event('change', { bubbles: true }));
+            }
         }
     });
 };

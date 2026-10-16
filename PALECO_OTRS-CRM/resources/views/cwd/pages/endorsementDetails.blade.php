@@ -100,7 +100,7 @@
                     <div class="ml-11">
                         <h2 id="decision-heading" class="text-sm font-bold text-slate-900 mb-4">Dispatcher Decision</h2>
 
-                        <form method="POST">
+                        <form method="POST" data-endorsement-form id="endorsement-decision-form">
                             @csrf
 
                             <div class="space-y-5">
@@ -127,6 +127,7 @@
                                 <!-- Action Buttons (Zero-JS Route Parameter Bypass) -->
                                 <div class="flex flex-col sm:flex-row gap-4 pt-2">
                                     <button type="submit" 
+                                            id="endorsement-reject-btn"
                                             formmethod="POST"
                                             formaction="{{ route('cwd.endorsements.decide', ['endorsement' => $endorsement, 'status' => $rejectValue->value]) }}"
                                             class="btn btn-secondary text-rose-700 hover:bg-rose-50 hover:border-rose-300 border-rose-200 flex-1 py-3 text-sm font-bold shadow-xs">
@@ -135,6 +136,7 @@
                                     </button>
                                     
                                     <button type="submit" 
+                                            id="endorsement-approve-btn"
                                             formmethod="POST"
                                             formaction="{{ route('cwd.endorsements.decide', ['endorsement' => $endorsement, 'status' => $approveValue->value]) }}"
                                             class="btn btn-primary flex-1 py-3 text-sm font-bold shadow-xs">

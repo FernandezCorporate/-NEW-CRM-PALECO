@@ -34,9 +34,22 @@ const initPreventDoubleSubmit = () => {
         if (form.dataset.submitBound) return;
         form.dataset.submitBound = 'true';
         form.addEventListener('submit', function (e) {
+            if (e.defaultPrevented) return;
             if (!this.checkValidity()) return;
             const submitBtn = this.querySelector('button[type="submit"], input[type="submit"]');
-            if (submitBtn) applyLoadingState(submitBtn);
+            if (!submitBtn || submitBtn.disabled) return;
+
+            queueMicrotask(() => {
+                if (!e.defaultPrevented && submitBtn && !submitBtn.disabled) {
+                    applyLoadingState(submitBtn);
+                    form.classList.add('is-submitting');
+                    form.querySelectorAll('input:not([type="hidden"]), select, textarea').forEach(el => {
+                        if (el.tagName.toLowerCase() === 'input' || el.tagName.toLowerCase() === 'textarea') {
+                            el.readOnly = true;
+                        }
+                    });
+                }
+            });
         });
     });
 
@@ -52,7 +65,20 @@ const initPreventDoubleSubmit = () => {
 
     // 3. Fix for browser back button (bfcache) freezing the UI in the loading state
     window.addEventListener('pageshow', (event) => {
-        if (event.persisted) window.location.reload();
+        if (event.persisted) {
+            window.location.reload();
+        } else {
+            document.querySelectorAll('form.is-submitting').forEach(form => {
+                form.classList.remove('is-submitting');
+                form.querySelectorAll('input:not([type="hidden"]), select, textarea').forEach(el => {
+                    if (el.hasAttribute('data-original-readonly')) {
+                        // preserve if originally readonly
+                    } else {
+                        el.readOnly = false;
+                    }
+                });
+            });
+        }
     });
 };
 

@@ -1,8 +1,14 @@
 <div>
     <nav class="record-tabs" aria-label="Filter tickets by status">
-        <a href="#" wire:click.prevent="$set('status', 'all')" @if($status === 'all') aria-current="page" @endif>All tickets</a>
+        <a href="#" wire:click.prevent="$set('status', 'all')" @if($status === 'all') aria-current="page" @endif>
+            All tickets
+            <span>{{ number_format($totalCount ?? 0) }}</span>
+        </a>
         @foreach($statuses as $stat)
-            <a href="#" wire:click.prevent="$set('status', '{{ $stat->value }}')" @if($status === $stat->value) aria-current="page" @endif>{{ $stat->label() }}</a>
+            <a href="#" wire:click.prevent="$set('status', '{{ $stat->value }}')" @if($status === $stat->value) aria-current="page" @endif>
+                {{ $stat->label() }}
+                <span>{{ number_format($statusCounts[$stat->value] ?? 0) }}</span>
+            </a>
         @endforeach
     </nav>
 
@@ -67,22 +73,31 @@
                 <thead>
                     <tr class="bg-slate-50 border-b border-slate-200 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
                         <th scope="col" class="px-6 py-4 w-40">Ticket ID</th>
+                        <th scope="col" class="px-6 py-4 w-36 text-center">Status</th>
                         <th scope="col" class="px-6 py-4 w-40">Source / Caller</th>
                         <th scope="col" class="px-6 py-4 w-56">Address & Landmark</th>
                         <th scope="col" class="px-6 py-4 w-48">Nature of Complaint</th>
-                        <th scope="col" class="px-6 py-4 w-40 text-center">Assigned Dept</th>
-                        <th scope="col" class="px-6 py-4 w-32 text-center">Status</th>
-                        <th scope="col" class="px-6 py-4 w-40 text-center">Hierarchy</th>
+                        <th scope="col" class="px-6 py-4 w-56">Assigned Dept</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100">
                     @forelse ($tickets as $tkt)
                         <tr class="hover:bg-slate-50/75 transition-colors">
                             <td class="px-6 py-4 align-top">
-                                <a href="{{ route($isAdmin ? 'admin.tickets.show' : 'cwd.tickets.show', $tkt) }}" class="font-bold text-emerald-700 text-sm hover:underline block" aria-label="View ticket #{{ $tkt->ticket_number }}">
-                                    {{ $tkt->ticket_number }}
-                                </a>
+                                <div class="flex items-center gap-1.5 flex-wrap">
+                                    <a href="{{ route($isAdmin ? 'admin.tickets.show' : 'cwd.tickets.show', $tkt) }}" class="font-bold text-emerald-700 text-sm hover:underline" aria-label="View ticket #{{ $tkt->ticket_number }}">
+                                        {{ $tkt->ticket_number }}
+                                    </a>
+                                    @if($tkt->parent_ticket_id)
+                                        <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold uppercase bg-indigo-50 text-indigo-700 border border-indigo-200" title="Child ticket">Child</span>
+                                    @endif
+                                </div>
                                 <div class="text-[11px] text-slate-400 mt-0.5">{{ $tkt->reported_at->format('M d, Y') }}</div>
+                            </td>
+                            <td class="px-6 py-4 align-top text-center">
+                                <span class="inline-flex items-center justify-center px-2.5 py-1 rounded-full border {{ $tkt->status->badgeClasses() }} text-[11px] font-bold tracking-wide">
+                                    {{ $tkt->status->label() }}
+                                </span>
                             </td>
                             <td class="px-6 py-4 align-top">
                                 <div class="text-sm text-slate-800 font-medium">{{ $tkt->complaint_source->label() }}</div>
@@ -109,40 +124,18 @@
                                     @endif
                                 </div>
                             </td>
-                            <td class="px-6 py-4 align-top text-center">
-                                <x-badge variant="emerald">
+                            <td class="px-6 py-4 align-top">
+                                <div class="text-sm font-medium leading-snug {{ $tkt->department ? 'text-slate-800' : 'text-slate-400 italic' }}">
                                     {{ $tkt->department->dept_name ?? 'Unassigned' }}
                                     @if($tkt->department?->trashed())
-                                        <span class="text-[10px] text-emerald-800 font-normal italic">(Archived)</span>
+                                        <span class="text-[10px] text-slate-400 font-normal not-italic ml-1">(Archived)</span>
                                     @endif
-                                </x-badge>
-                            </td>
-                            <td class="px-6 py-4 align-top text-center">
-                                <span class="inline-flex items-center justify-center px-2.5 py-1 rounded-full border {{ $tkt->status->badgeClasses() }} text-[11px] font-bold">
-                                    {{ $tkt->status->label() }}
-                                </span>
-                            </td>
-                            <td class="px-6 py-4 align-top text-center">
-                                @if(is_null($tkt->parent_ticket_id))
-                                    <div class="text-xs font-bold uppercase tracking-wider text-slate-500">Parent</div>
-                                    <div class="font-bold text-slate-300 text-xs mt-0.5">—</div>
-                                @else
-                                    <div class="text-xs font-bold uppercase tracking-wider text-indigo-600">Child</div>
-                                    <div class="font-bold text-emerald-700 text-xs mt-0.5">
-                                        @if($tkt->parentTicket)
-                                            <a href="{{ route($isAdmin ? 'admin.tickets.show' : 'cwd.tickets.show', $tkt->parentTicket) }}" class="hover:underline">
-                                                {{ $tkt->parentTicket->ticket_number }}
-                                            </a>
-                                        @else
-                                            Unknown
-                                        @endif
-                                    </div>
-                                @endif
+                                </div>
                             </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="7" class="px-6 py-16 text-center border-2 border-dashed border-slate-200 rounded-lg">
+                            <td colspan="6" class="px-6 py-16 text-center border-2 border-dashed border-slate-200 rounded-lg">
                                 <div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-slate-50 mb-3">
                                     <x-icons.ticket class="w-6 h-6 text-slate-400" />
                                 </div>

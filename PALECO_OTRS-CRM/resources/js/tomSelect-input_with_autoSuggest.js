@@ -4,6 +4,10 @@ const initTomSelectSync = () => {
     document.querySelectorAll('.tom-select-sync').forEach((selectElement) => {
         if (selectElement.tomselect) return;
         try {
+            if (selectElement.parentElement && !selectElement.parentElement.classList.contains('relative')) {
+                selectElement.parentElement.classList.add('relative');
+            }
+
             const ts = new TomSelect(selectElement, {
                 create: false,
                 maxOptions: null,
