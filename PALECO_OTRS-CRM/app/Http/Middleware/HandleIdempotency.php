@@ -40,12 +40,25 @@ class HandleIdempotency
             return $next($request);
         }
 
-        // Check for an existing idempotency record
+        $requestHash = sha1(
+            $request->method().'|'.$request->path().'|'.json_encode($request->except(['photos', 'signature', '_token']))
+        );
+
+        // Check for an existing unexpired idempotency record
         $record = IdempotencyRecord::where('user_id', $user->id)
             ->where('idempotency_key', $idempotencyKey)
+            ->where('expires_at', '>', now())
             ->first();
 
         if ($record) {
+            // Fingerprint integrity guard: Prevent key reuse with a different payload or endpoint
+            if ($record->request_hash && $record->request_hash !== $requestHash) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Idempotency key has already been used with a different request payload.',
+                ], Response::HTTP_UNPROCESSABLE_ENTITY);
+            }
+
             if ($record->status === 'completed') {
                 return response()->json($record->response_body, $record->response_code)
                     ->header('X-Cache', 'HIT')
@@ -63,10 +76,6 @@ class HandleIdempotency
             }
         }
 
-        $requestHash = sha1(
-            $request->method().'|'.$request->path().'|'.json_encode($request->except(['photos', 'signature', '_token']))
-        );
-
         if (! $record) {
             try {
                 $record = IdempotencyRecord::create([
@@ -82,6 +91,13 @@ class HandleIdempotency
                 $record = IdempotencyRecord::where('user_id', $user->id)
                     ->where('idempotency_key', $idempotencyKey)
                     ->first();
+
+                if ($record && $record->request_hash && $record->request_hash !== $requestHash) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Idempotency key has already been used with a different request payload.',
+                    ], Response::HTTP_UNPROCESSABLE_ENTITY);
+                }
 
                 if ($record && $record->status === 'completed') {
                     return response()->json($record->response_body, $record->response_code)
