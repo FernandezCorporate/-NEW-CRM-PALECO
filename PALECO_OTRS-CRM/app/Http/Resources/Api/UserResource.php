@@ -18,6 +18,9 @@ class UserResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
+        $primaryTeam = $this->relationLoaded('teams') ? $this->teams->first() : null;
+        $primaryDept = $this->department ?? $primaryTeam?->department;
+
         return [
             'id' => $this->id,
             'username' => $this->username,
@@ -32,8 +35,8 @@ class UserResource extends JsonResource
             'contact' => $this->contact,
             'role_slug' => $this->role?->slug_identifier,
             'role_name' => $this->role?->role_name,
-            'department_id' => $this->department_id,
-            'department' => $this->department?->dept_name,
+            'department_id' => $this->department_id ?? $primaryDept?->id,
+            'department' => $this->department?->dept_name ?? $primaryDept?->dept_name,
             'teams' => $this->whenLoaded('teams', function () {
                 $teamRoles = TeamRole::pluck('role_name', 'id')->toArray();
 
@@ -44,6 +47,8 @@ class UserResource extends JsonResource
                         'id' => $team->id,
                         'team_name' => $team->team_name,
                         'team_desc' => $team->team_desc,
+                        'department_id' => $team->department_id,
+                        'department' => $team->department?->dept_name,
                         'shift_start' => $team->shift_start instanceof DateTimeInterface
                             ? $team->shift_start->format('H:i')
                             : ($team->shift_start ? substr((string) $team->shift_start, 0, 5) : null),

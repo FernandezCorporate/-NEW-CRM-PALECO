@@ -20,7 +20,10 @@ class TicketAssigned implements ShouldBroadcastNow
     /**
      * Create a new event instance.
      */
-    public function __construct(public Ticket $ticket) {}
+    public function __construct(
+        public Ticket $ticket,
+        public ?string $previousTeamId = null,
+    ) {}
 
     /**
      * Get the channels the event should broadcast on.
@@ -33,6 +36,10 @@ class TicketAssigned implements ShouldBroadcastNow
 
         if ($this->ticket->team_id) {
             $channels[] = new PrivateChannel('team.'.$this->ticket->team_id);
+        }
+
+        if ($this->previousTeamId && $this->previousTeamId !== $this->ticket->team_id) {
+            $channels[] = new PrivateChannel('team.'.$this->previousTeamId);
         }
 
         if ($this->ticket->department_id) {
@@ -55,6 +62,7 @@ class TicketAssigned implements ShouldBroadcastNow
             'status_label' => $this->ticket->status->label(),
             'team_id' => $this->ticket->team_id,
             'team_name' => $this->ticket->team?->team_name ?? 'Assigned Team',
+            'previous_team_id' => $this->previousTeamId,
             'department' => $this->ticket->department?->dept_name ?? 'Unassigned',
             'updated_at' => $this->ticket->updated_at?->format('M d, Y h:i A') ?? now()->format('M d, Y h:i A'),
         ];

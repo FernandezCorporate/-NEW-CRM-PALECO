@@ -508,12 +508,11 @@ class TicketService
         $allowedStatuses = [
             TicketStatus::OPEN,
             TicketStatus::ASSIGNED,
-            TicketStatus::IN_PROGRESS,
         ];
 
         if (! in_array($ticket->status, $allowedStatuses, true)) {
             throw ValidationException::withMessages([
-                'status' => 'Tickets that are resolved, closed, or has a pending endorsement cannot be reassigned.',
+                'status' => 'Tickets that are in-progress, resolved, closed, or pending endorsement cannot be assigned or reassigned.',
             ]);
         }
 
@@ -540,7 +539,7 @@ class TicketService
 
             if (! in_array($lockedTicket->status, $allowedStatuses, true)) {
                 throw ValidationException::withMessages([
-                    'status' => 'Tickets that are resolved, closed, or has a pending endorsement cannot be reassigned.',
+                    'status' => 'Tickets that are in-progress, resolved, closed, or pending endorsement cannot be assigned or reassigned.',
                 ]);
             }
 
@@ -579,6 +578,8 @@ class TicketService
                 ]);
             }
 
+            $previousTeamId = $lockedTicket->team_id;
+
             $lockedTicket->update([
                 'team_id' => $teamId,
                 'status' => TicketStatus::ASSIGNED,
@@ -592,8 +593,8 @@ class TicketService
                 'activeAssignment.assigner.role',
             ]);
 
-            DB::afterCommit(function () use ($freshTicket) {
-                rescue(fn () => TicketAssigned::dispatch($freshTicket), report: true);
+            DB::afterCommit(function () use ($freshTicket, $previousTeamId) {
+                rescue(fn () => TicketAssigned::dispatch($freshTicket, $previousTeamId), report: true);
             });
 
             return $freshTicket;

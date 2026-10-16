@@ -20,7 +20,7 @@ class ProfileService
         $user->load(['role', 'department']);
 
         if ($user->role?->slug_identifier === 'field_personnel') {
-            $user->load('teams');
+            $user->load(['teams.department']);
         }
 
         return $user;

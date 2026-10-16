@@ -136,6 +136,10 @@ class TicketPolicy
             return Response::deny('Cancelled tickets cannot be assigned.');
         }
 
+        if (in_array($ticket->status, [TicketStatus::IN_PROGRESS, TicketStatus::RESOLVED, TicketStatus::CLOSED], true)) {
+            return Response::deny('Tickets that are in-progress, resolved, or closed cannot be assigned or reassigned.');
+        }
+
         return $user->department_id === $ticket->department_id
             ? Response::allow()
             : Response::denyAsNotFound('The requested ticket was not found.');

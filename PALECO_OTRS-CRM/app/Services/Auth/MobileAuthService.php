@@ -97,7 +97,7 @@ class MobileAuthService
 
         $user->load(['role', 'department']);
         if ($userRoleSlug === 'field_personnel') {
-            $user->load('teams');
+            $user->load(['teams.department']);
         }
 
         return [
