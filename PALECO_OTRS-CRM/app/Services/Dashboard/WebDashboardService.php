@@ -7,9 +7,12 @@ use App\Models\Department;
 use App\Models\Team;
 use App\Models\Ticket;
 use App\Models\TicketAccomplishment;
+use App\Models\TicketCategory;
 use App\Models\TicketEndorsement;
 use App\Models\User;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
+use Spatie\Activitylog\Models\Activity;
 
 /**
  * Aggregates operational statistics, complaint trends, and administrative KPIs for the web dashboards.
@@ -175,7 +178,7 @@ class WebDashboardService
     }
 
     /**
-     * Summarizes system-wide user counts, departments, teams, and total ticket volumes for administrators.
+     * Summarizes system-wide user counts, departments, teams, categories, and live online users for administrators.
      */
     public function adminSummary(): array
     {
@@ -185,14 +188,32 @@ class WebDashboardService
         $deptsArchived = Department::onlyTrashed()->count();
         $ticketsTotal = Ticket::query()->count();
         $teamsActive = Team::query()->count();
+        $categoriesActive = TicketCategory::query()->count();
+
+        // Calculate live online users (deduplicated union of active web sessions + active mobile Sanctum tokens)
+        $sessionLifetimeSeconds = (int) config('session.lifetime', 120) * 60;
+        $activeWebUserIds = DB::table('sessions')
+            ->whereNotNull('user_id')
+            ->where('last_activity', '>=', now()->timestamp - $sessionLifetimeSeconds)
+            ->pluck('user_id');
+
+        $activeMobileUserIds = DB::table('personal_access_tokens')
+            ->where('tokenable_type', User::class)
+            ->where(function ($q) {
+                $q->whereNull('expires_at')->orWhere('expires_at', '>', now());
+            })
+            ->where('last_used_at', '>=', now()->subHours(24))
+            ->pluck('tokenable_id');
+
+        $onlineUsersCount = $activeWebUserIds->merge($activeMobileUserIds)->unique()->count();
 
         $metrics = [
-            ['Users', $usersTotal, 'Total accounts', route('admin.users'), 'bg-emerald-50 text-emerald-600', 'bg-emerald-500', 'users'],
-            ['Active users', $usersActive, 'Enabled accounts', route('admin.users'), 'bg-teal-50 text-teal-600', 'bg-teal-500', 'check-circle'],
-            ['Active departments', $deptsActive, 'Current divisions', route('admin.departments'), 'bg-sky-50 text-sky-600', 'bg-sky-500', 'department'],
-            ['Archived departments', $deptsArchived, 'Retired divisions', route('admin.departments', ['filter' => 'archived']), 'bg-amber-50 text-amber-600', 'bg-amber-500', 'trash'],
-            ['Total tickets', $ticketsTotal, 'All service requests', route('admin.monitoring.index'), 'bg-blue-50 text-blue-600', 'bg-blue-600', 'ticket'],
-            ['Active teams', $teamsActive, 'Operational crews', route('admin.teams'), 'bg-violet-50 text-violet-600', 'bg-violet-500', 'team'],
+            ['Users', $usersActive, 'Active staff accounts', route('admin.users'), 'bg-emerald-50 text-emerald-600', 'bg-emerald-500', 'users'],
+            ['Departments', $deptsActive, 'Active divisions', route('admin.departments'), 'bg-sky-50 text-sky-600', 'bg-sky-500', 'department'],
+            ['Field teams', $teamsActive, 'Operational crews', route('admin.teams'), 'bg-violet-50 text-violet-600', 'bg-violet-500', 'team'],
+            ['Categories', $categoriesActive, 'Complaint types', route('admin.ticketCategories'), 'bg-amber-50 text-amber-600', 'bg-amber-500', 'category'],
+            ['All tickets', $ticketsTotal, 'Lifetime records', route('admin.monitoring.index', ['category' => 'Tickets']), 'bg-blue-50 text-blue-600', 'bg-blue-600', 'ticket'],
+            ['Online users', $onlineUsersCount, 'Active sessions & tokens', route('admin.monitoring.index', ['category' => 'auth']), 'bg-teal-50 text-teal-600', 'bg-teal-500', 'user'],
         ];
 
         $metricMax = max(1, ...array_column($metrics, 1));
@@ -218,9 +239,159 @@ class WebDashboardService
             'departments_archived' => $deptsArchived,
             'tickets_total' => $ticketsTotal,
             'teams_active' => $teamsActive,
+            'categories_active' => $categoriesActive,
+            'online_users' => $onlineUsersCount,
             'system_metrics' => $metricsWithWidth,
             'metric_max' => $metricMax,
             'admin_controls' => $adminControls,
+        ];
+    }
+
+    /**
+     * Retrieves the top 5 ticket categories with the most open tickets for the leaderboard.
+     * Accurately aggregates both predefined categories and open-ended/custom complaint categories.
+     */
+    public function topOpenCategories(): array
+    {
+        $rawCategories = Ticket::query()
+            ->where('tickets.status', TicketStatus::OPEN->value)
+            ->whereNull('tickets.deleted_at')
+            ->leftJoin('ticket_categories', 'tickets.category_id', '=', 'ticket_categories.id')
+            ->selectRaw("
+                CASE 
+                    WHEN tickets.other_category = 1 
+                        THEN 'Other Category'
+                    ELSE COALESCE(ticket_categories.category_name, 'Uncategorized')
+                END as resolved_category_name,
+                COUNT(*) as open_tickets_count
+            ")
+            ->groupBy('resolved_category_name')
+            ->orderByDesc('open_tickets_count')
+            ->limit(5)
+            ->get();
+
+        $maxCount = max(1, (int) ($rawCategories->max('open_tickets_count') ?? 0));
+        $totalOpen = Ticket::query()->where('status', TicketStatus::OPEN->value)->count();
+
+        $items = $rawCategories->values()->map(function ($row, $index) use ($maxCount) {
+            return [
+                'rank' => $index + 1,
+                'name' => $row->resolved_category_name,
+                'count' => (int) $row->open_tickets_count,
+                'width_percent' => round(($row->open_tickets_count / $maxCount) * 100, 1),
+            ];
+        })->all();
+
+        return [
+            'total_open' => $totalOpen,
+            'categories' => $items,
+        ];
+    }
+
+    /**
+     * Compiles system monitoring and audit telemetry from the activity_log table for administrators.
+     */
+    public function systemMonitoringSnapshot(): array
+    {
+        $todayStart = Carbon::today()->startOfDay();
+        $past24Hours = Carbon::now()->subHours(24);
+
+        $auditEventsToday = Activity::query()
+            ->where('created_at', '>=', $todayStart)
+            ->count();
+
+        $securityAlerts = Activity::query()
+            ->where('log_name', 'login_failed')
+            ->where('created_at', '>=', $past24Hours)
+            ->count();
+
+        $staffLoginsToday = Activity::query()
+            ->where('log_name', 'login_success')
+            ->where('created_at', '>=', $todayStart)
+            ->count();
+
+        $accountMutationsToday = Activity::query()
+            ->where('log_name', 'Users')
+            ->where('created_at', '>=', $todayStart)
+            ->count();
+
+        $orgChangesToday = Activity::query()
+            ->whereIn('log_name', ['Teams', 'Department'])
+            ->where('created_at', '>=', $todayStart)
+            ->count();
+
+        $criticalActionsToday = Activity::query()
+            ->whereIn('event', ['deleted', 'delete', 'archived', 'locked', 'force_deleted'])
+            ->where('created_at', '>=', $todayStart)
+            ->count();
+
+        // Module activity distribution for today
+        $moduleCounts = Activity::query()
+            ->where('created_at', '>=', $todayStart)
+            ->selectRaw('log_name, COUNT(*) as total')
+            ->groupBy('log_name')
+            ->pluck('total', 'log_name')
+            ->all();
+
+        $authCount = ($moduleCounts['login_success'] ?? 0)
+            + ($moduleCounts['login_failed'] ?? 0)
+            + ($moduleCounts['login_pass_account_deactivated'] ?? 0);
+
+        $moduleDistribution = [
+            ['label' => 'Authentication', 'total' => $authCount, 'color' => 'bg-emerald-500'],
+            ['label' => 'Tickets & Dispatch', 'total' => (int) ($moduleCounts['Tickets'] ?? 0), 'color' => 'bg-blue-500'],
+            ['label' => 'User Management', 'total' => (int) ($moduleCounts['Users'] ?? 0), 'color' => 'bg-teal-500'],
+            ['label' => 'Teams & Crews', 'total' => (int) ($moduleCounts['Teams'] ?? 0), 'color' => 'bg-purple-500'],
+            ['label' => 'Departments', 'total' => (int) ($moduleCounts['Department'] ?? 0), 'color' => 'bg-sky-500'],
+            ['label' => 'Categories', 'total' => (int) ($moduleCounts['TicketCategory'] ?? 0), 'color' => 'bg-amber-500'],
+        ];
+
+        $moduleMax = max(1, (int) collect($moduleDistribution)->max('total'));
+
+        $moduleDistributionWithWidth = collect($moduleDistribution)->map(function ($item) use ($moduleMax) {
+            $item['width_percent'] = round(($item['total'] / $moduleMax) * 100, 1);
+
+            return $item;
+        })->all();
+
+        // Recent 5 audit events
+        $recentLogs = Activity::query()
+            ->with(['causer.role'])
+            ->latest()
+            ->limit(5)
+            ->get()
+            ->map(function ($log) {
+                $actor = $log->causer;
+                $actorName = $actor->fullName;
+                $actorRole = $actor?->role?->role_name ?? ($actor ? 'User' : 'System Automation');
+                $initials = $actor
+                    ? strtoupper(substr($actor->first_name ?? '', 0, 1).substr($actor->last_name ?? '', 0, 1))
+                    : 'SY';
+
+                return [
+                    'id' => $log->id,
+                    'actor_name' => $actorName,
+                    'actor_role' => $actorRole,
+                    'actor_initials' => $initials ?: 'US',
+                    'description' => $log->description,
+                    'event' => $log->event,
+                    'time_display' => $log->created_at->diffForHumans(),
+                    'created_at_time' => $log->created_at->format('h:i A'),
+                    'url' => route('admin.monitoring.show', $log->id),
+                ];
+            })->all();
+
+        return [
+            'today' => Carbon::now()->format('M j, Y'),
+            'timezone' => config('app.timezone'),
+            'audit_events_today' => $auditEventsToday,
+            'security_alerts' => $securityAlerts,
+            'staff_logins_today' => $staffLoginsToday,
+            'account_mutations_today' => $accountMutationsToday,
+            'org_changes_today' => $orgChangesToday,
+            'critical_actions_today' => $criticalActionsToday,
+            'module_distribution' => $moduleDistributionWithWidth,
+            'recent_logs' => $recentLogs,
         ];
     }
 }

@@ -26,6 +26,8 @@ class AdminDashboardController extends Controller
         return view('admin.pages.dashboard', [
             'overview' => $this->dashboardService->ticketOverview(),
             'summary' => $this->dashboardService->adminSummary(),
+            'categoryLeaderboard' => $this->dashboardService->topOpenCategories(),
+            'monitoring' => $this->dashboardService->systemMonitoringSnapshot(),
         ]);
     }
 }

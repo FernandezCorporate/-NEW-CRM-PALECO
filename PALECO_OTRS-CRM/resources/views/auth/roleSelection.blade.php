@@ -15,9 +15,8 @@
         <aside class="sidebar-surface w-full md:w-[45%] text-white p-8 md:p-10 flex flex-col justify-between relative overflow-hidden" aria-label="PALECO Portal Information">
             <div>
                 <div class="flex items-center gap-2">
-                    <span class="text-2xl font-bold tracking-tight">PALECO CRM-CWD</span>
+                    <span class="text-2xl font-bold tracking-tight">PALECO Open-Source Ticket Request System</span>
                 </div>
-                <p class="text-xs text-emerald-300 font-light mt-0.5">Consumer Welfare Desk Portal</p>
 
                 <div class="mt-12 space-y-3">
                     <h1 class="text-2xl md:text-3xl font-semibold tracking-tight leading-snug">System Access Portal</h1>
@@ -60,7 +59,7 @@
                         </div>
                         <div>
                             <h3 class="text-lg font-bold text-slate-800 group-hover:text-emerald-700 transition-colors">Administrator</h3>
-                            <p class="text-xs text-slate-500 mt-0.5">System configuration and master data management</p>
+                            <p class="text-xs text-slate-500 mt-0.5">System configuration and ticket workflow auditing</p>
                         </div>
                     </div>
                 </a>

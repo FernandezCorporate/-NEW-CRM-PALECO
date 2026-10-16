@@ -12,10 +12,6 @@
                 <h1 class="page-title mt-2">PALECO Control Center</h1>
                 <p class="mt-2 text-sm text-slate-500">Manage people, organizational structure, and service operations from one workspace.</p>
             </div>
-            <div class="status-live inline-flex w-fit items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-700 shadow-2xs">
-                <span class="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                System operational
-            </div>
         </header>
 
         <!-- Telemetry Metric Cards Grid -->
@@ -71,31 +67,12 @@
                 </div>
             </figure>
 
-            <figure data-animate class="ui-reveal panel p-6 md:p-7" style="--delay: 90ms" aria-labelledby="system-chart-title">
-                <figcaption>
-                    <p class="eyebrow">System footprint</p>
-                    <h2 id="system-chart-title" class="mt-1 text-xl font-bold text-slate-900">Operational overview</h2>
-                </figcaption>
-                <div class="mt-6 space-y-4" role="img" aria-label="Comparison of users, departments, tickets, and teams">
-                    @foreach ($summary['system_metrics'] ?? [] as $index => [$label, $value, $description, $url, $tone, $barTone, $icon, $widthPercent])
-                        <div>
-                            <div class="mb-2 flex items-center justify-between gap-4 text-xs">
-                                <span class="truncate font-semibold text-slate-700">{{ $label }}</span>
-                                <strong class="tabular-nums text-slate-900">
-                                    <data value="{{ $value }}">{{ number_format($value) }}</data>
-                                </strong>
-                            </div>
-                            <div class="chart-row-track">
-                                <div class="chart-row-fill {{ $barTone }}" style="--chart-width: {{ $widthPercent }}%; --bar-delay: {{ $index * 65 }}ms"></div>
-                            </div>
-                        </div>
-                    @endforeach
-                </div>
-            </figure>
+            <!-- Top Open Ticket Categories Leaderboard -->
+            <x-dashboard-category-leaderboard :data="$categoryLeaderboard" />
         </section>
 
-        <!-- Service Operations Island -->
-        <x-dashboard-operations :data="$overview['operations']" />
+        <!-- System Monitoring & Security Telemetry Island -->
+        <x-dashboard-monitoring :data="$monitoring" />
 
         <!-- Quick Action Panels & Workspace Summary -->
         <section class="admin-action-panels grid gap-6 xl:grid-cols-2">
