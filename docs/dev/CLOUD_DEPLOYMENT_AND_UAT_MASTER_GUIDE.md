@@ -2,15 +2,15 @@
 
 > **Project:** PALECO OTRS-CRM (Utility Service Ticket & Dispatch Management System)  
 > **Target Audience:** Development Team, DevOps Engineers, and Mobile Engineers  
-> **Document Version:** 2.0 (Multi-Platform Cloud Architecture & Comprehensive Checklist)  
+> **Document Version:** 2.1 (Multi-Platform Cloud Architecture with Supabase Zero-Credit-Card Storage)  
 > **Target Path:** `docs/dev/CLOUD_DEPLOYMENT_AND_UAT_MASTER_GUIDE.md`  
-> **Hosting Architecture:** Render.com (Web & Compute) + TiDB Cloud (5 GB Serverless MySQL 8.0) + Cloudflare R2 (10 GB S3 Object Storage) + Pusher Channels Sandbox (200,000 Real-Time Msgs/Day) + UptimeRobot (Keep-Alive Health Probe)
+> **Hosting Architecture:** Render.com (Web & Compute) + TiDB Cloud (5 GB Serverless MySQL 8.0) + Supabase Storage (1 GB Free S3 Object Storage - Zero Credit Card) + Pusher Channels Sandbox (200,000 Real-Time Msgs/Day) + UptimeRobot (Keep-Alive Health Probe)
 
 ---
 
 ## 1. High-Level Architecture Overview
 
-Free-tier cloud containers (like Render, Koyeb, or Railway) are **stateless and single-port**. To run an enterprise Laravel system with real-time WebSockets, ACID relational transactions, and image uploads without monthly bills or a paid custom domain, we decouple into five specialized zero-cost cloud platforms:
+Free-tier cloud containers (like Render, Koyeb, or Railway) are **stateless and single-port**. To run an enterprise Laravel system with real-time WebSockets, ACID relational transactions, and persistent image uploads **strictly without credit cards, fees, or paid custom domains**, we decouple into five specialized zero-cost cloud platforms:
 
 ```mermaid
 graph TD
@@ -18,7 +18,7 @@ graph TD
     UserMobile[📱 Linemen / Supervisors Flutter APK] -->|HTTPS: /api/v1/tickets| Render
     
     Render -->|ACID SQL Queries: ULIDs, Locks, Indexes| TiDB[(TiDB Cloud Serverless: 5 GB Free MySQL 8.0)]
-    Render -->|Store Signatures & Photos: Zero Egress Fees| R2[(Cloudflare R2: 10 GB Free S3 Storage)]
+    Render -->|Store Signatures & Photos: Zero Credit Card Required| Supabase[(Supabase Storage: 1 GB Free S3 Bucket)]
     
     Render & UserWeb & UserMobile <-->|Real-Time Broadcasts: 200k msgs/day via Port 443| Pusher[Pusher Channels Free Sandbox: ap1 Cluster]
     
@@ -29,9 +29,9 @@ graph TD
 
 | Role | Provider | Free Allowance | Why It Is Used |
 | :--- | :--- | :--- | :--- |
-| **Compute & Web** | **Render.com** | 512 MB RAM, Free SSL | Hosts Laravel 11/PHP 8.4, handles HTTP requests, auto-deploys on `git push`. |
-| **Database** | **TiDB Cloud** | 5 GB Free Forever | 100% MySQL 8.0 wire-compatible; supports ULIDs, transactions, and row-level `lockForUpdate()`. |
-| **Media Storage** | **Cloudflare R2** | 10 GB Free Forever | S3-compatible cloud storage for accomplishment photos and canvas signatures. **$0 egress/bandwidth fees**. |
+| **Compute & Web** | **Render.com** | 512 MB RAM, Free SSL | Hosts Laravel 11/PHP 8.4, handles HTTP requests, auto-deploys on `git push`. (No card needed). |
+| **Database** | **TiDB Cloud** | 5 GB Free Forever | 100% MySQL 8.0 wire-compatible; supports ULIDs, transactions, and row-level `lockForUpdate()`. (No card needed). |
+| **Media Storage** | **Supabase Storage** | 1 GB Free Forever, 2 GB/mo Egress | S3-compatible cloud storage for accomplishment photos and canvas signatures. **100% Free via GitHub sign-in, strictly NO credit card required**. |
 | **Real-Time WebSockets** | **Pusher Channels** | 200,000 msgs/day, 100 connections | Pushes instant dispatches over HTTPS port 443 without requiring custom open firewall ports. Supported natively by Laravel Echo & Flutter. |
 | **Uptime & Health** | **UptimeRobot** | 50 Monitors, 5-min checks | Pings `/up` health probe every 10 minutes to prevent Render free container from entering sleep state. |
 
@@ -54,19 +54,28 @@ graph TD
 
 ---
 
-### Step 2: Set Up Cloudflare R2 (10 GB Free Photo Storage)
-1. Sign up for free at [dash.cloudflare.com](https://dash.cloudflare.com). **No custom domain purchase is required.**
-2. In the left sidebar, click **R2 Object Storage**.
-3. Click **Create bucket** $\to$ Name it: `paleco-crm-storage` $\to$ Click **Create**.
-4. In the bucket settings, under **Public access**, enable **R2.dev subdomain** (provides a public URL like `https://pub-xxxxxx.r2.dev` to display images in the web browser and mobile app).
-5. Go to **R2 Overview** $\to$ Click **Manage R2 API Tokens** (on the right).
-6. Click **Create API Token**:
-   - Permissions: **Object Read & Write**
-   - Apply to: **All buckets** (or select `paleco-crm-storage`)
-7. Click **Create API Token** and copy the credentials:
-   - **Access Key ID:** `xxxxxxxxxxxxxxxxxxxxxxxx`
-   - **Secret Access Key:** `xxxxxxxxxxxxxxxxxxxxxxxx`
-   - **Endpoint URL:** `https://<ACCOUNT_ID>.r2.cloudflarestorage.com`
+### Step 2: Set Up Supabase Storage (1 GB Free S3-Compatible Storage - No Credit Card)
+1. Sign up or log in at [supabase.com](https://supabase.com) using your **GitHub account**. **Strictly NO credit card is required.**
+2. Click **New Project**:
+   - **Name:** `paleco-crm-storage`
+   - **Database Password:** *(Set any strong password)*
+   - **Region:** **Singapore (`ap-southeast-1`)**
+   - **Pricing Plan:** **Free Tier ($0/month)**
+3. In the left navigation bar, click **Storage**:
+   - Click **New Bucket**.
+   - Bucket Name: `paleco-media`
+   - **Public bucket:** Toggle **ON** (allows accomplishment photos and canvas signatures to be viewed over HTTPS in web browsers and the mobile app without requiring signed URLs).
+   - Click **Save**.
+4. Generate S3-Compatible Access Credentials:
+   - Click the gear icon (**Project Settings**) at the bottom left $\to$ **Storage**.
+   - Under **S3 Access Keys**, click **New access key** (or **Generate Access Key**).
+   - Name the key: `render-backend`.
+   - Copy and securely save the credentials:
+     - **Access Key ID:** e.g., `a1b2c3d4e5f6...`
+     - **Secret Access Key:** e.g., `xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx`
+     - **Endpoint URL:** `https://<PROJECT_REF>.supabase.co/storage/v1/s3`
+     - **Public Storage Base URL:** `https://<PROJECT_REF>.supabase.co/storage/v1/object/public/paleco-media`
+
 
 ---
 
@@ -144,15 +153,15 @@ PUSHER_APP_CLUSTER=ap1
 VITE_PUSHER_APP_KEY="${PUSHER_APP_KEY}"
 VITE_PUSHER_APP_CLUSTER="${PUSHER_APP_CLUSTER}"
 
-# Media Storage via Cloudflare R2 (S3-Compatible Driver)
+# Media Storage via Supabase Storage (S3-Compatible Driver - Zero Credit Card)
 FILESYSTEM_DISK=s3
-AWS_ACCESS_KEY_ID=your_r2_access_key
-AWS_SECRET_ACCESS_KEY=your_r2_secret_key
-AWS_DEFAULT_REGION=auto
-AWS_BUCKET=paleco-crm-storage
-AWS_ENDPOINT=https://your_account_id.r2.cloudflarestorage.com
+AWS_ACCESS_KEY_ID=your_supabase_access_key_id
+AWS_SECRET_ACCESS_KEY=your_supabase_secret_access_key
+AWS_DEFAULT_REGION=ap-southeast-1
+AWS_BUCKET=paleco-media
+AWS_ENDPOINT=https://your_project_ref.supabase.co/storage/v1/s3
 AWS_USE_PATH_STYLE_ENDPOINT=true
-AWS_URL=https://pub-xxxxxx.r2.dev
+AWS_URL=https://your_project_ref.supabase.co/storage/v1/object/public/paleco-media
 ```
 
 5. Click **Create Web Service**. Render pulls the code, installs dependencies, builds Vite assets, runs migrations, and deploys!
@@ -203,7 +212,7 @@ Use this exhaustive checklist to track every single operational step:
 
 ### Phase 1: Pre-Deployment Repository & Codebase Sanity
 - [ ] Run `git status` to ensure all changes are committed on branch `master`.
-- [ ] Verify `composer.json` contains `"league/flysystem-aws-s3-v3": "^3.0"` for Cloudflare R2 support.
+- [ ] Verify `composer.json` contains `"league/flysystem-aws-s3-v3": "^3.0"` for Supabase Storage (S3 API) support.
 - [ ] Verify `composer.json` contains `"pusher/pusher-php-server": "^7.3"` for cloud WebSockets.
 - [ ] Verify API routes enforce `/api/v1/` prefix in `routes/api.php`.
 - [ ] Verify password constraints in `StoreUserRequest.php` enforce `Password::min(8)->mixedCase()`.
@@ -218,12 +227,19 @@ Use this exhaustive checklist to track every single operational step:
 - [ ] Whitelist `0.0.0.0/0` (TiDB Serverless enforces mandatory TLS/SSL certificate encryption).
 - [ ] Test direct SQL connection using MySQL Workbench or CLI with SSL flag enabled.
 
-### Phase 3: Cloudflare R2 Storage Provisioning
-- [ ] Create bucket named `paleco-crm-storage`.
-- [ ] Enable Public Access via **R2.dev subdomain** in bucket settings.
-- [ ] Copy the public bucket URL (e.g., `https://pub-xxxxxx.r2.dev`).
-- [ ] Generate R2 API Token with **Object Read & Write** permissions.
-- [ ] Save `Access Key ID`, `Secret Access Key`, and S3 `Endpoint URL`.
+### Phase 3: Supabase Storage Provisioning (Zero Credit Card Required)
+- [ ] Sign up or log into [supabase.com](https://supabase.com) using your GitHub account (No card needed).
+- [ ] Create free project `paleco-crm-storage` in Singapore (`ap-southeast-1`).
+- [ ] Navigate to **Storage** $\to$ Click **New Bucket**.
+  - Bucket Name: `paleco-media`
+  - Set **Public bucket**: Toggle ON.
+- [ ] Navigate to **Project Settings** (gear icon) $\to$ **Storage** $\to$ **S3 Access Keys**.
+- [ ] Click **New access key** (or **Generate Access Key**).
+- [ ] Copy and securely save:
+  - `Access Key ID`
+  - `Secret Access Key`
+  - `Endpoint URL`: `https://<PROJECT_REF>.supabase.co/storage/v1/s3`
+  - `Public Storage Base URL`: `https://<PROJECT_REF>.supabase.co/storage/v1/object/public/paleco-media`
 
 ### Phase 4: Pusher Channels Real-Time Gateway Setup
 - [ ] Create free app `paleco-crm` in Singapore cluster (`ap1`).
@@ -295,10 +311,10 @@ Perform this live test sequence to verify all platforms are cooperating:
    - View assigned ticket, tap **Start Work**.
    - Capture canvas signature and upload accomplishment photo.
    - Tap **Submit Accomplishment**.
-5. **Cloudflare R2 Storage Verification:**
+5. **Supabase Storage Verification:**
    - Open CWD or Admin ticket detail view on web.
    - Inspect the uploaded accomplishment report.
-   - Right-click image and verify URL points to Cloudflare R2 (`https://pub-xxxxxx.r2.dev/...`).
+   - Right-click image and verify URL points to Supabase public storage (`https://<project-ref>.supabase.co/storage/v1/object/public/paleco-media/...`).
    - Confirm photo and signature render cleanly.
 6. **Supervisor Verification & Closure:**
    - On mobile app as `mycka`, review submitted proof and tap **Approve & Close**.
@@ -319,7 +335,8 @@ Use when testing is paused until the next evaluation session:
 Use when the capstone is finished and grades are recorded:
 1. **Render:** Settings $\to$ Danger Zone $\to$ **Delete Web Service**.
 2. **TiDB Cloud:** Cluster overview $\to$ `...` $\to$ **Delete Cluster**.
-3. **Cloudflare R2:** Bucket settings $\to$ **Delete Bucket**; revoke API token.
+3. **Supabase Storage:** Project Settings $\to$ General $\to$ **Delete Project**; or Storage $\to$ **Delete Bucket**.
 4. **Pusher:** App settings $\to$ **Delete App**.
 5. **UptimeRobot:** Monitor settings $\to$ **Delete Monitor**.
 *Leaves zero residual accounts, tokens, or cloud footprint.*
+
