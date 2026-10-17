@@ -3,9 +3,25 @@ import Pusher from 'pusher-js';
 
 window.Pusher = Pusher;
 
-const reverbKey = import.meta.env.VITE_REVERB_APP_KEY;
+// Determine runtime Pusher or Reverb configuration
+const pusherKey = window.PUSHER_CONFIG?.key || import.meta.env.VITE_PUSHER_APP_KEY;
+const pusherCluster = window.PUSHER_CONFIG?.cluster || import.meta.env.VITE_PUSHER_APP_CLUSTER || 'ap1';
+const reverbKey = window.REVERB_CONFIG?.key || import.meta.env.VITE_REVERB_APP_KEY;
 
-if (reverbKey) {
+if (pusherKey) {
+    try {
+        window.Echo = new Echo({
+            broadcaster: 'pusher',
+            key: pusherKey,
+            cluster: pusherCluster,
+            forceTLS: true,
+            authEndpoint: '/broadcasting/auth',
+        });
+        console.info(`[Echo] Real-time broadcasting connected via Pusher Channels (cluster: ${pusherCluster}).`);
+    } catch (error) {
+        console.warn('[Echo] Pusher initialization error:', error);
+    }
+} else if (reverbKey) {
     try {
         window.Echo = new Echo({
             broadcaster: 'reverb',
@@ -16,10 +32,11 @@ if (reverbKey) {
             forceTLS: (import.meta.env.VITE_REVERB_SCHEME ?? 'https') === 'https',
             enabledTransports: ['ws', 'wss'],
         });
+        console.info('[Echo] Real-time broadcasting connected via Laravel Reverb.');
     } catch (error) {
-        console.warn('Laravel Echo / Reverb initialization error:', error);
+        console.warn('[Echo] Reverb initialization error:', error);
     }
 } else {
-    console.info('VITE_REVERB_APP_KEY is not defined; Echo real-time broadcasting is inactive.');
+    console.info('[Echo] Neither Pusher nor Reverb credentials configured; Echo real-time broadcasting is inactive.');
 }
 

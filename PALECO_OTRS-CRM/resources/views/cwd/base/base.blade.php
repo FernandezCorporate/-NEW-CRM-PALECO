@@ -6,6 +6,14 @@
     <title>@yield('title', 'Dashboard') | PALECO CWD</title>
     <link rel="icon" type="image/png" href="{{ asset('images/paleco-logo.png') }}">
     <link rel="apple-touch-icon" href="{{ asset('images/paleco-logo.png') }}">
+    @if(config('broadcasting.default') === 'pusher')
+        <script>
+            window.PUSHER_CONFIG = {
+                key: '{{ config('broadcasting.connections.pusher.key') }}',
+                cluster: '{{ config('broadcasting.connections.pusher.options.cluster') }}',
+            };
+        </script>
+    @endif
     
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @livewireStyles
