@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Policies\ActivityPolicy;
 use Illuminate\Auth\Access\Response;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 use Spatie\Activitylog\Contracts\Activity as ActivityContract;
 use Spatie\Activitylog\Facades\Activity;
@@ -31,6 +32,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        if (app()->environment('production') || str_starts_with((string) config('app.url'), 'https://')) {
+            URL::forceScheme('https');
+        }
+
         // --- WEB RBAC GATES ---
 
         Gate::define('access-admin', function (User $user) {
