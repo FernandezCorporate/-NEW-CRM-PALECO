@@ -3,6 +3,10 @@ set -e
 
 echo "=== PALECO OTRS-CRM Container Initialization ==="
 
+# Discover packages with runtime environment
+echo "Discovering Laravel packages..."
+php artisan package:discover --ansi
+
 # Execute database migrations
 echo "Executing database migrations against TiDB Cloud..."
 php artisan migrate --force
@@ -16,3 +20,4 @@ php artisan view:cache
 # Start Apache in the foreground
 echo "Starting Apache web server on port ${PORT:-80}..."
 exec apache2-foreground
+

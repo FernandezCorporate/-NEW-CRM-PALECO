@@ -45,8 +45,8 @@ COPY . .
 # Copy compiled frontend assets from Stage 1
 COPY --from=frontend-builder /app/public/build ./public/build
 
-# Complete composer optimization
-RUN composer dump-autoload --optimize --no-dev
+# Complete composer optimization without running artisan scripts during build
+RUN composer dump-autoload --no-scripts --optimize --no-dev
 
 # Set correct storage & cache directory permissions
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache \
@@ -64,3 +64,4 @@ RUN sed -i 's/Listen 80/Listen ${PORT:-80}/' /etc/apache2/ports.conf \
 EXPOSE 80
 
 ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
+
