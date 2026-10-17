@@ -44,9 +44,63 @@ class WebDashboardService
             'badge_classes' => $status->badgeClasses(),
         ])->values()->all();
 
-        $totalTickets = max(1, collect($statuses)->sum('total'));
-        $statusesWithWidth = collect($statuses)->map(function ($status) use ($totalTickets) {
-            $status['width_percent'] = round(($status['total'] / $totalTickets) * 100, 2);
+        $actualTotal = collect($statuses)->sum('total');
+        $totalTickets = max(1, $actualTotal);
+
+        $accumulatedPercent = 0.0;
+        $statusesWithGeometry = collect($statuses)->map(function ($status) use (&$accumulatedPercent, $totalTickets, $actualTotal) {
+            $slicePercent = ($status['total'] / $totalTickets) * 100;
+            $status['width_percent'] = round($slicePercent, 1);
+            $status['filter_url'] = route('cwd.tickets', ['status' => $status['key']]);
+
+            if ($actualTotal === 0 || $status['total'] === 0) {
+                $status['path_d'] = '';
+                $status['start_percent'] = 0;
+                $status['end_percent'] = 0;
+
+                return $status;
+            }
+
+            $startPercent = $accumulatedPercent;
+            $endPercent = $startPercent + $slicePercent;
+            $accumulatedPercent = $endPercent;
+
+            $status['start_percent'] = round($startPercent, 2);
+            $status['end_percent'] = round($endPercent, 2);
+
+            $cx = 100;
+            $cy = 100;
+            $outerR = 86;
+            $innerR = 50;
+
+            if ($slicePercent >= 99.99) {
+                $status['path_d'] = sprintf(
+                    'M %s %s A %s %s 0 1 1 %s %s A %s %s 0 1 1 %s %s M %s %s A %s %s 0 1 0 %s %s A %s %s 0 1 0 %s %s Z',
+                    $cx, $cy - $outerR, $outerR, $outerR, $cx, $cy + $outerR, $outerR, $outerR, $cx, $cy - $outerR,
+                    $cx, $cy - $innerR, $innerR, $innerR, $cx, $cy + $innerR, $innerR, $innerR, $cx, $cy - $innerR
+                );
+            } else {
+                $startAngle = ($startPercent / 100) * 2 * M_PI;
+                $endAngle = ($endPercent / 100) * 2 * M_PI;
+
+                $x1 = round($cx + $outerR * sin($startAngle), 3);
+                $y1 = round($cy - $outerR * cos($startAngle), 3);
+                $x2 = round($cx + $outerR * sin($endAngle), 3);
+                $y2 = round($cy - $outerR * cos($endAngle), 3);
+
+                $x3 = round($cx + $innerR * sin($endAngle), 3);
+                $y3 = round($cy - $innerR * cos($endAngle), 3);
+                $x4 = round($cx + $innerR * sin($startAngle), 3);
+                $y4 = round($cy - $innerR * cos($startAngle), 3);
+
+                $largeArc = ($endAngle - $startAngle) > M_PI ? 1 : 0;
+
+                $status['path_d'] = sprintf(
+                    'M %s %s A %s %s 0 %d 1 %s %s L %s %s A %s %s 0 %d 0 %s %s Z',
+                    $x1, $y1, $outerR, $outerR, $largeArc, $x2, $y2,
+                    $x3, $y3, $innerR, $innerR, $largeArc, $x4, $y4
+                );
+            }
 
             return $status;
         })->all();
@@ -125,7 +179,7 @@ class WebDashboardService
         return [
             'operations' => $operations,
             'total' => collect($statuses)->sum('total'),
-            'statuses' => $statusesWithWidth,
+            'statuses' => $statusesWithGeometry,
             'trend' => $trendWithHeight,
             'trend_sum' => $trendSum,
             'trend_max' => $trendMax,
@@ -146,7 +200,9 @@ class WebDashboardService
             ->groupBy('department_id')->get();
         $departments = Department::withTrashed()->whereIn('id', $departmentCounts->pluck('department_id')->filter())
             ->get()->keyBy('id');
-        $workload = $departmentCounts->map(function ($row) use ($departments) {
+        $ticketsRoute = (auth()->check() && auth()->user()?->role?->slug_identifier === 'admin') ? 'admin.tickets' : 'cwd.tickets';
+
+        $workload = $departmentCounts->map(function ($row) use ($departments, $ticketsRoute) {
             $department = $departments->get($row->department_id);
 
             return [
@@ -154,6 +210,10 @@ class WebDashboardService
                     ? $department->dept_name.($department->trashed() ? ' (archived)' : '')
                     : 'No department',
                 'total' => (int) $row->total,
+                'url' => route($ticketsRoute, [
+                    'department' => $row->department_id ?? 'unassigned',
+                    'status' => 'all',
+                ]),
             ];
         })->sortByDesc('total')->values();
 
@@ -167,9 +227,21 @@ class WebDashboardService
             'pending_endorsements' => TicketEndorsement::query()->where('status', 'pending')->whereHas('ticket')->count(),
             'pending_reports' => TicketAccomplishment::query()->where('status', 'pending')->whereHas('ticket')->count(),
             'aging' => [
-                ['label' => 'Less than 24 hours', 'total' => (clone $active)->where('created_at', '>', $now->copy()->subDay())->count()],
-                ['label' => '1 to under 7 days', 'total' => (clone $active)->where('created_at', '<=', $now->copy()->subDay())->where('created_at', '>', $now->copy()->subDays(7))->count()],
-                ['label' => '7 days or more', 'total' => (clone $active)->where('created_at', '<=', $now->copy()->subDays(7))->count()],
+                [
+                    'label' => 'Less than 24 hours',
+                    'total' => (clone $active)->where('created_at', '>', $now->copy()->subDay())->count(),
+                    'url' => route($ticketsRoute, ['aging' => 'under_24h', 'status' => 'all']),
+                ],
+                [
+                    'label' => '1 to under 7 days',
+                    'total' => (clone $active)->where('created_at', '<=', $now->copy()->subDay())->where('created_at', '>', $now->copy()->subDays(7))->count(),
+                    'url' => route($ticketsRoute, ['aging' => '1_to_7_days', 'status' => 'all']),
+                ],
+                [
+                    'label' => '7 days or more',
+                    'total' => (clone $active)->where('created_at', '<=', $now->copy()->subDays(7))->count(),
+                    'url' => route($ticketsRoute, ['aging' => '7_days_plus', 'status' => 'all']),
+                ],
             ],
             'departments' => $workload->take(6)->all(),
             'other_departments' => $workload->skip(6)->sum('total'),

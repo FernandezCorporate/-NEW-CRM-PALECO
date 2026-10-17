@@ -22,7 +22,7 @@
     <div class="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4 mb-6">
         
         <search class="filter-toolbar w-full xl:w-auto" aria-label="Team search and filters">
-            <form action="{{ route('admin.teams') }}" method="GET" class="flex flex-col md:flex-row flex-wrap gap-4 w-full xl:w-auto">
+            <form action="{{ route('admin.teams') }}" method="GET" class="flex flex-col md:flex-row flex-wrap gap-4 items-end w-full xl:w-auto">
                 
                 <!-- Search -->
                 <div class="flex items-center gap-2">
@@ -37,33 +37,42 @@
                 </div>
 
                 <!-- Filters & Sort -->
-                <div class="flex items-center gap-2 flex-wrap">
+                <div class="flex items-end gap-3 flex-wrap">
                     
                     <!-- Status Filter (Active/Archived) -->
-                    <select name="status" class="ts-filter-dropdown" aria-label="Filter active or archived teams">
-                        <option value="active" {{ request('status') !== 'archived' ? 'selected' : '' }}>Active Teams</option>
-                        <option value="archived" {{ request('status') === 'archived' ? 'selected' : '' }}>Archived Teams</option>
-                    </select>
-
-                    <!-- Department Filter -->
-                    <div class="w-56 text-sm"> 
-                        <select name="filter" class="ts-filter-dropdown" aria-label="Filter by department">
-                            <option value="all" {{ request('filter') === 'all' || empty(request('filter')) ? 'selected' : '' }}>All Departments</option>
-                            @foreach($departments as $id => $name)
-                                <option value="{{ $id }}" {{ request('filter') == $id ? 'selected' : '' }}>{{ $name }}</option>
-                            @endforeach
+                    <div class="flex flex-col gap-1.5">
+                        <label for="team-filter-status" class="text-xs font-semibold text-slate-600">Status</label>
+                        <select id="team-filter-status" name="status" class="ts-filter-dropdown" aria-label="Filter active or archived teams">
+                            <option value="active" {{ request('status') !== 'archived' ? 'selected' : '' }}>Active Teams</option>
+                            <option value="archived" {{ request('status') === 'archived' ? 'selected' : '' }}>Archived Teams</option>
                         </select>
                     </div>
 
+                    <!-- Department Filter -->
+                    <div class="flex flex-col gap-1.5">
+                        <label for="team-filter-dept" class="text-xs font-semibold text-slate-600">Department</label>
+                        <div class="w-56 text-sm"> 
+                            <select id="team-filter-dept" name="filter" class="ts-filter-dropdown" aria-label="Filter by department">
+                                <option value="all" {{ request('filter') === 'all' || empty(request('filter')) ? 'selected' : '' }}>All Departments</option>
+                                @foreach($departments as $id => $name)
+                                    <option value="{{ $id }}" {{ request('filter') == $id ? 'selected' : '' }}>{{ $name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+
                     <!-- Sort Dropdown -->
-                    <select name="sort" class="ts-filter-dropdown" aria-label="Sort teams">
-                        <option value="newest" {{ request('sort') === 'newest' ? 'selected' : '' }}>Sort by Newest</option>
-                        <option value="oldest" {{ request('sort') === 'oldest' ? 'selected' : '' }}>Sort by Oldest</option>
-                        <option value="team_nameASC" {{ request('sort') === 'team_nameASC' ? 'selected' : '' }}>Name (A-Z)</option>
-                        <option value="team_nameDESC" {{ request('sort') === 'team_nameDESC' ? 'selected' : '' }}>Name (Z-A)</option>
-                        <option value="shift_startASC" {{ request('sort') === 'shift_startASC' ? 'selected' : '' }}>Shift Start (Earliest)</option>
-                        <option value="shift_startDESC" {{ request('sort') === 'shift_startDESC' ? 'selected' : '' }}>Shift Start (Latest)</option>
-                    </select>
+                    <div class="flex flex-col gap-1.5">
+                        <label for="team-filter-sort" class="text-xs font-semibold text-slate-600">Sort</label>
+                        <select id="team-filter-sort" name="sort" class="ts-filter-dropdown" aria-label="Sort teams">
+                            <option value="newest" {{ request('sort') === 'newest' ? 'selected' : '' }}>Sort by Newest</option>
+                            <option value="oldest" {{ request('sort') === 'oldest' ? 'selected' : '' }}>Sort by Oldest</option>
+                            <option value="team_nameASC" {{ request('sort') === 'team_nameASC' ? 'selected' : '' }}>Name (A-Z)</option>
+                            <option value="team_nameDESC" {{ request('sort') === 'team_nameDESC' ? 'selected' : '' }}>Name (Z-A)</option>
+                            <option value="shift_startASC" {{ request('sort') === 'shift_startASC' ? 'selected' : '' }}>Shift Start (Earliest)</option>
+                            <option value="shift_startDESC" {{ request('sort') === 'shift_startDESC' ? 'selected' : '' }}>Shift Start (Latest)</option>
+                        </select>
+                    </div>
                     
                     <noscript><x-btn type="submit" variant="secondary" size="md">Apply</x-btn></noscript>
                     

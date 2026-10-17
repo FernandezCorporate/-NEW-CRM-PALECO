@@ -21,7 +21,7 @@
     <!-- Controls Row -->
     <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-6">
         <search class="filter-toolbar w-full lg:w-auto" aria-label="Ticket category search and filters">
-            <form action="{{ route('admin.ticketCategories') }}" method="GET" class="flex flex-col md:flex-row flex-wrap gap-4 w-full lg:w-auto">
+            <form action="{{ route('admin.ticketCategories') }}" method="GET" class="flex flex-col md:flex-row flex-wrap gap-4 items-end w-full lg:w-auto">
                 <!-- Search -->
                 <div class="flex items-center gap-2">
                     <input type="text" name="search" placeholder="Search categories..." value="{{ request('search') }}" class="form-input w-full md:w-64" aria-label="Search categories by name or description">
@@ -32,18 +32,24 @@
                 </div>
 
                 <!-- Filter and Sort Group -->
-                <div class="flex items-center gap-2">
-                    <select name="filter" class="ts-filter-dropdown" aria-label="Filter active or archived categories">
-                        <option value="active" {{ request('filter') === 'active' ? 'selected' : '' }}>Active Categories</option>
-                        <option value="archived" {{ request('filter') === 'archived' ? 'selected' : '' }}>Archived Categories</option>
-                    </select>
+                <div class="flex items-end gap-3 flex-wrap">
+                    <div class="flex flex-col gap-1.5">
+                        <label for="category-filter-status" class="text-xs font-semibold text-slate-600">Status</label>
+                        <select id="category-filter-status" name="filter" class="ts-filter-dropdown" aria-label="Filter active or archived categories">
+                            <option value="active" {{ request('filter') === 'active' ? 'selected' : '' }}>Active Categories</option>
+                            <option value="archived" {{ request('filter') === 'archived' ? 'selected' : '' }}>Archived Categories</option>
+                        </select>
+                    </div>
 
-                    <select name="sort" class="ts-filter-dropdown" aria-label="Sort categories">
-                        <option value="newest" {{ request('sort') === 'newest' ? 'selected' : '' }}>Sort by Newest</option>
-                        <option value="oldest" {{ request('sort') === 'oldest' ? 'selected' : '' }}>Sort by Oldest</option>
-                        <option value="category_nameASC" {{ request('sort') === 'category_nameASC' ? 'selected' : '' }}>Name (A-Z)</option>
-                        <option value="category_nameDESC" {{ request('sort') === 'category_nameDESC' ? 'selected' : '' }}>Name (Z-A)</option>
-                    </select>
+                    <div class="flex flex-col gap-1.5">
+                        <label for="category-filter-sort" class="text-xs font-semibold text-slate-600">Sort</label>
+                        <select id="category-filter-sort" name="sort" class="ts-filter-dropdown" aria-label="Sort categories">
+                            <option value="newest" {{ request('sort') === 'newest' ? 'selected' : '' }}>Sort by Newest</option>
+                            <option value="oldest" {{ request('sort') === 'oldest' ? 'selected' : '' }}>Sort by Oldest</option>
+                            <option value="category_nameASC" {{ request('sort') === 'category_nameASC' ? 'selected' : '' }}>Name (A-Z)</option>
+                            <option value="category_nameDESC" {{ request('sort') === 'category_nameDESC' ? 'selected' : '' }}>Name (Z-A)</option>
+                        </select>
+                    </div>
                     <noscript><x-btn type="submit" variant="secondary" size="md">Apply</x-btn></noscript>
                 </div>
             </form>

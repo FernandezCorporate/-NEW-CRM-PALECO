@@ -26,3 +26,4 @@ import './tomselect-filters';
 import './smart-navigation';
 import './form-validation-scroll';
 import './form-submit-lock';
+import './dashboard-pie-chart';

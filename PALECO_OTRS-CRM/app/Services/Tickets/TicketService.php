@@ -49,6 +49,7 @@ class TicketService
             ->filterByCategory($request->filter)
             ->filterByDepartment($request->department)
             ->filterByStatus($request->status === 'all' ? null : $request->status)
+            ->filterByAging($request->aging, $request->status)
             ->sort($request->sort)
             ->paginate(10);
 

@@ -144,8 +144,9 @@
                     <!-- Container for dynamic rows -->
                     <div id="team-members-container" class="space-y-3">
                         @foreach($currentMembers as $index => $member)
-                            <div class="member-row flex flex-col md:flex-row gap-3 items-start md:items-center bg-slate-50/80 p-3.5 border border-slate-200 rounded-xl shadow-2xs">
+                            <div class="member-row flex flex-col md:flex-row gap-3 items-start md:items-end bg-slate-50/80 p-3.5 border border-slate-200 rounded-xl shadow-2xs">
                                 <div class="w-full md:flex-1">
+                                    <label class="block text-xs font-semibold text-slate-600 mb-1">Personnel</label>
                                     <select name="members[{{ $index }}][user_id]" class="tom-select-dynamic" required autocomplete="off" placeholder="Select personnel...">
                                         <option value=""></option>
                                         @foreach ($personnel as $person)
@@ -155,6 +156,7 @@
                                 </div>
 
                                 <div class="w-full md:w-56 shrink-0">
+                                    <label class="block text-xs font-semibold text-slate-600 mb-1">Team Role</label>
                                     <select name="members[{{ $index }}][team_role_id]" required 
                                         class="tom-select-sync" data-autosubmit="false" autocomplete="off" placeholder="Select Role...">
                                         <option value=""></option>
@@ -166,7 +168,7 @@
                                     </select>
                                 </div>
 
-                                <button type="button" class="remove-member-btn shrink-0 w-full md:w-auto inline-flex justify-center p-2.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors" title="Remove member">
+                                <button type="button" class="remove-member-btn shrink-0 w-full md:w-auto inline-flex items-center justify-center p-2.5 h-[38px] text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors" title="Remove member">
                                     <x-icons.trash class="w-4 h-4" />
                                 </button>
                             </div>
@@ -181,8 +183,9 @@
 
                 <!-- HTML Template for dynamically appended rows -->
                 <template id="member-row-template">
-                    <div class="member-row flex flex-col md:flex-row gap-3 items-start md:items-center bg-slate-50/80 p-3.5 border border-slate-200 rounded-xl shadow-2xs">
+                    <div class="member-row flex flex-col md:flex-row gap-3 items-start md:items-end bg-slate-50/80 p-3.5 border border-slate-200 rounded-xl shadow-2xs">
                         <div class="w-full md:flex-1">
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">Personnel</label>
                             <select name="members[__INDEX__][user_id]" class="tom-select-dynamic" required autocomplete="off" placeholder="Select personnel...">
                                 <option value=""></option>
                                 @foreach ($personnel as $person)
@@ -192,6 +195,7 @@
                         </div>
 
                         <div class="w-full md:w-56 shrink-0">
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">Team Role</label>
                             <select name="members[__INDEX__][team_role_id]" required 
                                 class="tom-select-sync" data-autosubmit="false" autocomplete="off" placeholder="Select Role...">
                                 <option value=""></option>
@@ -201,7 +205,7 @@
                             </select>
                         </div>
 
-                        <button type="button" class="remove-member-btn shrink-0 w-full md:w-auto inline-flex justify-center p-2.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors" title="Remove member">
+                        <button type="button" class="remove-member-btn shrink-0 w-full md:w-auto inline-flex items-center justify-center p-2.5 h-[38px] text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors" title="Remove member">
                             <x-icons.trash class="w-4 h-4" />
                         </button>
                     </div>

@@ -14,42 +14,64 @@
 
     <!-- Search & Filter Controls -->
     <search class="filter-toolbar mb-6" aria-label="Ticket queue search and filters">
-        <div class="flex flex-col lg:flex-row gap-4 items-center w-full">
+        <div class="flex flex-col lg:flex-row gap-4 items-end w-full">
             
             <!-- Wide Search Bar -->
-            <div class="relative w-full flex-grow">
-                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <x-icons.search class="h-5 w-5 text-slate-400" />
+            <div class="relative w-full flex-grow flex flex-col gap-1.5">
+                <label for="ticket-search-input" class="text-xs font-semibold text-slate-600">Search</label>
+                <div class="relative w-full">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <x-icons.search class="h-5 w-5 text-slate-400" />
+                    </div>
+                    <input id="ticket-search-input" type="text" wire:model.live.debounce.300ms="search" placeholder="Search tickets by ID, location, or description..." class="form-input w-full pl-10 pr-3 min-h-[42px]" aria-label="Search tickets by ID, location, or description">
                 </div>
-                <input type="text" wire:model.live.debounce.300ms="search" placeholder="Search tickets by ID, location, or description..." class="form-input w-full pl-10 pr-3" aria-label="Search tickets by ID, location, or description">
             </div>
 
             <!-- Filter Dropdowns -->
-            <div class="flex items-center gap-3 w-full lg:w-auto shrink-0 flex-wrap">
-                <select wire:model.live="filter" class="form-input bg-white text-slate-700 min-h-[42px] w-auto" aria-label="Filter by category">
-                    <option value="all">All Categories</option>
-                    @foreach($categories as $category)
-                        <option value="{{ $category->id }}">{{ $category->category_name }}</option>
-                    @endforeach
-                    <option value="other">Custom/Other Categories</option>
-                </select>
+            <div class="flex items-end gap-3 w-full lg:w-auto shrink-0 flex-wrap">
+                <div class="flex flex-col gap-1.5">
+                    <label for="ticket-filter-category" class="text-xs font-semibold text-slate-600">Category</label>
+                    <select id="ticket-filter-category" wire:model.live="filter" class="form-input bg-white text-slate-700 min-h-[42px] w-auto" aria-label="Filter by category">
+                        <option value="all">All Categories</option>
+                        @foreach($categories as $category)
+                            <option value="{{ $category->id }}">{{ $category->category_name }}</option>
+                        @endforeach
+                        <option value="other">Custom/Other Categories</option>
+                    </select>
+                </div>
 
-                <select wire:model.live="department" class="form-input bg-white text-slate-700 min-h-[42px] w-auto" aria-label="Filter by assigned department">
-                    <option value="all">All Departments</option>
-                    @foreach($departments as $dept)
-                        <option value="{{ $dept->id }}">{{ $dept->dept_name }}</option>
-                    @endforeach
-                    <option value="unassigned">Unassigned</option>
-                </select>
+                <div class="flex flex-col gap-1.5">
+                    <label for="ticket-filter-department" class="text-xs font-semibold text-slate-600">Department</label>
+                    <select id="ticket-filter-department" wire:model.live="department" class="form-input bg-white text-slate-700 min-h-[42px] w-auto" aria-label="Filter by assigned department">
+                        <option value="all">All Departments</option>
+                        @foreach($departments as $dept)
+                            <option value="{{ $dept->id }}">{{ $dept->dept_name }}</option>
+                        @endforeach
+                        <option value="unassigned">Unassigned</option>
+                    </select>
+                </div>
 
-                <select wire:model.live="sort" class="form-input bg-white text-slate-700 min-h-[42px] w-auto" aria-label="Sort tickets">
-                    <option value="newest">Newest First</option>
-                    <option value="oldest">Oldest First</option>
-                    <option value="status">Sort by Status</option>
-                </select>
+                <div class="flex flex-col gap-1.5">
+                    <label for="ticket-filter-aging" class="text-xs font-semibold text-slate-600">Age</label>
+                    <select id="ticket-filter-aging" wire:model.live="aging" class="form-input bg-white text-slate-700 min-h-[42px] w-auto {{ $aging !== 'all' ? 'border-emerald-500 ring-1 ring-emerald-500 font-medium' : '' }}" aria-label="Filter by ticket age">
+                        <option value="all">All Ticket Ages</option>
+                        <option value="under_24h">Unresolved: &lt; 24 hours</option>
+                        <option value="1_to_7_days">Unresolved: 1 to 7 days</option>
+                        <option value="7_days_plus">Unresolved: 7+ days</option>
+                    </select>
+                </div>
+
+                <div class="flex flex-col gap-1.5">
+                    <label for="ticket-filter-sort" class="text-xs font-semibold text-slate-600">Sort</label>
+                    <select id="ticket-filter-sort" wire:model.live="sort" class="form-input bg-white text-slate-700 min-h-[42px] w-auto" aria-label="Sort tickets">
+                        <option value="newest">Newest First</option>
+                        <option value="oldest">Oldest First</option>
+                        <option value="status">Sort by Status</option>
+                    </select>
+                </div>
 
                 <!-- Loading Indicator -->
-                <div wire:loading class="btn btn-secondary btn-md opacity-75 cursor-wait">
+                <div wire:loading class="btn btn-secondary btn-md opacity-75 cursor-wait min-h-[42px] flex items-center">
                     Updating...
                 </div>
             </div>
@@ -62,7 +84,15 @@
 
         <div class="px-6 py-5 border-b border-slate-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
             <div>
-                <h2 class="text-lg font-bold text-slate-900">Ticket queue <span class="record-count ml-2">{{ number_format($tickets->total()) }}</span></h2>
+                <h2 class="text-lg font-bold text-slate-900">
+                    Ticket queue <span class="record-count ml-2">{{ number_format($tickets->total()) }}</span>
+                    @if($aging !== 'all')
+                        <span class="inline-flex items-center gap-1 ml-2 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                            <span>Age: {{ $aging === 'under_24h' ? '< 24 hours' : ($aging === '1_to_7_days' ? '1–7 days' : '7+ days') }}</span>
+                            <button type="button" wire:click="$set('aging', 'all')" class="hover:text-emerald-900 ml-0.5 font-bold cursor-pointer" title="Clear age filter">&times;</button>
+                        </span>
+                    @endif
+                </h2>
                 <p class="text-xs text-slate-500 mt-0.5">Service requests matching your current filters</p>
             </div>
         </div>

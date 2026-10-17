@@ -49,7 +49,15 @@
                         </span>
                     @endif
                 </div>
-                <p class="text-sm text-slate-600 mt-1 font-medium leading-relaxed">{{ $ticket->subject }}</p>
+                <div class="flex items-center gap-3 mt-1.5 flex-wrap">
+                    <p class="text-sm text-slate-600 font-medium leading-relaxed">{{ $ticket->subject }}</p>
+                    @if($agingTelemetry = $ticket->getAgingTelemetry())
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold border {{ $agingTelemetry['badgeClasses'] }} shadow-2xs" title="Time unresolved since creation: {{ $agingTelemetry['duration'] }}">
+                            <span class="w-1.5 h-1.5 rounded-full {{ $agingTelemetry['dotClass'] }} animate-pulse"></span>
+                            <span>{{ $agingTelemetry['label'] }}</span>
+                        </span>
+                    @endif
+                </div>
         </div>
 
         <!-- Informational Metadata Pills -->

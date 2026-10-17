@@ -37,13 +37,33 @@ class TicketEndorsementService
         $endorsements = TicketEndorsement::with(['ticket', 'creator', 'suggestedDepartment'])
             ->search($request->search)
             ->filterByStatus($request->status)
+            ->latest('created_at')
             ->paginate(10)
             ->withQueryString();
 
+        $rawCounts = TicketEndorsement::query()
+            ->search($request->search)
+            ->selectRaw('status, count(*) as total')
+            ->groupBy('status')
+            ->pluck('total', 'status')
+            ->toArray();
+
+        $statusCounts = [];
+        foreach ($rawCounts as $st => $cnt) {
+            $key = $st instanceof EndorsementStatus ? $st->value : (string) $st;
+            $statusCounts[$key] = (int) $cnt;
+        }
+
+        $totalCount = array_sum($statusCounts);
+
         $statusMetrics = [
-            'pending' => TicketEndorsement::query()->where('status', EndorsementStatus::PENDING)->count(),
-            'denied' => TicketEndorsement::query()->where('status', EndorsementStatus::REJECTED)->count(),
-            'endorsed' => TicketEndorsement::query()->where('status', EndorsementStatus::APPROVED)->count(),
+            'total' => $totalCount,
+            EndorsementStatus::PENDING->value => $statusCounts[EndorsementStatus::PENDING->value] ?? 0,
+            EndorsementStatus::APPROVED->value => $statusCounts[EndorsementStatus::APPROVED->value] ?? 0,
+            EndorsementStatus::REJECTED->value => $statusCounts[EndorsementStatus::REJECTED->value] ?? 0,
+            'pending' => $statusCounts[EndorsementStatus::PENDING->value] ?? 0,
+            'denied' => $statusCounts[EndorsementStatus::REJECTED->value] ?? 0,
+            'endorsed' => $statusCounts[EndorsementStatus::APPROVED->value] ?? 0,
         ];
 
         $statuses = EndorsementStatus::cases();

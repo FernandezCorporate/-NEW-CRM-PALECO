@@ -23,7 +23,7 @@
         
         <!-- Filter and Search Toolbar -->
         <search class="filter-toolbar w-full lg:w-auto" aria-label="Department search and filters">
-            <form action="{{ route('admin.departments') }}" method="GET" class="flex flex-col md:flex-row flex-wrap gap-4 w-full lg:w-auto">
+            <form action="{{ route('admin.departments') }}" method="GET" class="flex flex-col md:flex-row flex-wrap gap-4 items-end w-full lg:w-auto">
                 
                 <!-- Search -->
                 <div class="flex items-center gap-2">
@@ -38,20 +38,26 @@
                 </div>
 
                 <!-- Filter and Sort Group -->
-                <div class="flex items-center gap-2">
-                    <select name="filter" class="ts-filter-dropdown" aria-label="Filter active or archived departments">
-                        <option value="active" {{ request('filter') === 'active' ? 'selected' : '' }}>Active Departments</option>
-                        <option value="archived" {{ request('filter') === 'archived' ? 'selected' : '' }}>Archived Departments</option>
-                    </select>
+                <div class="flex items-end gap-3 flex-wrap">
+                    <div class="flex flex-col gap-1.5">
+                        <label for="dept-filter-status" class="text-xs font-semibold text-slate-600">Status</label>
+                        <select id="dept-filter-status" name="filter" class="ts-filter-dropdown" aria-label="Filter active or archived departments">
+                            <option value="active" {{ request('filter') === 'active' ? 'selected' : '' }}>Active Departments</option>
+                            <option value="archived" {{ request('filter') === 'archived' ? 'selected' : '' }}>Archived Departments</option>
+                        </select>
+                    </div>
 
-                    <select name="sort" class="ts-filter-dropdown" aria-label="Sort departments">
-                        <option value="newest" {{ request('sort') === 'newest' ? 'selected' : '' }}>Sort by Newest</option>
-                        <option value="oldest" {{ request('sort') === 'oldest' ? 'selected' : '' }}>Sort by Oldest</option>
-                        <option value="dept_nameASC" {{ request('sort') === 'dept_nameASC' ? 'selected' : '' }}>Name (A-Z)</option>
-                        <option value="dept_nameDESC" {{ request('sort') === 'dept_nameDESC' ? 'selected' : '' }}>Name (Z-A)</option>
-                        <option value="dept_descASC" {{ request('sort') === 'dept_descASC' ? 'selected' : '' }}>Description (A-Z)</option>
-                        <option value="dept_descDESC" {{ request('sort') === 'dept_descDESC' ? 'selected' : '' }}>Description (Z-A)</option>
-                    </select>
+                    <div class="flex flex-col gap-1.5">
+                        <label for="dept-filter-sort" class="text-xs font-semibold text-slate-600">Sort</label>
+                        <select id="dept-filter-sort" name="sort" class="ts-filter-dropdown" aria-label="Sort departments">
+                            <option value="newest" {{ request('sort') === 'newest' ? 'selected' : '' }}>Sort by Newest</option>
+                            <option value="oldest" {{ request('sort') === 'oldest' ? 'selected' : '' }}>Sort by Oldest</option>
+                            <option value="dept_nameASC" {{ request('sort') === 'dept_nameASC' ? 'selected' : '' }}>Name (A-Z)</option>
+                            <option value="dept_nameDESC" {{ request('sort') === 'dept_nameDESC' ? 'selected' : '' }}>Name (Z-A)</option>
+                            <option value="dept_descASC" {{ request('sort') === 'dept_descASC' ? 'selected' : '' }}>Description (A-Z)</option>
+                            <option value="dept_descDESC" {{ request('sort') === 'dept_descDESC' ? 'selected' : '' }}>Description (Z-A)</option>
+                        </select>
+                    </div>
                     <noscript><x-btn type="submit" variant="secondary" size="md">Apply</x-btn></noscript>
                 </div>
             </form>

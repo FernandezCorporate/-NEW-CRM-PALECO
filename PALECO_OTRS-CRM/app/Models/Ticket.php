@@ -365,6 +365,93 @@ class Ticket extends Model
     }
 
     /**
+     * Unified scope: Filter unresolved tickets by age (time since creation).
+     * Supports:
+     * - 'under_24h', 'less_than_24h': created within the last 24 hours
+     * - '1_to_7_days': created between 24 hours and 7 days ago
+     * - '7_days_plus', '7_days_or_more': created 7 days ago or more
+     * - 'all': no aging restriction
+     */
+    public function scopeFilterByAging(Builder $query, ?string $aging, ?string $currentStatus = null): Builder
+    {
+        if (empty($aging) || strtolower($aging) === 'all') {
+            return $query;
+        }
+
+        $now = now();
+
+        // If status is 'all' or empty, restrict to unresolved statuses (consistent with dashboard telemetry)
+        if (empty($currentStatus) || strtolower($currentStatus) === 'all') {
+            $query->whereIn('status', ['open', 'assigned', 'in_progress']);
+        }
+
+        return match ($aging) {
+            'under_24h', 'less_than_24h' => $query->where('created_at', '>', $now->copy()->subDay()),
+            '1_to_7_days' => $query->where('created_at', '<=', $now->copy()->subDay())
+                                  ->where('created_at', '>', $now->copy()->subDays(7)),
+            '7_days_plus', '7_days_or_more' => $query->where('created_at', '<=', $now->copy()->subDays(7)),
+            default => $query,
+        };
+    }
+
+    /**
+     * Resolves real-time aging telemetry and presentation for unresolved tickets.
+     */
+    public function getAgingTelemetry(): ?array
+    {
+        if (! in_array($this->status, [TicketStatus::OPEN, TicketStatus::ASSIGNED, TicketStatus::IN_PROGRESS])) {
+            return null;
+        }
+
+        $now = now();
+        $diffMinutes = (int) $this->created_at->diffInMinutes($now);
+        $diffHours = (int) $this->created_at->diffInHours($now);
+        $diffDays = (int) $this->created_at->diffInDays($now);
+
+        if ($this->created_at > $now->copy()->subDay()) {
+            $tone = 'green';
+            $badgeClasses = 'bg-emerald-50 text-emerald-700 border-emerald-200';
+            $dotClass = 'bg-emerald-500';
+            if ($diffHours < 1) {
+                $mins = max(1, $diffMinutes);
+                $duration = $mins . ' ' . Str::plural('minute', $mins);
+            } else {
+                $remMins = $diffMinutes % 60;
+                $duration = $diffHours . ' ' . Str::plural('hour', $diffHours);
+                if ($remMins > 0) {
+                    $duration .= ' ' . $remMins . ' ' . Str::plural('minute', $remMins);
+                }
+            }
+        } elseif ($this->created_at > $now->copy()->subDays(7)) {
+            $tone = 'yellow';
+            $badgeClasses = 'bg-amber-50 text-amber-700 border-amber-200';
+            $dotClass = 'bg-amber-500';
+            $remHours = $diffHours % 24;
+            $duration = $diffDays . ' ' . Str::plural('day', $diffDays);
+            if ($remHours > 0) {
+                $duration .= ' ' . $remHours . ' ' . Str::plural('hour', $remHours);
+            }
+        } else {
+            $tone = 'red';
+            $badgeClasses = 'bg-rose-50 text-rose-700 border-rose-200';
+            $dotClass = 'bg-rose-500';
+            $remHours = $diffHours % 24;
+            $duration = $diffDays . ' ' . Str::plural('day', $diffDays);
+            if ($remHours > 0) {
+                $duration .= ' ' . $remHours . ' ' . Str::plural('hour', $remHours);
+            }
+        }
+
+        return [
+            'tone' => $tone,
+            'badgeClasses' => $badgeClasses,
+            'dotClass' => $dotClass,
+            'duration' => $duration,
+            'label' => "Unresolved for {$duration}",
+        ];
+    }
+
+    /**
      * Unified scope: Sort tickets by created_at date, ticket number, or status.
      */
     public function scopeSort(Builder $query, ?string $sort): Builder

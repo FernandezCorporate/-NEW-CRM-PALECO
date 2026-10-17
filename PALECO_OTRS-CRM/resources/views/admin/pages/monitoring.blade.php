@@ -26,7 +26,7 @@
 
     <!-- Controls Row -->
     <search class="filter-toolbar mb-6" aria-label="Audit log search and filters">
-        <form action="{{ route('admin.monitoring.index') }}" method="GET" class="flex flex-col md:flex-row flex-wrap gap-4 w-full">
+        <form action="{{ route('admin.monitoring.index') }}" method="GET" class="flex flex-col md:flex-row flex-wrap gap-4 items-end w-full">
             
             <!-- Search -->
             <div class="flex items-center gap-2">
@@ -38,20 +38,26 @@
             </div>
 
             <!-- Category & Event Type Filters (Server-Provided) -->
-            <div class="flex items-center gap-3 ml-auto flex-wrap">
+            <div class="flex items-end gap-3 ml-auto flex-wrap">
                 <!-- Event Type Filter (CRUD vs Non-CRUD) -->
-                <select name="event_type" class="ts-filter-dropdown" aria-label="Filter by event type">
-                    @foreach($eventTypes as $value => $label)
-                        <option value="{{ $value }}" {{ request('event_type', 'all') === (string) $value ? 'selected' : '' }}>{{ $label }}</option>
-                    @endforeach
-                </select>
+                <div class="flex flex-col gap-1.5">
+                    <label for="monitoring-filter-event" class="text-xs font-semibold text-slate-600">Event</label>
+                    <select id="monitoring-filter-event" name="event_type" class="ts-filter-dropdown" aria-label="Filter by event type">
+                        @foreach($eventTypes as $value => $label)
+                            <option value="{{ $value }}" {{ request('event_type', 'all') === (string) $value ? 'selected' : '' }}>{{ $label }}</option>
+                        @endforeach
+                    </select>
+                </div>
 
                 <!-- Category Filter -->
-                <select name="category" class="ts-filter-dropdown" aria-label="Filter by category">
-                    @foreach($categories as $value => $label)
-                        <option value="{{ $value }}" {{ (request('category', 'all') === (string) $value || (in_array(request('category'), ['auth', 'login_success', 'login', 'authentication']) && $value === 'auth')) ? 'selected' : '' }}>{{ $label }}</option>
-                    @endforeach
-                </select>
+                <div class="flex flex-col gap-1.5">
+                    <label for="monitoring-filter-category" class="text-xs font-semibold text-slate-600">Category</label>
+                    <select id="monitoring-filter-category" name="category" class="ts-filter-dropdown" aria-label="Filter by category">
+                        @foreach($categories as $value => $label)
+                            <option value="{{ $value }}" {{ (request('category', 'all') === (string) $value || (in_array(request('category'), ['auth', 'login_success', 'login', 'authentication']) && $value === 'auth')) ? 'selected' : '' }}>{{ $label }}</option>
+                        @endforeach
+                    </select>
+                </div>
                 <noscript><x-btn type="submit" variant="secondary" size="md">Apply</x-btn></noscript>
             </div>
         </form>

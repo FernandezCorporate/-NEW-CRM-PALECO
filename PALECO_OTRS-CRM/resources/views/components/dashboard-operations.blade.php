@@ -37,15 +37,34 @@
                 <ul class="mt-5 space-y-4">
                     @forelse ($rows as $index => $row)
                         <li>
-                            <div class="mb-2 flex items-start justify-between gap-4 text-sm">
-                                <span class="min-w-0 break-words font-medium text-slate-700">{{ $row['label'] }}</span>
-                                <strong class="shrink-0 tabular-nums text-slate-900">
-                                    <data value="{{ $row['total'] }}">{{ number_format($row['total']) }}</data>
-                                </strong>
-                            </div>
-                            <div class="chart-row-track" aria-hidden="true">
-                                <div class="chart-row-fill {{ $id === 'ticket-age' ? ['bg-teal-500', 'bg-sky-600', 'bg-amber-500'][$index] : 'bg-emerald-600' }}" style="--chart-width: {{ ($row['total'] / $maximum) * 100 }}%; --bar-delay: {{ $index * 65 }}ms"></div>
-                            </div>
+                            @if (!empty($row['url']))
+                                <a href="{{ $row['url'] }}" class="group block rounded-lg p-2.5 -m-2.5 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500">
+                                    <div class="mb-2 flex items-start justify-between gap-4 text-sm">
+                                        <span class="min-w-0 break-words font-medium text-slate-700 group-hover:text-emerald-700 transition-colors flex items-center gap-1.5">
+                                            <span>{{ $row['label'] }}</span>
+                                            <svg class="w-3.5 h-3.5 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all text-emerald-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                                            </svg>
+                                        </span>
+                                        <strong class="shrink-0 tabular-nums text-slate-900 group-hover:text-emerald-800">
+                                            <data value="{{ $row['total'] }}">{{ number_format($row['total']) }}</data>
+                                        </strong>
+                                    </div>
+                                    <div class="chart-row-track" aria-hidden="true">
+                                        <div class="chart-row-fill {{ $id === 'ticket-age' ? ['bg-teal-500', 'bg-sky-600', 'bg-amber-500'][$index] : 'bg-emerald-600' }} group-hover:brightness-105 transition-all" style="--chart-width: {{ ($row['total'] / $maximum) * 100 }}%; --bar-delay: {{ $index * 65 }}ms"></div>
+                                    </div>
+                                </a>
+                            @else
+                                <div class="mb-2 flex items-start justify-between gap-4 text-sm">
+                                    <span class="min-w-0 break-words font-medium text-slate-700">{{ $row['label'] }}</span>
+                                    <strong class="shrink-0 tabular-nums text-slate-900">
+                                        <data value="{{ $row['total'] }}">{{ number_format($row['total']) }}</data>
+                                    </strong>
+                                </div>
+                                <div class="chart-row-track" aria-hidden="true">
+                                    <div class="chart-row-fill {{ $id === 'ticket-age' ? ['bg-teal-500', 'bg-sky-600', 'bg-amber-500'][$index] : 'bg-emerald-600' }}" style="--chart-width: {{ ($row['total'] / $maximum) * 100 }}%; --bar-delay: {{ $index * 65 }}ms"></div>
+                                </div>
+                            @endif
                         </li>
                     @empty
                         <li class="border-l-2 border-emerald-300 pl-4 text-sm text-slate-500">No unresolved tickets to distribute.</li>

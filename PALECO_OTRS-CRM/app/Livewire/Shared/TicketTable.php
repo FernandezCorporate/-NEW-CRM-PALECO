@@ -32,6 +32,9 @@ class TicketTable extends Component
     public string $status = 'all';
 
     #[Url]
+    public string $aging = 'all';
+
+    #[Url]
     public string $sort = 'newest';
 
     public function updatedSearch(): void
@@ -50,6 +53,11 @@ class TicketTable extends Component
     }
 
     public function updatedStatus(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatedAging(): void
     {
         $this->resetPage();
     }
@@ -84,6 +92,7 @@ class TicketTable extends Component
             ->search($this->search)
             ->filterByCategory($this->filter)
             ->filterByDepartment($this->department)
+            ->filterByAging($this->aging, $this->status)
             ->selectRaw('status, count(*) as total')
             ->groupBy('status')
             ->pluck('total', 'status')
@@ -96,6 +105,7 @@ class TicketTable extends Component
             ->filterByCategory($this->filter)
             ->filterByDepartment($this->department)
             ->filterByStatus($this->status === 'all' ? null : $this->status)
+            ->filterByAging($this->aging, $this->status)
             ->sort($this->sort)
             ->paginate(10);
 

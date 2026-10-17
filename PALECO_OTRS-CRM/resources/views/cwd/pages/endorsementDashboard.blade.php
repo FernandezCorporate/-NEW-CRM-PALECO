@@ -22,9 +22,15 @@
     </header>
 
     <nav class="record-tabs" aria-label="Filter endorsement requests">
-        <a href="{{ request()->fullUrlWithQuery(['status' => 'all', 'page' => null]) }}" @if(request('status', 'all') === 'all') aria-current="page" @endif>All requests</a>
+        <a href="{{ request()->fullUrlWithQuery(['status' => 'all', 'page' => null]) }}" @if(request('status', 'all') === 'all') aria-current="page" @endif>
+            All requests
+            <span>{{ number_format($statusMetrics['total'] ?? 0) }}</span>
+        </a>
         @foreach($statuses as $statusEnum)
-            <a href="{{ request()->fullUrlWithQuery(['status' => $statusEnum->value, 'page' => null]) }}" @if(request('status') === $statusEnum->value) aria-current="page" @endif>{{ $statusEnum->label() }}</a>
+            <a href="{{ request()->fullUrlWithQuery(['status' => $statusEnum->value, 'page' => null]) }}" @if(request('status') === $statusEnum->value) aria-current="page" @endif>
+                {{ $statusEnum->label() }}
+                <span>{{ number_format($statusMetrics[$statusEnum->value] ?? 0) }}</span>
+            </a>
         @endforeach
     </nav>
 

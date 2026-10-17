@@ -31,7 +31,7 @@
 
     <!-- Filter & Search Toolbar -->
     <search class="filter-toolbar mb-6" aria-label="Search and filter users">
-        <form action="{{ route('admin.users') }}" method="GET" class="flex flex-col md:flex-row flex-wrap gap-4 w-full lg:w-auto">
+        <form action="{{ route('admin.users') }}" method="GET" class="flex flex-col md:flex-row flex-wrap gap-4 items-end w-full lg:w-auto">
             
             <!-- Search Input -->
             <div class="flex items-center gap-2">
@@ -43,17 +43,20 @@
             </div>
 
             <!-- Role and Sort Controls -->
-            <div class="flex items-center gap-2">
+            <div class="flex items-end gap-2">
                 <input type="hidden" name="filter" value="{{ request('filter', 'all') }}">
 
-                <select name="sort" class="ts-filter-dropdown" aria-label="Sort users">
-                    <option value="newest" {{ request('sort') === 'newest' ? 'selected' : '' }}>Sort by Newest</option>
-                    <option value="oldest" {{ request('sort') === 'oldest' ? 'selected' : '' }}>Sort by Oldest</option>
-                    <option value="first_nameASC" {{ request('sort') === 'first_nameASC' ? 'selected' : '' }}>First Name (A-Z)</option>
-                    <option value="first_nameDESC" {{ request('sort') === 'first_nameDESC' ? 'selected' : '' }}>First Name (Z-A)</option>
-                    <option value="last_nameASC" {{ request('sort') === 'last_nameASC' ? 'selected' : '' }}>Last Name (A-Z)</option>
-                    <option value="last_nameDESC" {{ request('sort') === 'last_nameDESC' ? 'selected' : '' }}>Last Name (Z-A)</option>
-                </select>
+                <div class="flex flex-col gap-1.5">
+                    <label for="user-filter-sort" class="text-xs font-semibold text-slate-600">Sort</label>
+                    <select id="user-filter-sort" name="sort" class="ts-filter-dropdown" aria-label="Sort users">
+                        <option value="newest" {{ request('sort') === 'newest' ? 'selected' : '' }}>Sort by Newest</option>
+                        <option value="oldest" {{ request('sort') === 'oldest' ? 'selected' : '' }}>Sort by Oldest</option>
+                        <option value="first_nameASC" {{ request('sort') === 'first_nameASC' ? 'selected' : '' }}>First Name (A-Z)</option>
+                        <option value="first_nameDESC" {{ request('sort') === 'first_nameDESC' ? 'selected' : '' }}>First Name (Z-A)</option>
+                        <option value="last_nameASC" {{ request('sort') === 'last_nameASC' ? 'selected' : '' }}>Last Name (A-Z)</option>
+                        <option value="last_nameDESC" {{ request('sort') === 'last_nameDESC' ? 'selected' : '' }}>Last Name (Z-A)</option>
+                    </select>
+                </div>
                 <noscript><x-btn type="submit" variant="secondary" size="md">Apply</x-btn></noscript>
             </div>
             
