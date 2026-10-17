@@ -57,10 +57,6 @@ COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 RUN sed -i 's/\r$//' /usr/local/bin/docker-entrypoint.sh \
     && chmod +x /usr/local/bin/docker-entrypoint.sh
 
-# Configure Apache to listen on dynamic $PORT assigned by Render (defaults to 80/10000)
-RUN sed -i 's/Listen 80/Listen ${PORT:-80}/' /etc/apache2/ports.conf \
-    && sed -i 's/:80/:${PORT:-80}/' /etc/apache2/sites-available/000-default.conf
-
 EXPOSE 80
 
 ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
