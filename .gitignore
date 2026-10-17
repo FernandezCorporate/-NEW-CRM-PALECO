@@ -6,3 +6,6 @@ vendor/
 # Standalone Mobile Simulator
 mobile-simulator/
 
+# Private Deployment Credentials & Secrets
+docs/private/
+
