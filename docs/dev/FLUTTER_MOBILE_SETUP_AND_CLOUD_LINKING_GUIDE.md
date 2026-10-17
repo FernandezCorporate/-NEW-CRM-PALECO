@@ -1,345 +1,152 @@
-# PALECO OTRS-CRM: Flutter Mobile App Setup & Cloud Linking Guide
+# PALECO OTRS-CRM: Flutter Mobile Integration & Cloud Context Spec
 
-> **Audience:** Development Team, QA Testers, and Mobile Developers  
-> **Target Environment:** Android Physical Devices & Emulators  
-> **Live Cloud Backend:** Render.com (`https://paleco-otrs.onrender.com/api/v1`)  
-> **WebSocket Gateway:** Pusher Channels (`cluster: ap1`, port 443)  
-> **Media Storage:** Supabase S3 (`paleco-media`)
+> **Target Audience:** Team Mobile Developers & AI Coding Agents  
+> **Purpose:** Provides all connection parameters, live cloud endpoints, authentication contracts, WebSocket channel schemas, and test accounts required to build or configure the Flutter mobile client.
 
 ---
 
-## 1. Overview & Architecture
+## 1. Cloud Infrastructure & Endpoint Inventory
 
-The PALECO OTRS-CRM Mobile Client is tailored specifically for **Supervisors** (dispatching, team management, ticket review) and **Field Personnel / Linemen** (work execution, accomplishment reporting, photo evidence capture, and offline-async syncing).
+The backend is deployed live on Render.com with TiDB Cloud (MySQL 8.0), Supabase Storage (S3), and Pusher Channels (WebSockets).
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                 Flutter Mobile Application                  │
-│       (Supervisor Dashboard / Lineman Work Order Flow)      │
-└──────────────┬──────────────────────────────┬───────────────┘
-               │ HTTPS REST API Calls         │ WSS WebSockets (Port 443)
-               ▼                              ▼
-┌──────────────────────────────┐ ┌────────────────────────────┐
-│   Render.com Web Service     │ │   Pusher Channels Cloud    │
-│ (https://paleco-otrs.onrender│ │   (ap1 Singapore Cluster)  │
-│  .com/api/v1/*)              │ │   App Key: ccb7b854b7132...│
-└──────────────┬───────────────┘ └────────────────────────────┘
-               │ Streams Multipart Photos
-               ▼
-┌──────────────────────────────┐
-│       Supabase Storage       │
-│  (paleco-media Public Bucket)│
-└──────────────────────────────┘
-```
+| Parameter | Cloud Production Value | Local Development Value | Description |
+| :--- | :--- | :--- | :--- |
+| **REST API Base URL** | `https://paleco-otrs.onrender.com/api/v1` | `http://10.0.2.2:8000/api/v1` *(Emulator)*<br>`http://192.168.x.x:8000/api/v1` *(Phone)* | Versioned API root. All mobile endpoints require `/api/v1/`. |
+| **WebSocket Provider** | **Pusher Channels Cloud** | Laravel Reverb (Port 8080) | Managed WebSocket server on standard Port 443. |
+| **Pusher App Key** | `ccb7b854b71323e17dac` | Local Reverb Key (`8ygjucohu35acd17ckbm`) | Client-side connection key. |
+| **Pusher Cluster** | `ap1` (Singapore) | `mt1` | Regional cluster. |
+| **WebSocket TLS** | `true` (WSS on Port 443) | `false` (WS on Port 8080) | TLS encryption mode. |
+| **Broadcasting Auth URL** | `https://paleco-otrs.onrender.com/api/v1/broadcasting/auth` | `http://10.0.2.2:8000/api/v1/broadcasting/auth` | Authorizes private channel subscriptions. |
+| **Media Storage** | **Supabase Storage S3** (`paleco-media`) | Local `/storage/` | Accomplishment photos & signatures stream to Supabase. |
 
 ---
 
-## 2. Prerequisites & Development Environment
+## 2. Authentication Contract (`POST /api/v1/login`)
 
-Ensure your development machine has the following tools installed:
+### Request Payload:
+```json
+POST https://paleco-otrs.onrender.com/api/v1/login
+Headers:
+  Accept: application/json
+  Content-Type: application/json
 
-1. **Flutter SDK:** Version 3.19.0 or higher ([Download Flutter](https://docs.flutter.dev/get-started/install))
-   - Verify installation: `flutter doctor -v`
-2. **Android Studio & Android SDK:**
-   - Android SDK Command-line Tools
-   - Android SDK Build-Tools (API 34 or higher)
-   - Android SDK Platform-Tools
-3. **Java Development Kit (JDK):** Version 17 (OpenJDK or Oracle JDK)
-4. **Physical Android Device (Recommended) or Android Emulator:**
-   - Physical device: Enable **Developer Options** $\to$ Enable **USB Debugging**.
-
----
-
-## 3. Cloud Backend Endpoint Configuration
-
-All mobile API calls must target the versioned cloud endpoint `/api/v1/`.
-
-### 3.1 Create or Update `lib/config/api_config.dart`
-
-In your Flutter project under `lib/config/api_config.dart`, configure the endpoints and Pusher credentials:
-
-```dart
-class ApiConfig {
-  // --- ENVIRONMENT TOGGLE ---
-  static const bool isProduction = true;
-
-  // --- BASE URLS ---
-  // Production Cloud URL (Render.com)
-  static const String _prodBaseUrl = 'https://paleco-otrs.onrender.com/api/v1';
-
-  // Local Development URLs:
-  // - 10.0.2.2 for default Android Studio Emulator
-  // - 127.0.0.1 for desktop/web testing
-  // - Or your workstation's LAN IP (e.g. 192.168.1.100:8000) for physical phone testing
-  static const String _devBaseUrl = 'http://10.0.2.2:8000/api/v1';
-
-  static String get baseUrl => isProduction ? _prodBaseUrl : _devBaseUrl;
-
-  // --- AUTHENTICATION & SESSIONS ---
-  static String get loginUrl => '$baseUrl/login';
-  static String get logoutUrl => '$baseUrl/logout';
-  static String get userProfileUrl => '$baseUrl/user/profile';
-
-  // --- TICKETS LIFECYCLE ---
-  static String get ticketsUrl => '$baseUrl/tickets';
-  static String ticketDetailsUrl(String id) => '$baseUrl/tickets/$id';
-  static String startWorkUrl(String id) => '$baseUrl/tickets/$id/start';
-  static String accomplishUrl(String id) => '$baseUrl/tickets/$id/accomplish';
-  static String assignUrl(String id) => '$baseUrl/tickets/$id/assign';
-  static String assignOptionsUrl(String id) => '$baseUrl/tickets/$id/assign-options';
-  static String endorseUrl(String id) => '$baseUrl/tickets/$id/endorse';
-  static String endorseOptionsUrl(String id) => '$baseUrl/tickets/$id/endorse-options';
-  static String ticketHistoryUrl(String id) => '$baseUrl/tickets/$id/history';
-
-  // --- REAL-TIME WEBSOCKETS (PUSHER CHANNELS) ---
-  static const String pusherApiKey = 'ccb7b854b71323e17dac';
-  static const String pusherCluster = 'ap1';
-  
-  // Broadcast Authorization Endpoint for Private Channels
-  static String get broadcastAuthUrl => isProduction
-      ? 'https://paleco-otrs.onrender.com/api/v1/broadcasting/auth'
-      : 'http://10.0.2.2:8000/api/v1/broadcasting/auth';
+Body:
+{
+  "username": "ralph",
+  "password": "Password",
+  "device_name": "Infinix-X6816" // REQUIRED: any unique string or device model
 }
 ```
 
----
-
-## 4. Dependencies Configuration (`pubspec.yaml`)
-
-Ensure the following packages are included in your `pubspec.yaml`:
-
-```yaml
-dependencies:
-  flutter:
-    sdk: flutter
-
-  # Networking & REST API
-  http: ^1.2.0
-  dio: ^5.4.1
-
-  # Real-Time Pusher WebSockets
-  pusher_channels_flutter: ^2.2.1
-
-  # Local Offline Storage (Store-and-Forward Sync)
-  hive: ^2.2.3
-  hive_flutter: ^1.1.0
-
-  # Device Hardware (Evidence Photos & Signature)
-  image_picker: ^1.0.7
-  signature: ^5.4.1
-  path_provider: ^2.1.2
-  device_info_plus: ^9.1.2
-  connectivity_plus: ^5.0.2
-
-  # State Management
-  provider: ^6.1.1 # or flutter_bloc / riverpod
-```
-
-Run package installation:
-```bash
-flutter pub get
-```
-
----
-
-## 5. Android Manifest Permissions & Network Security
-
-### 5.1 Android Permissions (`android/app/src/main/AndroidManifest.xml`)
-
-Open `android/app/src/main/AndroidManifest.xml` and add the following permissions inside the `<manifest>` tag:
-
-```xml
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
-
-    <!-- Network Access -->
-    <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-
-    <!-- Camera for Lineman Accomplishment Photo Evidence -->
-    <uses-permission android:name="android.permission.CAMERA" />
-    <uses-feature android:name="android.hardware.camera" android:required="false" />
-
-    <!-- File Storage Access for Photos -->
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
-    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
-
-    <application
-        android:label="PALECO OTRS"
-        android:icon="@mipmap/ic_launcher"
-        android:usesCleartextTraffic="true"> <!-- Allows local dev http fallback -->
-        ...
-    </application>
-</manifest>
-```
-
----
-
-## 6. Real-Time WebSockets Integration (Pusher)
-
-### 6.1 Initialize Pusher Channels
-
-Initialize the Pusher client upon successful user authentication:
-
-```dart
-import 'package:pusher_channels_flutter/pusher_channels_flutter.dart';
-import '../config/api_config.dart';
-
-class WebSocketService {
-  static final WebSocketService _instance = WebSocketService._internal();
-  factory WebSocketService() => _instance;
-  WebSocketService._internal();
-
-  final PusherChannelsFlutter _pusher = PusherChannelsFlutter.getInstance();
-
-  Future<void> init(String bearerToken, int departmentId, String? teamId) async {
-    try {
-      await _pusher.init(
-        apiKey: ApiConfig.pusherApiKey,
-        cluster: ApiConfig.pusherCluster,
-        useTLS: true,
-        authEndpoint: ApiConfig.broadcastAuthUrl,
-        onAuthorizer: (channelName, socketId, options) async {
-          // Send Bearer token to authorize private channels
-          final response = await http.post(
-            Uri.parse(ApiConfig.broadcastAuthUrl),
-            headers: {
-              'Authorization': 'Bearer $bearerToken',
-              'Accept': 'application/json',
-              'Content-Type': 'application/x-www-form-urlencoded',
-            },
-            body: {
-              'socket_id': socketId,
-              'channel_name': channelName,
-            },
-          );
-          return jsonDecode(response.body);
-        },
-      );
-
-      await _pusher.connect();
-
-      // Subscribe to Private Operations Channel
-      await _pusher.subscribe(channelName: 'private-cwd.operations');
-
-      // Subscribe to Department Channel (Supervisor)
-      await _pusher.subscribe(channelName: 'private-department.$departmentId');
-
-      // Subscribe to Team Channel (Lineman)
-      if (teamId != null) {
-        await _pusher.subscribe(channelName: 'private-team.$teamId');
-      }
-
-      print("[Pusher] Connected and subscribed to real-time channels.");
-    } catch (e) {
-      print("[Pusher] Connection Error: $e");
+### Response Payload (HTTP 200):
+```json
+{
+  "success": true,
+  "message": "Authentication successful.",
+  "access_token": "1|ROy0aSiARLD9kz7eRkxp9OLSBUjEK8t8bBvaadR72f1a98ab",
+  "token_type": "Bearer",
+  "data": {
+    "access_token": "1|ROy0aSiARLD9kz7eRkxp9OLSBUjEK8t8bBvaadR72f1a98ab",
+    "user": {
+      "id": "01m54s2ebc75t8nkddmb2c3grx",
+      "username": "ralph",
+      "name": "Ralph Personnel",
+      "role_slug": "field_personnel", // or "supervisor"
+      "department_id": 1,
+      "teams": [
+        {
+          "id": "01m54s2apas3s97ngh05x70708",
+          "team_name": "Alpha Emergency Response Crew",
+          "role_name": "Team Leader"
+        }
+      ]
     }
   }
-
-  void bindEvent(String eventName, Function(dynamic) onEvent) {
-    _pusher.bind(eventName: eventName, onEvent: onEvent);
-  }
-
-  Future<void> disconnect() async {
-    await _pusher.disconnect();
-  }
 }
 ```
 
+> **Header for subsequent requests:**  
+> `Authorization: Bearer <access_token>`  
+> `Accept: application/json`
+
 ---
 
-## 7. Authentication & Live Testing Credentials
-
-When logging in from the mobile application, the backend requires three fields:
-1. `username`
-2. `password`
-3. `device_name` (e.g. `Samsung Galaxy S21`, `Infinix Note 30`, or device model from `device_info_plus`)
-
-### Default Seeded Accounts:
+## 3. Seeded Accounts for Testing
 
 | Role | Username | Password | Intended Screen Flow |
 | :--- | :--- | :--- | :--- |
-| **Supervisor** | `mycka` | `Password` | Supervisor Dashboard, Crew Assignment, Ticket Review |
-| **Field Lineman** | `ralph` | `Password` | Dispatched Tasks, Start Work, Accomplishment + Photos |
+| **Supervisor** | `mycka` | `Password` | View dispatched tickets, assign crew to tickets, endorse inter-department transfers, review & approve accomplishments. |
+| **Field Lineman** | `ralph` | `Password` | View crew tickets, start work order, capture consumer signature, upload accomplishment photos. |
 
 ---
 
-## 8. Accomplishment Uploads & Supabase S3 Integration
+## 4. Real-Time WebSocket Channels & Events (Pusher)
 
-When a lineman completes work, the mobile app sends a `multipart/form-data` POST request to `/api/v1/tickets/{id}/accomplish`.
+When the app initializes Pusher, subscribe to the following private channels using the user's role and team IDs:
 
-The backend automatically streams these files directly to **Supabase Storage S3** (`paleco-media`):
+### Private Channels to Subscribe:
+1. `private-cwd.operations`: Broadcasts all operational ticket events across PALECO.
+2. `private-department.{deptId}`: Broadcasts tickets specific to the supervisor's department (`user.department_id`).
+3. `private-team.{teamId}`: Broadcasts tickets assigned to the lineman's team (`user.teams[0].id`).
 
-```dart
-Future<bool> submitAccomplishment({
-  required String ticketId,
-  required String token,
-  required String remarks,
-  required String consumerName,
-  required File signatureFile,
-  required List<File> photoFiles,
-}) async {
-  final uri = Uri.parse(ApiConfig.accomplishUrl(ticketId));
-  final request = http.MultipartRequest('POST', uri);
+### Events Dispatched by Backend:
+- `.TicketCreated`: Dispatched when CWD creates a complaint.
+- `.TicketAssigned`: Dispatched when a supervisor assigns a crew.
+- `.TicketWorkStarted`: Dispatched when field crew taps **Start Work**.
+- `.TicketAccomplished`: Dispatched when field crew submits report with photo evidence.
+- `.TicketVerifiedAndClosed`: Dispatched when supervisor approves accomplishment.
+- `.TicketCancelled`: Dispatched if CWD cancels the ticket.
+- `.TicketForceClosed`: Dispatched if CWD closes an abandoned ticket.
 
-  request.headers['Authorization'] = 'Bearer $token';
-  request.headers['Accept'] = 'application/json';
-
-  request.fields['remarks'] = remarks;
-  request.fields['consumer_name'] = consumerName;
-
-  // Attach digital signature
-  request.files.add(await http.MultipartFile.fromPath('signature', signatureFile.path));
-
-  // Attach proof-of-work photos
-  for (var photo in photoFiles) {
-    request.files.add(await http.MultipartFile.fromPath('photos[]', photo.path));
-  }
-
-  final streamedResponse = await request.send();
-  final response = await http.Response.fromStream(streamedResponse);
-
-  return response.statusCode == 200 || response.statusCode == 201;
-}
-```
+> **Note on Channel Authorization:**  
+> Pusher private channels automatically POST to `ApiConfig.broadcastAuthUrl` with the client's `socket_id` and `channel_name`. The mobile client must attach `Authorization: Bearer <token>` to this authorization call.
 
 ---
 
-## 9. Compiling and Distributing the Production APK
+## 5. Core Mobile REST API Endpoints
 
-### 9.1 Build Release APK
-Run the production build command in your Flutter project directory:
+All routes require `Authorization: Bearer <token>` and `Accept: application/json`:
+
+| Action | HTTP Method | Endpoint | Key Body / Query Params |
+| :--- | :---: | :--- | :--- |
+| **User Profile** | `GET` | `/api/v1/user/profile` | Returns current user details and teams. |
+| **Tickets List** | `GET` | `/api/v1/tickets` | Query: `?status=all&page=1&search=keyword` |
+| **Ticket Details** | `GET` | `/api/v1/tickets/{ticketId}` | Returns ticket info, consumer, category, accomplishments. |
+| **Start Work** | `PATCH` | `/api/v1/tickets/{ticketId}/start` | Headers: `X-Idempotency-Key: <ulid>`, `X-Client-Timestamp: <iso>` |
+| **Submit Accomplishment** | `POST` | `/api/v1/tickets/{ticketId}/accomplish` | **Multipart Form-Data:**<br>`remarks`: string<br>`consumer_name`: string (optional)<br>`signature`: image file (optional)<br>`photos[]`: array of image files |
+| **Assign Crew** | `POST` | `/api/v1/tickets/{ticketId}/assign` | Body: `{"team_id": "<teamId>"}` *(Supervisor only)* |
+| **Assign Form Options**| `GET` | `/api/v1/tickets/{ticketId}/assign-options` | Returns list of available crews in department. |
+| **Endorse Transfer** | `POST` | `/api/v1/tickets/{ticketId}/endorse` | Body: `{"target_department_id": 2, "remarks": "..."}` |
+| **Verify Accomplishment** | `POST` | `/api/v1/tickets/{ticketId}/accomplishments/{accId}/verify` | Body: `{"status": "approved"}` or `{"status": "rejected", "rejection_reason": "..."}` |
+| **Ticket History** | `GET` | `/api/v1/tickets/{ticketId}/history` | Returns complete audit trail & status timeline. |
+| **Logout** | `POST` | `/api/v1/logout` | Revokes the current Sanctum access token. |
+
+---
+
+## 6. Photo Evidence & Supabase Storage Context
+
+- When the mobile app uploads photos via `POST /api/v1/tickets/{ticketId}/accomplish`, the backend automatically saves them to **Supabase Storage S3** (`paleco-media`).
+- The backend stores them under `accomplishments/photos/<hash>.jpg` and `accomplishments/signatures/<hash>.png`.
+- The API responses automatically return full public CDN URLs:
+  ```
+  https://uiwbrakbkjbqkbasbnyp.supabase.co/storage/v1/object/public/paleco-media/accomplishments/photos/...
+  ```
+- The mobile app can display these URLs directly using standard image loading widgets (`Image.network(url)`).
+
+---
+
+## 7. APK Build Quick Reference
 
 ```bash
+# Fetch dependencies
+flutter pub get
+
+# Run on connected phone (debug)
+flutter run
+
+# Compile production APK for distribution
 flutter build apk --release
+
+# Output path:
+# build/app/outputs/flutter-apk/app-release.apk
 ```
-
-To optimize the APK size for lineman devices, build per-ABI splits:
-```bash
-flutter build apk --split-per-abi
-```
-
-### 9.2 Locate Output File
-The compiled installer will be located at:
-```
-build/app/outputs/flutter-apk/app-release.apk
-```
-
-### 9.3 Installing on Test Phones
-Connect the phone via USB and install directly:
-```bash
-flutter install
-# or
-adb install -r build/app/outputs/flutter-apk/app-release.apk
-```
-
----
-
-## 10. Troubleshooting & Common Pitfalls
-
-| Issue | Root Cause | Solution |
-| :--- | :--- | :--- |
-| **HTTP 422 Unprocessable Entity on Login** | Missing `device_name` in JSON body | Ensure the login payload sends `{"username": "...", "password": "...", "device_name": "..."}`. |
-| **WebSocket Private Channel Auth Fails (403/401)** | Missing or invalid Bearer token in `/broadcasting/auth` header | Confirm that `Authorization: Bearer <token>` is attached in the `onAuthorizer` callback. |
-| **Camera crashes on photo capture** | Missing camera hardware feature or permission | Verify that `CAMERA` and `READ_MEDIA_IMAGES` permissions are declared in `AndroidManifest.xml`. |
-| **Photos do not appear on web portal after submission** | Uploaded before commit `3ad2522` or wrong disk configuration | Ensure backend is running `master` with Supabase S3 integration. |
-
