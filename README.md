@@ -92,13 +92,15 @@ The database seeder automatically creates the following test accounts. **The pas
 
 ## 📱 Mobile API Reference
 
+> **API Base URL:** `http://<server-ip-or-domain>:8000/api/v1` (e.g. `http://192.168.1.15:8000/api/v1` or `http://127.0.0.1:8000/api/v1`)
+
 All requests to the backend must include the following header to force Laravel to return JSON validation errors instead of web HTML redirects:
 * `Accept: application/json`
 
 ### 1. Authentication (Login)
 Authenticates a mobile user and issues a Sanctum API access token.
 
-* **Endpoint:** `POST /api/login`
+* **Endpoint:** `POST /api/v1/login`
 * **Headers Required:**
   * `Accept: application/json`
   * `Content-Type: application/json`
@@ -134,7 +136,7 @@ Authenticates a mobile user and issues a Sanctum API access token.
 ### 2. Secure Logout
 Revokes the current access token and logs the user out of the device.
 
-* **Endpoint:** `POST /api/logout`
+* **Endpoint:** `POST /api/v1/logout`
 * **Headers Required:**
   * `Accept: application/json`
   * `Authorization: Bearer <your_saved_access_token_here>`

@@ -5,6 +5,8 @@
 
 @section('content')
     <div class="max-w-7xl mx-auto space-y-8">
+        <x-alert />
+
         <header class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
             <div>
                 <p class="eyebrow">Welcome back, {{ auth()->user()->first_name ?? 'Officer' }}</p>

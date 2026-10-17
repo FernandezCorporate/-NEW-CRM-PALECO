@@ -16,10 +16,10 @@ Following the Flutter mobile team's review of the backend integration, this docu
 > **Items 3 and 8 are officially dropped.**
 > 
 > In the PALECO system architecture, **Offline-Asynchronous store-and-forward queueing applies strictly and exclusively to:**
-> 1. **Starting work:** `PATCH /api/tickets/{ticket}/start`
-> 2. **Submitting accomplishments:** `POST /api/tickets/{ticket}/accomplish`
+> 1. **Starting work:** `PATCH /api/v1/tickets/{ticket}/start`
+> 2. **Submitting accomplishments:** `POST /api/v1/tickets/{ticket}/accomplish`
 >
-> **Ticket Remarks (`POST /api/tickets/{ticket}/remarks`) are live, online-only communications.**
+> **Ticket Remarks (`POST /api/v1/tickets/{ticket}/remarks`) are live, online-only communications.**
 > - Remarks will **not** use the `idempotent` middleware.
 > - Remarks will **not** accept or process offline client timestamps.
 > - The mobile application team must **remove remarks from the offline outbox queue**. When a lineman's device is in a cellular dead zone, the remarks UI must disable the submit button and show a clear indicator: *"An active internet connection is required to post remarks."*
@@ -120,7 +120,7 @@ flowchart TD
   3. Reassignment modal header explicitly displays "Reassign Crew", disables the currently assigned team in the dropdown, and enforces mandatory reason input.
 
 #### Phase 2.2: Field Personnel Department Profile Mapping (Item 5)
-- **Problem:** Linemen have `users.department_id = null` because their department is determined by their operational team (`teams.department_id`). `GET /api/user/profile` returned `"department": null`, and the teams array lacked department metadata.
+- **Problem:** Linemen have `users.department_id = null` because their department is determined by their operational team (`teams.department_id`). `GET /api/v1/user/profile` returned `"department": null`, and the teams array lacked department metadata.
 - **Remediation:**
   1. In [`app/Services/Users/ProfileService.php`](file:///c:/Users/allen/Desktop/Capstone/-NEW-CRM-PALECO/PALECO_OTRS-CRM/app/Services/Users/ProfileService.php) and [`app/Services/Auth/MobileAuthService.php`](file:///c:/Users/allen/Desktop/Capstone/-NEW-CRM-PALECO/PALECO_OTRS-CRM/app/Services/Auth/MobileAuthService.php):
      - Eager-loaded `teams.department`.
@@ -182,8 +182,8 @@ flowchart TD
 
 #### Phase 4.1: Documentation Typo & Payload Corrections (Item 10)
 - **Corrections applied in [`docs/dev/FLUTTER_REALTIME_WEBSOCKET_SPECIFICATION.md`](file:///c:/Users/allen/Desktop/Capstone/-NEW-CRM-PALECO/docs/dev/FLUTTER_REALTIME_WEBSOCKET_SPECIFICATION.md):**
-  - Accomplishment submission endpoint corrected to `POST /api/tickets/{ticket}/accomplish`.
-  - `TicketAssigned` payload documented as a lightweight notification summary (`ticket_id`, `ticket_number`, `parent_ticket_id`, `status`, `status_label`, `team_id`, `team_name`, `department`, `updated_at`). Upon receipt, the mobile app refreshes ticket details via `GET /api/tickets/{ticket}`.
+  - Accomplishment submission endpoint corrected to `POST /api/v1/tickets/{ticket}/accomplish`.
+  - `TicketAssigned` payload documented as a lightweight notification summary (`ticket_id`, `ticket_number`, `parent_ticket_id`, `status`, `status_label`, `team_id`, `team_name`, `department`, `updated_at`). Upon receipt, the mobile app refreshes ticket details via `GET /api/v1/tickets/{ticket}`.
 
 #### Phase 4.2: Scope Boundary Clarification (Dropped Items 3 & 8)
 - **Documented in [`docs/dev/FLUTTER_OFFLINE_SYNC_IMPLEMENTATION_SPEC.md`](file:///c:/Users/allen/Desktop/Capstone/-NEW-CRM-PALECO/docs/dev/FLUTTER_OFFLINE_SYNC_IMPLEMENTATION_SPEC.md):**
@@ -198,7 +198,7 @@ flowchart TD
 | Phase | Tasks / Items | Verification Method | Pass Criteria |
 | :--- | :--- | :--- | :--- |
 | **Phase 1** | Items 1 & 2 (Broadcast rescue & Upload limits) | Kill Reverb daemon, call `/start` and `/accomplish`. Upload 10-photo batch. | HTTP 200/201 returned; no 500 error; DB commits safely; photos persist. |
-| **Phase 2** | Items 4 & 5 (Reassignment channel, Reassignment Policy & Department profile) | Reassign ticket from Team 1 to Team 2. Attempt reassignment on in-progress ticket. Call `GET /api/user/profile` as lineman. | Event sent on both `team.1` and `team.2`. In-progress reassignment blocked with 422. Profile includes `teams[].department` and root fallback. |
+| **Phase 2** | Items 4 & 5 (Reassignment channel, Reassignment Policy & Department profile) | Reassign ticket from Team 1 to Team 2. Attempt reassignment on in-progress ticket. Call `GET /api/v1/user/profile` as lineman. | Event sent on both `team.1` and `team.2`. In-progress reassignment blocked with 422. Profile includes `teams[].department` and root fallback. |
 | **Phase 3** | Items 6, 7, 9 (Lifecycle clock drift, hash check, pruning) | Send action with client timestamp before assignment/start. Send same key with different body. Run `model:prune`. | Action clamped to assignment/start milestone (HTTP 200); hash mismatch returns 422; expired records pruned. |
 | **Phase 4** | Item 10 & Dropped Items 3/8 policy | Inspect `FLUTTER_REALTIME_WEBSOCKET_SPECIFICATION.md` and `FLUTTER_OFFLINE_SYNC_IMPLEMENTATION_SPEC.md`. | Routes match `routes/api.php`; remarks confirmed online-only. |
 

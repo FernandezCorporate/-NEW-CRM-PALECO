@@ -10,6 +10,8 @@
         <x-contextual-back :default="session('user_list_url', route('admin.users'))" default-label="Back to Users" variant="link" />
     </div>
 
+    <x-alert />
+
     <!-- Page Header -->
     <header class="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div class="flex items-center gap-4">

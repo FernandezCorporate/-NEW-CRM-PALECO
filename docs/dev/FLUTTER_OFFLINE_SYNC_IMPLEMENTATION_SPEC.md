@@ -41,14 +41,14 @@
 PALECO field linemen operate in remote barangays and mountainous sitios across Palawan with zero cellular reception (dead zones). 
 
 When field personnel perform critical maintenance, two key operations occur:
-1. **Start Work (`PATCH /api/tickets/{ticket}/start`):** Initiates emergency repair upon arrival.
-2. **Accomplish Ticket (`POST /api/tickets/{ticket}/accomplish`):** Submits technical narrative, consumer e-signature, and 1–10 photographic evidences.
+1. **Start Work (`PATCH /api/v1/tickets/{ticket}/start`):** Initiates emergency repair upon arrival.
+2. **Accomplish Ticket (`POST /api/v1/tickets/{ticket}/accomplish`):** Submits technical narrative, consumer e-signature, and 1–10 photographic evidences.
 
 In an online-only app, these actions fail immediately in dead zones. With this **Offline-Asynchronous Module**, the mobile application writes actions and images to local device storage, optimistically renders the ticket as progressed, and automatically syncs the payload when cellular connectivity is restored.
 
 > [!IMPORTANT]
 > **Scope Boundary: Notes / Remarks (`/remarks`) Are Online-Only**  
-> Offline-asynchronous store-and-forward queueing applies **strictly and exclusively** to `start` and `accomplish`. Ticket remarks (`POST /api/tickets/{ticket}/remarks`) are interactive operational communications and **must not be queued in the offline outbox**. When the device is offline, the mobile app should disable the submit button or prompt the user: *"An active internet connection is required to post remarks."*
+> Offline-asynchronous store-and-forward queueing applies **strictly and exclusively** to `start` and `accomplish`. Ticket remarks (`POST /api/v1/tickets/{ticket}/remarks`) are interactive operational communications and **must not be queued in the offline outbox**. When the device is offline, the mobile app should disable the submit button or prompt the user: *"An active internet connection is required to post remarks."*
 
 ---
 
@@ -70,9 +70,9 @@ flowchart TD
     end
 
     subgraph CloudAPI["PALECO Cloud API"]
-        FIFOLock -->|"4. Sync Start with X-Idempotency-Key"| ApiStart["PATCH /api/tickets/:id/start"]
+        FIFOLock -->|"4. Sync Start with X-Idempotency-Key"| ApiStart["PATCH /api/v1/tickets/:id/start"]
         ApiStart -->|"200 OK"| OutboxMark1["Mark Action Synced"]
-        OutboxMark1 -->|"5. Sync Accomplish with Multipart"| ApiAcc["POST /api/tickets/:id/accomplish"]
+        OutboxMark1 -->|"5. Sync Accomplish with Multipart"| ApiAcc["POST /api/v1/tickets/:id/accomplish"]
         ApiAcc -->|"201 Created"| OutboxMark2["Mark Action Synced & Clean Media"]
     end
 ```
@@ -486,7 +486,7 @@ class TicketSyncService {
 
   Future<void> _executeStartRequest(OfflineAction action) async {
     final response = await dio.patch(
-      '/api/tickets/${action.ticketId}/start',
+      '/api/v1/tickets/${action.ticketId}/start',
       options: Options(
         headers: {
           'X-Idempotency-Key': action.idempotencyKey,
@@ -529,7 +529,7 @@ class TicketSyncService {
     }
 
     final response = await dio.post(
-      '/api/tickets/${action.ticketId}/accomplish',
+      '/api/v1/tickets/${action.ticketId}/accomplish',
       data: formData,
       options: Options(
         headers: {
@@ -656,8 +656,8 @@ Requirements:
 1. Connects to `internet_connection_checker_plus` stream to trigger `syncPendingOutbox()` on reconnect.
 2. Fetches pending actions from `OfflineOutboxRepository`.
 3. Groups actions by `ticketId` and processes them in strict chronological FIFO order.
-4. For ticket start: sends PATCH `/api/tickets/{ticketId}/start` with headers `X-Idempotency-Key` and `X-Client-Timestamp` (UTC ISO-8601).
-5. For ticket accomplish: sends POST `/api/tickets/{ticketId}/accomplish` as multipart form-data including signature and photos.
+4. For ticket start: sends PATCH `/api/v1/tickets/{ticketId}/start` with headers `X-Idempotency-Key` and `X-Client-Timestamp` (UTC ISO-8601).
+5. For ticket accomplish: sends POST `/api/v1/tickets/{ticketId}/accomplish` as multipart form-data including signature and photos.
 6. Handles DioException: if 422, marks action as failed; if network error, leaves pending for retry.
 7. Upon successful sync, calls `FileStorageHelper.cleanupMedia()` to free device disk space.
 ```
@@ -692,8 +692,8 @@ When the user submits accomplishment:
 6. Turn off **Airplane Mode** (re-enable Wi-Fi / LTE).
 7. Observe logs:
    - Worker triggers `syncPendingOutbox()`.
-   - Sends `PATCH /api/tickets/{id}/start` &rarr; Returns `200 OK`.
-   - Sends `POST /api/tickets/{id}/accomplish` &rarr; Returns `201 Created`.
+   - Sends `PATCH /api/v1/tickets/{id}/start` &rarr; Returns `200 OK`.
+   - Sends `POST /api/v1/tickets/{id}/accomplish` &rarr; Returns `201 Created`.
    - Badges update to **"Synced"**.
 8. Inspect device storage: Verify cached photos in `/offline_media` are safely cleaned up.
 

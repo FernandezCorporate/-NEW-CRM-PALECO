@@ -10,6 +10,8 @@
         <x-contextual-back :default="session('category_list_url', route('admin.ticketCategories'))" default-label="Back to Categories" variant="link" />
     </div>
 
+    <x-alert />
+
     <!-- Category Profile Card -->
     <article class="bg-white border border-slate-200 rounded-xl shadow-xs p-6 lg:p-8 max-w-full mb-6">
         <header class="flex justify-between items-start mb-6">

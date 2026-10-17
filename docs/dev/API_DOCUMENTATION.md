@@ -1,6 +1,6 @@
 # PALECO OTRS-CRM Mobile API Documentation
 
-> **Base URL:** `http://<host-or-domain>/api`  
+> **Base URL:** `http://<host-or-domain>/api/v1`  
 > **Protocol:** HTTPS (Production) / HTTP (Local Development)  
 > **Authentication Scheme:** HTTP Bearer Token via Laravel Sanctum  
 > **API Version:** 1.0 (Mobile Client Optimized)
@@ -68,10 +68,10 @@ The PALECO OTRS-CRM Mobile API delivers a robust, stateless interface designed s
     { "id": "01JM4C7W1...", "ticket_number": "2026-0001" }
   ],
   "links": {
-    "first": "http://crm.paleco.local/api/tickets?page=1",
-    "last": "http://crm.paleco.local/api/tickets?page=5",
+    "first": "http://crm.paleco.local/api/v1/tickets?page=1",
+    "last": "http://crm.paleco.local/api/v1/tickets?page=5",
     "prev": null,
-    "next": "http://crm.paleco.local/api/tickets?page=2"
+    "next": "http://crm.paleco.local/api/v1/tickets?page=2"
   },
   "meta": {
     "current_page": 1,
@@ -158,7 +158,7 @@ Returned when a requested resource does not exist, or when an authenticated user
 Authenticates mobile users, validates device identification, verifies role authorization (`supervisor` or `field_personnel`), revokes prior active sessions, and issues a fresh Laravel Sanctum bearer token.
 
 - **Method:** `POST`
-- **URL:** `/api/login`
+- **URL:** `/api/v1/login`
 - **Access Level:** Public (Guest)
 - **Headers:** `Accept: application/json`, `Content-Type: application/json`
 
@@ -254,7 +254,7 @@ When an IP address exceeds the velocity ceiling of 10 requests within 60 seconds
 Terminates the authenticated session by destroying the current Sanctum access token.
 
 - **Method:** `POST`
-- **URL:** `/api/logout`
+- **URL:** `/api/v1/logout`
 - **Access Level:** Authenticated (`auth:sanctum`)
 - **Headers:** `Authorization: Bearer <token>`, `Accept: application/json`
 
@@ -274,7 +274,7 @@ Terminates the authenticated session by destroying the current Sanctum access to
 Fetches the profile details, department affiliation, and role meta for the active user.
 
 - **Method:** `GET`
-- **URL:** `/api/user/profile`
+- **URL:** `/api/v1/user/profile`
 - **Access Level:** Authenticated (`auth:sanctum`)
 - **Headers:** `Authorization: Bearer <token>`, `Accept: application/json`
 
@@ -357,7 +357,7 @@ Retrieves a paginated list of service tickets scoped to the user's role:
 Includes real-time global status counters in the pagination `meta` block.
 
 - **Method:** `GET`
-- **URL:** `/api/tickets`
+- **URL:** `/api/v1/tickets`
 - **Access Level:** Authenticated (`auth:sanctum`)
 - **Headers:** `Authorization: Bearer <token>`, `Accept: application/json`
 
@@ -416,8 +416,8 @@ Includes real-time global status counters in the pagination `meta` block.
     }
   ],
   "links": {
-    "first": "http://crm.paleco.local/api/tickets?page=1",
-    "last": "http://crm.paleco.local/api/tickets?page=1",
+    "first": "http://crm.paleco.local/api/v1/tickets?page=1",
+    "last": "http://crm.paleco.local/api/v1/tickets?page=1",
     "prev": null,
     "next": null
   },
@@ -450,7 +450,7 @@ Includes real-time global status counters in the pagination `meta` block.
 Returns the full ticket details including complainant particulars, assigned crew, status logs timeline, parent/child hierarchy, force closure / cancellation exceptions, and linked child tickets.
 
 - **Method:** `GET`
-- **URL:** `/api/tickets/{ticket}`
+- **URL:** `/api/v1/tickets/{ticket}`
 - **Access Level:** Authenticated (`auth:sanctum`)
 - **Headers:** `Authorization: Bearer <token>`, `Accept: application/json`
 
@@ -558,7 +558,7 @@ Returns the full ticket details including complainant particulars, assigned crew
 Transitions an assigned ticket to `In Progress` status upon field crew arrival or work start. Supports **offline-asynchronous store-and-forward** and **idempotent retries**.
 
 - **Method:** `PATCH`
-- **URL:** `/api/tickets/{ticket}/start`
+- **URL:** `/api/v1/tickets/{ticket}/start`
 - **Access Level:** Field Personnel (`can:access-field_personnel`)
 - **Headers:**
   - `Authorization: Bearer <token>`
@@ -655,7 +655,7 @@ When `X-Client-Timestamp` or `client_timestamp` is provided:
 Fetches the full timeline of historical crew assignments and cross-department endorsements.
 
 - **Method:** `GET`
-- **URL:** `/api/tickets/{ticket}/history`
+- **URL:** `/api/v1/tickets/{ticket}/history`
 - **Access Level:** Supervisor (`can:access-supervisor`)
 - **Headers:** `Authorization: Bearer <token>`, `Accept: application/json`
 
@@ -693,7 +693,7 @@ Fetches the full timeline of historical crew assignments and cross-department en
 Retrieves all public remarks/comments posted on the ticket. Internal administrative notes are filtered out automatically.
 
 - **Method:** `GET`
-- **URL:** `/api/tickets/{ticket}/remarks`
+- **URL:** `/api/v1/tickets/{ticket}/remarks`
 - **Access Level:** Authenticated (`auth:sanctum`)
 - **Headers:** `Authorization: Bearer <token>`, `Accept: application/json`
 
@@ -731,7 +731,7 @@ Posts a new public remark to the ticket timeline.
 > **Online-Only Operational Boundary:** Ticket remarks are strictly online-only interactive communications. Unlike `/start` and `/accomplish`, remarks do **not** support offline queueing, idempotency keys, or client-side timestamps. When a mobile device is in an offline dead zone, the remarks UI must disable the submit button and instruct the user: *"An active internet connection is required to post remarks."*
 
 - **Method:** `POST`
-- **URL:** `/api/tickets/{ticket}/remarks`
+- **URL:** `/api/v1/tickets/{ticket}/remarks`
 - **Access Level:** Authenticated (`auth:sanctum`)
 - **Headers:** `Authorization: Bearer <token>`, `Content-Type: application/json`, `Accept: application/json`
 
@@ -775,7 +775,7 @@ Posts a new public remark to the ticket timeline.
 Retrieves the list of operational teams in the supervisor's department, including active ticket counts and an `is_current` flag indicating the ticket's current team.
 
 - **Method:** `GET`
-- **URL:** `/api/tickets/{ticket}/assign-options`
+- **URL:** `/api/v1/tickets/{ticket}/assign-options`
 - **Access Level:** Supervisor (`can:access-supervisor`)
 - **Headers:** `Authorization: Bearer <token>`, `Accept: application/json`
 
@@ -821,7 +821,7 @@ Assigns or reassigns a service ticket to a designated team within the supervisor
 > - **Target Team:** The ticket cannot be reassigned to the currently assigned team (returns `HTTP 422`).
 
 - **Method:** `POST`
-- **URL:** `/api/tickets/{ticket}/assign`
+- **URL:** `/api/v1/tickets/{ticket}/assign`
 - **Access Level:** Supervisor (`can:access-supervisor`)
 - **Headers:** `Authorization: Bearer <token>`, `Content-Type: application/json`, `Accept: application/json`
 
@@ -896,7 +896,7 @@ Assigns or reassigns a service ticket to a designated team within the supervisor
 Retrieves all candidate departments available for ticket transfer, marking the supervisor's current department with `is_current: true`.
 
 - **Method:** `GET`
-- **URL:** `/api/tickets/{ticket}/endorse-options`
+- **URL:** `/api/v1/tickets/{ticket}/endorse-options`
 - **Access Level:** Supervisor (`can:access-supervisor`)
 - **Headers:** `Authorization: Bearer <token>`, `Accept: application/json`
 
@@ -933,7 +933,7 @@ Retrieves all candidate departments available for ticket transfer, marking the s
 Submits a formal endorsement request. The ticket transitions to `Pending Endorsement` status and is frozen until reviewed by CWD administration.
 
 - **Method:** `POST`
-- **URL:** `/api/tickets/{ticket}/endorse`
+- **URL:** `/api/v1/tickets/{ticket}/endorse`
 - **Access Level:** Supervisor (`can:access-supervisor`)
 - **Headers:** `Authorization: Bearer <token>`, `Content-Type: application/json`, `Accept: application/json`
 
@@ -979,7 +979,7 @@ Submits a formal endorsement request. The ticket transitions to `Pending Endorse
 Retrieves all accomplishment submissions for a ticket.
 
 - **Method:** `GET`
-- **URL:** `/api/tickets/{ticket}/accomplishments`
+- **URL:** `/api/v1/tickets/{ticket}/accomplishments`
 - **Access Level:** Authenticated (`auth:sanctum`)
 - **Headers:** `Authorization: Bearer <token>`, `Accept: application/json`
 
@@ -1020,7 +1020,7 @@ Retrieves all accomplishment submissions for a ticket.
 Retrieves an individual accomplishment report with photo evidence and evaluator notes.
 
 - **Method:** `GET`
-- **URL:** `/api/tickets/{ticket}/accomplishments/{accomplishment}`
+- **URL:** `/api/v1/tickets/{ticket}/accomplishments/{accomplishment}`
 - **Access Level:** Authenticated (`auth:sanctum`)
 - **Headers:** `Authorization: Bearer <token>`, `Accept: application/json`
 
@@ -1059,7 +1059,7 @@ Retrieves an individual accomplishment report with photo evidence and evaluator 
 Submits an accomplishment report with required photo evidence (1–10 images) and consumer e-signature. Upon submission, the ticket status changes to `Resolved`. Supports **offline-asynchronous store-and-forward** and **idempotent retries**.
 
 - **Method:** `POST`
-- **URL:** `/api/tickets/{ticket}/accomplish`
+- **URL:** `/api/v1/tickets/{ticket}/accomplish`
 - **Access Level:** Field Personnel (`can:access-field_personnel`)
 - **Headers:**
   - `Authorization: Bearer <token>`
@@ -1153,7 +1153,7 @@ Evaluates a pending accomplishment report.
 - **`REJECTED`**: Requires a `rejection_reason`. Ticket status transitions back to `In Progress` for field personnel rework.
 
 - **Method:** `POST`
-- **URL:** `/api/tickets/{ticket}/accomplishments/{accomplishment}/verify`
+- **URL:** `/api/v1/tickets/{ticket}/accomplishments/{accomplishment}/verify`
 - **Access Level:** Supervisor (`can:access-supervisor`)
 - **Headers:** `Authorization: Bearer <token>`, `Content-Type: application/json`, `Accept: application/json`
 
@@ -1224,7 +1224,7 @@ Fetches high-level KPIs and four accordion ticket groups for supervisor monitori
 4. `endorsement_review`: Tickets currently frozen under endorsement review.
 
 - **Method:** `GET`
-- **URL:** `/api/dashboard`
+- **URL:** `/api/v1/dashboard`
 - **Access Level:** Supervisor (`can:access-supervisor`)
 - **Headers:** `Authorization: Bearer <token>`, `Accept: application/json`
 
@@ -1277,7 +1277,7 @@ Fetches high-level KPIs and four accordion ticket groups for supervisor monitori
 Retrieves available active field personnel and team roles to populate team creation/editing dropdowns.
 
 - **Method:** `GET`
-- **URL:** `/api/teams/team-options`
+- **URL:** `/api/v1/teams/team-options`
 - **Access Level:** Supervisor (`can:access-supervisor`)
 - **Headers:** `Authorization: Bearer <token>`, `Accept: application/json`
 
@@ -1317,7 +1317,7 @@ Retrieves available active field personnel and team roles to populate team creat
 Retrieves a paginated list of teams belonging to the supervisor's department, complete with workload counts and member rosters.
 
 - **Method:** `GET`
-- **URL:** `/api/teams`
+- **URL:** `/api/v1/teams`
 - **Access Level:** Supervisor (`can:access-supervisor`)
 - **Headers:** `Authorization: Bearer <token>`, `Accept: application/json`
 
@@ -1374,7 +1374,7 @@ Retrieves a paginated list of teams belonging to the supervisor's department, co
 Retrieves details, member list, and workload stats for a specific team.
 
 - **Method:** `GET`
-- **URL:** `/api/teams/{team}`
+- **URL:** `/api/v1/teams/{team}`
 - **Access Level:** Supervisor (`can:access-supervisor`)
 - **Headers:** `Authorization: Bearer <token>`, `Accept: application/json`
 
@@ -1419,7 +1419,7 @@ Retrieves details, member list, and workload stats for a specific team.
 Creates a new operational team under the supervisor's department and syncs initial members.
 
 - **Method:** `POST`
-- **URL:** `/api/teams` *(Alias: `/api/teams/create`)*
+- **URL:** `/api/v1/teams` *(Alias: `/api/v1/teams/create`)*
 - **Access Level:** Supervisor (`can:access-supervisor`)
 - **Headers:** `Authorization: Bearer <token>`, `Content-Type: application/json`, `Accept: application/json`
 
@@ -1456,7 +1456,7 @@ Creates a new operational team under the supervisor's department and syncs initi
 Updates team metadata and modifies member rosters with optimistic locking protection.
 
 - **Method:** `PUT`
-- **URL:** `/api/teams/{team}` *(Alias: `/api/teams/{team}/update`)*
+- **URL:** `/api/v1/teams/{team}` *(Alias: `/api/v1/teams/{team}/update`)*
 - **Access Level:** Supervisor (`can:access-supervisor`)
 - **Headers:** `Authorization: Bearer <token>`, `Content-Type: application/json`, `Accept: application/json`
 
@@ -1493,7 +1493,7 @@ Updates team metadata and modifies member rosters with optimistic locking protec
 Soft deletes a team if no active tickets (`Open`, `Assigned`, `In Progress`, `Resolved`) are currently assigned.
 
 - **Method:** `DELETE`
-- **URL:** `/api/teams/{team}/archive`
+- **URL:** `/api/v1/teams/{team}/archive`
 - **Access Level:** Supervisor (`can:access-supervisor`)
 - **Headers:** `Authorization: Bearer <token>`, `Accept: application/json`
 
@@ -1515,7 +1515,7 @@ Soft deletes a team if no active tickets (`Open`, `Assigned`, `In Progress`, `Re
 Restores an archived team back to active status.
 
 - **Method:** `PATCH`
-- **URL:** `/api/teams/{team}/restore`
+- **URL:** `/api/v1/teams/{team}/restore`
 - **Access Level:** Supervisor (`can:access-supervisor`)
 - **Headers:** `Authorization: Bearer <token>`, `Accept: application/json`
 
@@ -1537,7 +1537,7 @@ Restores an archived team back to active status.
 Permanently deletes a previously archived team from the database. Blocked if the team has any historical service ticket associations.
 
 - **Method:** `DELETE`
-- **URL:** `/api/teams/{team}/force-delete`
+- **URL:** `/api/v1/teams/{team}/force-delete`
 - **Access Level:** Supervisor (`can:access-supervisor`)
 - **Headers:** `Authorization: Bearer <token>`, `Accept: application/json`
 

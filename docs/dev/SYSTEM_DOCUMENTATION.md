@@ -234,27 +234,27 @@ Authorization: Bearer <sanctum_token>
 ```
 
 ### 7.1 Authentication & Security Contracts
-* `POST /api/login`: Authenticates mobile users (Supervisor / Field Personnel). Revokes prior tokens, applies 5-attempt rate limit and 15-minute lockouts.
-* `POST /api/logout`: Revokes active Sanctum token.
-* `GET /api/user/profile`: Retrieves authenticated user details, department, and team memberships.
+* `POST /api/v1/login`: Authenticates mobile users (Supervisor / Field Personnel). Revokes prior tokens, applies 5-attempt rate limit and 15-minute lockouts.
+* `POST /api/v1/logout`: Revokes active Sanctum token.
+* `GET /api/v1/user/profile`: Retrieves authenticated user details, department, and team memberships.
 
 ### 7.2 Supervisor Endpoints
-* `GET /api/dashboard`: Department-scoped metrics (open, assigned, in-progress, pending endorsement, resolved, closed).
-* `GET /api/tickets`: Paginated ticket inbox with status counters (`meta.status_counts` single-query aggregation). Supports `search`, `category`, `status`, `sort`.
-* `GET /api/tickets/{ticket}`: Detailed ticket information.
-* `GET /api/tickets/{ticket}/assign-options`: Available department teams.
-* `POST /api/tickets/{ticket}/assign`: Dispatches ticket to a team; closes previous assignment timestamp.
-* `GET /api/tickets/{ticket}/endorse-options`: Candidate departments.
-* `POST /api/tickets/{ticket}/endorse`: Submits inter-departmental endorsement request.
-* `GET /api/tickets/{ticket}/history`: Assignment and endorsement history timeline.
-* `POST /api/tickets/{ticket}/accomplishments/{accomplishment}/verify`: Approves (closes ticket) or rejects (reopens to in-progress).
-* `GET|POST|PUT|DELETE /api/teams/*`: Complete CRUD, archival, restore, and force-deletion of department teams.
+* `GET /api/v1/dashboard`: Department-scoped metrics (open, assigned, in-progress, pending endorsement, resolved, closed).
+* `GET /api/v1/tickets`: Paginated ticket inbox with status counters (`meta.status_counts` single-query aggregation). Supports `search`, `category`, `status`, `sort`.
+* `GET /api/v1/tickets/{ticket}`: Detailed ticket information.
+* `GET /api/v1/tickets/{ticket}/assign-options`: Available department teams.
+* `POST /api/v1/tickets/{ticket}/assign`: Dispatches ticket to a team; closes previous assignment timestamp.
+* `GET /api/v1/tickets/{ticket}/endorse-options`: Candidate departments.
+* `POST /api/v1/tickets/{ticket}/endorse`: Submits inter-departmental endorsement request.
+* `GET /api/v1/tickets/{ticket}/history`: Assignment and endorsement history timeline.
+* `POST /api/v1/tickets/{ticket}/accomplishments/{accomplishment}/verify`: Approves (closes ticket) or rejects (reopens to in-progress).
+* `GET|POST|PUT|DELETE /api/v1/teams/*`: Complete CRUD, archival, restore, and force-deletion of department teams.
 
 ### 7.3 Field Personnel Endpoints
-* `GET /api/tickets`: Team-scoped ticket inbox.
-* `PATCH /api/tickets/{ticket}/start`: Acknowledges ticket and begins work (`in_progress`).
-* `POST /api/tickets/{ticket}/accomplish`: Submits accomplishment report with work description, findings, photos, and signature (`resolved`).
-* `GET|POST /api/tickets/{ticket}/remarks`: List and add ticket timeline remarks.
+* `GET /api/v1/tickets`: Team-scoped ticket inbox.
+* `PATCH /api/v1/tickets/{ticket}/start`: Acknowledges ticket and begins work (`in_progress`).
+* `POST /api/v1/tickets/{ticket}/accomplish`: Submits accomplishment report with work description, findings, photos, and signature (`resolved`).
+* `GET|POST /api/v1/tickets/{ticket}/remarks`: List and add ticket timeline remarks.
 
 ---
 

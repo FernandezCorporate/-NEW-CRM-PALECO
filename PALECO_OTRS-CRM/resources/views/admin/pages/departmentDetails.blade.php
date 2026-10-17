@@ -10,6 +10,8 @@
         <x-contextual-back :default="session('department_list_url', route('admin.departments'))" default-label="Back to Departments" variant="link" />
     </div>
 
+    <x-alert />
+
     <!-- Page Header -->
     <header class="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>

@@ -149,7 +149,7 @@ Content-Type: application/json
 * **Test Case 1.4.1 (Logout Invalidation):** Click profile dropdown &rarr; click **"Log Out"**. Attempt browser Back button &rarr; Session is destroyed, redirected to `/portal`.
 
 ### 1.5 Mobile API Login (Supervisor via Postman)
-* **Route:** `POST /api/login`
+* **Route:** `POST /api/v1/login`
 * **Test Case 1.5.1 (Missing Fields):** Send `{}`.  
   *Expected:* HTTP `422 Unprocessable Content` with validation errors for `username`, `password`, `device_name`.
 * **Test Case 1.5.2 (Web-Only Role Rejection):**
@@ -174,7 +174,7 @@ Content-Type: application/json
   *Expected:* Old token is revoked in database (`personal_access_tokens`), new token issued.
 
 ### 1.6 Mobile API Login (Field Personnel via Postman)
-* **Route:** `POST /api/login`
+* **Route:** `POST /api/v1/login`
 * **Test Case 1.6.1 (Successful Field Login):**
   ```json
   {
@@ -186,7 +186,7 @@ Content-Type: application/json
   *Expected:* HTTP `200 OK`. Copy `data.token` and store in Postman `{{field_token}}`.
 
 ### 1.7 Mobile Rate Limiting & Account Lockout
-* **Route:** `POST /api/login`
+* **Route:** `POST /api/v1/login`
 * **Test Case 1.7.1 (5 Failed Attempts & 15-Minute Lockout):**
   Send 5 consecutive requests with `username: "ralph"`, `password: "badpass"`, `device_name: "Attacker"`.  
   *Expected on 5th failure:* HTTP `423 Locked` or `429 Too Many Requests` with message: *"Account locked due to too many failed attempts. Please try again in 15 minutes."*  
@@ -199,9 +199,9 @@ Content-Type: application/json
   Re-authenticate Ralph via Test 1.6.1 to refresh `{{field_token}}`.
 
 ### 1.8 Mobile Logout
-* **Route:** `POST /api/logout`
+* **Route:** `POST /api/v1/logout`
 * **Test Case 1.8.1 (Token Revocation):**
-  Log in temporary user, call `POST /api/logout` with Bearer token.  
+  Log in temporary user, call `POST /api/v1/logout` with Bearer token.  
   *Expected:* HTTP `200 OK`. Subsequent request with same token returns HTTP `401 Unauthorized`.
 
 ---
@@ -238,7 +238,7 @@ Content-Type: application/json
   *Expected:* Flash: *"Department restored successfully."* Department badge returns to "Active".
 
 ### 2.2 Field Team & Crew Management Module (Web & API)
-* **Routes:** `/admin/teams/*` (Web) & `/api/teams/*` (Mobile API)
+* **Routes:** `/admin/teams/*` (Web) & `/api/v1/teams/*` (Mobile API)
 
 #### Web Interface (Admin):
 * **Test Case 2.2.1 (View Teams Index):** Navigate to `http://127.0.0.1:8000/admin/teams`.  
@@ -307,7 +307,7 @@ Content-Type: application/json
   Click **"Deactivate"** &rarr; Confirm prompt (`PATCH /admin/users/{{test_user_id}}/deactivate`).  
   *Expected:* Badge updates to "Inactive".
 * **Test Case 2.4.6 (Blocked Deactivated Login via Postman):**
-  Attempt login with `username: "carlosl"`, `password: "password"` on Postman `POST /api/login`.  
+  Attempt login with `username: "carlosl"`, `password: "password"` on Postman `POST /api/v1/login`.  
   *Expected:* Login rejected with error: *"Your account has been deactivated. Please contact your system administrator."*
 * **Test Case 2.4.7 (Reactivate User):**
   On Web, click **"Reactivate"** on `carlosl` &rarr; Confirm prompt.  
@@ -438,7 +438,7 @@ Content-Type: application/json
   *Expected:* Remark renders with "Internal Only" badge.
 
 ### 5.2 Mobile Remarks via Postman
-* **Routes:** `GET /api/tickets/{ticket}/remarks` & `POST /api/tickets/{ticket}/remarks`
+* **Routes:** `GET /api/v1/tickets/{ticket}/remarks` & `POST /api/v1/tickets/{ticket}/remarks`
 * **Test Case 5.2.1 (Retrieve Remarks List):**
   ```http
   GET {{base_url}}/tickets/{{parent_ticket_id}}/remarks
@@ -463,7 +463,7 @@ Content-Type: application/json
 *Prerequisite: Use `{{supervisor_token}}` (Supervisor Mycka, Dept 1 TSD).*
 
 ### 6.1 Supervisor Dashboard Metrics
-* **Route:** `GET /api/dashboard`
+* **Route:** `GET /api/v1/dashboard`
 * **Test Case 6.1.1 (Department Scoped Counts):**
   ```http
   GET {{base_url}}/dashboard
@@ -472,7 +472,7 @@ Content-Type: application/json
   *Expected:* HTTP `200 OK`. `open_tickets` reflects tickets assigned to TSD. Tickets belonging to Line Construction or CWD are excluded.
 
 ### 6.2 Ticket Inbox & Query Parameters
-* **Route:** `GET /api/tickets`
+* **Route:** `GET /api/v1/tickets`
 * **Test Case 6.2.1 (Status Filter 'all'):**
   ```http
   GET {{base_url}}/tickets?status=all
@@ -493,7 +493,7 @@ Content-Type: application/json
   *Expected:* HTTP `200 OK`. Invalid status `'approved'` is ignored without corrupting SQL clauses or returning an empty result.
 
 ### 6.3 Ticket Detailed View & History
-* **Routes:** `GET /api/tickets/{ticket}` & `GET /api/tickets/{ticket}/history`
+* **Routes:** `GET /api/v1/tickets/{ticket}` & `GET /api/v1/tickets/{ticket}/history`
 * **Test Case 6.3.1 (Ticket Details):**
   ```http
   GET {{base_url}}/tickets/{{parent_ticket_id}}
@@ -508,7 +508,7 @@ Content-Type: application/json
   *Expected:* HTTP `200 OK` returning initial creation status log.
 
 ### 6.4 Ticket Assignment (Dispatch)
-* **Routes:** `GET /api/tickets/{ticket}/assign-options` & `POST /api/tickets/{ticket}/assign`
+* **Routes:** `GET /api/v1/tickets/{ticket}/assign-options` & `POST /api/v1/tickets/{ticket}/assign`
 * **Test Case 6.4.1 (Get Assign Options):**
   ```http
   GET {{base_url}}/tickets/{{parent_ticket_id}}/assign-options
@@ -537,7 +537,7 @@ Content-Type: application/json
 *Prerequisite: Use `{{field_token}}` (Ralph, Alpha Emergency Response Crew).*
 
 ### 7.1 Field Personnel Profile & Inbox Scoping
-* **Routes:** `GET /api/user/profile` & `GET /api/tickets`
+* **Routes:** `GET /api/v1/user/profile` & `GET /api/v1/tickets`
 * **Test Case 7.1.1 (Field Profile):**
   ```http
   GET {{base_url}}/user/profile
@@ -552,7 +552,7 @@ Content-Type: application/json
   *Expected:* Returns `{{parent_ticket_id}}` (assigned to Alpha Crew). Tickets assigned to Bravo or other teams are not returned.
 
 ### 7.2 Start Work on Ticket
-* **Route:** `PATCH /api/tickets/{ticket}/start`
+* **Route:** `PATCH /api/v1/tickets/{ticket}/start`
 * **Test Case 7.2.1 (Start Unassigned Ticket Guard):**
   Attempt to start Child Ticket `{{child_ticket_id}}` (which is still `Open` and unassigned):
   ```http
@@ -571,7 +571,7 @@ Content-Type: application/json
   *Expected:* HTTP `422 Unprocessable Content`: *"This ticket is already in progress."*
 
 ### 7.3 Submit Accomplishment Report (Multipart Form-Data)
-* **Route:** `POST /api/tickets/{ticket}/accomplish`
+* **Route:** `POST /api/v1/tickets/{ticket}/accomplish`
 * **Test Case 7.3.1 (Status Guard - Must Be In Progress):**
   Attempt to submit accomplishment on an unstarted ticket &rarr; Rejected with HTTP `422`.
 * **Test Case 7.3.2 (Submit Valid Accomplishment with Proof):**
@@ -597,7 +597,7 @@ Content-Type: application/json
 *Prerequisite: Ticket is in `resolved` status with accomplishment `{{accomplishment_id}}`.*
 
 ### 8.1 List & Inspect Accomplishments (API & Web)
-* **Routes:** `GET /api/tickets/{ticket}/accomplishments` & `GET /cwd/tickets/{ticket}/accomplishments/{id}`
+* **Routes:** `GET /api/v1/tickets/{ticket}/accomplishments` & `GET /cwd/tickets/{ticket}/accomplishments/{id}`
 * **Test Case 8.1.1 (Supervisor List Accomplishments via API):**
   ```http
   GET {{base_url}}/tickets/{{parent_ticket_id}}/accomplishments
@@ -609,7 +609,7 @@ Content-Type: application/json
   *Expected:* Lightbox modal displays uploaded photos and customer digital signature.
 
 ### 8.2 Accomplishment Verification Rejection Flow
-* **Route:** `POST /api/tickets/{ticket}/accomplishments/{id}/verify`
+* **Route:** `POST /api/v1/tickets/{ticket}/accomplishments/{id}/verify`
 * **Test Case 8.2.1 (Missing Rejection Reason Guard):**
   ```http
   POST {{base_url}}/tickets/{{parent_ticket_id}}/accomplishments/{{accomplishment_id}}/verify
@@ -655,7 +655,7 @@ Content-Type: application/json
 *Prerequisite: Create a fresh ticket `TKT-261007-004` assigned to TSD to test the endorsement workflow.*
 
 ### 9.1 Supervisor Submits Endorsement Request
-* **Routes:** `GET /api/tickets/{ticket}/endorse-options` & `POST /api/tickets/{ticket}/endorse`
+* **Routes:** `GET /api/v1/tickets/{ticket}/endorse-options` & `POST /api/v1/tickets/{ticket}/endorse`
 * **Test Case 9.1.1 (Get Endorse Candidate Departments):**
   ```http
   GET {{base_url}}/tickets/<fresh_ticket_id>/endorse-options
@@ -733,7 +733,7 @@ Do not hardcode static dates. Inspect your test ticket's `reported_at` (e.g. `15
 
 ### 11.1 Simulating Offline `/start`
 * **Method:** `PATCH`
-* **URL:** `http://127.0.0.1:8000/api/tickets/{{ticket_id}}/start`
+* **URL:** `http://127.0.0.1:8000/api/v1/tickets/{{ticket_id}}/start`
 * **Headers:**
   ```http
   Authorization: Bearer {{field_token}}
@@ -757,7 +757,7 @@ Do not hardcode static dates. Inspect your test ticket's `reported_at` (e.g. `15
 
 ### 11.3 Simulating Offline `/accomplish` (Multipart Upload)
 * **Method:** `POST`
-* **URL:** `http://127.0.0.1:8000/api/tickets/{{ticket_id}}/accomplish`
+* **URL:** `http://127.0.0.1:8000/api/v1/tickets/{{ticket_id}}/accomplish`
 * **Headers:**
   ```http
   Authorization: Bearer {{field_token}}

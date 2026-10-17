@@ -19,6 +19,7 @@ return Application::configure(basePath: dirname(__DIR__))
         commands: __DIR__.'/../routes/console.php',
         channels: __DIR__.'/../routes/channels.php',
         health: '/up',
+        apiPrefix: 'api/v1',
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
@@ -67,9 +68,13 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $exceptions->render(function (NotFoundHttpException $e, Request $request) {
             if ($request->is('api/*')) {
-                $message = $e->getMessage();
-                if ($message === '' || $message === 'Not Found') {
-                    $message = 'The requested resource was not found.';
+                if (! $request->is('api/v1/*')) {
+                    $message = 'The requested endpoint was not found. Please verify the API base URL is versioned at /api/v1/.';
+                } else {
+                    $message = $e->getMessage();
+                    if ($message === '' || $message === 'Not Found' || str_starts_with($message, 'The route ')) {
+                        $message = 'The requested resource was not found.';
+                    }
                 }
 
                 return response()->json([

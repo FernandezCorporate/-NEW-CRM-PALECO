@@ -12,9 +12,9 @@
 > If you are an AI coding assistant tasked with implementing or refactoring this feature in the Flutter mobile codebase:
 > 1. **Do not poll endpoints on a timer:** Never implement periodic polling loops (e.g., `Timer.periodic`) to refresh ticket statuses. All live state changes must be driven reactively via incoming WebSocket broadcast events.
 > 2. **Enforce Role-Based Channel Scopes:** Linemen must **only** subscribe to their assigned team's channel (`private-team.{teamId}`). Department supervisors subscribe to their department channel (`private-department.{departmentId}`). Never subscribe to channels outside the user's authenticated scope.
-> 3. **Sanctum Multi-Guard Authentication:** All private channel authorizations require a valid Sanctum Bearer token sent to `/api/broadcasting/auth`. If the token expires or is rejected (HTTP 401/403), gracefully prompt the user to re-authenticate.
+> 3. **Sanctum Multi-Guard Authentication:** All private channel authorizations require a valid Sanctum Bearer token sent to `/api/v1/broadcasting/auth`. If the token expires or is rejected (HTTP 401/403), gracefully prompt the user to re-authenticate.
 > 4. **Lock Emergency Halt Screens:** Upon receiving `TicketForceClosed`, the active ticket screen must **immediately disable** all action buttons ("Start Work", "Submit Accomplishment") and render an emergency modal with the administrative reason.
-> 5. **Implement Catch-Up Fetching on Reconnect:** When the WebSocket connection drops and reconnects (e.g. recovering from a cellular dead zone), automatically fire a single background `GET /api/tickets` to catch up on missed events.
+> 5. **Implement Catch-Up Fetching on Reconnect:** When the WebSocket connection drops and reconnects (e.g. recovering from a cellular dead zone), automatically fire a single background `GET /api/v1/tickets` to catch up on missed events.
 <!-- AI_AGENT_SYSTEM_PROMPT_END -->
 
 ---
@@ -69,13 +69,13 @@ sequenceDiagram
     participant WS as Reverb WebSocket (Port 8080)
     participant Backend as Laravel API (/api)
 
-    Field->>Mobile: Logs in via POST /api/login
+    Field->>Mobile: Logs in via POST /api/v1/login
     Backend-->>Mobile: Returns Sanctum Token + User Details (Role, Team, Dept)
     Mobile->>WS: Connect WebSocket (ws:// or wss://)
     WS-->>Mobile: Connection Established (Returns socket_id)
 
     Note over Mobile,Backend: Multi-Guard Sanctum Handshake
-    Mobile->>Backend: POST /api/broadcasting/auth (Bearer Token, socket_id, channel)
+    Mobile->>Backend: POST /api/v1/broadcasting/auth (Bearer Token, socket_id, channel)
     Backend->>Backend: Validates Sanctum Token & checks routes/channels.php
     Backend-->>Mobile: Returns Auth Signature Hash { "auth": "key:signature" }
 
@@ -92,7 +92,7 @@ sequenceDiagram
 Every private channel subscription (`private-*`) is cryptographically signed to prevent unauthorized snooping. Under the hood:
 
 1. **Socket ID Generation:** When the Flutter app opens the WebSocket to Reverb, Reverb generates an ephemeral `socket_id` (e.g., `12345.67890`) and sends it down to the mobile client.
-2. **Authorization Request:** Before Reverb lets the client listen to `private-team.01J0...`, the client must prove permission by sending an HTTP POST request to `/api/broadcasting/auth` on the Laravel API.
+2. **Authorization Request:** Before Reverb lets the client listen to `private-team.01J0...`, the client must prove permission by sending an HTTP POST request to `/api/v1/broadcasting/auth` on the Laravel API.
    - Header: `Authorization: Bearer <SANCTUM_TOKEN>`
    - Body: `socket_id` and `channel_name`
 3. **Guard Evaluation:** The Laravel backend authenticates the user via Sanctum and evaluates the channel logic registered in `routes/channels.php`.
@@ -119,7 +119,7 @@ Below is the complete logic map of all broadcasted events, detailing who trigger
 
 ### Event 1: `TicketAssigned` (Work Order Dispatch & Multi-Crew Reassignment)
 - **Fired When:** Supervisor or CWD assigns an open ticket or reassigns an assigned ticket to a field team.
-- **Triggered By:** Web Desk or Mobile Supervisor (`POST /tickets/{ticket}/assign` or `POST /api/tickets/{ticket}/assign`).
+- **Triggered By:** Web Desk or Mobile Supervisor (`POST /tickets/{ticket}/assign` or `POST /api/v1/tickets/{ticket}/assign`).
 - **Policy Guard:** Initial assignment requires ticket status `open`. Reassignment requires status `assigned`. Tickets in `in_progress` status **cannot** be reassigned.
 - **Target Channels:**
   - **Initial Assignment:** `private-team.{teamId}` and `private-cwd.operations`
@@ -144,7 +144,7 @@ Below is the complete logic map of all broadcasted events, detailing who trigger
   1. Parse the incoming notification summary from `event.data`.
   2. **Branch by Recipient Team:**
      - **For the newly assigned crew (`team_id == user.active_team_id`):**
-       - Fetch full ticket details via `GET /api/tickets/{ticket_id}` or insert/update ticket entry in local state.
+       - Fetch full ticket details via `GET /api/v1/tickets/{ticket_id}` or insert/update ticket entry in local state.
        - Render floating toast: *"⚡ New Dispatch Order: Ticket #TCK-XXXX assigned to your crew."*
        - Increment the unread counter badge on the "My Tasks" / "Dispatches" tab.
        - Trigger a subtle haptic vibration.
@@ -158,7 +158,7 @@ Below is the complete logic map of all broadcasted events, detailing who trigger
 
 ### Event 2: `TicketWorkStarted` (Crew Commenced Field Work)
 - **Fired When:** A lineman arrives at the consumer's premises and taps "Start Work".
-- **Triggered By:** Mobile API (`PATCH /api/tickets/{ticket}/start`).
+- **Triggered By:** Mobile API (`PATCH /api/v1/tickets/{ticket}/start`).
 - **Target Channel:** `private-team.{teamId}` and `private-cwd.operations`
 - **Audience on Mobile:** Other crew members on the same team and mobile supervisors.
 - **Payload Data Contains:** Ticket ID, `status: "in_progress"`, and `started_at` timestamp.
@@ -172,7 +172,7 @@ Below is the complete logic map of all broadcasted events, detailing who trigger
 
 ### Event 3: `TicketAccomplished` (Field Proof Submitted)
 - **Fired When:** Lineman completes field repair, captures photo proofs and consumer signature, and taps "Submit Accomplishment".
-- **Triggered By:** Mobile API (`POST /api/tickets/{ticket}/accomplish`).
+- **Triggered By:** Mobile API (`POST /api/v1/tickets/{ticket}/accomplish`).
 - **Target Channel:** `private-department.{departmentId}` and `private-cwd.operations`
 - **Audience on Mobile:** **Department Supervisors**.
 - **Payload Data Contains:** Ticket ID, ticket number, status `resolved`, and accomplishment summary (photos count, remarks, consumer name).
@@ -185,7 +185,7 @@ Below is the complete logic map of all broadcasted events, detailing who trigger
 
 ### Event 4: `TicketVerifiedAndClosed` (Supervisor Approves)
 - **Fired When:** Supervisor verifies the photos and consumer signature and approves the work.
-- **Triggered By:** Web Desk or Mobile Supervisor (`POST /tickets/{ticket}/verify` or `POST /api/tickets/{ticket}/accomplishments/{id}/verify`).
+- **Triggered By:** Web Desk or Mobile Supervisor (`POST /tickets/{ticket}/verify` or `POST /api/v1/tickets/{ticket}/accomplishments/{id}/verify`).
 - **Target Channel:** `private-team.{teamId}` and `private-cwd.operations`
 - **Audience on Mobile:** Field Linemen.
 - **Payload Data Contains:** Ticket ID, status `closed`, and `closed_at` timestamp.
@@ -300,7 +300,7 @@ flowchart TD
     C -->|Local Actions Queued| D[Stored in Offline Outbox]
     C -->|Truck Regains Signal| E[WebSocket Reconnects]
     E --> F[Re-authenticate & Resubscribe to Channels]
-    F --> G[TRIGGER CATCH-UP FETCH: Background GET /api/tickets]
+    F --> G[TRIGGER CATCH-UP FETCH: Background GET /api/v1/tickets]
     G --> H[Reconcile Server State with Local State]
     H --> I[Resume Normal Live Real-Time Operations]
 ```
@@ -309,7 +309,7 @@ flowchart TD
 1. **Monitor Connection State:** Listen to the WebSocket connection state transitions.
 2. **Detect Reconnect:** When the connection shifts from `DISCONNECTED` $\to$ `CONNECTED`:
    - Automatically resubscribe to the required `private-team.{teamId}` channel.
-   - Immediately fire an asynchronous background `GET /api/tickets` request.
+   - Immediately fire an asynchronous background `GET /api/v1/tickets` request.
 3. **Reconcile State:** Compare the fresh HTTP response against in-memory tickets. If any ticket was force-closed or reassigned while the crew was offline, update the UI immediately.
 
 ---
@@ -321,7 +321,7 @@ Share these configuration parameters with the mobile team:
 | Variable | Development (Local Network) | Staging / Production |
 | :--- | :--- | :--- |
 | **API Base URL** | `http://<HOST_IP>:8000/api` | `https://crm.paleco.org.ph/api` |
-| **Broadcasting Auth URL** | `http://<HOST_IP>:8000/api/broadcasting/auth` | `https://crm.paleco.org.ph/api/broadcasting/auth` |
+| **Broadcasting Auth URL** | `http://<HOST_IP>:8000/api/v1/broadcasting/auth` | `https://crm.paleco.org.ph/api/v1/broadcasting/auth` |
 | **WebSocket Host** | `<HOST_IP>` (e.g., `192.168.1.50` or `10.0.2.2`) | `crm.paleco.org.ph` |
 | **WebSocket Port** | `8080` | `443` (TLS) |
 | **Reverb App Key** | `REVERB_APP_KEY` from `.env` | Production Key |
@@ -335,7 +335,7 @@ Share these configuration parameters with the mobile team:
 The Flutter mobile team can feed the following prompts directly to their AI coding assistants (Cursor, Claude Code, Copilot) to generate the implementation according to this specification:
 
 ### Prompt 1: Implement the Real-Time Broadcasting Service Singleton
-> *"Read `docs/dev/FLUTTER_REALTIME_WEBSOCKET_SPECIFICATION.md`. Create a robust singleton class in `lib/services/realtime_broadcasting_service.dart` using `pusher_channels_flutter`. It must connect to our Laravel Reverb server using our Sanctum token for `/api/broadcasting/auth`. Support subscribing to private channels (`private-team.{teamId}` and `private-department.{deptId}`) and provide a clean listener subscription API so our screen controllers can register callbacks for incoming events."*
+> *"Read `docs/dev/FLUTTER_REALTIME_WEBSOCKET_SPECIFICATION.md`. Create a robust singleton class in `lib/services/realtime_broadcasting_service.dart` using `pusher_channels_flutter`. It must connect to our Laravel Reverb server using our Sanctum token for `/api/v1/broadcasting/auth`. Support subscribing to private channels (`private-team.{teamId}` and `private-department.{deptId}`) and provide a clean listener subscription API so our screen controllers can register callbacks for incoming events."*
 
 ### Prompt 2: Implement Reactive In-App Floating Toasts & State Updates
 > *"Read Section 4 of `docs/dev/FLUTTER_REALTIME_WEBSOCKET_SPECIFICATION.md`. Implement an in-app non-blocking floating toast component that displays when `TicketAssigned` or `TicketAccomplished` events arrive. Connect this to our ticket state manager so incoming tickets are prepended to the active list without full screen rebuilds."*
@@ -344,5 +344,5 @@ The Flutter mobile team can feed the following prompts directly to their AI codi
 > *"Review the Emergency Halt specifications in Section 4 (UX Pattern 4) of `docs/dev/FLUTTER_REALTIME_WEBSOCKET_SPECIFICATION.md`. Create a reusable dialog that triggers when a `TicketForceClosed` event is received for the active ticket. It must be non-dismissible, display the administrative closure reason prominently, disable action buttons, and provide an acknowledge button that safely navigates the lineman back to their inbox."*
 
 ### Prompt 4: Implement Reconnection & Catch-Up Sync
-> *"Review Section 5 of `docs/dev/FLUTTER_REALTIME_WEBSOCKET_SPECIFICATION.md`. Update our real-time service and repository to detect when the WebSocket reconnects after being disconnected (cellular dead zone). On reconnect, automatically trigger a background fetch to `GET /api/tickets` to reconcile any missed ticket status changes or cancellations."*
+> *"Review Section 5 of `docs/dev/FLUTTER_REALTIME_WEBSOCKET_SPECIFICATION.md`. Update our real-time service and repository to detect when the WebSocket reconnects after being disconnected (cellular dead zone). On reconnect, automatically trigger a background fetch to `GET /api/v1/tickets` to reconcile any missed ticket status changes or cancellations."*
 
