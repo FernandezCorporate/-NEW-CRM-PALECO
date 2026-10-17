@@ -11,6 +11,10 @@ php artisan package:discover --ansi
 echo "Executing database migrations against TiDB Cloud..."
 php artisan migrate --force
 
+# Ensure public storage symlink exists
+echo "Creating storage symlink..."
+php artisan storage:link || true
+
 # Optimize Laravel for production
 echo "Caching configuration, routes, and views..."
 php artisan config:cache

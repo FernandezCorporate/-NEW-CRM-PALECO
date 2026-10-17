@@ -27,4 +27,18 @@ class AccomplishmentPhoto extends Model
     {
         return $this->belongsTo(TicketAccomplishment::class, 'accomplishment_id');
     }
+
+    /**
+     * Resolves the full URL for the photo across local and cloud disks.
+     */
+    public function getUrlAttribute(): string
+    {
+        if (str_starts_with($this->file_path, 'http://') || str_starts_with($this->file_path, 'https://')) {
+            return $this->file_path;
+        }
+
+        $disk = config('filesystems.default', 'public');
+
+        return \Illuminate\Support\Facades\Storage::disk($disk)->url($this->file_path);
+    }
 }

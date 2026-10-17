@@ -86,4 +86,22 @@ class TicketAccomplishment extends Model
     {
         return $this->hasMany(AccomplishmentPhoto::class, 'accomplishment_id');
     }
+
+    /**
+     * Resolves the full URL for the consumer signature across local and cloud disks.
+     */
+    public function getSignatureUrlAttribute(): ?string
+    {
+        if (! $this->signature_path) {
+            return null;
+        }
+
+        if (str_starts_with($this->signature_path, 'http://') || str_starts_with($this->signature_path, 'https://')) {
+            return $this->signature_path;
+        }
+
+        $disk = config('filesystems.default', 'public');
+
+        return \Illuminate\Support\Facades\Storage::disk($disk)->url($this->signature_path);
+    }
 }

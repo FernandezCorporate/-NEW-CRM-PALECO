@@ -89,8 +89,8 @@
 
             <span class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Consumer Signature Image Frame</span>
             <div class="border-2 border-dashed border-slate-200 rounded-lg p-2 bg-slate-50 flex items-center justify-center min-h-[150px]">
-                @if($accomplishment->signature_path)
-                    <img src="{{ asset('storage/' . $accomplishment->signature_path) }}" alt="Consumer Signature" class="max-h-32 object-contain mix-blend-multiply">
+                @if($accomplishment->signature_url)
+                    <img src="{{ $accomplishment->signature_url }}" alt="Consumer Signature" class="max-h-32 object-contain mix-blend-multiply">
                 @else
                     <span class="text-sm text-slate-400 italic">No signature captured</span>
                 @endif
@@ -111,9 +111,9 @@
                     @foreach($accomplishment->photos as $index => $photo)
                         <button type="button" 
                              class="group relative rounded-lg border border-slate-200 overflow-hidden bg-slate-800 aspect-[4/3] shadow-xs js-lightbox-trigger cursor-pointer text-left focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2" 
-                             data-image-src="{{ asset('storage/' . $photo->file_path) }}"
+                             data-image-src="{{ $photo->url }}"
                              aria-label="View evidence photo {{ $index + 1 }} full screen">
-                            <img src="{{ asset('storage/' . $photo->file_path) }}" alt="Evidence {{ $index + 1 }}" class="w-full h-full object-contain transition-transform duration-300 group-hover:scale-105 pointer-events-none">
+                            <img src="{{ $photo->url }}" alt="Evidence {{ $index + 1 }}" class="w-full h-full object-contain transition-transform duration-300 group-hover:scale-105 pointer-events-none">
                             <div class="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/80 to-transparent pt-8 pb-3 px-4 pointer-events-none">
                                 <span class="text-sm text-white font-bold block drop-shadow-md">Evidence {{ $index + 1 }}</span>
                             </div>

@@ -108,12 +108,13 @@ class TicketAccomplishmentService
         $isOffline = $clientTimestamp !== null && $clientTimestamp->diffInMinutes(now()) > 5;
         $actualAccomplishedTime = $clientTimestamp ?? now();
 
+        $disk = config('filesystems.default', 'public');
         $signaturePath = null;
         $photoPaths = [];
 
         try {
             if (isset($data['signature'])) {
-                $signaturePath = $data['signature']->store('accomplishments/signatures', 'public');
+                $signaturePath = $data['signature']->store('accomplishments/signatures', $disk);
             }
 
             return DB::transaction(function () use (
@@ -177,7 +178,7 @@ class TicketAccomplishmentService
 
                 if (! empty($data['photos'])) {
                     foreach ($data['photos'] as $photo) {
-                        $path = $photo->store('accomplishments/photos', 'public');
+                        $path = $photo->store('accomplishments/photos', $disk);
                         $photoPaths[] = $path;
 
                         $report->photos()->create([
@@ -219,10 +220,10 @@ class TicketAccomplishmentService
             });
         } catch (Exception $e) {
             if ($signaturePath) {
-                Storage::disk('public')->delete($signaturePath);
+                Storage::disk($disk)->delete($signaturePath);
             }
             if (! empty($photoPaths)) {
-                Storage::disk('public')->delete($photoPaths);
+                Storage::disk($disk)->delete($photoPaths);
             }
 
             throw $e;

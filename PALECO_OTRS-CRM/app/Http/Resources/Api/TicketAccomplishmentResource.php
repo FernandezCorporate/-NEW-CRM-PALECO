@@ -21,15 +21,13 @@ class TicketAccomplishmentResource extends JsonResource
             'remarks' => $this->remarks,
             'consumer_name' => $this->consumer_name,
 
-            'signature_url' => $this->signature_path
-                ? asset('storage/'.$this->signature_path)
-                : null,
+            'signature_url' => $this->signature_url,
 
             'photos' => $this->whenLoaded('photos', function () {
                 return $this->photos->map(function ($photo) {
                     return [
                         'id' => $photo->id,
-                        'url' => asset('storage/'.$photo->file_path),
+                        'url' => $photo->url,
                     ];
                 });
             }),
