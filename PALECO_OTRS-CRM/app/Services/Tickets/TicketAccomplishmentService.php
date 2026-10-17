@@ -121,6 +121,7 @@ class TicketAccomplishmentService
                 $ticket,
                 $worker,
                 $data,
+                $disk,
                 $signaturePath,
                 &$photoPaths,
                 $actualAccomplishedTime,
