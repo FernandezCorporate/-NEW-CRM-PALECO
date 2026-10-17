@@ -5,6 +5,7 @@ namespace App\Http\Requests\Users;
 use App\Models\AccountRole;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Rules\Password;
 
 /**
  * Validates incoming HTTP requests for creating a new user account.
@@ -59,7 +60,7 @@ class StoreUserRequest extends FormRequest
                 'integer',
                 Rule::exists('departments', 'id')->whereNull('deleted_at'),
             ],
-            'password' => ['required', 'string', 'min:8', 'confirmed'],
+            'password' => ['required', 'string', 'confirmed', Password::min(8)->mixedCase()],
         ];
     }
 
@@ -108,6 +109,7 @@ class StoreUserRequest extends FormRequest
             'password.required' => 'A password must be provided for the new account.',
             'password.string' => 'The password must be a valid text string.',
             'password.min' => 'The password must be at least 8 characters long.',
+            'password.mixed' => 'The password must contain at least one uppercase and one lowercase letter.',
             'password.confirmed' => 'The password confirmation does not match.',
         ];
     }

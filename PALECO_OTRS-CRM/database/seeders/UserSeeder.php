@@ -21,7 +21,7 @@ class UserSeeder extends Seeder
             'last_name' => 'fernandez',
             'contact' => '09123456789',
             'role_id' => 1,
-            'password' => 'password',
+            'password' => 'Password',
         ]);
 
         // 2. CWD Officer Account (Web Portal)
@@ -31,7 +31,7 @@ class UserSeeder extends Seeder
             'last_name' => 'officer',
             'contact' => '09123456789',
             'role_id' => 2,
-            'password' => 'password',
+            'password' => 'Password',
         ]);
 
         // 3. Supervisor Account (Mobile App Target)
@@ -42,7 +42,7 @@ class UserSeeder extends Seeder
             'contact' => '09123456789',
             'role_id' => 3,
             'department_id' => 1,
-            'password' => 'password',
+            'password' => 'Password',
         ]);
 
         // 4. Field Personnel Account (Mobile App Target)
@@ -52,7 +52,7 @@ class UserSeeder extends Seeder
             'last_name' => 'personnel',
             'contact' => '09123456789',
             'role_id' => 4,
-            'password' => 'password',
+            'password' => 'Password',
         ]);
 
         $firstTeam = Team::first();

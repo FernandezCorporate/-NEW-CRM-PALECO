@@ -26,7 +26,7 @@ beforeEach(function () {
             'last_name' => 'Officer',
             'contact' => '09123456789',
             'role_id' => $this->cwdRole->id,
-            'password' => bcrypt('password'),
+            'password' => bcrypt('Password'),
             'is_active' => 1,
         ]
     );

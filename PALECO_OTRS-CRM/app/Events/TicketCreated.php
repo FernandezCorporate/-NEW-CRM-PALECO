@@ -24,10 +24,20 @@ class TicketCreated implements ShouldBroadcastNow
 
     /**
      * Get the channels the event should broadcast on.
+     *
+     * @return array<int, \Illuminate\Broadcasting\Channel>
      */
-    public function broadcastOn(): Channel
+    public function broadcastOn(): array
     {
-        return new PrivateChannel('cwd.operations');
+        $channels = [
+            new PrivateChannel('cwd.operations'),
+        ];
+
+        if ($this->ticket->department_id) {
+            $channels[] = new PrivateChannel('department.'.$this->ticket->department_id);
+        }
+
+        return $channels;
     }
 
     /**
@@ -44,6 +54,7 @@ class TicketCreated implements ShouldBroadcastNow
             'source' => $this->ticket->complaint_source->label(),
             'address' => implode(', ', array_filter([$this->ticket->purok, $this->ticket->street, $this->ticket->barangay])),
             'category' => $this->ticket->other_category ? $this->ticket->other_category_name : ($this->ticket->category?->category_name ?? 'Unspecified'),
+            'department_id' => $this->ticket->department_id,
             'department' => $this->ticket->department?->dept_name ?? 'Unassigned',
             'created_at' => $this->ticket->reported_at?->format('M d, Y') ?? now()->format('M d, Y'),
         ];

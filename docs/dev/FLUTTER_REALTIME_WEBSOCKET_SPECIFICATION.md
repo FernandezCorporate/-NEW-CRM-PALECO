@@ -117,6 +117,33 @@ The system enforces strict multi-guard separation:
 
 Below is the complete logic map of all broadcasted events, detailing who triggers them, who hears them, and what the mobile application must do under the hood.
 
+### Event 0: `TicketCreated` (New Consumer Service Request / Complaint Intake)
+- **Fired When:** CWD Officer logs a new service request via the web intake form, or an endorsed child ticket is initiated.
+- **Triggered By:** Web Desk (`POST /cwd/tickets`) or Backend Services.
+- **Target Channels:** `private-cwd.operations` and `private-department.{deptId}` (target department).
+- **Audience on Mobile:** Supervisors of the assigned department.
+- **Payload Data Contains:**
+  ```json
+  {
+    "ticket_id": "01JM4C7W1ABCDEF1234567890",
+    "ticket_number": "TKT-261017-002",
+    "parent_ticket_id": null,
+    "status": "open",
+    "status_label": "Open",
+    "source": "Phone Call",
+    "address": "Masagana, Highway, Tiniguiban",
+    "category": "Fluctuating / Low Voltage",
+    "department_id": 1,
+    "department": "Technical Services Department (TSD)",
+    "created_at": "Oct 17, 2026"
+  }
+  ```
+- **Under the Hood Mobile Logic:**
+  1. Inspect `department_id`: If supervisor belongs to this department, proceed.
+  2. Render floating notification banner: *"📋 New Service Request: Ticket #TKT-XXXX logged for your department."*
+  3. Increment the "Open" and "All" counter badges in the inbox filter chips.
+  4. If user is currently on the Dispatched Tickets Inbox or Supervisor Dashboard, reload or prepend the ticket in local state to display it instantly in real time without requiring a manual refresh.
+
 ### Event 1: `TicketAssigned` (Work Order Dispatch & Multi-Crew Reassignment)
 - **Fired When:** Supervisor or CWD assigns an open ticket or reassigns an assigned ticket to a field team.
 - **Triggered By:** Web Desk or Mobile Supervisor (`POST /tickets/{ticket}/assign` or `POST /api/v1/tickets/{ticket}/assign`).

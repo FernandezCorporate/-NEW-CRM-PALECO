@@ -171,14 +171,14 @@ Authenticates mobile users, validates device identification, verifies role autho
 
 > [!TIP]
 > **Pre-Configured Test Accounts (Database Seeded):**
-> - **Supervisor:** `username: mycka` | `password: password` (Assigned to Technical Services Department)
-> - **Field Personnel:** `username: ralph` | `password: password` (Assigned to Alpha Emergency Response Crew)
+> - **Supervisor:** `username: mycka` | `password: Password` (Assigned to Technical Services Department)
+> - **Field Personnel:** `username: ralph` | `password: Password` (Assigned to Alpha Emergency Response Crew)
 
 #### Request Example
 ```json
 {
   "username": "mycka",
-  "password": "password",
+  "password": "Password",
   "device_name": "Samsung Galaxy S23"
 }
 ```

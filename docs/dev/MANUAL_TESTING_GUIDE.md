@@ -84,14 +84,14 @@ Open separate terminal windows and run:
 
 ## 3. Pre-Configured Test Accounts & Credentials
 
-The seeders configure four pre-linked test accounts (all passwords: `password`):
+The seeders configure four pre-linked test accounts (all passwords: `Password`):
 
 | Role | Username | Password | Operational Assignment | Authorized Channel |
 | :--- | :--- | :--- | :--- | :--- |
-| **Admin** | `allenglenn` | `password` | Global System Administrator | **Web Browser Only** |
-| **CWD Officer** | `alliah` | `password` | Consumer Welfare Desk (Intake & Endorsements) | **Web Browser Only** |
-| **Supervisor** | `mycka` | `password` | Technical Services Department (`department_id = 1`) | **Postman (Mobile API)** |
-| **Field Personnel** | `ralph` | `password` | Alpha Emergency Response Crew (`team_id = 1`) | **Postman (Mobile API)** |
+| **Admin** | `allenglenn` | `Password` | Global System Administrator | **Web Browser Only** |
+| **CWD Officer** | `alliah` | `Password` | Consumer Welfare Desk (Intake & Endorsements) | **Web Browser Only** |
+| **Supervisor** | `mycka` | `Password` | Technical Services Department (`department_id = 1`) | **Postman (Mobile API)** |
+| **Field Personnel** | `ralph` | `Password` | Alpha Emergency Response Crew (`team_id = 1`) | **Postman (Mobile API)** |
 
 ---
 
@@ -132,14 +132,14 @@ Content-Type: application/json
   *Expected:* Form displays validation errors: *"The username field is required."* and *"The password field is required."*
 * **Test Case 1.2.2 (Invalid Credentials):** Enter `allenglenn` / `wrongpassword`.  
   *Expected:* Error flash: *"These credentials do not match our records."*
-* **Test Case 1.2.3 (Role Mismatch Rejection):** Attempt to log into `/login/admin` using `alliah` / `password` (CWD role).  
+* **Test Case 1.2.3 (Role Mismatch Rejection):** Attempt to log into `/login/admin` using `alliah` / `Password` (CWD role).  
   *Expected:* Login rejected with error: *"These credentials do not match our records."* (Role boundary enforcement).
-* **Test Case 1.2.4 (Successful Admin Login):** Enter `allenglenn` / `password`.  
+* **Test Case 1.2.4 (Successful Admin Login):** Enter `allenglenn` / `Password`.  
   *Expected:* Authenticates session, redirects to `http://127.0.0.1:8000/admin/dashboard`. Header displays "Administrator" badge and navigation items.
 
 ### 1.3 Web CWD Login & Session Segregation
 * **Route:** `GET /login/cwd` & `POST /login/cwd`
-* **Test Case 1.3.1 (Successful CWD Login):** Open private browser window, navigate to `http://127.0.0.1:8000/login/cwd`, submit `alliah` / `password`.  
+* **Test Case 1.3.1 (Successful CWD Login):** Open private browser window, navigate to `http://127.0.0.1:8000/login/cwd`, submit `alliah` / `Password`.  
   *Expected:* Redirects to `/cwd/dashboard`. Header displays "Consumer Welfare Desk" navigation.
 * **Test Case 1.3.2 (Cross-Portal Access Obscurity):** In CWD session, navigate directly to `http://127.0.0.1:8000/admin/dashboard`.  
   *Expected:* HTTP `404 Not Found` (Deny-as-not-found security policy).
@@ -156,7 +156,7 @@ Content-Type: application/json
   ```json
   {
     "username": "allenglenn",
-    "password": "password",
+    "password": "Password",
     "device_name": "Postman"
   }
   ```
@@ -165,7 +165,7 @@ Content-Type: application/json
   ```json
   {
     "username": "mycka",
-    "password": "password",
+    "password": "Password",
     "device_name": "Samsung Galaxy S24"
   }
   ```
@@ -179,7 +179,7 @@ Content-Type: application/json
   ```json
   {
     "username": "ralph",
-    "password": "password",
+    "password": "Password",
     "device_name": "Rugged Phone 1"
   }
   ```
@@ -208,7 +208,7 @@ Content-Type: application/json
 
 ## Phase 2: Admin — Core Catalogs & Organizational Setup
 
-*Prerequisite: Logged in on Web Browser as `allenglenn` / `password`.*
+*Prerequisite: Logged in on Web Browser as `allenglenn` / `Password`.*
 
 ### 2.1 Department Management Module
 * **Routes:** `/admin/departments/*`
@@ -299,7 +299,7 @@ Content-Type: application/json
 * **Test Case 2.4.2 (User Form Validation):** Click **"+ New User"** (`/admin/users/create`). Submit empty.  
   *Expected:* Validation errors for `name`, `username`, `email`, `password`, `role_id`.
 * **Test Case 2.4.3 (Create Staff User):**
-  Name: `Carlos Lineman`, Username: `carlosl`, Email: `carlos@paleco.local`, Password: `password`, Role: `Field Personnel`, Department: `Substation Operations Division`. Click **"Save User"**.  
+  Name: `Carlos Lineman`, Username: `carlosl`, Email: `carlos@paleco.local`, Password: `Password`, Role: `Field Personnel`, Department: `Substation Operations Division`. Click **"Save User"**.  
   *Expected:* User created with active status. Note ID as `{{test_user_id}}`.
 * **Test Case 2.4.4 (User Details View):** Click **"View Profile"** on `carlosl` (`/admin/users/{{test_user_id}}`).  
   *Expected:* Profile view displays role, department, zero assigned tickets.
@@ -307,7 +307,7 @@ Content-Type: application/json
   Click **"Deactivate"** &rarr; Confirm prompt (`PATCH /admin/users/{{test_user_id}}/deactivate`).  
   *Expected:* Badge updates to "Inactive".
 * **Test Case 2.4.6 (Blocked Deactivated Login via Postman):**
-  Attempt login with `username: "carlosl"`, `password: "password"` on Postman `POST /api/v1/login`.  
+  Attempt login with `username: "carlosl"`, `password: "Password"` on Postman `POST /api/v1/login`.  
   *Expected:* Login rejected with error: *"Your account has been deactivated. Please contact your system administrator."*
 * **Test Case 2.4.7 (Reactivate User):**
   On Web, click **"Reactivate"** on `carlosl` &rarr; Confirm prompt.  

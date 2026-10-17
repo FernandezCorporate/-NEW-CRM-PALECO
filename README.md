@@ -77,7 +77,7 @@ php artisan serve --host=0.0.0.0 --port=8000
 
 ## 🔑 Test Accounts
 
-The database seeder automatically creates the following test accounts. **The password for all accounts is `password`.**
+The database seeder automatically creates the following test accounts. **The password for all accounts is `Password`.**
 
 | Username     | System Role       | Portal Access       |
 | ------------ | ----------------- | ------------------- |
@@ -109,7 +109,7 @@ Authenticates a mobile user and issues a Sanctum API access token.
 ```json
 {
     "username": "mycka",
-    "password": "password",
+    "password": "Password",
     "device_name": "Android_Emulator" 
 }
 ```

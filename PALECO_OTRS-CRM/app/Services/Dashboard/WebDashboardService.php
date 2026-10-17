@@ -434,11 +434,11 @@ class WebDashboardService
             ->get()
             ->map(function ($log) {
                 $actor = $log->causer;
-                $actorName = $actor->fullName;
-                $actorRole = $actor?->role?->role_name ?? ($actor ? 'User' : 'System Automation');
+                $actorName = $actor?->fullName ?? ($log->properties['full_name'] ?? $log->properties['username'] ?? 'System Automation');
+                $actorRole = $actor?->role?->role_name ?? ($log->properties['role'] ?? ($actor ? 'User' : 'System Automation'));
                 $initials = $actor
                     ? strtoupper(substr($actor->first_name ?? '', 0, 1).substr($actor->last_name ?? '', 0, 1))
-                    : 'SY';
+                    : (!empty($log->properties['username']) ? strtoupper(substr($log->properties['username'], 0, 2)) : 'SY');
 
                 return [
                     'id' => $log->id,

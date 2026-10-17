@@ -195,12 +195,13 @@
                             <div>
                                 <x-form.label for="login-password" :required="true">Password</x-form.label>
                                 <div class="relative">
-                                    <x-form.input type="password" name="password" id="login-password" minlength="8" required placeholder="Minimum 8 characters" class="pr-10" />
+                                    <x-form.input type="password" name="password" id="login-password" minlength="8" required placeholder="Min 8 chars, 1 uppercase, 1 lowercase" class="pr-10" />
                                     <button type="button" id="toggle-password-btn" aria-label="Toggle password visibility" class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-emerald-600 transition-colors focus:outline-none">
                                         <x-icons.eye-slash id="eye-icon-closed" class="w-5 h-5" />
                                         <x-icons.eye id="eye-icon-open" class="hidden w-5 h-5" />
                                     </button>
                                 </div>
+                                <p class="mt-1 text-xs text-slate-500">Must be at least 8 characters with at least one uppercase and one lowercase letter.</p>
                                 <x-form.error name="password" />
                             </div>
 
