@@ -87,6 +87,7 @@ class Ticket extends Model
     protected function casts(): array
     {
         return [
+            'consumer_contact' => 'encrypted',
             'complaint_source' => ComplaintSources::class,
             'other_category' => 'boolean',
             'status' => TicketStatus::class,

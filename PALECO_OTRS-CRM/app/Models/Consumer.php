@@ -25,6 +25,19 @@ class Consumer extends Model
         'meter_serial',
     ];
 
+    // --- CASTS ---
+
+    /**
+     * Defines attribute type casting.
+     */
+    protected function casts(): array
+    {
+        return [
+            'name' => 'encrypted',
+            'address' => 'encrypted',
+        ];
+    }
+
     // --- ACCESSORS & MUTATORS ---
 
     /**
@@ -69,13 +82,23 @@ class Consumer extends Model
             return $query;
         }
 
-        $term = "%{$term}%";
+        $term = trim($term);
+        $wildcard = "%{$term}%";
 
-        return $query->where(function ($query) use ($term) {
-            $query->where('name', 'like', $term)
-                ->orWhere('acct_no', 'like', $term)
-                ->orWhere('acct_code', 'like', $term);
-        });
+        // Query by account number or account code via SQL index
+        $sqlMatches = static::query()
+            ->where('acct_no', 'like', $wildcard)
+            ->orWhere('acct_code', 'like', $wildcard)
+            ->pluck('id');
+
+        // Query by decrypted name
+        $nameMatches = static::all()->filter(function (Consumer $consumer) use ($term) {
+            return str_contains(mb_strtolower($consumer->name ?? ''), mb_strtolower($term));
+        })->pluck('id');
+
+        $allIds = $sqlMatches->merge($nameMatches)->unique();
+
+        return $query->whereIn('id', $allIds);
     }
 
     /**
@@ -88,17 +111,24 @@ class Consumer extends Model
 
             if (str_contains($lastName, ',')) {
                 [$last, $first] = array_map('trim', explode(',', $lastName, 2));
-                $query->where('name', 'like', "%{$last}%");
-                if (! empty($first)) {
-                    $query->where('name', 'like', "%{$first}%");
-                }
+                $matchingIds = static::all()->filter(function (Consumer $consumer) use ($last, $first) {
+                    $lowerName = mb_strtolower($consumer->name ?? '');
+                    $matchesLast = str_contains($lowerName, mb_strtolower($last));
+                    $matchesFirst = empty($first) || str_contains($lowerName, mb_strtolower($first));
+
+                    return $matchesLast && $matchesFirst;
+                })->pluck('id');
             } else {
-                $query->where('name', 'like', "%{$lastName}%");
+                $matchingIds = static::all()->filter(function (Consumer $consumer) use ($lastName) {
+                    return str_contains(mb_strtolower($consumer->name ?? ''), mb_strtolower($lastName));
+                })->pluck('id');
             }
+
+            $query->whereIn('id', $matchingIds);
         }
 
         if (! empty($meterSerial)) {
-            $query->where('meter_serial', 'like', '%' . trim($meterSerial) . '%');
+            $query->where('meter_serial', 'like', '%'.trim($meterSerial).'%');
         }
 
         return $query;

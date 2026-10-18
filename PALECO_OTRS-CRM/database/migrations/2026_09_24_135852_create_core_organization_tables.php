@@ -34,8 +34,8 @@ return new class extends Migration
             $table->ulid('id')->primary();
             $table->string('acct_no')->unique();
             $table->string('acct_code')->unique();
-            $table->string('name');
-            $table->string('address');
+            $table->text('name');
+            $table->text('address');
             $table->string('status')->nullable();
             $table->string('meter_serial')->nullable();
             $table->softDeletes();

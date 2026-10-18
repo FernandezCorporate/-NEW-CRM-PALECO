@@ -23,7 +23,7 @@ return new class extends Migration
             $table->foreignUlid('parent_ticket_id')->nullable()->constrained('tickets')->nullOnDelete();
             $table->foreignUlid('consumer_id')->nullable()->constrained('consumers')->nullOnDelete();
 
-            $table->string('consumer_contact', 20)->nullable();
+            $table->text('consumer_contact')->nullable();
             $table->string('complaint_source', 30);
             $table->text('complaint_description')->nullable();
 
