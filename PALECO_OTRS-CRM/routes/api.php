@@ -22,67 +22,72 @@ use Illuminate\Support\Facades\Route;
 /*
  * Public API Endpoints
  * Open specifically for unauthenticated guests to request access tokens.
+ * Guarded by throttle:api-login (10 requests/min per IP and username).
  */
-Route::post('/login', [AuthController::class, 'login'])->middleware('guest');
+Route::post('/login', [AuthController::class, 'login'])->middleware(['guest', 'throttle:api-login']);
 
 /*
  * Authenticated API Endpoints
  * Strictly guarded by Laravel Sanctum; requires a valid Bearer token in the header.
  */
-Broadcast::routes(['middleware' => ['auth:sanctum']]);
+Broadcast::routes(['middleware' => ['auth:sanctum', 'throttle:api']]);
 
 Route::middleware('auth:sanctum')->group(function () {
 
-    // --- SHARED MOBILE ENDPOINTS (Supervisor & Field Personnel) ---
-    Route::post('/logout', [AuthController::class, 'logout']);
-    Route::get('/user/profile', [ProfileController::class, 'show']);
+    // --- GENERAL MOBILE ENDPOINTS & SUPERVISOR OPERATIONS (60 req/min) ---
+    Route::middleware('throttle:api')->group(function () {
 
-    Route::prefix('tickets')->group(function () {
-        Route::get('/', [TicketController::class, 'index']);
-        Route::get('/{ticket}', [TicketController::class, 'show'])->whereUlid('ticket');
-
-        Route::get('/{ticket}/accomplishments', [TicketAccomplishmentController::class, 'index']);
-        Route::get('/{ticket}/accomplishments/{accomplishment}', [TicketAccomplishmentController::class, 'show']);
-
-        Route::get('/{ticket}/remarks', [TicketRemarkController::class, 'index'])->whereUlid('ticket');
-        Route::post('/{ticket}/remarks', [TicketRemarkController::class, 'store'])->whereUlid('ticket');
-    });
-
-    // --- SUPERVISOR SPECIFIC ENDPOINTS ---
-    Route::middleware('can:access-supervisor')->group(function () {
-
-        Route::get('/dashboard', [DashboardController::class, 'supervisorIndex']);
+        // --- SHARED MOBILE ENDPOINTS (Supervisor & Field Personnel) ---
+        Route::post('/logout', [AuthController::class, 'logout']);
+        Route::get('/user/profile', [ProfileController::class, 'show']);
 
         Route::prefix('tickets')->group(function () {
-            Route::get('/{ticket}/assign-options', [TicketAssignmentController::class, 'assignOptions']);
-            Route::post('/{ticket}/assign', [TicketAssignmentController::class, 'assign']);
+            Route::get('/', [TicketController::class, 'index']);
+            Route::get('/{ticket}', [TicketController::class, 'show'])->whereUlid('ticket');
 
-            Route::get('/{ticket}/endorse-options', [TicketEndorsementController::class, 'endorsementOptions']);
-            Route::post('/{ticket}/endorse', [TicketEndorsementController::class, 'endorse']);
+            Route::get('/{ticket}/accomplishments', [TicketAccomplishmentController::class, 'index']);
+            Route::get('/{ticket}/accomplishments/{accomplishment}', [TicketAccomplishmentController::class, 'show']);
 
-            Route::post('/{ticket}/accomplishments/{accomplishment}/verify', [TicketAccomplishmentController::class, 'verify']);
-            Route::get('/{ticket}/history', [TicketController::class, 'history'])->whereUlid('ticket');
+            Route::get('/{ticket}/remarks', [TicketRemarkController::class, 'index'])->whereUlid('ticket');
+            Route::post('/{ticket}/remarks', [TicketRemarkController::class, 'store'])->whereUlid('ticket');
         });
 
-        Route::prefix('teams')->group(function () {
-            Route::get('/team-options', [TeamController::class, 'formOptions']);
+        // --- SUPERVISOR SPECIFIC ENDPOINTS ---
+        Route::middleware('can:access-supervisor')->group(function () {
 
-            Route::get('/', [TeamController::class, 'index'])->withTrashed();
-            Route::post('/', [TeamController::class, 'store']);
-            Route::post('/create', [TeamController::class, 'store']); // Compatibility alias
+            Route::get('/dashboard', [DashboardController::class, 'supervisorIndex']);
 
-            Route::get('/{team}', [TeamController::class, 'show'])->withTrashed();
-            Route::put('/{team}', [TeamController::class, 'update'])->withTrashed();
-            Route::put('/{team}/update', [TeamController::class, 'update'])->withTrashed(); // Compatibility alias
+            Route::prefix('tickets')->group(function () {
+                Route::get('/{ticket}/assign-options', [TicketAssignmentController::class, 'assignOptions']);
+                Route::post('/{ticket}/assign', [TicketAssignmentController::class, 'assign']);
 
-            Route::delete('/{team}/archive', [TeamController::class, 'archive'])->withTrashed();
-            Route::patch('/{team}/restore', [TeamController::class, 'restore'])->whereUlid('team')->withTrashed();
-            Route::delete('/{team}/force-delete', [TeamController::class, 'destroy'])->whereUlid('team')->withTrashed();
+                Route::get('/{ticket}/endorse-options', [TicketEndorsementController::class, 'endorsementOptions']);
+                Route::post('/{ticket}/endorse', [TicketEndorsementController::class, 'endorse']);
+
+                Route::post('/{ticket}/accomplishments/{accomplishment}/verify', [TicketAccomplishmentController::class, 'verify']);
+                Route::get('/{ticket}/history', [TicketController::class, 'history'])->whereUlid('ticket');
+            });
+
+            Route::prefix('teams')->group(function () {
+                Route::get('/team-options', [TeamController::class, 'formOptions']);
+
+                Route::get('/', [TeamController::class, 'index'])->withTrashed();
+                Route::post('/', [TeamController::class, 'store']);
+                Route::post('/create', [TeamController::class, 'store']); // Compatibility alias
+
+                Route::get('/{team}', [TeamController::class, 'show'])->withTrashed();
+                Route::put('/{team}', [TeamController::class, 'update'])->withTrashed();
+                Route::put('/{team}/update', [TeamController::class, 'update'])->withTrashed(); // Compatibility alias
+
+                Route::delete('/{team}/archive', [TeamController::class, 'archive'])->withTrashed();
+                Route::patch('/{team}/restore', [TeamController::class, 'restore'])->whereUlid('team')->withTrashed();
+                Route::delete('/{team}/force-delete', [TeamController::class, 'destroy'])->whereUlid('team')->withTrashed();
+            });
         });
     });
 
-    // --- FIELD PERSONNEL SPECIFIC ENDPOINTS (OFFLINE-ASYNC SUPPORTED) ---
-    Route::middleware(['can:access-field_personnel', 'idempotent'])->group(function () {
+    // --- FIELD PERSONNEL SPECIFIC ENDPOINTS (OFFLINE-ASYNC SUPPORTED, 120 req/min burst) ---
+    Route::middleware(['throttle:api-sync', 'can:access-field_personnel', 'idempotent'])->group(function () {
 
         Route::prefix('tickets')->group(function () {
             Route::patch('/{ticket}/start', [TicketController::class, 'start']);

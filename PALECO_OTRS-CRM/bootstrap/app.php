@@ -97,7 +97,7 @@ return Application::configure(basePath: dirname(__DIR__))
                 return response()->json([
                     'success' => false,
                     'message' => $message,
-                ], $status);
+                ], $status, $e->getHeaders());
             }
         });
     })->create();

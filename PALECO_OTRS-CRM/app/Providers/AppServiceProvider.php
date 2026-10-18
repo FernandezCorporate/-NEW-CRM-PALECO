@@ -5,12 +5,16 @@ namespace App\Providers;
 use App\Models\User;
 use App\Policies\ActivityPolicy;
 use Illuminate\Auth\Access\Response;
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 use Spatie\Activitylog\Contracts\Activity as ActivityContract;
 use Spatie\Activitylog\Facades\Activity;
 use Spatie\Activitylog\Models\Activity as ActivityModel;
+use Symfony\Component\HttpFoundation\Response as HttpResponse;
 
 /**
  * Bootstraps core application services and global configurations.
@@ -74,6 +78,45 @@ class AppServiceProvider extends ServiceProvider
                     ->put('ip_address', request()->ip())
                     ->put('user_agent', request()->userAgent());
             }
+        });
+
+        // --- API RATE LIMITERS ---
+
+        RateLimiter::for('api-login', function (Request $request) {
+            $username = strtolower((string) ($request->input('username') ?? ''));
+            $key = ($username !== '' ? $username : 'guest').'|'.$request->ip();
+
+            return Limit::perMinute(10)
+                ->by($key)
+                ->response(function (Request $request, array $headers) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Too many login attempts. Please try again in a minute.',
+                    ], HttpResponse::HTTP_TOO_MANY_REQUESTS, $headers);
+                });
+        });
+
+        RateLimiter::for('api', function (Request $request) {
+            return Limit::perMinute(60)
+                ->by($request->user()?->id ?: $request->ip())
+                ->response(function (Request $request, array $headers) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Too many requests. Please slow down.',
+                    ], HttpResponse::HTTP_TOO_MANY_REQUESTS, $headers);
+                });
+        });
+
+        RateLimiter::for('api-sync', function (Request $request) {
+            // Allows burst capacity (120 requests/minute) when mobile app flushes offline queued items
+            return Limit::perMinute(120)
+                ->by($request->user()?->id ?: $request->ip())
+                ->response(function (Request $request, array $headers) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Sync rate limit exceeded. Please wait before syncing more items.',
+                    ], HttpResponse::HTTP_TOO_MANY_REQUESTS, $headers);
+                });
         });
     }
 }
