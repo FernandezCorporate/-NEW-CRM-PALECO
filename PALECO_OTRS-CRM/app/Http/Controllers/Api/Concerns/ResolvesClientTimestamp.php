@@ -29,7 +29,7 @@ trait ResolvesClientTimestamp
         }
 
         try {
-            $parsed = Carbon::parse($raw);
+            $parsed = Carbon::parse($raw)->setTimezone(config('app.timezone'));
         } catch (Throwable) {
             throw ValidationException::withMessages([
                 'client_timestamp' => 'The client timestamp format is invalid. Must be a valid ISO-8601 string.',
