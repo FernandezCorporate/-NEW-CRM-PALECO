@@ -53,8 +53,8 @@ const initPreventDoubleSubmit = () => {
         });
     });
 
-    // 2. Intercept ALL Action Links
-    document.querySelectorAll('.action-link').forEach(link => {
+    // 2. Intercept ALL Action Links (anchor tags only; form buttons are handled by form submit event)
+    document.querySelectorAll('a.action-link').forEach(link => {
         if (link.dataset.linkBound) return;
         link.dataset.linkBound = 'true';
         link.addEventListener('click', function (e) {

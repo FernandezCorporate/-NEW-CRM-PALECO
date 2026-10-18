@@ -151,6 +151,26 @@ class User extends Authenticatable
         );
     }
 
+    /**
+     * Determines if the account is currently undergoing an active security lockout.
+     */
+    public function isLocked(): bool
+    {
+        return (bool) ($this->locked_until && $this->locked_until->isFuture());
+    }
+
+    /**
+     * Calculates remaining whole minutes on an active security lockout.
+     */
+    public function lockoutMinutesRemaining(): int
+    {
+        if (! $this->isLocked()) {
+            return 0;
+        }
+
+        return max(1, (int) ceil(now()->diffInMinutes($this->locked_until)));
+    }
+
     // --- SCOPES ---
 
     /**

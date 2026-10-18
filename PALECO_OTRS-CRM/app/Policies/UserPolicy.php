@@ -70,6 +70,14 @@ class UserPolicy
     }
 
     /*
+     * Determine whether the user can administratively unlock a locked user account.
+     */
+    public function unlock(User $user, User $targetUser): bool
+    {
+        return $this->update($user, $targetUser);
+    }
+
+    /*
      * Determine whether the user can access the deactivation confirmation prompt.
      */
     public function deactivateConfirm(User $user, User $targetUser): bool

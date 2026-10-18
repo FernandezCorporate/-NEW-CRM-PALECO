@@ -82,7 +82,7 @@
                         <th scope="col" class="px-6 py-4 w-44">Contact</th>
                         <th scope="col" class="px-6 py-4 w-44">Last Login</th>
                         <th scope="col" class="px-6 py-4 w-36 text-center">Status</th>
-                        <th scope="col" class="px-6 py-4 w-36 text-center">Actions</th>
+                        <th scope="col" class="px-6 py-4 w-44 text-center">Actions</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100">
@@ -122,7 +122,16 @@
                             </td>
                             
                             <td class="px-6 py-4 align-top text-center">
-                                @if($user->is_active)
+                                @if($user->isLocked())
+                                    <div class="flex flex-col items-center gap-1">
+                                        <span class="inline-flex items-center justify-center px-2 py-0.5 rounded-full border border-rose-200 bg-rose-50 text-rose-700 text-[10px] font-bold tracking-wide">
+                                            Locked ({{ $user->lockoutMinutesRemaining() }}m)
+                                        </span>
+                                        <span class="text-[10px] text-slate-400 font-medium">
+                                            {{ $user->is_active ? 'Active' : 'Deactivated' }}
+                                        </span>
+                                    </div>
+                                @elseif($user->is_active)
                                     <span class="inline-flex items-center justify-center px-2.5 py-1 rounded-full border border-emerald-200 bg-emerald-50 text-emerald-700 text-[11px] font-bold tracking-wide">
                                         Active
                                     </span>
@@ -170,6 +179,27 @@
                                                 <x-icons.arrow-path class="w-4 h-4" />
                                             </button>
                                         @endcan
+                                    @endif
+
+                                    <!-- Fourth Action: Administrative Lockout Bypass -->
+                                    @if($user->isLocked())
+                                        @can('unlock', $user)
+                                            <form method="POST" action="{{ route('admin.users.unlock', ['user' => $user]) }}" class="inline" data-no-lock>
+                                                @csrf
+                                                @method('PATCH')
+                                                <button type="submit" class="p-1.5 text-rose-600 hover:text-rose-700 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer" data-loading-text="" title="Account is locked ({{ $user->lockoutMinutesRemaining() }}m left) - Click to unlock" aria-label="Unlock user {{ $user->full_name }}">
+                                                    <x-icons.lock-open class="w-4 h-4 text-rose-600" />
+                                                </button>
+                                            </form>
+                                        @else
+                                            <button type="button" disabled class="p-1.5 text-slate-300 cursor-not-allowed rounded-lg" title="Cannot unlock this account" aria-label="Cannot unlock this account">
+                                                <x-icons.lock-open class="w-4 h-4" />
+                                            </button>
+                                        @endcan
+                                    @else
+                                        <button type="button" disabled class="p-1.5 text-slate-300 cursor-not-allowed rounded-lg opacity-40" title="Account is not locked" aria-label="Account is not locked">
+                                            <x-icons.lock-closed class="w-4 h-4 text-slate-400" />
+                                        </button>
                                     @endif
 
                                 </div>

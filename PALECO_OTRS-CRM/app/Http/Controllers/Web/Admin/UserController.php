@@ -162,6 +162,39 @@ class UserController extends Controller
         return redirect($redirectRoute)->with('success', "Password for user {$user->username} has been updated successfully.");
     }
 
+    /*
+     * Administratively bypasses and clears an active security lockout on a user account.
+     */
+    public function unlockAccount(Request $request, User $user)
+    {
+        Gate::authorize('unlock', $user);
+
+        $this->userService->unlockUser($user);
+
+        $redirectRoute = $this->resolveSmartRedirect($request, 'admin.users', [
+            'details' => function (Request $req) use ($user) {
+                $teamId = $req->input('team', $req->query('team'));
+                $deptId = $req->input('dept', $req->query('dept'));
+                return route('admin.users.show', array_filter([
+                    'user' => $user,
+                    'source' => $teamId ? 'team' : ($deptId ? 'department' : null),
+                    'team' => $teamId,
+                    'dept' => $deptId,
+                ]));
+            },
+            'team' => function (Request $req) use ($user) {
+                $teamId = $req->input('team', $req->query('team'));
+                return $teamId ? route('admin.teams.show', ['team' => $teamId]) : route('admin.users.show', ['user' => $user]);
+            },
+            'department' => function (Request $req) use ($user) {
+                $deptId = $req->input('dept', $req->query('dept', $user->department_id));
+                return $deptId ? route('admin.departments.show', ['dept' => $deptId]) : route('admin.users.show', ['user' => $user]);
+            },
+        ]);
+
+        return redirect($redirectRoute)->with('success', "Security lockout for user {$user->username} has been cleared.");
+    }
+
     // --- DESTRUCTIVE & STATE METHODS ---
 
     public function deactivateConfirm(User $user)

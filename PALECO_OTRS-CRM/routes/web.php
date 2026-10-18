@@ -94,6 +94,7 @@ Route::middleware(['auth', CheckIfActive::class])->group(function () {
             Route::get('/{user}/edit', [UserController::class, 'userForm'])->name('admin.users.editForm')->whereUlid('user');
             Route::put('/{user}', [UserController::class, 'update'])->name('admin.users.update')->whereUlid('user');
             Route::patch('/{user}/password', [UserController::class, 'updatePassword'])->name('admin.users.updatePassword')->whereUlid('user');
+            Route::patch('/{user}/unlock', [UserController::class, 'unlockAccount'])->name('admin.users.unlock')->whereUlid('user');
 
             Route::get('/{user}/deactivate', [UserController::class, 'deactivateConfirm'])->name('admin.users.deactivateConfirm')->whereUlid('user');
             Route::patch('/{user}/deactivate', [UserController::class, 'deactivate'])->name('admin.users.deactivate')->whereUlid('user');

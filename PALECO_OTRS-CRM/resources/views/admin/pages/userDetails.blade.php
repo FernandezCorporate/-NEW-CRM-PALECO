@@ -51,6 +51,26 @@
                     </a>
                 @endcan
             @endif
+
+            @if($user->isLocked())
+                @can('unlock', $user)
+                    <form method="POST" action="{{ route('admin.users.unlock', ['user' => $user]) }}" class="inline" data-no-lock>
+                        @csrf
+                        @method('PATCH')
+                        <input type="hidden" name="source" value="{{ request('source') ?: 'details' }}">
+                        @if(request()->filled('dept'))
+                            <input type="hidden" name="dept" value="{{ request('dept') }}">
+                        @endif
+                        @if(request()->filled('team'))
+                            <input type="hidden" name="team" value="{{ request('team') }}">
+                        @endif
+                        <button type="submit" class="btn btn-secondary text-rose-700 hover:bg-rose-50 hover:border-rose-300 border-rose-200 px-4 py-2 text-sm shadow-xs inline-flex items-center gap-1.5" data-loading-text="Unlocking...">
+                            <x-icons.lock-open class="w-4 h-4 text-rose-600" />
+                            <span>Unlock Account ({{ $user->lockoutMinutesRemaining() }}m)</span>
+                        </button>
+                    </form>
+                @endcan
+            @endif
         </div>
     </header>
 
@@ -145,6 +165,18 @@
                             @endif
                         </dd>
                     </div>
+
+                    @if($user->isLocked())
+                        <div class="flex justify-between items-center py-2">
+                            <dt class="text-slate-500 font-medium">Security Lockout</dt>
+                            <dd>
+                                <span class="bg-rose-50 text-rose-700 border border-rose-200 text-xs font-bold px-2.5 py-1 rounded-full uppercase tracking-wide inline-flex items-center gap-1.5">
+                                    <x-icons.lock-closed class="w-3.5 h-3.5 text-rose-600" />
+                                    <span>Locked ({{ $user->lockoutMinutesRemaining() }}m remaining)</span>
+                                </span>
+                            </dd>
+                        </div>
+                    @endif
                     
                     <div class="flex justify-between items-center py-2">
                         <dt class="text-slate-500 font-medium">Username</dt>
