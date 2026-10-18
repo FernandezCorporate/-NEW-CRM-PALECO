@@ -195,10 +195,10 @@
                             <div>
                                 <x-form.label for="login-password" :required="true">Password</x-form.label>
                                 <div class="relative">
-                                    <x-form.input type="password" name="password" id="login-password" minlength="8" required placeholder="Min 8 chars, 1 uppercase, 1 lowercase" class="pr-10" />
+                                    <x-form.input type="password" name="password" id="login-password" minlength="8" required placeholder="Min 8 chars, 1 uppercase, 1 lowercase" autocomplete="new-password" class="pr-10" />
                                     <button type="button" id="toggle-password-btn" aria-label="Toggle password visibility" class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-emerald-600 transition-colors focus:outline-none">
-                                        <x-icons.eye-slash id="eye-icon-closed" class="w-5 h-5" />
                                         <x-icons.eye id="eye-icon-open" class="hidden w-5 h-5" />
+                                        <x-icons.eye-slash id="eye-icon-closed" class="w-5 h-5" />
                                     </button>
                                 </div>
                                 <p class="mt-1 text-xs text-slate-500">Must be at least 8 characters with at least one uppercase and one lowercase letter.</p>
@@ -208,10 +208,10 @@
                             <div>
                                 <x-form.label for="confirm-password" :required="true">Confirm Password</x-form.label>
                                 <div class="relative">
-                                    <x-form.input type="password" name="password_confirmation" id="confirm-password" minlength="8" required placeholder="Must match password" class="pr-10" />
+                                    <x-form.input type="password" name="password_confirmation" id="confirm-password" minlength="8" required placeholder="Must match password" autocomplete="new-password" class="pr-10" />
                                     <button type="button" id="toggle-confirm-password-btn" aria-label="Toggle confirmation password visibility" class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-emerald-600 transition-colors focus:outline-none">
-                                        <x-icons.eye-slash id="confirm-eye-closed" class="w-5 h-5" />
                                         <x-icons.eye id="confirm-eye-open" class="hidden w-5 h-5" />
+                                        <x-icons.eye-slash id="confirm-eye-closed" class="w-5 h-5" />
                                     </button>
                                 </div>
                             </div>
@@ -231,5 +231,76 @@
             </div>
         </form>
     </article>
+
+    @isset($user)
+        <article class="card overflow-hidden">
+            <form method="POST" action="{{ route('admin.users.updatePassword', ['user' => $user]) }}">
+                @csrf
+                @method('PATCH')
+                @if(request()->filled('source') || old('source'))
+                    <input type="hidden" name="source" value="{{ old('source', request('source')) }}">
+                @endif
+                @if(request()->filled('dept') || old('dept'))
+                    <input type="hidden" name="dept" value="{{ old('dept', request('dept')) }}">
+                @endif
+                @if(request()->filled('team') || old('team'))
+                    <input type="hidden" name="team" value="{{ old('team', request('team')) }}">
+                @endif
+
+                <div class="p-6 md:p-8 space-y-6">
+                    <fieldset class="space-y-5">
+                        <legend class="sr-only">Change User Password</legend>
+                        <div class="border-b border-slate-200 pb-2 flex items-center justify-between">
+                            <h2 class="text-sm font-bold text-slate-900 flex items-center gap-2">
+                                <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                                <span>Change User Password</span>
+                            </h2>
+                            <span class="text-xs text-slate-500"><span class="text-rose-500 font-bold">*</span> Required field</span>
+                        </div>
+
+                        <p class="text-xs text-slate-500">
+                            Assign a new password for <strong class="text-slate-800">{{ $user->username }}</strong>. This overrides the current password directly without requiring the existing password.
+                        </p>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                            <div>
+                                <x-form.label for="reset-password" :required="true">New Password</x-form.label>
+                                <div class="relative">
+                                    <x-form.input type="password" name="password" id="reset-password" minlength="8" required placeholder="Min 8 chars, 1 uppercase, 1 lowercase" autocomplete="new-password" class="pr-10" />
+                                    <button type="button" data-password-toggle="reset-password" aria-label="Toggle password visibility" class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-emerald-600 transition-colors focus:outline-none">
+                                        <x-icons.eye data-eye-open class="hidden w-5 h-5" />
+                                        <x-icons.eye-slash data-eye-closed class="w-5 h-5" />
+                                    </button>
+                                </div>
+                                <p class="mt-1 text-xs text-slate-500">Must be at least 8 characters with at least one uppercase and one lowercase letter.</p>
+                                <x-form.error name="password" />
+                            </div>
+
+                            <div>
+                                <x-form.label for="reset-confirm-password" :required="true">Confirm New Password</x-form.label>
+                                <div class="relative">
+                                    <x-form.input type="password" name="password_confirmation" id="reset-confirm-password" minlength="8" required placeholder="Must match new password" autocomplete="new-password" class="pr-10" />
+                                    <button type="button" data-password-toggle="reset-confirm-password" aria-label="Toggle confirmation password visibility" class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-emerald-600 transition-colors focus:outline-none">
+                                        <x-icons.eye data-eye-open class="hidden w-5 h-5" />
+                                        <x-icons.eye-slash data-eye-closed class="w-5 h-5" />
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </fieldset>
+                </div>
+
+                <div class="card-footer px-6 md:px-8 py-4 bg-slate-50 border-t border-slate-200 flex items-center justify-end gap-3">
+                    <x-btn variant="secondary" href="{{ $cancelRoute }}" data-loading-text="Canceling...">
+                        Cancel
+                    </x-btn>
+                    <x-btn variant="primary" type="submit" data-loading-text="Updating Password...">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                        <span>Update Password</span>
+                    </x-btn>
+                </div>
+            </form>
+        </article>
+    @endisset
 </div>
 @endsection

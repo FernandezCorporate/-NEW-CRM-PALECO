@@ -87,10 +87,10 @@
                         <input type="password" id="login-password" name="password" placeholder="••••••••" required minlength="8" autocomplete="new-password" class="form-input w-full pl-3.5 pr-11 py-2.5 border border-slate-200 rounded-lg text-sm text-slate-800 focus:outline-none focus:border-emerald-600 focus:ring-4 focus:ring-emerald-500/10 placeholder-slate-400 transition-all shadow-2xs">
                         
                         <button type="button" id="toggle-password-btn" data-password-toggle="login-password" class="absolute inset-y-0 right-0 px-3 flex items-center text-slate-400 hover:text-emerald-700 transition-colors focus:outline-none cursor-pointer" title="Show password" aria-label="Show password" aria-pressed="false">
-                            <span id="eye-icon-open" class="flex items-center">
+                            <span id="eye-icon-open" class="hidden flex items-center">
                                 <x-icons.eye class="w-5 h-5" />
                             </span>
-                            <span id="eye-icon-closed" class="hidden flex items-center">
+                            <span id="eye-icon-closed" class="flex items-center">
                                 <x-icons.eye-slash class="w-5 h-5" />
                             </span>
                         </button>

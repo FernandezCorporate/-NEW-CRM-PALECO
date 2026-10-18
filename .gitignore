@@ -2,6 +2,10 @@
 node_modules/
 vendor/
 .env
+.env.*
+!.env.example
+reseed-tidb.bat
+reseed-tidb.ps1
 
 # Standalone Mobile Simulator
 mobile-simulator/

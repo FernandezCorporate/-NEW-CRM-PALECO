@@ -62,6 +62,14 @@ class UserPolicy
     }
 
     /*
+     * Determine whether the user can reset another user account's password.
+     */
+    public function resetPassword(User $user, User $targetUser): bool
+    {
+        return $this->update($user, $targetUser);
+    }
+
+    /*
      * Determine whether the user can access the deactivation confirmation prompt.
      */
     public function deactivateConfirm(User $user, User $targetUser): bool

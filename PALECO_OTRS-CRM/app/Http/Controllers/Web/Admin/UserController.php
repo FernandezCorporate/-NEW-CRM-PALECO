@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Web\Admin;
 use App\Concerns\ResolvesSmartRedirects;
 use App\Enums\TicketStatus;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Users\ResetUserPasswordRequest;
 use App\Http\Requests\Users\StoreUserRequest;
 use App\Http\Requests\Users\UpdateUserRequest;
 use App\Models\AccountRole;
@@ -125,6 +126,40 @@ class UserController extends Controller
         }
 
         return redirect($redirectRoute)->with('success', 'User updated successfully.');
+    }
+
+    /*
+     * Updates an existing user's password directly from the administrative user edit form.
+     * Blind to the old password, directly hashing and updating the credential.
+     */
+    public function updatePassword(ResetUserPasswordRequest $request, User $user)
+    {
+        Gate::authorize('update', $user);
+
+        $this->userService->resetPassword($user, $request->validated('password'));
+
+        $redirectRoute = $this->resolveSmartRedirect($request, 'admin.users', [
+            'details' => function (Request $req) use ($user) {
+                $teamId = $req->input('team', $req->query('team'));
+                $deptId = $req->input('dept', $req->query('dept'));
+                return route('admin.users.show', array_filter([
+                    'user' => $user,
+                    'source' => $teamId ? 'team' : ($deptId ? 'department' : null),
+                    'team' => $teamId,
+                    'dept' => $deptId,
+                ]));
+            },
+            'team' => function (Request $req) use ($user) {
+                $teamId = $req->input('team', $req->query('team'));
+                return $teamId ? route('admin.teams.show', ['team' => $teamId]) : route('admin.users.show', ['user' => $user]);
+            },
+            'department' => function (Request $req) use ($user) {
+                $deptId = $req->input('dept', $req->query('dept', $user->department_id));
+                return $deptId ? route('admin.departments.show', ['dept' => $deptId]) : route('admin.users.show', ['user' => $user]);
+            },
+        ]);
+
+        return redirect($redirectRoute)->with('success', "Password for user {$user->username} has been updated successfully.");
     }
 
     // --- DESTRUCTIVE & STATE METHODS ---

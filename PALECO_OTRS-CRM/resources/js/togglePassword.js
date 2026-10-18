@@ -4,25 +4,33 @@ const bindPasswordToggle = (toggleBtn, passwordInput, eyeOpen, eyeClosed) => {
     }
 
     toggleBtn.dataset.bound = 'true';
-    toggleBtn.setAttribute('aria-pressed', 'false');
 
-    toggleBtn.addEventListener('click', () => {
-        const isCurrentlyPassword = passwordInput.getAttribute('type') === 'password';
-        const nextType = isCurrentlyPassword ? 'text' : 'password';
+    const syncVisibility = () => {
+        const isPassword = (passwordInput.getAttribute('type') || passwordInput.type) === 'password';
+        toggleBtn.setAttribute('aria-pressed', isPassword ? 'false' : 'true');
 
-        passwordInput.setAttribute('type', nextType);
-        toggleBtn.setAttribute('aria-pressed', isCurrentlyPassword ? 'true' : 'false');
-        
-        const labelText = isCurrentlyPassword ? 'Hide password' : 'Show password';
+        const labelText = isPassword ? 'Show password' : 'Hide password';
         toggleBtn.setAttribute('aria-label', labelText);
         toggleBtn.setAttribute('title', labelText);
 
         if (eyeOpen) {
-            eyeOpen.classList.toggle('hidden', isCurrentlyPassword);
+            eyeOpen.classList.toggle('hidden', isPassword);
         }
         if (eyeClosed) {
-            eyeClosed.classList.toggle('hidden', !isCurrentlyPassword);
+            eyeClosed.classList.toggle('hidden', !isPassword);
         }
+    };
+
+    // Ensure icon state matches input type upon initial bind
+    syncVisibility();
+
+    toggleBtn.addEventListener('click', () => {
+        const isCurrentlyPassword = (passwordInput.getAttribute('type') || passwordInput.type) === 'password';
+        const nextType = isCurrentlyPassword ? 'text' : 'password';
+
+        passwordInput.setAttribute('type', nextType);
+        passwordInput.type = nextType;
+        syncVisibility();
     });
 };
 
