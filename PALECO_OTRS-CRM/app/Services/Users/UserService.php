@@ -8,6 +8,7 @@ use App\Models\TeamRole;
 use App\Models\Ticket;
 use App\Models\User;
 use Carbon\Carbon;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Schema;
@@ -43,12 +44,64 @@ class UserService
             'field_personnel' => $rawCounts->get($roles->where('slug_identifier', 'field_personnel')->first()?->id) ?? 0,
         ];
 
-        $users = User::with('role')
-            ->search($filters['search'] ?? null)
-            ->filter($filters['filter'] ?? null)
-            ->sort($filters['sort'] ?? null)
-            ->paginate(10)
-            ->withQueryString();
+        $query = User::with('role')
+            ->filter($filters['filter'] ?? null);
+
+        $searchTerm = trim($filters['search'] ?? '');
+        $sort = $filters['sort'] ?? null;
+        $isAlphabeticalSort = in_array($sort, ['first_nameASC', 'first_nameDESC', 'last_nameASC', 'last_nameDESC'], true);
+
+        if ($searchTerm !== '' || $isAlphabeticalSort) {
+            $usersCollection = $query->get();
+
+            if ($searchTerm !== '') {
+                $words = array_filter(explode(' ', strtolower($searchTerm)));
+                $usersCollection = $usersCollection->filter(function (User $user) use ($words) {
+                    $searchableText = strtolower(implode(' ', [
+                        $user->username ?? '',
+                        $user->first_name ?? '',
+                        $user->middle_name ?? '',
+                        $user->last_name ?? '',
+                        $user->name_ext ?? '',
+                        $user->email ?? '',
+                        $user->contact ?? '',
+                    ]));
+
+                    foreach ($words as $word) {
+                        if (! str_contains($searchableText, $word)) {
+                            return false;
+                        }
+                    }
+
+                    return true;
+                });
+            }
+
+            $usersCollection = match ($sort) {
+                'oldest' => $usersCollection->sortBy('created_at'),
+                'first_nameASC' => $usersCollection->sortBy('first_name', SORT_NATURAL | SORT_FLAG_CASE),
+                'first_nameDESC' => $usersCollection->sortByDesc('first_name', SORT_NATURAL | SORT_FLAG_CASE),
+                'last_nameASC' => $usersCollection->sortBy('last_name', SORT_NATURAL | SORT_FLAG_CASE),
+                'last_nameDESC' => $usersCollection->sortByDesc('last_name', SORT_NATURAL | SORT_FLAG_CASE),
+                default => $usersCollection->sortByDesc('created_at'),
+            };
+
+            $page = (int) request()->input('page', 1);
+            $perPage = 10;
+            $items = $usersCollection->slice(($page - 1) * $perPage, $perPage)->values();
+
+            $users = new LengthAwarePaginator(
+                $items,
+                $usersCollection->count(),
+                $perPage,
+                $page,
+                ['path' => request()->url(), 'query' => request()->query()]
+            );
+        } else {
+            $users = $query->sort($sort)
+                ->paginate(10)
+                ->withQueryString();
+        }
 
         return compact('users', 'roles', 'activeCounts');
     }

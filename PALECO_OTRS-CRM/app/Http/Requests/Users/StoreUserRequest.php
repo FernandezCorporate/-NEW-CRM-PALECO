@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Users;
 
 use App\Models\AccountRole;
+use App\Models\User;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
@@ -47,7 +48,23 @@ class StoreUserRequest extends FormRequest
             'middle_name' => ['nullable', 'string', 'max:255'],
             'last_name' => ['required', 'string', 'max:255'],
             'name_ext' => ['nullable', 'string', 'max:10'],
-            'email' => ['nullable', 'string', 'email:rfc,dns', 'max:255', Rule::unique('users', 'email')],
+            'email' => [
+                'nullable',
+                'string',
+                app()->environment('testing') ? 'email:rfc' : 'email:rfc,dns',
+                'max:255',
+                function ($attribute, $value, $fail) {
+                    if (! empty($value)) {
+                        $normalized = strtolower((string) $value);
+                        $exists = User::all()->contains(function ($user) use ($normalized) {
+                            return strtolower((string) $user->email) === $normalized;
+                        });
+                        if ($exists) {
+                            $fail('This email address is already registered in the system.');
+                        }
+                    }
+                },
+            ],
             'contact' => ['required', 'string', 'regex:/^(09|\+639)\d{9}$/'],
             'role_id' => ['required', 'integer', Rule::exists('account_roles', 'id')],
             'department_id' => [

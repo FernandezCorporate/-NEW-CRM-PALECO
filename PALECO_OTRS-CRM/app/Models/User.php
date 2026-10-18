@@ -44,6 +44,11 @@ class User extends Authenticatable
     protected function casts(): array
     {
         return [
+            'first_name' => 'encrypted',
+            'middle_name' => 'encrypted',
+            'last_name' => 'encrypted',
+            'email' => 'encrypted',
+            'contact' => 'encrypted',
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'is_active' => 'boolean',
@@ -172,32 +177,6 @@ class User extends Authenticatable
     }
 
     // --- SCOPES ---
-
-    /**
-     * Applies a multi-word search filter against names, emails, and usernames.
-     */
-    public function scopeSearch(Builder $query, ?string $term): Builder
-    {
-        if (empty($term)) {
-            return $query;
-        }
-
-        $words = array_filter(explode(' ', $term));
-
-        return $query->where(function ($query) use ($words) {
-            foreach ($words as $word) {
-                $searchWord = "%{$word}%";
-                $query->where(function ($subQuery) use ($searchWord) {
-                    $subQuery->where('first_name', 'like', $searchWord)
-                        ->orWhere('middle_name', 'like', $searchWord)
-                        ->orWhere('last_name', 'like', $searchWord)
-                        ->orWhere('name_ext', 'like', $searchWord)
-                        ->orWhere('email', 'like', $searchWord)
-                        ->orWhere('username', 'like', $searchWord);
-                });
-            }
-        });
-    }
 
     /**
      * Applies a filter to restrict users based on their assigned role identifier.

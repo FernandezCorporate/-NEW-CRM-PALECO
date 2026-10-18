@@ -45,12 +45,12 @@ return new class extends Migration
         Schema::create('users', function (Blueprint $table) {
             $table->ulid('id')->primary();
             $table->string('username')->unique();
-            $table->string('first_name');
-            $table->string('middle_name')->nullable();
-            $table->string('last_name');
+            $table->text('first_name');
+            $table->text('middle_name')->nullable();
+            $table->text('last_name');
             $table->string('name_ext')->nullable();
-            $table->string('email')->nullable()->unique();
-            $table->string('contact');
+            $table->text('email')->nullable();
+            $table->text('contact');
             $table->foreignId('role_id')->nullable()->constrained('account_roles')->nullOnDelete();
             $table->foreignId('department_id')->nullable()->constrained()->nullOnDelete();
             $table->timestamp('email_verified_at')->nullable();

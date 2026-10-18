@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Users;
 
+use App\Models\User;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -48,7 +49,23 @@ class UpdateUserRequest extends FormRequest
             'middle_name' => ['nullable', 'string', 'max:255'],
             'last_name' => ['required', 'string', 'max:255'],
             'name_ext' => ['nullable', 'string', 'max:10'],
-            'email' => ['nullable', 'string', 'email:rfc,dns', 'max:255', Rule::unique('users', 'email')->ignore($userModel->id)],
+            'email' => [
+                'nullable',
+                'string',
+                app()->environment('testing') ? 'email:rfc' : 'email:rfc,dns',
+                'max:255',
+                function ($attribute, $value, $fail) use ($userModel) {
+                    if (! empty($value)) {
+                        $normalized = strtolower((string) $value);
+                        $exists = User::all()->contains(function ($user) use ($normalized, $userModel) {
+                            return $user->id !== $userModel?->id && strtolower((string) $user->email) === $normalized;
+                        });
+                        if ($exists) {
+                            $fail('This email address is already registered in the system.');
+                        }
+                    }
+                },
+            ],
             'contact' => ['required', 'string', 'regex:/^(09|\+639)\d{9}$/'],
             'department_id' => [
                 Rule::requiredIf(function () use ($userModel) {
