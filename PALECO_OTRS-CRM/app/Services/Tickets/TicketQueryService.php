@@ -53,6 +53,7 @@ class TicketQueryService
         $ticket->load([
             // Core & Routing
             'creator',
+            'closedBy',
             'department.supervisors',
             'team.members',
             'category',

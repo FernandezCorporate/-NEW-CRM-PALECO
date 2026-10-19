@@ -2,37 +2,19 @@
 
 namespace App\Services\Users;
 
-use App\Actions\Users\CreateUser;
-use App\Actions\Users\ResetUserPassword;
-use App\Actions\Users\ToggleUserActiveStatus;
-use App\Actions\Users\UnlockUser;
-use App\Actions\Users\UpdateUser;
 use App\Models\AccountRole;
 use App\Models\TeamRole;
 use App\Models\User;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\ValidationException;
 
 /**
- * Service handling administration-level User queries and delegating mutations to Actions:
- * - CreateUser
- * - UpdateUser
- * - ResetUserPassword
- * - UnlockUser
- * - ToggleUserActiveStatus
+ * Service handling administration-level User queries, in-memory decryption search, and profile data retrieval.
  */
 class UserService
 {
-    public function __construct(
-        protected CreateUser $createUserAction,
-        protected UpdateUser $updateUserAction,
-        protected ResetUserPassword $resetUserPasswordAction,
-        protected UnlockUser $unlockUserAction,
-        protected ToggleUserActiveStatus $toggleUserActiveStatusAction
-    ) {}
-
     // --- QUERY METHODS ---
+
 
     /**
      * Retrieve users matching filters along with role distribution counts.
@@ -155,47 +137,5 @@ class UserService
         }
 
         return $user;
-    }
-
-    // --- MUTATING METHODS ---
-
-    /**
-     * Create or update a user record while handling concurrency locks and role constraints.
-     */
-    public function processAndSaveUser(array $data, ?User $user = null): array
-    {
-        if ($user) {
-            return $this->updateUserAction->execute($user, $data);
-        }
-
-        $this->createUserAction->execute($data);
-
-        return ['success' => true, 'changed' => true];
-    }
-
-    /**
-     * Resets a user's password directly, revokes active sessions and tokens, and clears any active lockouts.
-     */
-    public function resetPassword(User $user, string $newPassword): void
-    {
-        $this->resetUserPasswordAction->execute($user, $newPassword);
-    }
-
-    /**
-     * Administratively bypasses and clears an account security lockout.
-     */
-    public function unlockUser(User $user): void
-    {
-        $this->unlockUserAction->execute($user);
-    }
-
-    /**
-     * Toggle the active status of a user and invalidate tokens/memberships if deactivated.
-     *
-     * @throws ValidationException
-     */
-    public function toggleUserStatus(User $user, bool $isActive): void
-    {
-        $this->toggleUserActiveStatusAction->execute($user, $isActive);
     }
 }

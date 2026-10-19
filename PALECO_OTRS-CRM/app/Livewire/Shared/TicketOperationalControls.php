@@ -34,7 +34,6 @@ class TicketOperationalControls extends Component
         }
 
         $this->ticket->refresh();
-        $this->ticket->load(['closedBy']);
     }
 
     public function render()

@@ -113,7 +113,7 @@
 
                         <div class="md:col-span-4">
                             <x-form.label for="user-contact" :required="true">Contact Number</x-form.label>
-                            <x-form.input type="tel" name="contact" id="user-contact" required pattern="^(09|\+639)\d{9}$" :value="$user->contact ?? null" placeholder="09123456789 or +639123456789" />
+                            <x-form.input type="tel" name="contact" id="user-contact" required maxlength="11" inputmode="numeric" pattern="^09\d{9}$" oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 11)" :value="$user->contact ?? null" placeholder="09123456789" />
                             <x-form.error name="contact" />
                         </div>
 

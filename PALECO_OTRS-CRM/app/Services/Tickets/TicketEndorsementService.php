@@ -2,32 +2,20 @@
 
 namespace App\Services\Tickets;
 
-use App\Actions\Endorsements\DecideEndorsement;
-use App\Actions\Endorsements\InitiateEndorsement;
 use App\Enums\EndorsementStatus;
 use App\Models\Department;
-use App\Models\Ticket;
 use App\Models\TicketEndorsement;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Request;
-use Illuminate\Validation\ValidationException;
 
 /**
- * Service encapsulating the cross-department endorsement workflow.
- * Retains dashboard queries while delegating discrete mutations to:
- * - InitiateEndorsement
- * - DecideEndorsement
+ * Service encapsulating the cross-department endorsement queries and metrics.
  */
 class TicketEndorsementService
 {
-    public function __construct(
-        protected InitiateEndorsement $initiateEndorsementAction,
-        protected DecideEndorsement $decideEndorsementAction,
-        protected TicketSequenceService $sequenceService
-    ) {}
-
     // --- QUERY METHODS ---
+
 
     /**
      * Retrieve paginated endorsements with status metric tallies for CWD dashboard.
@@ -107,33 +95,5 @@ class TicketEndorsementService
             ->orderBy('dept_name', 'asc')
             ->select(['id', 'dept_name'])
             ->get();
-    }
-
-    // --- MUTATING METHODS ---
-
-    /**
-     * Initiates an endorsement request to another department, freezing ticket progress pending CWD review.
-     *
-     * @throws ValidationException
-     */
-    public function requestEndorsement(Ticket $ticket, array $data, User $supervisor): TicketEndorsement
-    {
-        return $this->initiateEndorsementAction->execute($ticket, $data, $supervisor);
-    }
-
-    /**
-     * Process an endorsement decision (approval creates child ticket & closes parent assignment; rejection reverts parent status).
-     */
-    public function verifyEndorsement(array $validatedData, TicketEndorsement $endorsement): array
-    {
-        return $this->decideEndorsementAction->execute($validatedData, $endorsement);
-    }
-
-    /**
-     * Generate a sequential child ticket number matching parent's pattern.
-     */
-    public function generateChildTicketNumber(Ticket $parentTicket): string
-    {
-        return $this->sequenceService->generateChildTicketNumber($parentTicket);
     }
 }

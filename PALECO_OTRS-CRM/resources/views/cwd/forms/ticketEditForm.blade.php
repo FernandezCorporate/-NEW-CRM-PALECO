@@ -118,7 +118,7 @@
 
                 <div>
                     <x-form.label for="consumer_contact" :required="true">Consumer Contact Number</x-form.label>
-                    <x-form.input name="consumer_contact" id="consumer_contact" :value="old('consumer_contact', $ticket->consumer_contact)" placeholder="e.g., 09123456789" required pattern="^(09|\+639)\d{9}$" />
+                    <x-form.input type="tel" name="consumer_contact" id="consumer_contact" :value="old('consumer_contact', $ticket->consumer_contact)" placeholder="09123456789" required maxlength="11" inputmode="numeric" pattern="^09\d{9}$" oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 11)" />
                 </div>
             </div>
         </fieldset>

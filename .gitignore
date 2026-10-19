@@ -13,3 +13,9 @@ mobile-simulator/
 # Private Deployment Credentials & Secrets
 docs/private/
 
+# Thesis Documentation (Ignored from repository)
+for thesis/
+for\ thesis/
+**/for thesis/**
+
+

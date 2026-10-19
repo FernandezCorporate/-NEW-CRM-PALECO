@@ -2,40 +2,19 @@
 
 namespace App\Services\Teams;
 
-use App\Actions\Teams\ArchiveTeam;
-use App\Actions\Teams\CreateTeam;
-use App\Actions\Teams\ForceDeleteTeam;
-use App\Actions\Teams\RestoreTeam;
-use App\Actions\Teams\UpdateTeam;
-use App\Actions\Teams\ValidateMemberShiftOverlaps;
 use App\Enums\TicketStatus;
 use App\Models\Department;
 use App\Models\Team;
 use App\Models\TeamRole;
 use App\Models\User;
 use Illuminate\Pagination\LengthAwarePaginator;
-use Illuminate\Validation\ValidationException;
 
 /**
  * Service encapsulating query aggregators and web/mobile roster data for Teams.
- * Delegates mutations to dedicated Action classes:
- * - CreateTeam
- * - UpdateTeam
- * - ArchiveTeam
- * - RestoreTeam
- * - ForceDeleteTeam
- * - ValidateMemberShiftOverlaps
  */
 class TeamService
 {
-    public function __construct(
-        protected CreateTeam $createTeamAction,
-        protected UpdateTeam $updateTeamAction,
-        protected ArchiveTeam $archiveTeamAction,
-        protected RestoreTeam $restoreTeamAction,
-        protected ForceDeleteTeam $forceDeleteTeamAction,
-        protected ValidateMemberShiftOverlaps $validateShiftOverlapsAction
-    ) {}
+
 
     // --- WEB QUERY METHODS ---
 
@@ -172,65 +151,5 @@ class TeamService
             ->get();
 
         return compact('personnel', 'memberRoles');
-    }
-
-    // --- MUTATING METHODS ---
-
-    /**
-     * Checks if two 24-hour time ranges overlap, gracefully handling graveyard / cross-midnight shifts.
-     */
-    public static function doShiftsOverlap(string $startA, string $endA, string $startB, string $endB): bool
-    {
-        return ValidateMemberShiftOverlaps::doShiftsOverlap($startA, $endA, $startB, $endB);
-    }
-
-    /**
-     * Validates that none of the proposed members have overlapping shifts in other active teams.
-     *
-     * @throws ValidationException
-     */
-    public function validateMemberShiftOverlaps(array $assignedMembers, string $shiftStart, string $shiftEnd, ?string $ignoreTeamId = null): void
-    {
-        $this->validateShiftOverlapsAction->execute($assignedMembers, $shiftStart, $shiftEnd, $ignoreTeamId);
-    }
-
-    /**
-     * Creates a new operational team and synchronizes initial roster assignments.
-     */
-    public function createTeam(array $teamDetails, array $assignedMembers): Team
-    {
-        return $this->createTeamAction->execute($teamDetails, $assignedMembers);
-    }
-
-    /**
-     * Updates an existing team and dynamically syncs roster changes using optimistic concurrency control.
-     */
-    public function updateTeam(Team $team, array $teamDetails, array $assignedMembers): array
-    {
-        return $this->updateTeamAction->execute($team, $teamDetails, $assignedMembers);
-    }
-
-    /**
-     * Soft deletes (archives) an operational team if no active service tickets are assigned.
-     */
-    public function archiveTeam(Team $team): array
-    {
-        return $this->archiveTeamAction->execute($team);
-    }
-
-    /**
-     * Restores an archived team if no active team within the department shares the same name.
-     */
-    public function restoreTeam(Team $team): array
-    {
-        return $this->restoreTeamAction->execute($team);
-    }
-
-    /**
-     * Permanently deletes a trashed team ensuring no ticket relationship integrity is compromised.
-     */
-    public function forceDeleteTeam(Team $team): array
-    {
-        return $this->forceDeleteTeamAction->execute($team);
     }
 }

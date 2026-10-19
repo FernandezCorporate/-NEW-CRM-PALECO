@@ -2,34 +2,15 @@
 
 namespace App\Services\Departments;
 
-use App\Actions\Departments\ArchiveDepartment;
-use App\Actions\Departments\CreateDepartment;
-use App\Actions\Departments\ForceDeleteDepartment;
-use App\Actions\Departments\RestoreDepartment;
-use App\Actions\Departments\UpdateDepartment;
 use App\Models\Department;
 use App\Models\User;
 use Illuminate\Pagination\LengthAwarePaginator;
 
 /**
  * Service encapsulating query aggregators and details for Departments.
- * Delegates mutations to dedicated Action classes:
- * - CreateDepartment
- * - UpdateDepartment
- * - ArchiveDepartment
- * - RestoreDepartment
- * - ForceDeleteDepartment
  */
 class DepartmentService
 {
-    public function __construct(
-        protected CreateDepartment $createDepartmentAction,
-        protected UpdateDepartment $updateDepartmentAction,
-        protected ArchiveDepartment $archiveDepartmentAction,
-        protected RestoreDepartment $restoreDepartmentAction,
-        protected ForceDeleteDepartment $forceDeleteDepartmentAction
-    ) {}
-
     // --- QUERY METHODS ---
 
     /**
@@ -78,47 +59,5 @@ class DepartmentService
             'supervisorCount' => $supervisorQuery->count(),
             'assignedSupervisor' => $assignedSupervisor,
         ];
-    }
-
-    // --- MUTATING METHODS ---
-
-    /**
-     * Creates a new department record.
-     */
-    public function createDepartment(array $data): Department
-    {
-        return $this->createDepartmentAction->execute($data);
-    }
-
-    /**
-     * Updates department information using optimistic locking concurrency control.
-     */
-    public function updateDepartment(Department $dept, array $data): array
-    {
-        return $this->updateDepartmentAction->execute($dept, $data);
-    }
-
-    /**
-     * Soft-deletes (archives) a department if no active teams, personnel, or active tickets are linked.
-     */
-    public function archiveDepartment(Department $dept): array
-    {
-        return $this->archiveDepartmentAction->execute($dept);
-    }
-
-    /**
-     * Restores an archived department back to active status.
-     */
-    public function restoreDepartment(int $id): array
-    {
-        return $this->restoreDepartmentAction->execute($id);
-    }
-
-    /**
-     * Permanently purges a department record from the database.
-     */
-    public function permanentlyDeleteDepartment(int $id): array
-    {
-        return $this->forceDeleteDepartmentAction->execute($id);
     }
 }

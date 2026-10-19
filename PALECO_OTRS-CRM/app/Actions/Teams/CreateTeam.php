@@ -10,10 +10,6 @@ use Illuminate\Support\Facades\DB;
  */
 class CreateTeam
 {
-    public function __construct(
-        protected ValidateMemberShiftOverlaps $validateShiftOverlaps
-    ) {}
-
     public function handle(array $teamDetails, array $assignedMembers): Team
     {
         return $this->execute($teamDetails, $assignedMembers);
@@ -21,10 +17,6 @@ class CreateTeam
 
     public function execute(array $teamDetails, array $assignedMembers): Team
     {
-        if (isset($teamDetails['shift_start'], $teamDetails['shift_end'])) {
-            $this->validateShiftOverlaps->execute($assignedMembers, $teamDetails['shift_start'], $teamDetails['shift_end']);
-        }
-
         return DB::transaction(function () use ($teamDetails, $assignedMembers) {
             $team = Team::create($teamDetails);
 

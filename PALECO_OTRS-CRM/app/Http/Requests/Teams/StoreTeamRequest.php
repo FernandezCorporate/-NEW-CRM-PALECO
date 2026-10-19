@@ -2,10 +2,8 @@
 
 namespace App\Http\Requests\Teams;
 
-use App\Services\Teams\TeamService;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
-use Illuminate\Validation\ValidationException;
 
 /**
  * Validates incoming HTTP requests for creating a new operational team
@@ -93,35 +91,5 @@ class StoreTeamRequest extends FormRequest
             'members.*.team_role_id.required' => 'A team role must be assigned to each member.',
             'members.*.team_role_id.exists' => 'The selected team role is invalid.',
         ];
-    }
-
-    /**
-     * Configure additional validator checks for member shift overlaps.
-     */
-    public function withValidator($validator): void
-    {
-        $validator->after(function ($validator) {
-            $shiftStart = $this->input('shift_start');
-            $shiftEnd = $this->input('shift_end');
-            $members = $this->input('members', []);
-
-            if (! $shiftStart || ! $shiftEnd || $shiftStart === $shiftEnd || empty($members)) {
-                return;
-            }
-
-            try {
-                app(TeamService::class)->validateMemberShiftOverlaps(
-                    $members,
-                    $shiftStart,
-                    $shiftEnd
-                );
-            } catch (ValidationException $e) {
-                foreach ($e->errors() as $key => $messages) {
-                    foreach ($messages as $message) {
-                        $validator->errors()->add($key, $message);
-                    }
-                }
-            }
-        });
     }
 }

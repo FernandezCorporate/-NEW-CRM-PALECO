@@ -60,34 +60,62 @@
                 </div>
         </div>
 
-        <!-- Informational Metadata Pills -->
-        <div class="flex items-center gap-2 flex-wrap shrink-0">
-            <!-- Source -->
-            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border text-xs font-semibold shadow-2xs {{ $ticket->complaint_source->badgeClasses() }}">
-                <x-icons.phone class="w-3.5 h-3.5" />
-                {{ $ticket->complaint_source->label() }}
-            </span>
-            <!-- Category -->
-            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-50 border border-slate-200 text-slate-700 text-xs font-semibold shadow-2xs">
-                <x-icons.category class="w-3.5 h-3.5 text-slate-400" />
-                <span>{{ $ticket->other_category ? $ticket->other_category_name : ($ticket->category->category_name ?? 'Unspecified') }}</span>
-                @if(! $ticket->other_category && $ticket->category?->trashed())
-                    <span class="text-[10px] bg-slate-200 text-slate-600 px-1.5 py-0.5 rounded font-medium italic">Archived</span>
-                @endif
-            </span>
-            <!-- Department -->
-            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-semibold shadow-2xs">
-                <x-icons.department class="w-3.5 h-3.5" />
-                <span>{{ $ticket->department->dept_name ?? 'Unassigned' }}</span>
-                @if($ticket->department?->trashed())
-                    <span class="text-[10px] bg-emerald-200 text-emerald-800 px-1.5 py-0.5 rounded font-medium italic">Archived</span>
-                @endif
-            </span>
-        </div>
+        <!-- Real-time Operational Controls (Livewire Island) -->
+        <livewire:shared.ticket-operational-controls :ticket="$ticket" />
     </header>
 
-    <!-- Real-time Operational Controls & Terminal Notices (Livewire Island) -->
-    <livewire:shared.ticket-operational-controls :ticket="$ticket" />
+    @if($ticket->status->value === 'cancelled')
+        <div class="mb-6 p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-900 shadow-xs transition-all duration-300">
+            <div class="flex items-start gap-3">
+                <div class="p-2 rounded-lg bg-rose-100 text-rose-700 shrink-0 mt-0.5">
+                    <x-icons.x-mark class="w-5 h-5" />
+                </div>
+                <div class="flex-grow min-w-0">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                        <h2 class="text-sm font-bold uppercase tracking-wider text-rose-900">
+                            Service Ticket Cancelled
+                        </h2>
+                        @if($ticket->cancelled_at)
+                            <span class="text-xs text-rose-700 font-medium">
+                                Cancelled on {{ $ticket->cancelled_at->format('M d, Y h:i A') }}
+                            </span>
+                        @endif
+                    </div>
+                    <div class="mt-1 text-sm text-rose-800">
+                        <span class="font-semibold text-rose-900">Reason:</span> <span class="whitespace-pre-wrap break-words">{{ $ticket->cancellation_reason ?? 'Cancelled by dispatcher' }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    @if($ticket->status->value === 'closed' && $ticket->is_force_closed)
+        <div class="mb-6 p-4 rounded-xl bg-amber-50/80 border border-amber-200 text-amber-950 shadow-xs transition-all duration-300">
+            <div class="flex items-start gap-3">
+                <div class="p-2 rounded-lg bg-amber-100 text-amber-700 shrink-0 mt-0.5">
+                    <x-icons.exclamation-triangle class="w-5 h-5" />
+                </div>
+                <div class="flex-grow min-w-0">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                        <h2 class="text-sm font-bold uppercase tracking-wider text-amber-900">
+                            Administrative Force Closure
+                        </h2>
+                        @if($ticket->closed_at)
+                            <span class="text-xs text-amber-700 font-medium">
+                                Closed on {{ $ticket->closed_at->format('M d, Y h:i A') }}
+                                @if($ticket->closedBy)
+                                    by {{ $ticket->closedBy->first_name }} {{ $ticket->closedBy->last_name }}
+                                @endif
+                            </span>
+                        @endif
+                    </div>
+                    <div class="mt-1 text-sm text-amber-900">
+                        <span class="font-semibold text-amber-950">Justification:</span> <span class="whitespace-pre-wrap break-words">{{ $ticket->closure_reason ?? 'Administratively closed by supervisor' }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endif
 
     <!-- Top Block: Info & Routing -->
     <div class="grid grid-cols-1 xl:grid-cols-3 gap-6 mb-6 items-start">
@@ -103,6 +131,33 @@
                 <h2 id="issue-details-heading" class="text-base font-bold text-slate-900 mb-6">Complaint & Issue Details</h2>
                 
                 <dl class="grid grid-cols-1 md:grid-cols-3 gap-y-6 gap-x-8">
+                    <!-- Complaint Source -->
+                    <div>
+                        <dt class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Complaint Source</dt>
+                        <dd class="text-sm text-slate-800 font-medium">{{ $ticket->complaint_source->label() }}</dd>
+                    </div>
+
+                    <!-- Category -->
+                    <div>
+                        <dt class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Category</dt>
+                        <dd class="text-sm text-slate-800 font-medium">
+                            <span>{{ $ticket->other_category ? $ticket->other_category_name : ($ticket->category->category_name ?? 'Unspecified') }}</span>
+                            @if(! $ticket->other_category && $ticket->category?->trashed())
+                                <span class="text-[10px] bg-slate-200 text-slate-600 px-1.5 py-0.5 rounded font-medium italic ml-1">Archived</span>
+                            @endif
+                        </dd>
+                    </div>
+
+                    <!-- Assigned Department -->
+                    <div>
+                        <dt class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Assigned Department</dt>
+                        <dd class="text-sm text-slate-800 font-medium">
+                            <span>{{ $ticket->department->dept_name ?? 'Unassigned' }}</span>
+                            @if($ticket->department?->trashed())
+                                <span class="text-[10px] bg-slate-200 text-slate-600 px-1.5 py-0.5 rounded font-medium italic ml-1">Archived</span>
+                            @endif
+                        </dd>
+                    </div>
                     <!-- Location -->
                     <div>
                         <dt class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Incident Address</dt>

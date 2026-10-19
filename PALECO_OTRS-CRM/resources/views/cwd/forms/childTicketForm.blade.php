@@ -120,7 +120,7 @@
             <!-- Row 2: Consumer Contact (Inherited/Override) -->
             <div>
                 <x-form.label for="consumer_contact">Consumer Contact Number (Optional override)</x-form.label>
-                <x-form.input name="consumer_contact" id="consumer_contact" :value="old('consumer_contact', $parentTicket->consumer_contact)" placeholder="e.g., 09123456789" />
+                <x-form.input type="tel" name="consumer_contact" id="consumer_contact" :value="old('consumer_contact', $parentTicket->consumer_contact)" placeholder="09123456789" maxlength="11" inputmode="numeric" pattern="^09\d{9}$" oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 11)" />
                 <p class="mt-1 text-[11px] text-slate-500">Pre-populated from parent ticket. Edit only if another on-site contact is coordinating for this sub-task.</p>
             </div>
         </fieldset>

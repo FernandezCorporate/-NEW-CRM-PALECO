@@ -138,7 +138,7 @@ test('team creation fails when team name already exists in the same department',
     $response->assertSessionHasErrors(['team_name']);
 });
 
-test('member shift overlap validation prevents scheduling user to conflicting shifts', function () {
+test('field personnel can be scheduled to multiple teams with overlapping shifts', function () {
     $admin = User::factory()->admin()->create();
     $department = Department::first();
     $fieldUser = User::factory()->fieldPersonnel()->create(['department_id' => $department->id]);
@@ -152,9 +152,9 @@ test('member shift overlap validation prevents scheduling user to conflicting sh
     ]);
     $team1->members()->attach($fieldUser->id, ['team_role_id' => $teamRole->id]);
 
-    // Team 2 attempt: 12:00 - 20:00 (overlaps with Team 1)
+    // Team 2 attempt: 12:00 - 20:00 (overlapping shift allowed)
     $payload = [
-        'team_name' => 'Conflicting Team',
+        'team_name' => 'Concurrent Team',
         'department_id' => $department->id,
         'shift_start' => '12:00',
         'shift_end' => '20:00',
@@ -168,7 +168,13 @@ test('member shift overlap validation prevents scheduling user to conflicting sh
 
     $response = $this->actingAs($admin)->post(route('admin.teams.store'), $payload);
 
-    $response->assertSessionHasErrors();
+    $response->assertSessionHasNoErrors();
+    $response->assertRedirect(route('admin.teams'));
+
+    $newTeam = Team::where('team_name', 'Concurrent Team')->first();
+    expect($newTeam)->not->toBeNull();
+    expect($newTeam->members->pluck('id'))->toContain($fieldUser->id);
+    expect($fieldUser->fresh()->teams)->toHaveCount(2);
 });
 
 test('admin can update team details and members with concurrency timestamp', function () {

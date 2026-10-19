@@ -4,7 +4,6 @@ namespace App\Actions\Teams;
 
 use App\Models\Team;
 use Carbon\Carbon;
-use DateTimeInterface;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -12,10 +11,6 @@ use Illuminate\Support\Facades\DB;
  */
 class UpdateTeam
 {
-    public function __construct(
-        protected ValidateMemberShiftOverlaps $validateShiftOverlaps
-    ) {}
-
     /**
      * @return array{success: bool, changed?: bool, message?: string, team?: Team}
      */
@@ -49,11 +44,6 @@ class UpdateTeam
                     'message' => 'Conflict: This team was modified by another user while you were editing.',
                 ];
             }
-
-            $targetShiftStart = $teamDetails['shift_start'] ?? ($lockedTeam->shift_start instanceof DateTimeInterface ? $lockedTeam->shift_start->format('H:i') : substr((string) $lockedTeam->shift_start, 0, 5));
-            $targetShiftEnd = $teamDetails['shift_end'] ?? ($lockedTeam->shift_end instanceof DateTimeInterface ? $lockedTeam->shift_end->format('H:i') : substr((string) $lockedTeam->shift_end, 0, 5));
-
-            $this->validateShiftOverlaps->execute($assignedMembers, $targetShiftStart, $targetShiftEnd, $lockedTeam->id);
 
             // Compare roster states to detect membership changes
             $oldRoster = $lockedTeam->members()->get()->mapWithKeys(function ($m) {
