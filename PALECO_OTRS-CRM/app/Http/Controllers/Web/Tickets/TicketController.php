@@ -2,6 +2,11 @@
 
 namespace App\Http\Controllers\Web\Tickets;
 
+use App\Actions\Tickets\CancelTicket;
+use App\Actions\Tickets\CreateCwdTicket;
+use App\Actions\Tickets\CreateManualChildTicket;
+use App\Actions\Tickets\ForceCloseTicket;
+use App\Actions\Tickets\UpdateTicketIntake;
 use App\Concerns\ResolvesSmartRedirects;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Tickets\CancelTicketRequest;
@@ -102,13 +107,13 @@ class TicketController extends Controller
     // --- ACTION METHODS (MUTATION - CWD ONLY) ---
 
     /*
-     * Validates and processes the creation of a new utility service ticket.
+     * Validates and processes the creation of a new utility service ticket using CreateCwdTicket action.
      */
-    public function store(StoreTicketRequest $request): RedirectResponse
+    public function store(StoreTicketRequest $request, CreateCwdTicket $createCwdTicket): RedirectResponse
     {
         Gate::authorize('create', Ticket::class);
 
-        $ticket = $this->ticketService->createCwdTicket($request->validated());
+        $ticket = $createCwdTicket->execute($request->validated());
 
         $destination = $this->resolveSmartRedirect($request, 'cwd.tickets', [
             'dashboard' => 'cwd.dashboard',
@@ -120,9 +125,9 @@ class TicketController extends Controller
     }
 
     /*
-     * Validates and updates clerical intake details on an existing Open ticket.
+     * Validates and updates clerical intake details on an existing Open ticket using UpdateTicketIntake action.
      */
-    public function update(UpdateTicketIntakeRequest $request, Ticket $ticket): RedirectResponse
+    public function update(UpdateTicketIntakeRequest $request, Ticket $ticket, UpdateTicketIntake $updateTicketIntake): RedirectResponse
     {
         Gate::authorize('update', $ticket);
 
@@ -134,7 +139,7 @@ class TicketController extends Controller
         ]));
 
         try {
-            $result = $this->ticketService->updateIntakeDetails($ticket, $request->validated());
+            $result = $updateTicketIntake->execute($ticket, $request->validated());
         } catch (ValidationException $e) {
             $errorMessage = collect($e->errors())->flatten()->first() ?? 'Ticket can no longer be edited.';
 
@@ -152,13 +157,13 @@ class TicketController extends Controller
     }
 
     /*
-     * Stores a new linked child ticket associated with the specified parent ticket.
+     * Stores a new linked child ticket associated with the specified parent ticket using CreateManualChildTicket action.
      */
-    public function storeChild(StoreChildTicketRequest $request, Ticket $ticket): RedirectResponse
+    public function storeChild(StoreChildTicketRequest $request, Ticket $ticket, CreateManualChildTicket $createChildTicket): RedirectResponse
     {
         Gate::authorize('createChild', $ticket);
 
-        $childTicket = $this->ticketService->createManualChildTicket($ticket, $request->validated());
+        $childTicket = $createChildTicket->execute($ticket, $request->validated());
 
         return redirect()->route('cwd.tickets.show', $childTicket)
             ->with('success', "Child Ticket {$childTicket->ticket_number} successfully registered under parent ticket {$ticket->ticket_number}.");
@@ -177,14 +182,14 @@ class TicketController extends Controller
     }
 
     /*
-     * Validates and processes the cancellation of an open or assigned service ticket.
+     * Validates and processes the cancellation of an open or assigned service ticket using CancelTicket action.
      */
-    public function cancel(CancelTicketRequest $request, Ticket $ticket): RedirectResponse
+    public function cancel(CancelTicketRequest $request, Ticket $ticket, CancelTicket $cancelTicket): RedirectResponse
     {
         Gate::authorize('cancel', $ticket);
 
         try {
-            $this->ticketService->cancelTicket($ticket, $request->validated(), $request->user());
+            $cancelTicket->execute($ticket, $request->validated(), $request->user());
         } catch (ValidationException $e) {
             $errorMessage = collect($e->errors())->flatten()->first() ?? 'Ticket cannot be cancelled.';
 
@@ -209,14 +214,14 @@ class TicketController extends Controller
     }
 
     /*
-     * Validates and processes administrative force-closure of an active service ticket.
+     * Validates and processes administrative force-closure of an active service ticket using ForceCloseTicket action.
      */
-    public function forceClose(ForceCloseTicketRequest $request, Ticket $ticket): RedirectResponse
+    public function forceClose(ForceCloseTicketRequest $request, Ticket $ticket, ForceCloseTicket $forceCloseTicket): RedirectResponse
     {
         Gate::authorize('forceClose', $ticket);
 
         try {
-            $this->ticketService->forceCloseTicket($ticket, $request->validated(), $request->user());
+            $forceCloseTicket->execute($ticket, $request->validated(), $request->user());
         } catch (ValidationException $e) {
             $errorMessage = collect($e->errors())->flatten()->first() ?? 'Ticket cannot be force-closed.';
 
@@ -228,4 +233,3 @@ class TicketController extends Controller
             ->with('success', "Ticket {$ticket->ticket_number} has been administratively force-closed.");
     }
 }
-

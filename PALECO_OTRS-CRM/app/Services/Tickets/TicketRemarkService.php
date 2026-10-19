@@ -2,17 +2,23 @@
 
 namespace App\Services\Tickets;
 
+use App\Actions\Tickets\AddTicketRemark;
 use App\Models\Ticket;
 use App\Models\TicketRemark;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Collection;
 
 /**
- * Encapsulates communication remarks and chronological timeline entries for tickets.
+ * Service encapsulating communication remarks and chronological timeline entries for tickets.
  * Handles internal/external visibility filtering across Web and Mobile portals.
+ * Delegates remark creation to AddTicketRemark Action.
  */
 class TicketRemarkService
 {
+    public function __construct(
+        protected AddTicketRemark $addTicketRemarkAction
+    ) {}
+
     // --- QUERY METHODS ---
 
     /**
@@ -38,10 +44,6 @@ class TicketRemarkService
      */
     public function createRemark(Ticket $ticket, User $user, array $data): TicketRemark
     {
-        return $ticket->remarks()->create([
-            'user_id' => $user->id,
-            'body' => $data['body'],
-            'is_internal' => (bool) ($data['is_internal'] ?? false),
-        ]);
+        return $this->addTicketRemarkAction->execute($ticket, $user, $data);
     }
 }

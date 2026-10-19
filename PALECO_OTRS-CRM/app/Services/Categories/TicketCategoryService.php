@@ -2,17 +2,33 @@
 
 namespace App\Services\Categories;
 
-use App\Enums\TicketStatus;
+use App\Actions\Categories\ArchiveTicketCategory;
+use App\Actions\Categories\CreateTicketCategory;
+use App\Actions\Categories\ForceDeleteTicketCategory;
+use App\Actions\Categories\RestoreTicketCategory;
+use App\Actions\Categories\UpdateTicketCategory;
 use App\Models\TicketCategory;
-use Carbon\Carbon;
 use Illuminate\Pagination\LengthAwarePaginator;
-use Illuminate\Support\Facades\DB;
 
 /**
- * Encapsulates backend business logic and lifecycle operations for Ticket Categories.
+ * Service encapsulating query aggregators and details for Ticket Categories.
+ * Delegates mutations to dedicated Action classes:
+ * - CreateTicketCategory
+ * - UpdateTicketCategory
+ * - ArchiveTicketCategory
+ * - RestoreTicketCategory
+ * - ForceDeleteTicketCategory
  */
 class TicketCategoryService
 {
+    public function __construct(
+        protected CreateTicketCategory $createCategoryAction,
+        protected UpdateTicketCategory $updateCategoryAction,
+        protected ArchiveTicketCategory $archiveCategoryAction,
+        protected RestoreTicketCategory $restoreCategoryAction,
+        protected ForceDeleteTicketCategory $forceDeleteCategoryAction
+    ) {}
+
     // --- QUERY METHODS ---
 
     /**
@@ -48,71 +64,27 @@ class TicketCategoryService
     // --- MUTATING METHODS ---
 
     /**
+     * Stores a new ticket category in the database.
+     */
+    public function createCategory(array $data): TicketCategory
+    {
+        return $this->createCategoryAction->execute($data);
+    }
+
+    /**
      * Updates category information using optimistic locking protection.
      */
     public function updateCategory(TicketCategory $category, array $data): array
     {
-        $originalUpdatedAt = $data['original_updated_at'];
-        unset($data['original_updated_at']);
-
-        return DB::transaction(function () use ($category, $data, $originalUpdatedAt) {
-            $lockedCategory = TicketCategory::where('id', $category->id)->lockForUpdate()->first();
-
-            if (! $lockedCategory->updated_at->eq(Carbon::parse($originalUpdatedAt))) {
-                return ['success' => false, 'message' => 'Conflict: This category was modified by another user while you were editing.'];
-            }
-
-            $lockedCategory->fill($data);
-
-            if ($lockedCategory->isClean()) {
-                return ['success' => true, 'changed' => false];
-            }
-
-            $lockedCategory->save();
-
-            return ['success' => true, 'changed' => true];
-        });
+        return $this->updateCategoryAction->execute($category, $data);
     }
-
-    // --- DESTRUCTIVE & STATE METHODS ---
 
     /**
      * Soft-deletes (archives) a ticket category if no active service tickets are linked.
      */
     public function archiveCategory(TicketCategory $category): array
     {
-        return DB::transaction(function () use ($category) {
-            $lockedCategory = TicketCategory::where('id', $category->id)
-                ->lockForUpdate()
-                ->first();
-
-            if (! $lockedCategory || $lockedCategory->trashed()) {
-                return [
-                    'success' => false,
-                    'message' => 'Conflict: This category has already been archived by an administrator.',
-                ];
-            }
-
-            $hasActiveTickets = $lockedCategory->ticket()
-                ->whereIn('status', [
-                    TicketStatus::OPEN,
-                    TicketStatus::ASSIGNED,
-                    TicketStatus::IN_PROGRESS,
-                    TicketStatus::PENDING_ENDORSEMENT,
-                ])
-                ->exists();
-
-            if ($hasActiveTickets) {
-                return [
-                    'success' => false,
-                    'message' => 'Cannot archive this category because it is currently assigned to active service tickets.',
-                ];
-            }
-
-            $lockedCategory->delete();
-
-            return ['success' => true, 'message' => 'Category archived successfully.'];
-        });
+        return $this->archiveCategoryAction->execute($category);
     }
 
     /**
@@ -120,23 +92,7 @@ class TicketCategoryService
      */
     public function restoreCategory(int $id): array
     {
-        $category = TicketCategory::withTrashed()->find($id);
-
-        if (! $category) {
-            return ['success' => false, 'message' => 'Category no longer exists. It may have been permanently deleted.'];
-        }
-
-        if (! $category->trashed()) {
-            return ['success' => false, 'message' => 'Category is already active.'];
-        }
-
-        if (TicketCategory::where('category_name', $category->category_name)->exists()) {
-            return ['success' => false, 'message' => 'Cannot restore category. An active category with the same name already exists.'];
-        }
-
-        $category->restore();
-
-        return ['success' => true, 'message' => 'Category restored successfully.'];
+        return $this->restoreCategoryAction->execute($id);
     }
 
     /**
@@ -144,22 +100,6 @@ class TicketCategoryService
      */
     public function permanentlyDeleteCategory(int $id): array
     {
-        $category = TicketCategory::withTrashed()->find($id);
-
-        if (! $category) {
-            return ['success' => true, 'message' => 'Category has already been permanently deleted.'];
-        }
-
-        if (! $category->trashed()) {
-            return ['success' => false, 'message' => 'Cannot permanently delete this category because it was recently restored.'];
-        }
-
-        if ($category->ticket()->exists()) {
-            return ['success' => false, 'message' => 'Cannot permanently delete this category because it is currently referenced by existing service tickets.'];
-        }
-
-        $category->forceDelete();
-
-        return ['success' => true, 'message' => 'Category permanently deleted.'];
+        return $this->forceDeleteCategoryAction->execute($id);
     }
 }

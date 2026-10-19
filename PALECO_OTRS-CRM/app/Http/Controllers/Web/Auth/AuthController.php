@@ -2,9 +2,10 @@
 
 namespace App\Http\Controllers\Web\Auth;
 
+use App\Actions\Auth\AuthenticateWebUser;
+use App\Actions\Auth\TerminateWebSession;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
-use App\Services\Auth\AuthService;
 use Illuminate\Http\Request;
 
 /*
@@ -40,12 +41,12 @@ class AuthController extends Controller
     // --- MUTATING METHODS ---
 
     /*
-     * Processes the login attempt by handing validated credentials over to the AuthService.
+     * Processes the login attempt using the AuthenticateWebUser action.
      * Redirects to the appropriate dashboard on success or returns validation errors on failure.
      */
-    public function login(LoginRequest $request, $role, AuthService $authService)
+    public function login(LoginRequest $request, $role, AuthenticateWebUser $authenticateWebUser)
     {
-        $result = $authService->processLogin(
+        $result = $authenticateWebUser->execute(
             $request->validated(),
             $request->ip(),
             $role,
@@ -62,9 +63,9 @@ class AuthController extends Controller
     /*
      * Safely terminates the user's active session and redirects them back to the portal.
      */
-    public function logout(Request $request, AuthService $authService)
+    public function logout(Request $request, TerminateWebSession $terminateWebSession)
     {
-        $authService->terminateSession($request);
+        $terminateWebSession->execute($request);
 
         return redirect('/portal');
     }

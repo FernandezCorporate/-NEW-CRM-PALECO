@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\Tickets;
 
+use App\Actions\Endorsements\InitiateEndorsement;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Tickets\StoreEndorsementRequest;
 use App\Http\Resources\Api\EndorsementOptionResource;
@@ -42,13 +43,13 @@ class TicketEndorsementController extends Controller
     // --- MUTATING METHODS ---
 
     /*
-     * Submits a formal endorsement request, freezing the ticket into PENDING_ENDORSEMENT status.
+     * Submits a formal endorsement request using InitiateEndorsement action, freezing the ticket into PENDING_ENDORSEMENT status.
      */
-    public function endorse(StoreEndorsementRequest $request, Ticket $ticket): JsonResponse
+    public function endorse(StoreEndorsementRequest $request, Ticket $ticket, InitiateEndorsement $initiateEndorsement): JsonResponse
     {
         Gate::authorize('endorse', $ticket);
 
-        $endorsement = $this->ticketEndorsementService->requestEndorsement(
+        $endorsement = $initiateEndorsement->execute(
             $ticket,
             $request->validated(),
             $request->user()

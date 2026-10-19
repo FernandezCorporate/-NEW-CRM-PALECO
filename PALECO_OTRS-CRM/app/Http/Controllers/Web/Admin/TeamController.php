@@ -2,6 +2,11 @@
 
 namespace App\Http\Controllers\Web\Admin;
 
+use App\Actions\Teams\ArchiveTeam;
+use App\Actions\Teams\CreateTeam;
+use App\Actions\Teams\ForceDeleteTeam;
+use App\Actions\Teams\RestoreTeam;
+use App\Actions\Teams\UpdateTeam;
 use App\Concerns\ResolvesSmartRedirects;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Teams\StoreTeamRequest;
@@ -18,8 +23,9 @@ use Illuminate\Support\Facades\Gate;
 class TeamController extends Controller
 {
     use ResolvesSmartRedirects;
+
     /*
-     * Injects the TeamService to handle complex member assignments and team logic.
+     * Injects the TeamService to handle queries and form options.
      */
     public function __construct(protected TeamService $teamService) {}
 
@@ -72,13 +78,13 @@ class TeamController extends Controller
     // --- MUTATING METHODS ---
 
     /*
-     * Processes validated request data to store a new team and attach its specified members.
+     * Processes validated request data to store a new team and attach its specified members using CreateTeam action.
      */
-    public function store(StoreTeamRequest $request)
+    public function store(StoreTeamRequest $request, CreateTeam $createTeam)
     {
         Gate::authorize('create', Team::class);
 
-        $this->teamService->createTeam(
+        $createTeam->execute(
             $request->safe()->except('members'),
             $request->validated('members', [])
         );
@@ -87,10 +93,9 @@ class TeamController extends Controller
     }
 
     /*
-     * Processes validated request data to commit updates to a team and sync its membership list.
-     * Redirects back to the originating view (dashboard or details page) if no changes were detected.
+     * Processes validated request data to commit updates to a team and sync its membership list using UpdateTeam action.
      */
-    public function update(UpdateTeamRequest $request, Team $team)
+    public function update(UpdateTeamRequest $request, Team $team, UpdateTeam $updateTeam)
     {
         if ($team->trashed()) {
             return redirect()->route('admin.teams')->with('error', 'Failed to save changes. The team was recently archived by another administrator.');
@@ -98,7 +103,7 @@ class TeamController extends Controller
 
         Gate::authorize('update', $team);
 
-        $result = $this->teamService->updateTeam(
+        $result = $updateTeam->execute(
             $team,
             $request->safe()->except('members'),
             $request->validated('members', [])
@@ -162,9 +167,9 @@ class TeamController extends Controller
     }
 
     /*
-     * Executes a soft delete to safely archive the specified team.
+     * Executes a soft delete to safely archive the specified team using ArchiveTeam action.
      */
-    public function archive(Team $team)
+    public function archive(Team $team, ArchiveTeam $archiveTeam)
     {
         if ($team->trashed()) {
             return redirect()->route('admin.teams')->with('error', 'This team has already been archived.');
@@ -172,7 +177,7 @@ class TeamController extends Controller
 
         Gate::authorize('archive', $team);
 
-        $result = $this->teamService->archiveTeam($team);
+        $result = $archiveTeam->execute($team);
 
         if (! $result['success']) {
             return redirect()->route('admin.teams')->with('error', $result['message']);
@@ -182,13 +187,13 @@ class TeamController extends Controller
     }
 
     /*
-     * Recovers a previously archived team back to active status.
+     * Recovers a previously archived team back to active status using RestoreTeam action.
      */
-    public function restore(Team $team)
+    public function restore(Team $team, RestoreTeam $restoreTeam)
     {
         Gate::authorize('restore', Team::class);
 
-        $result = $this->teamService->restoreTeam($team);
+        $result = $restoreTeam->execute($team);
 
         if (! $result['success']) {
             return redirect()->route('admin.teams')->with('error', $result['message']);
@@ -198,13 +203,13 @@ class TeamController extends Controller
     }
 
     /*
-     * Permanently eradicates the team record from the database, preventing orphaned tickets.
+     * Permanently eradicates the team record from the database using ForceDeleteTeam action.
      */
-    public function destroy(Team $team)
+    public function destroy(Team $team, ForceDeleteTeam $forceDeleteTeam)
     {
         Gate::authorize('forceDelete', Team::class);
 
-        $result = $this->teamService->forceDeleteTeam($team);
+        $result = $forceDeleteTeam->execute($team);
 
         if (! $result['success']) {
             return redirect()->route('admin.teams')->with('error', $result['message']);

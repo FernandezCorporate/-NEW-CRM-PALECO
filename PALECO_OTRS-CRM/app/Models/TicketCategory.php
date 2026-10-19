@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Concerns\Auditable;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -16,7 +17,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 #[Fillable(['category_name', 'category_desc'])]
 class TicketCategory extends Model
 {
-    use Auditable, SoftDeletes;
+    use Auditable, HasFactory, SoftDeletes;
 
     protected string $activityTitleAttribute = 'category_name';
 
@@ -40,9 +41,17 @@ class TicketCategory extends Model
     /**
      * Retrieves all service tickets classified under this specific category.
      */
-    public function ticket(): HasMany
+    public function tickets(): HasMany
     {
         return $this->hasMany(Ticket::class, 'category_id');
+    }
+
+    /**
+     * Backward-compatible alias for tickets().
+     */
+    public function ticket(): HasMany
+    {
+        return $this->tickets();
     }
 
     // --- SCOPES ---

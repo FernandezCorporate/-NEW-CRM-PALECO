@@ -2,6 +2,11 @@
 
 namespace App\Http\Controllers\Api\Teams;
 
+use App\Actions\Teams\ArchiveTeam;
+use App\Actions\Teams\CreateTeam;
+use App\Actions\Teams\ForceDeleteTeam;
+use App\Actions\Teams\RestoreTeam;
+use App\Actions\Teams\UpdateTeam;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Teams\StoreTeamRequest;
 use App\Http\Requests\Teams\UpdateTeamRequest;
@@ -78,16 +83,16 @@ class TeamController extends Controller
     // --- MUTATING METHODS ---
 
     /*
-     * Validates and processes the creation of a new team and syncs initial members.
+     * Validates and processes the creation of a new team and syncs initial members using CreateTeam action.
      */
-    public function store(StoreTeamRequest $request): JsonResponse
+    public function store(StoreTeamRequest $request, CreateTeam $createTeam): JsonResponse
     {
         Gate::authorize('create', Team::class);
 
         $teamDetails = $request->safe()->except('members');
         $teamDetails['department_id'] = $request->user()->department_id;
 
-        $newTeam = $this->teamService->createTeam(
+        $newTeam = $createTeam->execute(
             $teamDetails,
             $request->validated('members', [])
         );
@@ -100,16 +105,16 @@ class TeamController extends Controller
     }
 
     /*
-     * Updates team details and roster memberships with concurrency collision detection.
+     * Updates team details and roster memberships using UpdateTeam action.
      */
-    public function update(UpdateTeamRequest $request, Team $team): JsonResponse
+    public function update(UpdateTeamRequest $request, Team $team, UpdateTeam $updateTeam): JsonResponse
     {
         Gate::authorize('mobileUpdateTeam', $team);
 
         $teamDetails = $request->safe()->except('members');
         $teamDetails['department_id'] = $request->user()->department_id;
 
-        $result = $this->teamService->updateTeam(
+        $result = $updateTeam->execute(
             $team,
             $teamDetails,
             $request->validated('members', [])
@@ -132,13 +137,13 @@ class TeamController extends Controller
     // --- DESTRUCTIVE & STATE METHODS ---
 
     /*
-     * Soft-deletes (archives) a team from active dispatch rosters.
+     * Soft-deletes (archives) a team from active dispatch rosters using ArchiveTeam action.
      */
-    public function archive(Request $request, Team $team): JsonResponse
+    public function archive(Request $request, Team $team, ArchiveTeam $archiveTeam): JsonResponse
     {
         Gate::authorize('mobileArchiveTeam', $team);
 
-        $result = $this->teamService->archiveTeam($team);
+        $result = $archiveTeam->execute($team);
 
         if (! $result['success']) {
             return response()->json([
@@ -155,13 +160,13 @@ class TeamController extends Controller
     }
 
     /*
-     * Restores an archived team back to active operations.
+     * Restores an archived team back to active operations using RestoreTeam action.
      */
-    public function restore(Request $request, Team $team): JsonResponse
+    public function restore(Request $request, Team $team, RestoreTeam $restoreTeam): JsonResponse
     {
         Gate::authorize('mobileRestoreTeam', $team);
 
-        $result = $this->teamService->restoreTeam($team);
+        $result = $restoreTeam->execute($team);
 
         if (! $result['success']) {
             return response()->json([
@@ -178,13 +183,13 @@ class TeamController extends Controller
     }
 
     /*
-     * Permanently purges a trashed team from the database.
+     * Permanently purges a trashed team from the database using ForceDeleteTeam action.
      */
-    public function destroy(Request $request, Team $team): JsonResponse
+    public function destroy(Request $request, Team $team, ForceDeleteTeam $forceDeleteTeam): JsonResponse
     {
         Gate::authorize('mobileDestroyTeam', $team);
 
-        $result = $this->teamService->forceDeleteTeam($team);
+        $result = $forceDeleteTeam->execute($team);
 
         if (! $result['success']) {
             return response()->json([

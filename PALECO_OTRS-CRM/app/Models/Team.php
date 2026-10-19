@@ -6,6 +6,7 @@ use App\Concerns\Auditable;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -19,7 +20,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 #[Fillable(['team_name', 'team_desc', 'shift_start', 'shift_end', 'department_id'])]
 class Team extends Model
 {
-    use Auditable, HasUlids, SoftDeletes;
+    use Auditable, HasFactory, HasUlids, SoftDeletes;
 
     protected string $activityLogName = 'Teams';
 
@@ -63,9 +64,17 @@ class Team extends Model
     /**
      * The service tickets assigned to this team.
      */
-    public function ticket(): HasMany
+    public function tickets(): HasMany
     {
         return $this->hasMany(Ticket::class);
+    }
+
+    /**
+     * Backward-compatible alias for tickets().
+     */
+    public function ticket(): HasMany
+    {
+        return $this->tickets();
     }
 
     // --- SCOPES (UNIFIED) ---

@@ -10,6 +10,7 @@ use App\Models\TicketAccomplishment;
 use App\Models\TicketCategory;
 use App\Models\TicketEndorsement;
 use App\Models\User;
+use App\Presenters\SvgDonutPresenter;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Spatie\Activitylog\Models\Activity;
@@ -44,66 +45,8 @@ class WebDashboardService
             'badge_classes' => $status->badgeClasses(),
         ])->values()->all();
 
-        $actualTotal = collect($statuses)->sum('total');
-        $totalTickets = max(1, $actualTotal);
-
-        $accumulatedPercent = 0.0;
-        $statusesWithGeometry = collect($statuses)->map(function ($status) use (&$accumulatedPercent, $totalTickets, $actualTotal) {
-            $slicePercent = ($status['total'] / $totalTickets) * 100;
-            $status['width_percent'] = round($slicePercent, 1);
-            $status['filter_url'] = route('cwd.tickets', ['status' => $status['key']]);
-
-            if ($actualTotal === 0 || $status['total'] === 0) {
-                $status['path_d'] = '';
-                $status['start_percent'] = 0;
-                $status['end_percent'] = 0;
-
-                return $status;
-            }
-
-            $startPercent = $accumulatedPercent;
-            $endPercent = $startPercent + $slicePercent;
-            $accumulatedPercent = $endPercent;
-
-            $status['start_percent'] = round($startPercent, 2);
-            $status['end_percent'] = round($endPercent, 2);
-
-            $cx = 100;
-            $cy = 100;
-            $outerR = 86;
-            $innerR = 50;
-
-            if ($slicePercent >= 99.99) {
-                $status['path_d'] = sprintf(
-                    'M %s %s A %s %s 0 1 1 %s %s A %s %s 0 1 1 %s %s M %s %s A %s %s 0 1 0 %s %s A %s %s 0 1 0 %s %s Z',
-                    $cx, $cy - $outerR, $outerR, $outerR, $cx, $cy + $outerR, $outerR, $outerR, $cx, $cy - $outerR,
-                    $cx, $cy - $innerR, $innerR, $innerR, $cx, $cy + $innerR, $innerR, $innerR, $cx, $cy - $innerR
-                );
-            } else {
-                $startAngle = ($startPercent / 100) * 2 * M_PI;
-                $endAngle = ($endPercent / 100) * 2 * M_PI;
-
-                $x1 = round($cx + $outerR * sin($startAngle), 3);
-                $y1 = round($cy - $outerR * cos($startAngle), 3);
-                $x2 = round($cx + $outerR * sin($endAngle), 3);
-                $y2 = round($cy - $outerR * cos($endAngle), 3);
-
-                $x3 = round($cx + $innerR * sin($endAngle), 3);
-                $y3 = round($cy - $innerR * cos($endAngle), 3);
-                $x4 = round($cx + $innerR * sin($startAngle), 3);
-                $y4 = round($cy - $innerR * cos($startAngle), 3);
-
-                $largeArc = ($endAngle - $startAngle) > M_PI ? 1 : 0;
-
-                $status['path_d'] = sprintf(
-                    'M %s %s A %s %s 0 %d 1 %s %s L %s %s A %s %s 0 %d 0 %s %s Z',
-                    $x1, $y1, $outerR, $outerR, $largeArc, $x2, $y2,
-                    $x3, $y3, $innerR, $innerR, $largeArc, $x4, $y4
-                );
-            }
-
-            return $status;
-        })->all();
+        $actualTotal = (int) collect($statuses)->sum('total');
+        $statusesWithGeometry = SvgDonutPresenter::computeGeometry($statuses, $actualTotal);
 
         $startDate = Carbon::today()->subDays(6)->startOfDay();
         $rawTrends = Ticket::query()

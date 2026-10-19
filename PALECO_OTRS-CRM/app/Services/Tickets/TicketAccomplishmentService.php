@@ -2,28 +2,28 @@
 
 namespace App\Services\Tickets;
 
-use App\Enums\TicketAccomplishmentStatus;
-use App\Enums\TicketStatus;
-use App\Events\TicketAccomplished;
-use App\Events\TicketVerifiedAndClosed;
-use App\Events\TicketWorkStarted;
+use App\Actions\Accomplishments\SubmitAccomplishment;
+use App\Actions\Accomplishments\VerifyAccomplishment;
 use App\Models\Ticket;
 use App\Models\TicketAccomplishment;
-use App\Models\TicketStatusLog;
 use App\Models\User;
 use Carbon\Carbon;
-use Exception;
 use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 
 /**
- * Encapsulates the complete accomplishment report lifecycle:
- * photo uploads, work verification, supervisory review, and assignment finalization.
+ * Service encapsulating accomplishment report queries and lifecycle workflows.
+ * Delegates discrete state mutations to dedicated Action classes:
+ * - SubmitAccomplishment
+ * - VerifyAccomplishment
  */
 class TicketAccomplishmentService
 {
+    public function __construct(
+        protected SubmitAccomplishment $submitAccomplishmentAction,
+        protected VerifyAccomplishment $verifyAccomplishmentAction
+    ) {}
+
     // --- QUERY METHODS ---
 
     /**
@@ -39,16 +39,12 @@ class TicketAccomplishmentService
 
     /**
      * Eagerly loads relationships for detailed accomplishment inspection.
-     * Supports single-parameter (Web) and two-parameter (Api) invocations.
+     * Optionally validates that the accomplishment belongs to the provided ticket context.
      */
-    public function getAccomplishmentDetails(Ticket|TicketAccomplishment $first, ?TicketAccomplishment $second = null): TicketAccomplishment
+    public function getAccomplishmentDetails(TicketAccomplishment $accomplishment, ?Ticket $ticket = null): TicketAccomplishment
     {
-        $accomplishment = $second ?? $first;
-
-        if ($first instanceof Ticket && $second instanceof TicketAccomplishment) {
-            if ($second->ticket_id !== $first->id) {
-                abort(404, 'This accomplishment report does not belong to the requested ticket.');
-            }
+        if ($ticket && $accomplishment->ticket_id !== $ticket->id) {
+            abort(404, 'This accomplishment report does not belong to the requested ticket.');
         }
 
         return $accomplishment->load(['accomplishedBy', 'approvedBy', 'rejectedBy', 'photos']);
@@ -68,167 +64,7 @@ class TicketAccomplishmentService
         ?Carbon $clientTimestamp = null,
         ?string $idempotencyKey = null
     ): TicketAccomplishment {
-        // Idempotency safety: If client resubmits an accomplishment with the same key
-        if ($idempotencyKey) {
-            $existingReport = TicketAccomplishment::where('idempotency_key', $idempotencyKey)->first();
-            if ($existingReport) {
-                return $existingReport->load(['accomplishedBy', 'approvedBy', 'rejectedBy', 'photos']);
-            }
-        }
-
-        // Idempotency safety: If already resolved by this worker, return the existing report
-        if ($ticket->status === TicketStatus::RESOLVED) {
-            $existingReport = $ticket->accomplishments()
-                ->where('accomplished_by_id', $worker->id)
-                ->latest('id')
-                ->first();
-            if ($existingReport) {
-                return $existingReport->load(['accomplishedBy', 'approvedBy', 'rejectedBy', 'photos']);
-            }
-        }
-
-        if ($ticket->status === TicketStatus::PENDING_ENDORSEMENT) {
-            throw ValidationException::withMessages([
-                'status' => 'Ticket is locked pending inter-departmental endorsement review.',
-            ]);
-        }
-
-        if ($ticket->status !== TicketStatus::IN_PROGRESS) {
-            throw ValidationException::withMessages([
-                'status' => 'Only tickets that are currently in progress can be marked as accomplished.',
-            ]);
-        }
-
-        if ($ticket->accomplishments()->where('status', TicketAccomplishmentStatus::PENDING)->exists()) {
-            throw ValidationException::withMessages([
-                'status' => 'This ticket already has a pending accomplishment report under supervisor review.',
-            ]);
-        }
-
-        $isOffline = $clientTimestamp !== null && $clientTimestamp->diffInMinutes(now()) > 5;
-        $actualAccomplishedTime = $clientTimestamp ?? now();
-
-        $disk = config('filesystems.default', 'public');
-        $signaturePath = null;
-        $photoPaths = [];
-
-        try {
-            if (isset($data['signature'])) {
-                $signaturePath = $data['signature']->store('accomplishments/signatures', $disk);
-            }
-
-            return DB::transaction(function () use (
-                $ticket,
-                $worker,
-                $data,
-                $disk,
-                $signaturePath,
-                &$photoPaths,
-                $actualAccomplishedTime,
-                $clientTimestamp,
-                $isOffline,
-                $idempotencyKey
-            ) {
-                $lockedTicket = Ticket::where('id', $ticket->id)
-                    ->lockForUpdate()
-                    ->firstOrFail();
-
-                // Concurrency safety under pessimistic row lock
-                if ($lockedTicket->status === TicketStatus::RESOLVED) {
-                    $existingReport = $lockedTicket->accomplishments()
-                        ->where('accomplished_by_id', $worker->id)
-                        ->latest('id')
-                        ->first();
-                    if ($existingReport) {
-                        return $existingReport->load(['accomplishedBy', 'approvedBy', 'rejectedBy', 'photos']);
-                    }
-                }
-
-                if ($lockedTicket->status === TicketStatus::PENDING_ENDORSEMENT) {
-                    throw ValidationException::withMessages([
-                        'status' => 'Ticket is locked pending inter-departmental endorsement review.',
-                    ]);
-                }
-
-                if ($lockedTicket->status !== TicketStatus::IN_PROGRESS) {
-                    throw ValidationException::withMessages([
-                        'status' => 'Only tickets that are currently in progress can be marked as accomplished.',
-                    ]);
-                }
-
-                if ($lockedTicket->accomplishments()->where('status', TicketAccomplishmentStatus::PENDING)->exists()) {
-                    throw ValidationException::withMessages([
-                        'status' => 'This ticket already has a pending accomplishment report under supervisor review.',
-                    ]);
-                }
-
-                $oldStatus = $lockedTicket->status;
-
-                $report = $lockedTicket->accomplishments()->create([
-                    'accomplished_by_id' => $worker->id,
-                    'remarks' => $data['remarks'],
-                    'accomplished_at' => $actualAccomplishedTime,
-                    'client_accomplished_at' => $clientTimestamp,
-                    'consumer_name' => $data['consumer_name'] ?? null,
-                    'signature_path' => $signaturePath,
-                    'status' => TicketAccomplishmentStatus::PENDING,
-                    'is_offline_synced' => $isOffline,
-                    'synced_at' => $isOffline ? now() : null,
-                    'idempotency_key' => $idempotencyKey,
-                ]);
-
-                if (! empty($data['photos'])) {
-                    foreach ($data['photos'] as $photo) {
-                        $path = $photo->store('accomplishments/photos', $disk);
-                        $photoPaths[] = $path;
-
-                        $report->photos()->create([
-                            'file_path' => $path,
-                            'file_name' => $photo->getClientOriginalName(),
-                            'file_size' => $photo->getSize(),
-                            'mime_type' => $photo->getMimeType(),
-                        ]);
-                    }
-                }
-
-                TicketStatusLog::create([
-                    'ticket_id' => $lockedTicket->id,
-                    'old_status' => $oldStatus,
-                    'new_status' => TicketStatus::RESOLVED,
-                    'changed_by_id' => $worker->id,
-                    'created_at' => $actualAccomplishedTime,
-                ]);
-
-                $ticketUpdate = [
-                    'status' => TicketStatus::RESOLVED,
-                    'resolved_at' => $actualAccomplishedTime,
-                ];
-
-                if ($isOffline && ! $lockedTicket->is_offline_synced) {
-                    $ticketUpdate['is_offline_synced'] = true;
-                    $ticketUpdate['synced_at'] = now();
-                }
-
-                $lockedTicket->update($ticketUpdate);
-
-                $freshTicket = $lockedTicket->fresh(['category', 'team', 'department']);
-
-                DB::afterCommit(function () use ($freshTicket) {
-                    rescue(fn () => TicketAccomplished::dispatch($freshTicket), report: true);
-                });
-
-                return $report;
-            });
-        } catch (Exception $e) {
-            if ($signaturePath) {
-                Storage::disk($disk)->delete($signaturePath);
-            }
-            if (! empty($photoPaths)) {
-                Storage::disk($disk)->delete($photoPaths);
-            }
-
-            throw $e;
-        }
+        return $this->submitAccomplishmentAction->execute($ticket, $worker, $data, $clientTimestamp, $idempotencyKey);
     }
 
     /**
@@ -238,84 +74,6 @@ class TicketAccomplishmentService
      */
     public function verifyAccomplishment(Ticket $ticket, TicketAccomplishment $accomplishment, array $data, User $supervisor): TicketAccomplishment
     {
-        if ($accomplishment->ticket_id !== $ticket->id) {
-            abort(404, 'This accomplishment report does not belong to the requested ticket.');
-        }
-
-        return DB::transaction(function () use ($ticket, $accomplishment, $data, $supervisor) {
-            $lockedAccomplishment = TicketAccomplishment::where('id', $accomplishment->id)
-                ->lockForUpdate()
-                ->firstOrFail();
-
-            if ($lockedAccomplishment->status !== TicketAccomplishmentStatus::PENDING) {
-                throw ValidationException::withMessages([
-                    'status' => 'This accomplishment report has already been evaluated.',
-                ]);
-            }
-
-            $lockedTicket = Ticket::where('id', $ticket->id)
-                ->lockForUpdate()
-                ->firstOrFail();
-
-            $oldTicketStatus = $lockedTicket->status;
-
-            if ($data['status'] === TicketAccomplishmentStatus::APPROVED->value) {
-                $lockedAccomplishment->update([
-                    'status' => TicketAccomplishmentStatus::APPROVED,
-                    'approved_by_id' => $supervisor->id,
-                ]);
-
-                // Close active assignment since the ticket's field lifecycle is completely finalized
-                $lockedTicket->assignments()
-                    ->whereNull('unassigned_at')
-                    ->update(['unassigned_at' => now()]);
-
-                $lockedTicket->update([
-                    'status' => TicketStatus::CLOSED,
-                    'closed_at' => now(),
-                ]);
-
-                TicketStatusLog::create([
-                    'ticket_id' => $lockedTicket->id,
-                    'old_status' => $oldTicketStatus,
-                    'new_status' => TicketStatus::CLOSED,
-                    'changed_by_id' => $supervisor->id,
-                ]);
-
-                $freshTicket = $lockedTicket->fresh(['category', 'team', 'department']);
-
-                DB::afterCommit(function () use ($freshTicket) {
-                    rescue(fn () => TicketVerifiedAndClosed::dispatch($freshTicket), report: true);
-                });
-            }
-
-            if ($data['status'] === TicketAccomplishmentStatus::REJECTED->value) {
-                $lockedAccomplishment->update([
-                    'status' => TicketAccomplishmentStatus::REJECTED,
-                    'rejection_reason' => $data['rejection_reason'],
-                    'rejected_by_id' => $supervisor->id,
-                ]);
-
-                $lockedTicket->update([
-                    'status' => TicketStatus::IN_PROGRESS,
-                    'resolved_at' => null,
-                ]);
-
-                TicketStatusLog::create([
-                    'ticket_id' => $lockedTicket->id,
-                    'old_status' => $oldTicketStatus,
-                    'new_status' => TicketStatus::IN_PROGRESS,
-                    'changed_by_id' => $supervisor->id,
-                ]);
-
-                $freshTicket = $lockedTicket->fresh(['category', 'team', 'department']);
-
-                DB::afterCommit(function () use ($freshTicket) {
-                    rescue(fn () => TicketWorkStarted::dispatch($freshTicket), report: true);
-                });
-            }
-
-            return $lockedAccomplishment->fresh(['accomplishedBy', 'rejectedBy', 'approvedBy', 'photos']);
-        });
+        return $this->verifyAccomplishmentAction->execute($ticket, $accomplishment, $data, $supervisor);
     }
 }

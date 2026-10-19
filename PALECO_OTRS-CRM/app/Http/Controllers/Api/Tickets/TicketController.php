@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\Tickets;
 
+use App\Actions\Tickets\StartTicket;
 use App\Http\Controllers\Api\Concerns\ResolvesClientTimestamp;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Api\TicketDetailedResource;
@@ -86,15 +87,15 @@ class TicketController extends Controller
     // --- MUTATING METHODS ---
 
     /*
-     * Transitions an assigned ticket to in-progress status upon field personnel departure or work start.
+     * Transitions an assigned ticket to in-progress status upon field personnel departure or work start using StartTicket action.
      */
-    public function start(Request $request, Ticket $ticket): JsonResponse
+    public function start(Request $request, Ticket $ticket, StartTicket $startTicket): JsonResponse
     {
         Gate::authorize('start', $ticket);
 
         $clientTimestamp = $this->resolveClientTimestamp($request, $ticket);
 
-        $updatedTicket = $this->ticketService->startTicket($ticket, $request->user(), $clientTimestamp);
+        $updatedTicket = $startTicket->execute($ticket, $request->user(), $clientTimestamp);
 
         return response()->json([
             'success' => true,

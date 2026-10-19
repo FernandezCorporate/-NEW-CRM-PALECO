@@ -2,10 +2,10 @@
 
 namespace Database\Factories;
 
+use App\Models\Department;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str;
 
 /**
  * @extends Factory<User>
@@ -25,21 +25,83 @@ class UserFactory extends Factory
     public function definition(): array
     {
         return [
-            'name' => fake()->name(),
+            'username' => fake()->unique()->userName(),
+            'first_name' => fake()->firstName(),
+            'middle_name' => fake()->lastName(),
+            'last_name' => fake()->lastName(),
+            'name_ext' => null,
             'email' => fake()->unique()->safeEmail(),
-            'email_verified_at' => now(),
+            'contact' => '09'.fake()->numerify('#########'),
+            'role_id' => 1,
+            'department_id' => null,
             'password' => static::$password ??= Hash::make('Password'),
-            'remember_token' => Str::random(10),
+            'is_active' => true,
+            'locked_until' => null,
+            'last_login' => null,
         ];
     }
 
     /**
-     * Indicate that the model's email address should be unverified.
+     * Indicate that the user is an administrator.
      */
-    public function unverified(): static
+    public function admin(): static
     {
-        return $this->state(fn (array $attributes) => [
-            'email_verified_at' => null,
+        return $this->state(fn () => [
+            'role_id' => 1,
+            'department_id' => null,
+        ]);
+    }
+
+    /**
+     * Indicate that the user is a CWD Officer.
+     */
+    public function cwdOfficer(): static
+    {
+        return $this->state(fn () => [
+            'role_id' => 2,
+            'department_id' => null,
+        ]);
+    }
+
+    /**
+     * Indicate that the user is a Supervisor.
+     */
+    public function supervisor(?int $departmentId = null): static
+    {
+        return $this->state(fn () => [
+            'role_id' => 3,
+            'department_id' => $departmentId ?? Department::first()?->id ?? Department::factory(),
+        ]);
+    }
+
+    /**
+     * Indicate that the user is Field Personnel.
+     */
+    public function fieldPersonnel(): static
+    {
+        return $this->state(fn () => [
+            'role_id' => 4,
+            'department_id' => null,
+        ]);
+    }
+
+    /**
+     * Indicate that the user is deactivated.
+     */
+    public function inactive(): static
+    {
+        return $this->state(fn () => [
+            'is_active' => false,
+        ]);
+    }
+
+    /**
+     * Indicate that the user is locked out.
+     */
+    public function locked(): static
+    {
+        return $this->state(fn () => [
+            'locked_until' => now()->addMinutes(15),
         ]);
     }
 }

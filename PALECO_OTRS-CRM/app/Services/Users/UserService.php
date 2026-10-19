@@ -2,23 +2,36 @@
 
 namespace App\Services\Users;
 
-use App\Enums\TicketStatus;
+use App\Actions\Users\CreateUser;
+use App\Actions\Users\ResetUserPassword;
+use App\Actions\Users\ToggleUserActiveStatus;
+use App\Actions\Users\UnlockUser;
+use App\Actions\Users\UpdateUser;
 use App\Models\AccountRole;
 use App\Models\TeamRole;
-use App\Models\Ticket;
 use App\Models\User;
-use Carbon\Carbon;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\RateLimiter;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\ValidationException;
 
 /**
- * Service handling administration-level User queries, mutations, and status transitions.
+ * Service handling administration-level User queries and delegating mutations to Actions:
+ * - CreateUser
+ * - UpdateUser
+ * - ResetUserPassword
+ * - UnlockUser
+ * - ToggleUserActiveStatus
  */
 class UserService
 {
+    public function __construct(
+        protected CreateUser $createUserAction,
+        protected UpdateUser $updateUserAction,
+        protected ResetUserPassword $resetUserPasswordAction,
+        protected UnlockUser $unlockUserAction,
+        protected ToggleUserActiveStatus $toggleUserActiveStatusAction
+    ) {}
+
     // --- QUERY METHODS ---
 
     /**
@@ -129,6 +142,21 @@ class UserService
         return compact('assignedTeams');
     }
 
+    /**
+     * Retrieves the authenticated user and eagerly loads required relationships for API resource formatting.
+     * Eagerly loads assigned operational teams when the authenticated user is a field personnel.
+     */
+    public function getProfileData(User $user): User
+    {
+        $user->load(['role', 'department']);
+
+        if ($user->role?->slug_identifier === 'field_personnel') {
+            $user->load(['teams.department']);
+        }
+
+        return $user;
+    }
+
     // --- MUTATING METHODS ---
 
     /**
@@ -136,36 +164,11 @@ class UserService
      */
     public function processAndSaveUser(array $data, ?User $user = null): array
     {
-        $originalUpdatedAt = $data['original_updated_at'] ?? null;
-        unset($data['original_updated_at']);
-
-        $role = $user ? $user->role : AccountRole::find($data['role_id']);
-
-        if ($role && $role->slug_identifier === 'field_personnel') {
-            $data['department_id'] = null;
-        }
-
         if ($user) {
-            return DB::transaction(function () use ($user, $data, $originalUpdatedAt) {
-                $lockedUser = User::query()->where('id', $user->id)->lockForUpdate()->first();
-
-                if ($originalUpdatedAt && ! $lockedUser->updated_at->eq(Carbon::parse($originalUpdatedAt))) {
-                    return ['success' => false, 'message' => 'Conflict: This user profile was modified by another admin while you were editing.'];
-                }
-
-                $lockedUser->fill($data);
-
-                if ($lockedUser->isClean()) {
-                    return ['success' => true, 'changed' => false];
-                }
-
-                $lockedUser->save();
-
-                return ['success' => true, 'changed' => true];
-            });
+            return $this->updateUserAction->execute($user, $data);
         }
 
-        User::create($data);
+        $this->createUserAction->execute($data);
 
         return ['success' => true, 'changed' => true];
     }
@@ -175,45 +178,7 @@ class UserService
      */
     public function resetPassword(User $user, string $newPassword): void
     {
-        DB::transaction(function () use ($user, $newPassword) {
-            $user->password = $newPassword;
-            $user->remember_token = null;
-            $user->save();
-
-            // Revoke active mobile API tokens
-            $user->tokens()->delete();
-
-            // Revoke active web database sessions for this user
-            if (Schema::hasTable('sessions')) {
-                DB::table('sessions')->where('user_id', $user->id)->delete();
-            }
-
-            // Clear any active lockout state on this account
-            if ($user->locked_until) {
-                $user->updateQuietly(['locked_until' => null]);
-            }
-
-            $normalizedUsername = strtolower($user->username);
-            RateLimiter::clear('auth:account:attempts:'.$normalizedUsername);
-            RateLimiter::clear('auth:account:locked:'.$normalizedUsername);
-
-            // Record standardized audit trail event
-            $causer = auth()->user();
-            activity('Users')
-                ->performedOn($user)
-                ->causedBy($causer)
-                ->event('password_reset')
-                ->withProperties([
-                    'ip_address' => request()->ip() ?? 'unknown',
-                    'user_agent' => request()->userAgent() ?? 'unknown',
-                    'target_user_id' => $user->id,
-                    'username' => $user->username,
-                    'full_name' => $user->full_name,
-                    'role' => $user->role?->role_name,
-                    'action' => 'admin_password_reset',
-                ])
-                ->log("Password was administratively reset for {$user->username}.");
-        });
+        $this->resetUserPasswordAction->execute($user, $newPassword);
     }
 
     /**
@@ -221,67 +186,16 @@ class UserService
      */
     public function unlockUser(User $user): void
     {
-        DB::transaction(function () use ($user) {
-            $user->locked_until = null;
-            $user->save();
-
-            $normalizedUsername = strtolower($user->username);
-            RateLimiter::clear('auth:account:attempts:'.$normalizedUsername);
-            RateLimiter::clear('auth:account:locked:'.$normalizedUsername);
-
-            $causer = auth()->user();
-            activity('Users')
-                ->performedOn($user)
-                ->causedBy($causer)
-                ->event('account_unlocked')
-                ->withProperties([
-                    'ip_address' => request()->ip() ?? 'unknown',
-                    'user_agent' => request()->userAgent() ?? 'unknown',
-                    'target_user_id' => $user->id,
-                    'username' => $user->username,
-                    'full_name' => $user->full_name,
-                    'role' => $user->role?->role_name,
-                    'action' => 'admin_lockout_bypass',
-                ])
-                ->log("Administrative lockout bypass granted for {$user->username}.");
-        });
+        $this->unlockUserAction->execute($user);
     }
-
-    // --- DESTRUCTIVE & STATE METHODS ---
 
     /**
      * Toggle the active status of a user and invalidate tokens/memberships if deactivated.
+     *
+     * @throws ValidationException
      */
     public function toggleUserStatus(User $user, bool $isActive): void
     {
-        DB::transaction(function () use ($user, $isActive) {
-            if (! $isActive) {
-                if ($user->role->slug_identifier === 'field_personnel') {
-                    $hasActiveTickets = Ticket::query()
-                        ->whereIn('team_id', $user->teams()->pluck('teams.id'))
-                        ->whereIn('status', [TicketStatus::ASSIGNED, TicketStatus::IN_PROGRESS])
-                        ->exists();
-
-                    if ($hasActiveTickets) {
-                        throw ValidationException::withMessages([
-                            'user' => 'Cannot deactivate user while their assigned crew has active tickets assigned or in progress. Please reassign the active tickets or remove the user from the active crew first.',
-                        ]);
-                    }
-                }
-
-                $user->tokens()->delete();
-
-                if (Schema::hasTable('sessions')) {
-                    DB::table('sessions')->where('user_id', $user->id)->delete();
-                }
-
-                if ($user->role->slug_identifier === 'field_personnel') {
-                    $user->teams()->detach();
-                }
-            }
-
-            $user->is_active = $isActive;
-            $user->save();
-        });
+        $this->toggleUserActiveStatusAction->execute($user, $isActive);
     }
 }

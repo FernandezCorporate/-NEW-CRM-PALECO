@@ -2,6 +2,11 @@
 
 namespace App\Http\Controllers\Web\Admin;
 
+use App\Actions\Departments\ArchiveDepartment;
+use App\Actions\Departments\CreateDepartment;
+use App\Actions\Departments\ForceDeleteDepartment;
+use App\Actions\Departments\RestoreDepartment;
+use App\Actions\Departments\UpdateDepartment;
 use App\Concerns\ResolvesSmartRedirects;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Departments\StoreDepartmentRequest;
@@ -18,8 +23,9 @@ use Illuminate\Support\Facades\Gate;
 class DepartmentController extends Controller
 {
     use ResolvesSmartRedirects;
+
     /*
-     * Injects the DepartmentService to handle complex business logic.
+     * Injects the DepartmentService to handle queries and complex view state.
      */
     public function __construct(protected DepartmentService $departmentService) {}
 
@@ -71,22 +77,21 @@ class DepartmentController extends Controller
     // --- MUTATING METHODS ---
 
     /*
-     * Processes validated request data to store a newly created department in the database.
+     * Processes validated request data to store a newly created department using CreateDepartment action.
      */
-    public function store(StoreDepartmentRequest $request)
+    public function store(StoreDepartmentRequest $request, CreateDepartment $createDepartment)
     {
         Gate::authorize('create', Department::class);
 
-        Department::create($request->validated());
+        $createDepartment->execute($request->validated());
 
         return redirect()->route('admin.departments')->with('success', 'Department created successfully.');
     }
 
     /*
-     * Processes validated request data to commit updates to an existing department.
-     * Redirects back to the originating view (dashboard or details page) based on the query parameter.
+     * Processes validated request data to commit updates to an existing department using UpdateDepartment action.
      */
-    public function update(UpdateDepartmentRequest $request, Department $dept)
+    public function update(UpdateDepartmentRequest $request, Department $dept, UpdateDepartment $updateDepartment)
     {
         if ($dept->trashed()) {
             return redirect()->route('admin.departments')->with('error', 'Failed to save changes. The department was recently archived by another administrator.');
@@ -94,7 +99,7 @@ class DepartmentController extends Controller
 
         Gate::authorize('update', $dept);
 
-        $result = $this->departmentService->updateDepartment($dept, $request->validated());
+        $result = $updateDepartment->execute($dept, $request->validated());
 
         if (! $result['success']) {
             return redirect()->back()->with('error', $result['message'])->withInput();
@@ -154,9 +159,9 @@ class DepartmentController extends Controller
     }
 
     /*
-     * Executes a soft delete to safely archive the specified department.
+     * Executes a soft delete to safely archive the specified department using ArchiveDepartment action.
      */
-    public function archive(Department $dept)
+    public function archive(Department $dept, ArchiveDepartment $archiveDepartment)
     {
         if ($dept->trashed()) {
             return redirect()->route('admin.departments')->with('error', 'This department has already been archived.');
@@ -164,7 +169,7 @@ class DepartmentController extends Controller
 
         Gate::authorize('archive', $dept);
 
-        $result = $this->departmentService->archiveDepartment($dept);
+        $result = $archiveDepartment->execute($dept);
 
         if (! $result['success']) {
             return redirect()->route('admin.departments')->with('error', $result['message']);
@@ -174,13 +179,13 @@ class DepartmentController extends Controller
     }
 
     /*
-     * Recovers a previously archived department back to active status.
+     * Recovers a previously archived department back to active status using RestoreDepartment action.
      */
-    public function restore($id)
+    public function restore($id, RestoreDepartment $restoreDepartment)
     {
         Gate::authorize('restore', Department::class);
 
-        $result = $this->departmentService->restoreDepartment($id);
+        $result = $restoreDepartment->execute($id);
 
         if (! $result['success']) {
             return redirect()->route('admin.departments')->with('error', $result['message']);
@@ -190,14 +195,13 @@ class DepartmentController extends Controller
     }
 
     /*
-     * Permanently eradicates the department record from the database.
-     * Delegates to the service layer to ensure no relational constraints are violated.
+     * Permanently eradicates the department record from the database using ForceDeleteDepartment action.
      */
-    public function destroy($id)
+    public function destroy($id, ForceDeleteDepartment $forceDeleteDepartment)
     {
         Gate::authorize('forceDelete', Department::class);
 
-        $result = $this->departmentService->permanentlyDeleteDepartment($id);
+        $result = $forceDeleteDepartment->execute($id);
 
         if (! $result['success']) {
             return redirect()->route('admin.departments')->with('error', $result['message']);

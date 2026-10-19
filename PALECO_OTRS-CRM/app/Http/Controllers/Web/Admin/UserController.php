@@ -2,6 +2,11 @@
 
 namespace App\Http\Controllers\Web\Admin;
 
+use App\Actions\Users\CreateUser;
+use App\Actions\Users\ResetUserPassword;
+use App\Actions\Users\ToggleUserActiveStatus;
+use App\Actions\Users\UnlockUser;
+use App\Actions\Users\UpdateUser;
 use App\Concerns\ResolvesSmartRedirects;
 use App\Enums\TicketStatus;
 use App\Http\Controllers\Controller;
@@ -26,7 +31,7 @@ class UserController extends Controller
     use ResolvesSmartRedirects;
 
     /*
-     * Injects the UserService to handle complex user processing and database transactions.
+     * Injects the UserService to handle complex user queries and dashboard aggregations.
      */
     public function __construct(protected UserService $userService) {}
 
@@ -76,25 +81,25 @@ class UserController extends Controller
     // --- MUTATING METHODS ---
 
     /*
-     * Processes validated request data to configure and store a new user account.
+     * Processes validated request data to configure and store a new user account using CreateUser action.
      */
-    public function store(StoreUserRequest $request)
+    public function store(StoreUserRequest $request, CreateUser $createUser)
     {
         Gate::authorize('create', User::class);
 
-        $this->userService->processAndSaveUser($request->validated());
+        $createUser->execute($request->validated());
 
         return redirect()->route('admin.users')->with('success', 'User created successfully.');
     }
 
     /*
-     * Processes validated request data to commit updates to an existing user account profile.
+     * Processes validated request data to commit updates to an existing user account profile using UpdateUser action.
      */
-    public function update(UpdateUserRequest $request, User $user)
+    public function update(UpdateUserRequest $request, User $user, UpdateUser $updateUser)
     {
         Gate::authorize('update', $user);
 
-        $result = $this->userService->processAndSaveUser($request->validated(), $user);
+        $result = $updateUser->execute($user, $request->validated());
 
         if (! $result['success']) {
             return redirect()->back()->with('error', $result['message'])->withInput();
@@ -129,14 +134,13 @@ class UserController extends Controller
     }
 
     /*
-     * Updates an existing user's password directly from the administrative user edit form.
-     * Blind to the old password, directly hashing and updating the credential.
+     * Updates an existing user's password directly using ResetUserPassword action.
      */
-    public function updatePassword(ResetUserPasswordRequest $request, User $user)
+    public function updatePassword(ResetUserPasswordRequest $request, User $user, ResetUserPassword $resetUserPassword)
     {
         Gate::authorize('update', $user);
 
-        $this->userService->resetPassword($user, $request->validated('password'));
+        $resetUserPassword->execute($user, $request->validated('password'));
 
         $redirectRoute = $this->resolveSmartRedirect($request, 'admin.users', [
             'details' => function (Request $req) use ($user) {
@@ -163,13 +167,13 @@ class UserController extends Controller
     }
 
     /*
-     * Administratively bypasses and clears an active security lockout on a user account.
+     * Administratively bypasses and clears an active security lockout on a user account using UnlockUser action.
      */
-    public function unlockAccount(Request $request, User $user)
+    public function unlockAccount(Request $request, User $user, UnlockUser $unlockUser)
     {
         Gate::authorize('unlock', $user);
 
-        $this->userService->unlockUser($user);
+        $unlockUser->execute($user);
 
         $redirectRoute = $this->resolveSmartRedirect($request, 'admin.users', [
             'details' => function (Request $req) use ($user) {
@@ -219,7 +223,7 @@ class UserController extends Controller
         return view('admin.prompts.userDeactivateConfirm', ['userAccount' => $user]);
     }
 
-    public function deactivate(Request $request, User $user)
+    public function deactivate(Request $request, User $user, ToggleUserActiveStatus $toggleUserStatus)
     {
         if (! $user->is_active) {
             return redirect()->route('admin.users')->with('info', 'This account has already been deactivated by another administrator.');
@@ -228,7 +232,7 @@ class UserController extends Controller
         Gate::authorize('deactivate', $user);
 
         try {
-            $this->userService->toggleUserStatus($user, false);
+            $toggleUserStatus->execute($user, false);
         } catch (ValidationException $e) {
             return redirect()->back()->with('error', $e->getMessage())->withErrors($e->errors());
         }
@@ -268,14 +272,14 @@ class UserController extends Controller
         return view('admin.prompts.userReactivateConfirm', ['userAccount' => $user]);
     }
 
-    public function reactivate(Request $request, User $user)
+    public function reactivate(Request $request, User $user, ToggleUserActiveStatus $toggleUserStatus)
     {
         if ($user->is_active) {
             return redirect()->route('admin.users')->with('info', 'This account has already been reactivated by another administrator.');
         }
 
         Gate::authorize('reactivate', $user);
-        $this->userService->toggleUserStatus($user, true);
+        $toggleUserStatus->execute($user, true);
 
         $redirectRoute = $this->resolveSmartRedirect($request, 'admin.users', [
             'details' => function (Request $req) use ($user) {

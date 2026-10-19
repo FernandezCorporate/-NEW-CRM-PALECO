@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\Api\Tickets;
 
+use App\Actions\Accomplishments\SubmitAccomplishment;
+use App\Actions\Accomplishments\VerifyAccomplishment;
 use App\Http\Controllers\Api\Concerns\ResolvesClientTimestamp;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Tickets\SubmitAccomplishmentReportRequest;
@@ -50,7 +52,7 @@ class TicketAccomplishmentController extends Controller
     {
         Gate::authorize('view', $ticket);
 
-        $loadedAccomplishment = $this->ticketAccomplishmentService->getAccomplishmentDetails($ticket, $accomplishment);
+        $loadedAccomplishment = $this->ticketAccomplishmentService->getAccomplishmentDetails($accomplishment, $ticket);
 
         return response()->json([
             'success' => true,
@@ -61,16 +63,19 @@ class TicketAccomplishmentController extends Controller
     // --- MUTATING METHODS ---
 
     /*
-     * Submits a new accomplishment report with photo evidence, moving the ticket to RESOLVED.
+     * Submits a new accomplishment report with photo evidence using SubmitAccomplishment action.
      */
-    public function store(SubmitAccomplishmentReportRequest $request, Ticket $ticket): JsonResponse
-    {
+    public function store(
+        SubmitAccomplishmentReportRequest $request,
+        Ticket $ticket,
+        SubmitAccomplishment $submitAccomplishment
+    ): JsonResponse {
         Gate::authorize('accomplish', $ticket);
 
         $clientTimestamp = $this->resolveClientTimestamp($request, $ticket);
         $idempotencyKey = $request->header('X-Idempotency-Key') ?? $request->input('idempotency_key');
 
-        $accomplishmentReport = $this->ticketAccomplishmentService->accomplishTicket(
+        $accomplishmentReport = $submitAccomplishment->execute(
             $ticket,
             $request->user(),
             $request->validated(),
@@ -86,13 +91,17 @@ class TicketAccomplishmentController extends Controller
     }
 
     /*
-     * Evaluates an accomplishment report (APPROVED closes the ticket, REJECTED returns to IN_PROGRESS).
+     * Evaluates an accomplishment report using VerifyAccomplishment action.
      */
-    public function verify(VerifyAccomplishmentRequest $request, Ticket $ticket, TicketAccomplishment $accomplishment): JsonResponse
-    {
+    public function verify(
+        VerifyAccomplishmentRequest $request,
+        Ticket $ticket,
+        TicketAccomplishment $accomplishment,
+        VerifyAccomplishment $verifyAccomplishment
+    ): JsonResponse {
         Gate::authorize('verify', $ticket);
 
-        $verifiedAccomplishment = $this->ticketAccomplishmentService->verifyAccomplishment(
+        $verifiedAccomplishment = $verifyAccomplishment->execute(
             $ticket,
             $accomplishment,
             $request->validated(),

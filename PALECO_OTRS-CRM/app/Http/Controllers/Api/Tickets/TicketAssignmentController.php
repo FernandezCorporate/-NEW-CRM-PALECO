@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\Tickets;
 
+use App\Actions\Tickets\AssignTicket;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Tickets\AssignTicketRequest;
 use App\Http\Resources\Api\AssignOptionResource;
@@ -42,15 +43,15 @@ class TicketAssignmentController extends Controller
     // --- MUTATING METHODS ---
 
     /*
-     * Assigns or reassigns a service ticket to a designated team with an optional audit reason.
+     * Assigns or reassigns a service ticket to a designated team using the AssignTicket action.
      */
-    public function assign(AssignTicketRequest $request, Ticket $ticket): JsonResponse
+    public function assign(AssignTicketRequest $request, Ticket $ticket, AssignTicket $assignTicket): JsonResponse
     {
         Gate::authorize('assign', $ticket);
 
         $action = is_null($ticket->team_id) ? 'assigned' : 'reassigned';
 
-        $updatedTicket = $this->ticketService->assignTicket(
+        $updatedTicket = $assignTicket->execute(
             $ticket,
             $request->validated('team_id'),
             $request->user(),

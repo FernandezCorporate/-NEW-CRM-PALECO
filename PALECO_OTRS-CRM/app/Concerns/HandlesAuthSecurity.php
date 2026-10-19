@@ -72,14 +72,6 @@ trait HandlesAuthSecurity
     }
 
     /**
-     * Backward-compatible alias for handleAccountLockout.
-     */
-    protected function handleDatabaseLockout(?User $user): ?string
-    {
-        return $this->handleAccountLockout($user, $user?->username ?? '');
-    }
-
-    /**
      * Layer 2: Registers an authentication failure against the targeted account identity.
      * Emits user-facing attempt countdown (4, 3, 2, 1) and enforces 15-minute lockout on the 5th attempt.
      */

@@ -8,6 +8,7 @@ use App\Enums\TicketStatus;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -21,7 +22,7 @@ use Illuminate\Support\Str;
  */
 class Ticket extends Model
 {
-    use Auditable, HasUlids, SoftDeletes;
+    use Auditable, HasFactory, HasUlids, SoftDeletes;
 
     protected string $activityLogName = 'Tickets';
 
@@ -464,48 +465,6 @@ class Ticket extends Model
             'oldest' => $query->oldest('created_at'),
             default => $query->latest('created_at'),
         };
-    }
-
-    // --- SCOPES (API ALIASES FOR BACKWARD COMPATIBILITY) ---
-
-    /**
-     * @deprecated Use scopeSearch instead.
-     */
-    public function scopeApiSearch(Builder $query, ?string $search): Builder
-    {
-        return $this->scopeSearch($query, $search);
-    }
-
-    /**
-     * @deprecated Use scopeFilterByCategory instead.
-     */
-    public function scopeApiFilterByCategoryName(Builder $query, ?string $filter): Builder
-    {
-        return $this->scopeFilterByCategory($query, $filter);
-    }
-
-    /**
-     * @deprecated Use scopeFilterByStatus instead.
-     */
-    public function scopeApiFilterByStatus(Builder $query, mixed $status): Builder
-    {
-        return $this->scopeFilterByStatus($query, $status);
-    }
-
-    /**
-     * @deprecated Use scopeFilterByDepartment instead.
-     */
-    public function scopeApiFilterByDepartment(Builder $query, mixed $department): Builder
-    {
-        return $this->scopeFilterByDepartment($query, $department);
-    }
-
-    /**
-     * @deprecated Use scopeSort instead.
-     */
-    public function scopeApiSort(Builder $query, ?string $sort): Builder
-    {
-        return $this->scopeSort($query, $sort);
     }
 
     // --- ACTIVITY LOG CONFIGURATION ---

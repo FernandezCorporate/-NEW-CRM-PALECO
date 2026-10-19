@@ -3,12 +3,12 @@
 use App\Http\Controllers\Api\Auth\AuthController;
 use App\Http\Controllers\Api\Dashboard\DashboardController;
 use App\Http\Controllers\Api\Profiles\ProfileController;
-use App\Http\Controllers\Api\Remarks\TicketRemarkController;
 use App\Http\Controllers\Api\Teams\TeamController;
 use App\Http\Controllers\Api\Tickets\TicketAccomplishmentController;
 use App\Http\Controllers\Api\Tickets\TicketAssignmentController;
 use App\Http\Controllers\Api\Tickets\TicketController;
 use App\Http\Controllers\Api\Tickets\TicketEndorsementController;
+use App\Http\Controllers\Api\Tickets\TicketRemarkController;
 use Illuminate\Support\Facades\Broadcast;
 use Illuminate\Support\Facades\Route;
 

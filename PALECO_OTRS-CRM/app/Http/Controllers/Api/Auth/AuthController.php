@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers\Api\Auth;
 
+use App\Actions\Auth\AuthenticateMobileUser;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\MobileLoginRequest;
 use App\Http\Resources\Api\UserResource;
-use App\Services\Auth\MobileAuthService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -19,12 +19,12 @@ class AuthController extends Controller
     // --- MUTATING METHODS ---
 
     /*
-     * Processes the incoming mobile login attempt.
-     * Validates credentials via the MobileAuthService and issues a secure API token upon success.
+     * Processes the incoming mobile login attempt via AuthenticateMobileUser action.
+     * Validates credentials and issues a secure API token upon success.
      */
-    public function login(MobileLoginRequest $request, MobileAuthService $authService): JsonResponse
+    public function login(MobileLoginRequest $request, AuthenticateMobileUser $authenticateMobileUser): JsonResponse
     {
-        $result = $authService->processLogin(
+        $result = $authenticateMobileUser->execute(
             $request->validated(),
             $request->ip()
         );

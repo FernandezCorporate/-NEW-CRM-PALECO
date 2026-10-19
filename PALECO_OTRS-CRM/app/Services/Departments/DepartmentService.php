@@ -2,18 +2,34 @@
 
 namespace App\Services\Departments;
 
-use App\Enums\TicketStatus;
+use App\Actions\Departments\ArchiveDepartment;
+use App\Actions\Departments\CreateDepartment;
+use App\Actions\Departments\ForceDeleteDepartment;
+use App\Actions\Departments\RestoreDepartment;
+use App\Actions\Departments\UpdateDepartment;
 use App\Models\Department;
 use App\Models\User;
-use Carbon\Carbon;
 use Illuminate\Pagination\LengthAwarePaginator;
-use Illuminate\Support\Facades\DB;
 
 /**
- * Encapsulates backend business logic and database operations for system Departments.
+ * Service encapsulating query aggregators and details for Departments.
+ * Delegates mutations to dedicated Action classes:
+ * - CreateDepartment
+ * - UpdateDepartment
+ * - ArchiveDepartment
+ * - RestoreDepartment
+ * - ForceDeleteDepartment
  */
 class DepartmentService
 {
+    public function __construct(
+        protected CreateDepartment $createDepartmentAction,
+        protected UpdateDepartment $updateDepartmentAction,
+        protected ArchiveDepartment $archiveDepartmentAction,
+        protected RestoreDepartment $restoreDepartmentAction,
+        protected ForceDeleteDepartment $forceDeleteDepartmentAction
+    ) {}
+
     // --- QUERY METHODS ---
 
     /**
@@ -67,80 +83,27 @@ class DepartmentService
     // --- MUTATING METHODS ---
 
     /**
+     * Creates a new department record.
+     */
+    public function createDepartment(array $data): Department
+    {
+        return $this->createDepartmentAction->execute($data);
+    }
+
+    /**
      * Updates department information using optimistic locking concurrency control.
      */
     public function updateDepartment(Department $dept, array $data): array
     {
-        $originalUpdatedAt = $data['original_updated_at'];
-        unset($data['original_updated_at']);
-
-        return DB::transaction(function () use ($dept, $data, $originalUpdatedAt) {
-            $lockedDept = Department::where('id', $dept->id)->lockForUpdate()->first();
-
-            if (! $lockedDept->updated_at->eq(Carbon::parse($originalUpdatedAt))) {
-                return [
-                    'success' => false,
-                    'message' => 'Conflict: Another administrator modified this department while you were editing. Please refresh and try again.',
-                ];
-            }
-
-            $lockedDept->fill($data);
-
-            if ($lockedDept->isClean()) {
-                return ['success' => true, 'changed' => false];
-            }
-
-            $lockedDept->save();
-
-            return ['success' => true, 'changed' => true];
-        });
+        return $this->updateDepartmentAction->execute($dept, $data);
     }
-
-    // --- DESTRUCTIVE & STATE METHODS ---
 
     /**
      * Soft-deletes (archives) a department if no active teams, personnel, or active tickets are linked.
      */
     public function archiveDepartment(Department $dept): array
     {
-        return DB::transaction(function () use ($dept) {
-            $lockedDept = Department::where('id', $dept->id)
-                ->lockForUpdate()
-                ->first();
-
-            if (! $lockedDept || $lockedDept->trashed()) {
-                return [
-                    'success' => false,
-                    'message' => 'Conflict: This department has already been archived by an administrator.',
-                ];
-            }
-
-            $hasActiveTickets = $lockedDept->tickets()
-                ->whereIn('status', [
-                    TicketStatus::OPEN,
-                    TicketStatus::ASSIGNED,
-                    TicketStatus::IN_PROGRESS,
-                    TicketStatus::PENDING_ENDORSEMENT,
-                ])
-                ->exists();
-
-            $hasActiveTeams = $lockedDept->teams()->whereNull('deleted_at')->exists();
-            $hasActiveSupervisors = $lockedDept->supervisors()->where('is_active', true)->exists();
-
-            if ($hasActiveTickets || $hasActiveTeams || $hasActiveSupervisors) {
-                return [
-                    'success' => false,
-                    'message' => 'Cannot archive this department. It contains active teams, personnel, or active service tickets.',
-                ];
-            }
-
-            $lockedDept->delete();
-
-            return [
-                'success' => true,
-                'message' => 'Department archived successfully.',
-            ];
-        });
+        return $this->archiveDepartmentAction->execute($dept);
     }
 
     /**
@@ -148,35 +111,7 @@ class DepartmentService
      */
     public function restoreDepartment(int $id): array
     {
-        $dept = Department::withTrashed()->find($id);
-
-        if (! $dept) {
-            return [
-                'success' => false,
-                'message' => 'Department no longer exists. It may have been permanently deleted by another administrator.',
-            ];
-        }
-
-        if (! $dept->trashed()) {
-            return [
-                'success' => false,
-                'message' => 'Department is already active.',
-            ];
-        }
-
-        if (Department::where('dept_name', $dept->dept_name)->exists()) {
-            return [
-                'success' => false,
-                'message' => 'Cannot restore department. An active department with the same name already exists.',
-            ];
-        }
-
-        $dept->restore();
-
-        return [
-            'success' => true,
-            'message' => 'Department restored successfully.',
-        ];
+        return $this->restoreDepartmentAction->execute($id);
     }
 
     /**
@@ -184,34 +119,6 @@ class DepartmentService
      */
     public function permanentlyDeleteDepartment(int $id): array
     {
-        $dept = Department::withTrashed()->find($id);
-
-        if (! $dept) {
-            return [
-                'success' => true,
-                'message' => 'Department has already been permanently deleted.',
-            ];
-        }
-
-        if (! $dept->trashed()) {
-            return [
-                'success' => false,
-                'message' => 'Cannot permanently delete this department because it was recently restored.',
-            ];
-        }
-
-        if ($dept->tickets()->exists() || $dept->teams()->exists() || $dept->supervisors()->exists()) {
-            return [
-                'success' => false,
-                'message' => 'Cannot permanently delete this department. It contains historical data.',
-            ];
-        }
-
-        $dept->forceDelete();
-
-        return [
-            'success' => true,
-            'message' => 'Department permanently deleted.',
-        ];
+        return $this->forceDeleteDepartmentAction->execute($id);
     }
 }

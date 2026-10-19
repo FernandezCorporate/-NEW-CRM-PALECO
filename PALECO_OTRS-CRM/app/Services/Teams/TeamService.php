@@ -2,23 +2,41 @@
 
 namespace App\Services\Teams;
 
+use App\Actions\Teams\ArchiveTeam;
+use App\Actions\Teams\CreateTeam;
+use App\Actions\Teams\ForceDeleteTeam;
+use App\Actions\Teams\RestoreTeam;
+use App\Actions\Teams\UpdateTeam;
+use App\Actions\Teams\ValidateMemberShiftOverlaps;
 use App\Enums\TicketStatus;
 use App\Models\Department;
 use App\Models\Team;
 use App\Models\TeamRole;
 use App\Models\User;
-use Carbon\Carbon;
-use DateTimeInterface;
 use Illuminate\Pagination\LengthAwarePaginator;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 /**
- * Encapsulates backend business logic and roster syncing for operational Teams
- * across both the Administrative Web Portal and Mobile Supervisor API.
+ * Service encapsulating query aggregators and web/mobile roster data for Teams.
+ * Delegates mutations to dedicated Action classes:
+ * - CreateTeam
+ * - UpdateTeam
+ * - ArchiveTeam
+ * - RestoreTeam
+ * - ForceDeleteTeam
+ * - ValidateMemberShiftOverlaps
  */
 class TeamService
 {
+    public function __construct(
+        protected CreateTeam $createTeamAction,
+        protected UpdateTeam $updateTeamAction,
+        protected ArchiveTeam $archiveTeamAction,
+        protected RestoreTeam $restoreTeamAction,
+        protected ForceDeleteTeam $forceDeleteTeamAction,
+        protected ValidateMemberShiftOverlaps $validateShiftOverlapsAction
+    ) {}
+
     // --- WEB QUERY METHODS ---
 
     /**
@@ -163,36 +181,7 @@ class TeamService
      */
     public static function doShiftsOverlap(string $startA, string $endA, string $startB, string $endB): bool
     {
-        $toMinutes = function (string $time): int {
-            $parts = explode(':', $time);
-            return ((int) $parts[0]) * 60 + ((int) ($parts[1] ?? 0));
-        };
-
-        $getIntervals = function (int $start, int $end): array {
-            if ($start < $end) {
-                return [[$start, $end]];
-            }
-            // Cross-midnight / graveyard shift: [start, 1440) and [0, end)
-            return [[$start, 1440], [0, $end]];
-        };
-
-        $minA_start = $toMinutes($startA);
-        $minA_end = $toMinutes($endA);
-        $minB_start = $toMinutes($startB);
-        $minB_end = $toMinutes($endB);
-
-        $intervalsA = $getIntervals($minA_start, $minA_end);
-        $intervalsB = $getIntervals($minB_start, $minB_end);
-
-        foreach ($intervalsA as [$aStart, $aEnd]) {
-            foreach ($intervalsB as [$bStart, $bEnd]) {
-                if (max($aStart, $bStart) < min($aEnd, $bEnd)) {
-                    return true;
-                }
-            }
-        }
-
-        return false;
+        return ValidateMemberShiftOverlaps::doShiftsOverlap($startA, $endA, $startB, $endB);
     }
 
     /**
@@ -202,40 +191,7 @@ class TeamService
      */
     public function validateMemberShiftOverlaps(array $assignedMembers, string $shiftStart, string $shiftEnd, ?string $ignoreTeamId = null): void
     {
-        if (empty($assignedMembers)) {
-            return;
-        }
-
-        $userIds = collect($assignedMembers)->pluck('user_id')->unique()->filter()->values();
-
-        if ($userIds->isEmpty()) {
-            return;
-        }
-
-        $users = User::with(['teams' => function ($query) use ($ignoreTeamId) {
-            $query->whereNull('teams.deleted_at');
-            if ($ignoreTeamId) {
-                $query->where('teams.id', '!=', $ignoreTeamId);
-            }
-        }])->whereIn('id', $userIds)->get();
-
-        foreach ($users as $user) {
-            foreach ($user->teams as $otherTeam) {
-                $otherStart = $otherTeam->shift_start instanceof DateTimeInterface
-                    ? $otherTeam->shift_start->format('H:i')
-                    : substr((string) $otherTeam->shift_start, 0, 5);
-                $otherEnd = $otherTeam->shift_end instanceof DateTimeInterface
-                    ? $otherTeam->shift_end->format('H:i')
-                    : substr((string) $otherTeam->shift_end, 0, 5);
-
-                if (self::doShiftsOverlap($shiftStart, $shiftEnd, $otherStart, $otherEnd)) {
-                    $fullName = trim("{$user->first_name} {$user->last_name}");
-                    throw ValidationException::withMessages([
-                        'members' => "Member '{$fullName}' is already assigned to '{$otherTeam->team_name}' with an overlapping shift ({$otherStart} - {$otherEnd}).",
-                    ]);
-                }
-            }
-        }
+        $this->validateShiftOverlapsAction->execute($assignedMembers, $shiftStart, $shiftEnd, $ignoreTeamId);
     }
 
     /**
@@ -243,25 +199,7 @@ class TeamService
      */
     public function createTeam(array $teamDetails, array $assignedMembers): Team
     {
-        if (isset($teamDetails['shift_start'], $teamDetails['shift_end'])) {
-            $this->validateMemberShiftOverlaps($assignedMembers, $teamDetails['shift_start'], $teamDetails['shift_end']);
-        }
-
-        return DB::transaction(function () use ($teamDetails, $assignedMembers) {
-            $team = Team::create($teamDetails);
-
-            if (! empty($assignedMembers)) {
-                $formattedMembers = collect($assignedMembers)->mapWithKeys(function ($member) {
-                    return [$member['user_id'] => ['team_role_id' => $member['team_role_id']]];
-                });
-
-                $team->members()->sync($formattedMembers);
-            }
-
-            return $team->fresh(['members' => function ($query) {
-                $query->select('users.id', 'users.first_name', 'users.middle_name', 'users.last_name', 'users.name_ext');
-            }]);
-        });
+        return $this->createTeamAction->execute($teamDetails, $assignedMembers);
     }
 
     /**
@@ -269,126 +207,15 @@ class TeamService
      */
     public function updateTeam(Team $team, array $teamDetails, array $assignedMembers): array
     {
-        if ($team->trashed()) {
-            return [
-                'success' => false,
-                'message' => 'Conflict: This team has been archived by an administrator and can no longer be modified.',
-            ];
-        }
-
-        $originalUpdatedAt = $teamDetails['original_updated_at'];
-        unset($teamDetails['original_updated_at']);
-
-        return DB::transaction(function () use ($team, $teamDetails, $assignedMembers, $originalUpdatedAt) {
-            $lockedTeam = Team::where('id', $team->id)->lockForUpdate()->first();
-
-            // Safe Carbon-based optimistic concurrency timestamp check
-            if (! $lockedTeam->updated_at->eq(Carbon::parse($originalUpdatedAt))) {
-                return [
-                    'success' => false,
-                    'message' => 'Conflict: This team was modified by another user while you were editing.',
-                ];
-            }
-
-            $targetShiftStart = $teamDetails['shift_start'] ?? ($lockedTeam->shift_start instanceof DateTimeInterface ? $lockedTeam->shift_start->format('H:i') : substr((string) $lockedTeam->shift_start, 0, 5));
-            $targetShiftEnd = $teamDetails['shift_end'] ?? ($lockedTeam->shift_end instanceof DateTimeInterface ? $lockedTeam->shift_end->format('H:i') : substr((string) $lockedTeam->shift_end, 0, 5));
-
-            $this->validateMemberShiftOverlaps($assignedMembers, $targetShiftStart, $targetShiftEnd, $lockedTeam->id);
-
-            // Compare roster states to detect membership changes
-            $oldRoster = $lockedTeam->members()->get()->mapWithKeys(function ($m) {
-                return [$m->id => (int) $m->pivot->team_role_id];
-            })->toArray();
-
-            $newRoster = collect($assignedMembers)->mapWithKeys(function ($member) {
-                return [$member['user_id'] => (int) $member['team_role_id']];
-            })->toArray();
-
-            ksort($oldRoster);
-            ksort($newRoster);
-
-            $membersChanged = ($oldRoster !== $newRoster);
-
-            $lockedTeam->fill($teamDetails);
-            $isTeamDirty = $lockedTeam->isDirty();
-
-            if ($isTeamDirty) {
-                $lockedTeam->save();
-            } elseif ($membersChanged) {
-                $lockedTeam->touch();
-            }
-
-            if ($membersChanged) {
-                $formattedMembers = collect($assignedMembers)->mapWithKeys(function ($member) {
-                    return [$member['user_id'] => ['team_role_id' => $member['team_role_id']]];
-                });
-
-                $lockedTeam->members()->sync($formattedMembers);
-
-                activity()
-                    ->useLog('Teams')
-                    ->performedOn($lockedTeam)
-                    ->event('roster_updated')
-                    ->withProperties([
-                        'old' => ['member_ids' => array_keys($oldRoster)],
-                        'attributes' => ['member_ids' => array_keys($newRoster)],
-                    ])
-                    ->log("{$lockedTeam->team_name} roster has been modified");
-            }
-
-            $freshTeam = $lockedTeam->fresh(['members' => function ($query) {
-                $query->select('users.id', 'users.first_name', 'users.middle_name', 'users.last_name', 'users.name_ext');
-            }]);
-
-            return [
-                'success' => true,
-                'changed' => $isTeamDirty || $membersChanged,
-                'team' => $freshTeam,
-            ];
-        });
+        return $this->updateTeamAction->execute($team, $teamDetails, $assignedMembers);
     }
-
-    // --- DESTRUCTIVE & STATE METHODS ---
 
     /**
      * Soft deletes (archives) an operational team if no active service tickets are assigned.
      */
     public function archiveTeam(Team $team): array
     {
-        return DB::transaction(function () use ($team) {
-            $lockedTeam = Team::where('id', $team->id)
-                ->lockForUpdate()
-                ->first();
-
-            if (! $lockedTeam || $lockedTeam->trashed()) {
-                return [
-                    'success' => false,
-                    'message' => 'Conflict: This team has already been archived by an administrator.',
-                ];
-            }
-
-            $hasActiveTickets = $lockedTeam->ticket()
-                ->whereIn('status', [
-                    TicketStatus::ASSIGNED,
-                    TicketStatus::IN_PROGRESS,
-                ])
-                ->exists();
-
-            if ($hasActiveTickets) {
-                return [
-                    'success' => false,
-                    'message' => 'Cannot archive team. They currently have active assigned service tickets.',
-                ];
-            }
-
-            $lockedTeam->delete();
-
-            return [
-                'success' => true,
-                'message' => 'Team archived successfully.',
-                'team' => $lockedTeam,
-            ];
-        });
+        return $this->archiveTeamAction->execute($team);
     }
 
     /**
@@ -396,29 +223,7 @@ class TeamService
      */
     public function restoreTeam(Team $team): array
     {
-        if (! $team->trashed()) {
-            return [
-                'success' => false,
-                'message' => 'This team is already active and cannot be restored.',
-            ];
-        }
-
-        if (Team::where('team_name', $team->team_name)
-            ->where('department_id', $team->department_id)
-            ->exists()) {
-            return [
-                'success' => false,
-                'message' => 'Cannot restore team. A team with the same name already exists within this department.',
-            ];
-        }
-
-        $team->restore();
-
-        return [
-            'success' => true,
-            'message' => 'Team restored successfully.',
-            'team' => $team,
-        ];
+        return $this->restoreTeamAction->execute($team);
     }
 
     /**
@@ -426,25 +231,6 @@ class TeamService
      */
     public function forceDeleteTeam(Team $team): array
     {
-        if (! $team->trashed()) {
-            return [
-                'success' => false,
-                'message' => 'Cannot permanently delete an active team. Please archive it first.',
-            ];
-        }
-
-        if ($team->ticket()->exists()) {
-            return [
-                'success' => false,
-                'message' => "Cannot permanently delete {$team->team_name} because it is currently assigned to existing service tickets.",
-            ];
-        }
-
-        $team->forceDelete();
-
-        return [
-            'success' => true,
-            'message' => 'Team permanently deleted successfully.',
-        ];
+        return $this->forceDeleteTeamAction->execute($team);
     }
 }

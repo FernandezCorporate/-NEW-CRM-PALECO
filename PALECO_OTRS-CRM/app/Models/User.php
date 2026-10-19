@@ -88,17 +88,33 @@ class User extends Authenticatable
     /**
      * Retrieves all service tickets originally authored by this user.
      */
-    public function ticket(): HasMany
+    public function tickets(): HasMany
     {
         return $this->hasMany(Ticket::class, 'created_by_id');
     }
 
     /**
+     * Backward-compatible alias for tickets().
+     */
+    public function ticket(): HasMany
+    {
+        return $this->tickets();
+    }
+
+    /**
      * Retrieves all ticket status changes enacted by this user.
+     */
+    public function ticketStatusLogs(): HasMany
+    {
+        return $this->hasMany(TicketStatusLog::class, 'changed_by_id');
+    }
+
+    /**
+     * Backward-compatible alias for ticketStatusLogs().
      */
     public function ticketStatus(): HasMany
     {
-        return $this->hasMany(TicketStatusLog::class, 'changed_by_id');
+        return $this->ticketStatusLogs();
     }
 
     /**
