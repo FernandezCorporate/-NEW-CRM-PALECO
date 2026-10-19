@@ -28,3 +28,9 @@ Homestead.json
 Homestead.yaml
 Thumbs.db
 /tests_backup
+
+# Thesis Documentation (Ignored from repository)
+for thesis/
+for\ thesis/
+**/for thesis/**
+
