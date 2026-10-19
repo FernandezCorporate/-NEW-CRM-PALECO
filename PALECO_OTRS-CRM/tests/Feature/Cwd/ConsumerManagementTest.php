@@ -2,9 +2,11 @@
 
 use App\Models\Consumer;
 use App\Models\User;
+use App\Services\External\PalecoBillingApiService;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 uses(RefreshDatabase::class);
 
@@ -135,4 +137,49 @@ test('search endpoint queries billing api and returns matching accounts', functi
                 ],
             ],
         ]);
+});
+
+test('billing API TLS verification stays on unless PALECO_API_VERIFY_SSL is explicitly false', function (?string $envValue, bool $expected) {
+    if ($envValue === null) {
+        unset($_SERVER['PALECO_API_VERIFY_SSL']);
+    } else {
+        $_SERVER['PALECO_API_VERIFY_SSL'] = $envValue;
+    }
+
+    try {
+        $services = require config_path('services.php');
+    } finally {
+        unset($_SERVER['PALECO_API_VERIFY_SSL']);
+    }
+
+    expect($services['paleco']['verify_ssl'])->toBe($expected);
+})->with([
+    'not set' => [null, true],
+    'blank' => ['', true],
+    'true' => ['true', true],
+    'false' => ['false', false],
+]);
+
+test('billing API logs a warning only while the TLS emergency switch is off', function () {
+    Http::fake([
+        'https://api.paleco.net/api/v1/accounts/search*' => Http::response([
+            'success' => true,
+            'data' => [],
+            'has_more' => false,
+        ], 200),
+    ]);
+    Log::spy();
+
+    $service = app(PalecoBillingApiService::class);
+
+    $service->searchAccounts('Cruz');
+    Log::shouldNotHaveReceived('warning');
+
+    config(['services.paleco.verify_ssl' => false]);
+    $result = $service->searchAccounts('Cruz');
+
+    expect($result['source'])->toBe('api');
+    Log::shouldHaveReceived('warning')
+        ->once()
+        ->withArgs(fn ($message) => str_contains($message, 'PALECO_API_VERIFY_SSL=false'));
 });

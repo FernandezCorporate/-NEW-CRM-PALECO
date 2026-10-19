@@ -37,6 +37,8 @@ return [
 
     'paleco' => [
         'key' => env('PALECO_API_KEY'),
+        // Only an explicit PALECO_API_VERIFY_SSL=false disables TLS verification; unset or blank keeps it on
+        'verify_ssl' => env('PALECO_API_VERIFY_SSL') !== false,
     ],
 
 ];

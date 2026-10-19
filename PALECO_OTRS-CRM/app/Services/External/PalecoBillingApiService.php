@@ -4,7 +4,9 @@ namespace App\Services\External;
 
 use App\Models\Consumer;
 use Exception;
+use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 
 /**
@@ -60,13 +62,7 @@ class PalecoBillingApiService
         }
 
         try {
-            $response = Http::withoutVerifying()
-                ->timeout(15)
-                ->withHeaders([
-                    'x-api-key' => config('services.paleco.key'),
-                    'Accept' => '*/*',
-                ])
-                ->get('https://api.paleco.net/api/v1/accounts/search', $query);
+            $response = $this->client()->get('https://api.paleco.net/api/v1/accounts/search', $query);
 
             if ($response->successful() && $response->json('success')) {
                 $rawAccounts = $response->json('data') ?? [];
@@ -208,13 +204,7 @@ class PalecoBillingApiService
     private function fetchFromApi(string $accountCode): array
     {
         try {
-            $response = Http::withoutVerifying()
-                ->timeout(15)
-                ->withHeaders([
-                    'x-api-key' => config('services.paleco.key'),
-                    'Accept' => '*/*',
-                ])
-                ->get("https://api.paleco.net/api/v1/account/{$accountCode}");
+            $response = $this->client()->get("https://api.paleco.net/api/v1/account/{$accountCode}");
 
             if ($response->failed() || ! $response->json('success')) {
                 $message = $response->json('message') ?? 'The provided account code could not be found in the billing system.';
@@ -232,6 +222,26 @@ class PalecoBillingApiService
                 'account_code' => ['Unable to connect to the external billing database.'],
             ]);
         }
+    }
+
+    /**
+     * Builds the shared HTTP client for the PALECO billing API.
+     * TLS certificate verification is enabled unless PALECO_API_VERIFY_SSL=false (emergency switch).
+     */
+    private function client(): PendingRequest
+    {
+        $verifySsl = (bool) config('services.paleco.verify_ssl', true);
+
+        if (! $verifySsl) {
+            Log::warning('PALECO billing API TLS certificate verification is disabled (PALECO_API_VERIFY_SSL=false).');
+        }
+
+        return Http::withOptions(['verify' => $verifySsl])
+            ->timeout(15)
+            ->withHeaders([
+                'x-api-key' => config('services.paleco.key'),
+                'Accept' => '*/*',
+            ]);
     }
 }
 
