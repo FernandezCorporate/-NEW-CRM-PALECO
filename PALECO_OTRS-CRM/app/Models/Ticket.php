@@ -48,6 +48,10 @@ class Ticket extends Model
         'cancelled_at',
     ];
 
+    protected array $activityLogRedactedAttributes = [
+        'consumer_contact',
+    ];
+
     protected $fillable = [
         'ticket_number',
         'parent_ticket_id',

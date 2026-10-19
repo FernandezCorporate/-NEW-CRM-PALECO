@@ -36,6 +36,10 @@ class User extends Authenticatable
         'email', 'contact', 'role_id', 'department_id', 'is_active',
     ];
 
+    protected array $activityLogRedactedAttributes = [
+        'first_name', 'middle_name', 'last_name', 'name_ext', 'email', 'contact',
+    ];
+
     // --- CASTS ---
 
     /**

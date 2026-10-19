@@ -52,7 +52,6 @@ class ResetUserPassword
                     'user_agent' => request()->userAgent() ?? 'unknown',
                     'target_user_id' => $user->id,
                     'username' => $user->username,
-                    'full_name' => $user->full_name,
                     'role' => $user->role?->role_name,
                     'action' => 'admin_password_reset',
                 ])

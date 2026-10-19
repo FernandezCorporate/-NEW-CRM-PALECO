@@ -128,6 +128,43 @@ test('mobile user can retrieve timeline of remarks for a ticket', function () {
     expect($response->json('data.0.body'))->toBe('First milestone update.');
 });
 
+test('supervisor in different department cannot read remark timeline via mobile api', function () {
+    TicketRemark::create([
+        'ticket_id' => $this->ticket->id,
+        'user_id' => $this->cwdOfficer->id,
+        'body' => 'Department-scoped public update.',
+        'is_internal' => false,
+    ]);
+
+    $otherDept = Department::where('id', '!=', $this->dept->id)->first() ?? Department::factory()->create();
+    $this->supervisor->update(['department_id' => $otherDept->id]);
+
+    Sanctum::actingAs($this->supervisor, ['*']);
+
+    $response = $this->getJson("/api/v1/tickets/{$this->ticket->id}/remarks");
+
+    $response->assertNotFound();
+    $response->assertJsonMissing(['body' => 'Department-scoped public update.']);
+});
+
+test('field personnel not on assigned team cannot read remark timeline via mobile api', function () {
+    TicketRemark::create([
+        'ticket_id' => $this->ticket->id,
+        'user_id' => $this->cwdOfficer->id,
+        'body' => 'Team-scoped public update.',
+        'is_internal' => false,
+    ]);
+
+    $this->team->members()->detach($this->personnel->id);
+
+    Sanctum::actingAs($this->personnel, ['*']);
+
+    $response = $this->getJson("/api/v1/tickets/{$this->ticket->id}/remarks");
+
+    $response->assertNotFound();
+    $response->assertJsonMissing(['body' => 'Team-scoped public update.']);
+});
+
 test('empty remark body is rejected by validation', function () {
     Sanctum::actingAs($this->supervisor, ['*']);
 

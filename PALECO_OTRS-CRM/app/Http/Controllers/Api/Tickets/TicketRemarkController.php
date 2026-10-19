@@ -27,10 +27,13 @@ class TicketRemarkController extends Controller
 
     /*
      * Retrieves the filtered timeline of remarks for a ticket.
+     * Remark visibility follows ticket visibility (supervisor: own department, field personnel: own team).
      */
     public function index(Request $request, Ticket $ticket): JsonResponse
     {
-        $remarks = $this->remarkService->getTimeline($ticket, in_array($request->user()->role->slug_identifier, ['admin', 'cwd_officer']));
+        Gate::authorize('view', $ticket);
+
+        $remarks =$this->remarkService->getTimeline($ticket, in_array($request->user()->role->slug_identifier, ['admin', 'cwd_officer']));
 
         return response()->json([
             'success' => true,

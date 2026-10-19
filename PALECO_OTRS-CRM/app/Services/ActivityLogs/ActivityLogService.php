@@ -388,7 +388,8 @@ class ActivityLogService
                     'new_raw' => $newVal,
                     'old_display' => $this->formatDiffValue($oldVal),
                     'new_display' => $this->formatDiffValue($newVal),
-                    'is_changed' => $oldVal !== $newVal,
+                    // Update diffs only contain dirty attributes, so redacted pairs still count as changed
+                    'is_changed' => $diffType === 'updated' || $oldVal !== $newVal,
                 ];
             }
         } else {

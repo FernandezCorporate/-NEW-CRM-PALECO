@@ -2,13 +2,15 @@
 
 namespace App\Concerns;
 
+use Spatie\Activitylog\Contracts\Activity;
 use Spatie\Activitylog\Models\Concerns\LogsActivity;
 use Spatie\Activitylog\Support\LogOptions;
 
 /**
  * Trait providing standardized Spatie Activitylog configuration across models.
  * Automatically handles dirty-checking, event verb mapping, soft-delete distinction,
- * and descriptive log messaging while offering model-specific extension hooks.
+ * descriptive log messaging, and redaction of personal information from audit diffs
+ * while offering model-specific extension hooks.
  */
 trait Auditable
 {
@@ -71,6 +73,48 @@ trait Auditable
         return property_exists($this, 'activityLogAttributes')
             ? $this->activityLogAttributes
             : $this->fillable;
+    }
+
+    /**
+     * Returns the personal-information attributes whose values must never be stored in activity logs.
+     */
+    public function getActivityLogRedactedAttributes(): array
+    {
+        return property_exists($this, 'activityLogRedactedAttributes')
+            ? $this->activityLogRedactedAttributes
+            : [];
+    }
+
+    // --- PERSONAL INFORMATION REDACTION ---
+
+    /**
+     * Spatie hook invoked just before an activity entry is persisted for this model.
+     * Masks redacted attribute values so the audit trail records that a field changed, never its value.
+     */
+    public function beforeActivityLogged(Activity $activity, string $eventName): void
+    {
+        if ($activity->attribute_changes) {
+            $activity->attribute_changes = collect(
+                $this->redactActivityChanges($activity->attribute_changes->toArray())
+            );
+        }
+    }
+
+    /**
+     * Replaces redacted attribute values within an activity change set ('attributes' and 'old').
+     * Null values are kept so the log still shows when a field was added or cleared.
+     */
+    protected function redactActivityChanges(array $changes): array
+    {
+        foreach ($this->getActivityLogRedactedAttributes() as $attribute) {
+            foreach (['attributes', 'old'] as $section) {
+                if (isset($changes[$section][$attribute])) {
+                    $changes[$section][$attribute] = '[redacted]';
+                }
+            }
+        }
+
+        return $changes;
     }
 
     /**
