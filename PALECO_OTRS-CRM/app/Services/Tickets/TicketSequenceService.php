@@ -13,14 +13,18 @@ class TicketSequenceService
      * Generate a unique sequential ticket tracking number for the current date.
      * Restricts search strictly to root tickets (parent_ticket_id is null) to prevent
      * child ticket numbers (e.g. TKT-261007-005-1) from contaminating sequence arithmetic.
+     * Orders by length first so sequences past 999 compare numerically (1000 sorts above 999),
+     * and includes soft-deleted tickets because their numbers still occupy the unique index.
      */
     public function generateSequentialNumber(): string
     {
         $dateCode = now()->format('ymd');
 
-        $latestMatch = Ticket::where('ticket_number', 'like', "TKT-{$dateCode}-%")
+        $latestMatch = Ticket::withTrashed()
+            ->where('ticket_number', 'like', "TKT-{$dateCode}-%")
             ->whereNull('parent_ticket_id')
             ->lockForUpdate()
+            ->orderByRaw('LENGTH(ticket_number) DESC')
             ->orderBy('ticket_number', 'desc')
             ->first();
 
@@ -42,7 +46,8 @@ class TicketSequenceService
     {
         $baseNumber = $parentTicket->ticket_number;
 
-        $existingChildren = Ticket::where('ticket_number', 'like', "{$baseNumber}-%")
+        $existingChildren = Ticket::withTrashed()
+            ->where('ticket_number', 'like', "{$baseNumber}-%")
             ->lockForUpdate()
             ->pluck('ticket_number');
 

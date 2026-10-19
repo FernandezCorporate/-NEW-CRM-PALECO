@@ -7,6 +7,7 @@ use App\Models\Department;
 use App\Models\Team;
 use App\Models\TeamRole;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Pagination\LengthAwarePaginator;
 
 /**
@@ -69,12 +70,7 @@ class TeamService
     {
         $depts = Department::orderBy('dept_name')->pluck('dept_name', 'id');
 
-        $personnel = User::query()
-            ->whereHas('role', fn ($q) => $q->where('slug_identifier', 'field_personnel'))
-            ->where('is_active', true)
-            ->orderBy('first_name', 'asc')
-            ->select(['id', 'first_name', 'middle_name', 'last_name', 'name_ext'])
-            ->get();
+        $personnel = $this->activeFieldPersonnel();
 
         $memberRoles = TeamRole::orderBy('role_name')->get();
 
@@ -138,12 +134,7 @@ class TeamService
      */
     public function getFormOptions(): array
     {
-        $personnel = User::query()
-            ->whereHas('role', fn ($q) => $q->where('slug_identifier', 'field_personnel'))
-            ->where('is_active', true)
-            ->orderBy('first_name', 'asc')
-            ->select(['id', 'first_name', 'middle_name', 'last_name', 'name_ext'])
-            ->get();
+        $personnel = $this->activeFieldPersonnel();
 
         $memberRoles = TeamRole::query()
             ->orderBy('role_name')
@@ -151,5 +142,22 @@ class TeamService
             ->get();
 
         return compact('personnel', 'memberRoles');
+    }
+
+    // --- PRIVATE HELPER METHODS ---
+
+    /**
+     * Retrieves active field personnel sorted alphabetically by first then last name.
+     * Names are encrypted at rest, so sorting happens in memory instead of SQL ORDER BY.
+     */
+    private function activeFieldPersonnel(): Collection
+    {
+        return User::query()
+            ->whereHas('role', fn ($q) => $q->where('slug_identifier', 'field_personnel'))
+            ->where('is_active', true)
+            ->select(['id', 'first_name', 'middle_name', 'last_name', 'name_ext'])
+            ->get()
+            ->sortBy(fn (User $user) => mb_strtolower($user->first_name.' '.$user->last_name))
+            ->values();
     }
 }

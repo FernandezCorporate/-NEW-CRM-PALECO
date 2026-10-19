@@ -230,3 +230,95 @@ test('rejecting endorsement requires rejection_reason note', function () {
     $response->assertSessionHasErrors(['rejection_reason']);
 });
 
+test('endorsement queue can be searched by the creator name despite encryption', function () {
+    $endorsement = TicketEndorsement::factory()->create([
+        'ticket_id' => $this->ticket->id,
+        'created_by_id' => $this->supervisor->id,
+        'suggested_department_id' => $this->dept2->id,
+        'status' => EndorsementStatus::PENDING,
+    ]);
+
+    // Seeded supervisor: first name "mycka", last name "supervisor"
+    foreach (['Mycka', 'supervisor', 'mycka supervisor'] as $term) {
+        $found = $this->actingAs($this->cwdOfficer)
+            ->get(route('cwd.endorsements', ['search' => $term]))
+            ->assertOk()
+            ->viewData('endorsements');
+
+        expect($found->pluck('id')->all())->toContain($endorsement->id);
+    }
+
+    $none = $this->actingAs($this->cwdOfficer)
+        ->get(route('cwd.endorsements', ['search' => 'nonexistent-person']))
+        ->viewData('endorsements');
+
+    expect($none->total())->toBe(0);
+});
+
+test('supervisor cannot endorse or load endorsement options for a child ticket', function () {
+    $child = Ticket::factory()->inProgress($this->team)->create([
+        'parent_ticket_id' => $this->ticket->id,
+        'ticket_number' => $this->ticket->ticket_number.'-1',
+        'department_id' => $this->dept1->id,
+        'category_id' => $this->category->id,
+    ]);
+
+    Sanctum::actingAs($this->supervisor, ['*']);
+
+    $this->getJson("/api/v1/tickets/{$child->id}/endorse-options")->assertForbidden();
+
+    $response = $this->postJson("/api/v1/tickets/{$child->id}/endorse", [
+        'suggested_department_id' => $this->dept2->id,
+        'reason' => 'Attempting to re-route a child ticket.',
+    ]);
+
+    $response->assertForbidden();
+    $response->assertJsonPath('message', 'Child tickets cannot be endorsed. Ask the CWD officer to create a new child ticket from the origin ticket instead.');
+
+    expect($child->fresh()->status)->toBe(TicketStatus::IN_PROGRESS)
+        ->and(TicketEndorsement::where('ticket_id', $child->id)->exists())->toBeFalse();
+});
+
+test('pending endorsement on a child ticket cannot be approved but can be rejected', function () {
+    $child = Ticket::factory()->create([
+        'parent_ticket_id' => $this->ticket->id,
+        'ticket_number' => $this->ticket->ticket_number.'-1',
+        'department_id' => $this->dept1->id,
+        'category_id' => $this->category->id,
+        'status' => TicketStatus::PENDING_ENDORSEMENT,
+    ]);
+
+    // Legacy state: endorsement created on a child ticket before the rule existed
+    $endorsement = TicketEndorsement::factory()->create([
+        'ticket_id' => $child->id,
+        'created_by_id' => $this->supervisor->id,
+        'suggested_department_id' => $this->dept2->id,
+        'status' => EndorsementStatus::PENDING,
+        'pre_endorsement_status' => TicketStatus::OPEN,
+    ]);
+
+    $approve = $this->actingAs($this->cwdOfficer)
+        ->from(route('cwd.endorsements.show', ['endorsement' => $endorsement]))
+        ->post(route('cwd.endorsements.decide', ['endorsement' => $endorsement]), [
+            'status' => 'approved',
+            'department_id' => $this->dept2->id,
+        ]);
+
+    $approve->assertRedirect(route('cwd.endorsements.show', ['endorsement' => $endorsement]));
+    $approve->assertSessionHas('error');
+
+    expect($endorsement->fresh()->status)->toBe(EndorsementStatus::PENDING)
+        ->and($child->fresh()->status)->toBe(TicketStatus::PENDING_ENDORSEMENT)
+        ->and(Ticket::where('parent_ticket_id', $child->id)->exists())->toBeFalse();
+
+    $reject = $this->actingAs($this->cwdOfficer)
+        ->post(route('cwd.endorsements.decide', ['endorsement' => $endorsement]), [
+            'status' => 'rejected',
+            'rejection_reason' => 'Child tickets cannot be re-routed; CWD will create a new child ticket.',
+        ]);
+
+    $reject->assertRedirect(route('cwd.endorsements'));
+    expect($endorsement->fresh()->status)->toBe(EndorsementStatus::REJECTED)
+        ->and($child->fresh()->status)->toBe(TicketStatus::OPEN);
+});
+

@@ -14,6 +14,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use Laravel\Sanctum\HasApiTokens;
 
@@ -223,6 +224,47 @@ class User extends Authenticatable
             'last_nameDESC' => $query->orderBy('last_name', 'desc'),
             default => $query->latest(),
         };
+    }
+
+    // --- ENCRYPTED IDENTITY SEARCH ---
+
+    /**
+     * Determines whether every word of the search term appears in the user's identity fields.
+     * Names, email, and contact are encrypted at rest, so matching runs on decrypted values in memory.
+     */
+    public function matchesSearchTerm(string $term): bool
+    {
+        $words = array_filter(explode(' ', mb_strtolower(trim($term))));
+
+        $searchableText = mb_strtolower(implode(' ', [
+            $this->username ?? '',
+            $this->first_name ?? '',
+            $this->middle_name ?? '',
+            $this->last_name ?? '',
+            $this->name_ext ?? '',
+            $this->email ?? '',
+            $this->contact ?? '',
+        ]));
+
+        foreach ($words as $word) {
+            if (! str_contains($searchableText, $word)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Resolves the IDs of users whose decrypted identity fields match the search term.
+     * Lets other models search by person name despite encryption (the staff table is small).
+     */
+    public static function idsMatchingSearch(string $term): Collection
+    {
+        return static::query()
+            ->get(['id', 'username', 'first_name', 'middle_name', 'last_name', 'name_ext', 'email', 'contact'])
+            ->filter(fn (User $user) => $user->matchesSearchTerm($term))
+            ->pluck('id');
     }
 
     // --- ACTIVITY LOG CONFIGURATION ---

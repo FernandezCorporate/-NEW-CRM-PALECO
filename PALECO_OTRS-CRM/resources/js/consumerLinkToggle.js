@@ -6,6 +6,18 @@
  * - Exact Account Code verification and separate multi-criteria Last Name / Meter Serial search.
  * - Puerto Princesa scope with overflow warning handling and status normalization.
  */
+
+/**
+ * Escapes HTML special characters so billing API, database, and server message values
+ * render as plain text inside HTML templates instead of executable markup.
+ */
+const escapeHtml = (value) => String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+
 const initConsumerLinkToggle = () => {
     const filterSelect = document.getElementById('consumer_search_filter');
     const linkConsumerInput = document.getElementById('link_consumer');
@@ -268,7 +280,7 @@ const initConsumerLinkToggle = () => {
                         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                         <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
                     </svg>
-                    <span>${message}</span>
+                    <span>${escapeHtml(message)}</span>
                 </div>
             `;
         } else if (type === 'error') {
@@ -276,7 +288,7 @@ const initConsumerLinkToggle = () => {
             accountCodeFeedback.innerHTML = `
                 <div class="flex items-center gap-2">
                     <svg class="w-4 h-4 text-rose-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                    <span>${message}</span>
+                    <span>${escapeHtml(message)}</span>
                 </div>
             `;
         } else {
@@ -284,7 +296,7 @@ const initConsumerLinkToggle = () => {
             accountCodeFeedback.innerHTML = `
                 <div class="flex items-center gap-2">
                     <svg class="w-4 h-4 text-emerald-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                    <span>${message}</span>
+                    <span>${escapeHtml(message)}</span>
                 </div>
             `;
         }
@@ -303,7 +315,7 @@ const initConsumerLinkToggle = () => {
                         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                         <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
                     </svg>
-                    <span>${message}</span>
+                    <span>${escapeHtml(message)}</span>
                 </div>
             `;
         } else if (type === 'error') {
@@ -311,7 +323,7 @@ const initConsumerLinkToggle = () => {
             searchFeedback.innerHTML = `
                 <div class="flex items-center gap-2">
                     <svg class="w-4 h-4 shrink-0 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                    <span>${message}</span>
+                    <span>${escapeHtml(message)}</span>
                 </div>
             `;
         } else {
@@ -319,7 +331,7 @@ const initConsumerLinkToggle = () => {
             searchFeedback.innerHTML = `
                 <div class="flex items-center gap-2">
                     <svg class="w-4 h-4 shrink-0 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                    <span>${message}</span>
+                    <span>${escapeHtml(message)}</span>
                 </div>
             `;
         }
@@ -352,16 +364,16 @@ const initConsumerLinkToggle = () => {
                 <div class="space-y-1 min-w-0">
                     <div class="flex items-center gap-2">
                         <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border ${badgeClasses}">
-                            ${account.status || 'Active'}
+                            ${escapeHtml(account.status || 'Active')}
                         </span>
-                        <h5 class="text-xs font-bold text-slate-900 group-hover:text-paleco-800 truncate">${account.name}</h5>
+                        <h5 class="text-xs font-bold text-slate-900 group-hover:text-paleco-800 truncate">${escapeHtml(account.name)}</h5>
                     </div>
                     <div class="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px] text-slate-500 font-mono">
-                        <span>Code: <strong class="text-slate-800">${account.acct_code}</strong></span>
-                        <span>Acct #: <strong class="text-slate-800">${account.acct_no || 'N/A'}</strong></span>
-                        <span>Meter: <strong class="text-slate-800">${account.meter_serial || 'N/A'}</strong></span>
+                        <span>Code: <strong class="text-slate-800">${escapeHtml(account.acct_code)}</strong></span>
+                        <span>Acct #: <strong class="text-slate-800">${escapeHtml(account.acct_no || 'N/A')}</strong></span>
+                        <span>Meter: <strong class="text-slate-800">${escapeHtml(account.meter_serial || 'N/A')}</strong></span>
                     </div>
-                    <p class="text-[11px] text-slate-500 truncate">${account.address || ''}</p>
+                    <p class="text-[11px] text-slate-500 truncate">${escapeHtml(account.address || '')}</p>
                 </div>
                 <div class="shrink-0 self-center">
                     <span class="btn btn-secondary text-xs px-2.5 py-1.5 group-hover:border-paleco-600 group-hover:text-paleco-700 inline-flex items-center gap-1">

@@ -50,26 +50,7 @@ class UserService
             $usersCollection = $query->get();
 
             if ($searchTerm !== '') {
-                $words = array_filter(explode(' ', strtolower($searchTerm)));
-                $usersCollection = $usersCollection->filter(function (User $user) use ($words) {
-                    $searchableText = strtolower(implode(' ', [
-                        $user->username ?? '',
-                        $user->first_name ?? '',
-                        $user->middle_name ?? '',
-                        $user->last_name ?? '',
-                        $user->name_ext ?? '',
-                        $user->email ?? '',
-                        $user->contact ?? '',
-                    ]));
-
-                    foreach ($words as $word) {
-                        if (! str_contains($searchableText, $word)) {
-                            return false;
-                        }
-                    }
-
-                    return true;
-                });
+                $usersCollection = $usersCollection->filter(fn (User $user) => $user->matchesSearchTerm($searchTerm));
             }
 
             $usersCollection = match ($sort) {

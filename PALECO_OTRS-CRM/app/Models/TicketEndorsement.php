@@ -81,6 +81,7 @@ class TicketEndorsement extends Model
 
     /**
      * Search endorsements by ticket ID, ticket number, creator name, or target department.
+     * Creator names are encrypted, so matching creators are resolved in memory first.
      */
     public function scopeSearch(Builder $query, ?string $search): Builder
     {
@@ -88,15 +89,14 @@ class TicketEndorsement extends Model
             return $query;
         }
 
-        return $query->where(function ($query) use ($search) {
+        $creatorIds = User::idsMatchingSearch($search);
+
+        return $query->where(function ($query) use ($search, $creatorIds) {
             $query->where('ticket_id', 'like', "%{$search}%")
                 ->orWhereHas('ticket', function ($ticketQuery) use ($search) {
                     $ticketQuery->where('ticket_number', 'like', "%{$search}%");
                 })
-                ->orWhereHas('creator', function ($creatorQuery) use ($search) {
-                    $creatorQuery->where('first_name', 'like', "%{$search}%")
-                        ->orWhere('last_name', 'like', "%{$search}%");
-                })
+                ->orWhereIn('created_by_id', $creatorIds)
                 ->orWhereHas('suggestedDepartment', function ($deptQuery) use ($search) {
                     $deptQuery->where('dept_name', 'like', "%{$search}%");
                 });

@@ -238,6 +238,10 @@ class TicketPolicy
             return Response::deny('Cancelled tickets cannot be endorsed.');
         }
 
+        if (! is_null($ticket->parent_ticket_id)) {
+            return Response::deny('Child tickets cannot be endorsed. Ask the CWD officer to create a new child ticket from the origin ticket instead.');
+        }
+
         return $user->department_id === $ticket->department_id
             ? Response::allow()
             : Response::denyAsNotFound('The requested ticket was not found.');

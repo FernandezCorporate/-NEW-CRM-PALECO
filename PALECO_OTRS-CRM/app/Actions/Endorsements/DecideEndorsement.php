@@ -49,6 +49,11 @@ class DecideEndorsement
 
                     $isApproved = $validatedData['status'] === EndorsementStatus::APPROVED->value;
 
+                    // Child tickets can no longer be endorsed; requests left pending from before this rule may only be rejected
+                    if ($isApproved && $lockedEndorsement->ticket()->whereNotNull('parent_ticket_id')->exists()) {
+                        return ['success' => false, 'message' => 'Endorsements on child tickets can no longer be approved. Reject this request, then create a new child ticket from the origin ticket if rerouting is still needed.'];
+                    }
+
                     $lockedEndorsement->update([
                         'status' => $validatedData['status'],
                         'reviewed_by_id' => Auth::id(),
@@ -97,7 +102,6 @@ class DecideEndorsement
                             'barangay' => $parentTicket->barangay,
                             'landmark' => $parentTicket->landmark,
 
-                            'subject' => 'Endorsed: '.$parentTicket->subject,
                             'status' => TicketStatus::OPEN,
                             'created_by_id' => Auth::id(),
                             'reported_at' => now(),

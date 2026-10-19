@@ -289,6 +289,31 @@ test('mobile supervisor can retrieve team options and list department teams', fu
         ->assertJson(['success' => true]);
 });
 
+test('personnel options are sorted alphabetically despite encrypted names', function () {
+    $department = Department::first();
+    $supervisor = User::factory()->supervisor()->create(['department_id' => $department->id]);
+
+    User::factory()->fieldPersonnel()->create(['first_name' => 'zaldy', 'last_name' => 'reyes']);
+    User::factory()->fieldPersonnel()->create(['first_name' => 'andres', 'last_name' => 'santos']);
+    User::factory()->fieldPersonnel()->create(['first_name' => 'marites', 'last_name' => 'cruz']);
+
+    Sanctum::actingAs($supervisor);
+
+    $personnel = $this->getJson('/api/v1/teams/team-options')
+        ->assertOk()
+        ->json('data.personnel');
+
+    // Must stay a JSON list (not an object keyed by original positions) for the mobile app
+    expect(array_is_list($personnel))->toBeTrue();
+
+    $firstNames = array_column($personnel, 'first_name');
+    $sorted = $firstNames;
+    sort($sorted, SORT_STRING | SORT_FLAG_CASE);
+
+    expect($firstNames)->toBe($sorted)
+        ->and($firstNames)->toContain('andres', 'marites', 'zaldy');
+});
+
 test('mobile supervisor cannot access teams from another department', function () {
     $dept1 = Department::first();
     $dept2 = Department::factory()->create(['dept_name' => 'Other Dept']);

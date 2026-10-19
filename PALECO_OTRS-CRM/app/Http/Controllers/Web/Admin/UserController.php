@@ -138,7 +138,7 @@ class UserController extends Controller
      */
     public function updatePassword(ResetUserPasswordRequest $request, User $user, ResetUserPassword $resetUserPassword)
     {
-        Gate::authorize('update', $user);
+        Gate::authorize('resetPassword', $user);
 
         $resetUserPassword->execute($user, $request->validated('password'));
 

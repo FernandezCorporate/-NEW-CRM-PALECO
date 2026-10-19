@@ -46,8 +46,12 @@ class SubmitAccomplishment
         ?string $idempotencyKey = null
     ): TicketAccomplishment {
         // Idempotency safety: If client resubmits an accomplishment with the same key
+        // (scoped to this ticket and worker so a reused key can never return another ticket's report)
         if ($idempotencyKey) {
-            $existingReport = TicketAccomplishment::where('idempotency_key', $idempotencyKey)->first();
+            $existingReport = $ticket->accomplishments()
+                ->where('accomplished_by_id', $worker->id)
+                ->where('idempotency_key', $idempotencyKey)
+                ->first();
             if ($existingReport) {
                 return $existingReport->load(['accomplishedBy', 'approvedBy', 'rejectedBy', 'photos']);
             }

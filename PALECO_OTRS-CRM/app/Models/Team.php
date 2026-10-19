@@ -145,30 +145,4 @@ class Team extends Model
             default => $query->latest(),
         };
     }
-
-    // --- SCOPES (API ALIASES FOR BACKWARD COMPATIBILITY) ---
-
-    /**
-     * @deprecated Use scopeSearch instead.
-     */
-    public function scopeApiSearch(Builder $query, ?string $term): Builder
-    {
-        return $this->scopeSearch($query, $term);
-    }
-
-    /**
-     * @deprecated Use scopeFilterByStatus instead.
-     */
-    public function scopeApiFilterStatus(Builder $query, ?string $status): Builder
-    {
-        return $this->scopeFilterByStatus($query, $status);
-    }
-
-    /**
-     * @deprecated Use scopeSort instead.
-     */
-    public function scopeApiSort(Builder $query, ?string $sort): Builder
-    {
-        return $this->scopeSort($query, $sort);
-    }
 }

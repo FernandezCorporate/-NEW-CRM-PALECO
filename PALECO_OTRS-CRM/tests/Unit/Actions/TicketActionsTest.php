@@ -16,6 +16,7 @@ use App\Models\Team;
 use App\Models\Ticket;
 use App\Models\TicketCategory;
 use App\Models\User;
+use App\Services\Tickets\TicketSequenceService;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Validation\ValidationException;
@@ -262,4 +263,22 @@ test('AddTicketRemark attaches remarks correctly', function () {
     expect($remark->body)->toBe('Spoke with complainant. Feeder line inspected.');
     expect($remark->is_internal)->toBeTrue();
     expect($remark->ticket_id)->toBe($ticket->id);
+});
+
+test('TicketSequenceService continues numbering past 999 tickets in a day', function () {
+    $dateCode = now()->format('ymd');
+
+    Ticket::factory()->create(['ticket_number' => "TKT-{$dateCode}-999"]);
+    Ticket::factory()->create(['ticket_number' => "TKT-{$dateCode}-1000"]);
+
+    expect(app(TicketSequenceService::class)->generateSequentialNumber())->toBe("TKT-{$dateCode}-1001");
+});
+
+test('TicketSequenceService never reuses the number of a soft-deleted ticket', function () {
+    $dateCode = now()->format('ymd');
+
+    Ticket::factory()->create(['ticket_number' => "TKT-{$dateCode}-001"]);
+    Ticket::factory()->create(['ticket_number' => "TKT-{$dateCode}-002"])->delete();
+
+    expect(app(TicketSequenceService::class)->generateSequentialNumber())->toBe("TKT-{$dateCode}-003");
 });

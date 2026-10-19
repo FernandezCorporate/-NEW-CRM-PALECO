@@ -79,6 +79,38 @@ test('SubmitAccomplishment respects idempotency key', function () {
     expect(TicketAccomplishment::where('ticket_id', $ticket->id)->count())->toBe(1);
 });
 
+test('SubmitAccomplishment scopes idempotency key to the ticket so a reused key cannot return another ticket report', function () {
+    $team = Team::factory()->create();
+    $worker = User::factory()->fieldPersonnel()->create();
+    $team->members()->attach($worker->id, ['team_role_id' => TeamRole::first()->id]);
+
+    $ticketA = Ticket::factory()->create([
+        'team_id' => $team->id,
+        'department_id' => $team->department_id,
+        'status' => TicketStatus::IN_PROGRESS->value,
+    ]);
+    $ticketB = Ticket::factory()->create([
+        'team_id' => $team->id,
+        'department_id' => $team->department_id,
+        'status' => TicketStatus::IN_PROGRESS->value,
+    ]);
+
+    $action = app(SubmitAccomplishment::class);
+    $data = fn () => [
+        'remarks' => 'Restored service line.',
+        'signature' => UploadedFile::fake()->image('signature.png'),
+        'photos' => [UploadedFile::fake()->image('proof.jpg')],
+    ];
+
+    $key = 'reused-client-key-0000000001';
+    $reportA = $action->execute($ticketA, $worker, $data(), null, $key);
+    $reportB = $action->execute($ticketB, $worker, $data(), null, $key);
+
+    expect($reportB->id)->not->toBe($reportA->id)
+        ->and($reportB->ticket_id)->toBe($ticketB->id)
+        ->and($ticketB->fresh()->status)->toBe(TicketStatus::RESOLVED);
+});
+
 test('VerifyAccomplishment approves report, closes ticket, and finalizes assignment', function () {
     $supervisor = User::factory()->supervisor()->create();
     $team = Team::factory()->create(['department_id' => $supervisor->department_id]);

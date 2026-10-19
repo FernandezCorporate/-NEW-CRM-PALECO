@@ -63,6 +63,29 @@ test('InitiateEndorsement prevents duplicate pending endorsements', function () 
     ], $supervisor))->toThrow(ValidationException::class);
 });
 
+test('InitiateEndorsement refuses child tickets', function () {
+    $dept1 = Department::first();
+    $dept2 = Department::factory()->create();
+    $supervisor = User::factory()->supervisor()->create(['department_id' => $dept1->id]);
+
+    $parent = Ticket::factory()->create(['department_id' => $dept1->id]);
+    $child = Ticket::factory()->create([
+        'parent_ticket_id' => $parent->id,
+        'ticket_number' => $parent->ticket_number.'-1',
+        'department_id' => $dept1->id,
+        'status' => TicketStatus::IN_PROGRESS->value,
+    ]);
+
+    $action = app(InitiateEndorsement::class);
+
+    expect(fn () => $action->execute($child, [
+        'suggested_department_id' => $dept2->id,
+        'reason' => 'Attempting to endorse a child ticket.',
+    ], $supervisor))->toThrow(ValidationException::class);
+
+    expect($child->fresh()->status)->toBe(TicketStatus::IN_PROGRESS);
+});
+
 test('DecideEndorsement approval approves endorsement and generates child ticket', function () {
     $dept1 = Department::first();
     $dept2 = Department::factory()->create();

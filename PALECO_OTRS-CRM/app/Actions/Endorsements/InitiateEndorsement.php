@@ -36,6 +36,13 @@ class InitiateEndorsement
             TicketStatus::IN_PROGRESS,
         ];
 
+        // Ticket hierarchy is immutable after creation, so this check needs no row lock
+        if (! is_null($ticket->parent_ticket_id)) {
+            throw ValidationException::withMessages([
+                'parent_ticket_id' => 'Child tickets cannot be endorsed. Ask the CWD officer to create a new child ticket from the origin ticket instead.',
+            ]);
+        }
+
         if (! in_array($ticket->status, $allowedStatuses, true)) {
             throw ValidationException::withMessages([
                 'status' => 'Tickets that are resolved, closed, or locked in an endorsement workflow cannot be endorsed.',
