@@ -285,8 +285,9 @@ class TicketPolicy
     /*
      * Determine whether the user can administratively force-close the service ticket.
      * Permitted strictly to CWD officers.
-     * Allowed strictly from ASSIGNED, IN_PROGRESS, RESOLVED, or ENDORSED status.
-     * Forbidden when OPEN (must cancel) or PENDING_ENDORSEMENT (in-flight review locked).
+     * Allowed strictly from ASSIGNED, IN_PROGRESS, or ENDORSED status.
+     * Forbidden when OPEN (must cancel), PENDING_ENDORSEMENT (in-flight review locked),
+     * or RESOLVED (accomplishment report awaiting supervisor verification).
      */
     public function forceClose(User $user, Ticket $ticket): Response
     {
@@ -314,10 +315,13 @@ class TicketPolicy
             return Response::deny('Tickets pending endorsement review cannot be force-closed. Complete the transfer decision first.');
         }
 
+        if ($ticket->status === TicketStatus::RESOLVED) {
+            return Response::deny('Resolved tickets are awaiting supervisor verification of the accomplishment report and cannot be force-closed.');
+        }
+
         $allowedStatuses = [
             TicketStatus::ASSIGNED,
             TicketStatus::IN_PROGRESS,
-            TicketStatus::RESOLVED,
             TicketStatus::ENDORSED,
         ];
 

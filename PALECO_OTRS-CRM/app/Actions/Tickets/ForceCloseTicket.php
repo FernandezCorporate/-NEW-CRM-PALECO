@@ -63,10 +63,15 @@ class ForceCloseTicket
                 ]);
             }
 
+            if ($lockedTicket->status === TicketStatus::RESOLVED) {
+                throw ValidationException::withMessages([
+                    'status' => 'Resolved tickets are awaiting supervisor verification of the accomplishment report and cannot be force-closed.',
+                ]);
+            }
+
             $allowedStatuses = [
                 TicketStatus::ASSIGNED,
                 TicketStatus::IN_PROGRESS,
-                TicketStatus::RESOLVED,
                 TicketStatus::ENDORSED,
             ];
 

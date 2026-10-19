@@ -215,6 +215,42 @@ test('evaluating an already evaluated accomplishment report is rejected', functi
     $response->assertJsonValidationErrors(['status']);
 });
 
+test('pending report on a force-closed ticket cannot be evaluated', function (string $decision) {
+    $closedAt = now()->subHour()->startOfSecond();
+
+    // Legacy state: ticket force-closed while its accomplishment report was still pending
+    $this->ticket->update([
+        'status' => TicketStatus::CLOSED,
+        'is_force_closed' => true,
+        'closure_reason' => 'Force-closed by CWD before verification.',
+        'closed_by_id' => $this->cwdOfficer->id,
+        'closed_at' => $closedAt,
+    ]);
+
+    $accomplishment = TicketAccomplishment::factory()->create([
+        'ticket_id' => $this->ticket->id,
+        'accomplished_by_id' => $this->personnel->id,
+        'status' => TicketAccomplishmentStatus::PENDING,
+    ]);
+
+    Sanctum::actingAs($this->supervisor, ['*']);
+
+    $response = $this->postJson("/api/v1/tickets/{$this->ticket->id}/accomplishments/{$accomplishment->id}/verify", [
+        'status' => $decision,
+        'rejection_reason' => 'Attempting to evaluate after force-closure.',
+    ]);
+
+    $response->assertStatus(422);
+    $response->assertJsonValidationErrors(['status']);
+
+    $this->ticket->refresh();
+    expect($this->ticket->status)->toBe(TicketStatus::CLOSED)
+        ->and($this->ticket->is_force_closed)->toBeTrue()
+        ->and($this->ticket->closed_at->equalTo($closedAt))->toBeTrue();
+
+    expect($accomplishment->fresh()->status)->toBe(TicketAccomplishmentStatus::PENDING);
+})->with(['approved', 'rejected']);
+
 test('cwd officer can inspect accomplishment report in web portal', function () {
     $accomplishment = TicketAccomplishment::factory()->create([
         'ticket_id' => $this->ticket->id,

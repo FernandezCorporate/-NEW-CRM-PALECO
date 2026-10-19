@@ -234,6 +234,21 @@ test('ForceCloseTicket closes an assigned or in-progress ticket with audit reaso
     ]);
 });
 
+test('ForceCloseTicket refuses resolved tickets awaiting supervisor verification', function () {
+    $cwdOfficer = User::factory()->cwdOfficer()->create();
+    $ticket = Ticket::factory()->create(['status' => TicketStatus::RESOLVED->value]);
+
+    $action = app(ForceCloseTicket::class);
+
+    expect(fn () => $action->execute($ticket, [
+        'closure_reason' => 'Attempting to bypass supervisor verification.',
+    ], $cwdOfficer))->toThrow(ValidationException::class);
+
+    $ticket->refresh();
+    expect($ticket->status)->toBe(TicketStatus::RESOLVED)
+        ->and($ticket->is_force_closed)->toBeFalse();
+});
+
 test('AddTicketRemark attaches remarks correctly', function () {
     $user = User::factory()->cwdOfficer()->create();
     $ticket = Ticket::factory()->create();

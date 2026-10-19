@@ -58,6 +58,13 @@ class VerifyAccomplishment
                 ->lockForUpdate()
                 ->firstOrFail();
 
+            // Only resolved tickets can be evaluated; prevents re-opening or re-closing force-closed tickets
+            if ($lockedTicket->status !== TicketStatus::RESOLVED) {
+                throw ValidationException::withMessages([
+                    'status' => 'This accomplishment report can no longer be evaluated because the ticket is '.$lockedTicket->status->label().'.',
+                ]);
+            }
+
             $oldTicketStatus = $lockedTicket->status;
 
             if ($data['status'] === TicketAccomplishmentStatus::APPROVED->value) {

@@ -179,6 +179,26 @@ test('force-closing is rejected if open tickets try to use it instead of cancell
     expect($ticket->fresh()->status)->toBe(TicketStatus::OPEN);
 });
 
+test('force-closing is rejected for resolved tickets awaiting supervisor verification', function () {
+    $ticket = Ticket::factory()->resolved($this->team)->create([
+        'department_id' => $this->dept->id,
+        'category_id' => $this->category->id,
+        'created_by_id' => $this->cwdOfficer->id,
+    ]);
+
+    $response = $this->actingAs($this->cwdOfficer)
+        ->post(route('cwd.tickets.forceClose', ['ticket' => $ticket]), [
+            'closure_reason' => 'Attempting force-close while report awaits verification.',
+        ]);
+
+    // Policy forceClose rejects resolved tickets with 403
+    $response->assertForbidden();
+
+    $ticket->refresh();
+    expect($ticket->status)->toBe(TicketStatus::RESOLVED)
+        ->and($ticket->is_force_closed)->toBeFalse();
+});
+
 test('force-closing parent ticket is blocked when active child tickets exist', function () {
     $parent = Ticket::factory()->inProgress($this->team)->create([
         'department_id' => $this->dept->id,
