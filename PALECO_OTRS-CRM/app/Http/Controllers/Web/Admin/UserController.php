@@ -210,11 +210,16 @@ class UserController extends Controller
         if ($user->role->slug_identifier === 'field_personnel') {
             $hasActiveTickets = Ticket::query()
                 ->whereIn('team_id', $user->teams()->pluck('teams.id'))
-                ->whereIn('status', [TicketStatus::ASSIGNED, TicketStatus::IN_PROGRESS])
+                ->whereIn('status', [
+                    TicketStatus::ASSIGNED,
+                    TicketStatus::IN_PROGRESS,
+                    TicketStatus::RESOLVED,
+                    TicketStatus::PENDING_ENDORSEMENT,
+                ])
                 ->exists();
 
             if ($hasActiveTickets) {
-                return redirect()->back()->with('error', 'Cannot deactivate user while their assigned crew has active tickets assigned or in progress. Please reassign the active tickets or remove the user from the active crew first.');
+                return redirect()->back()->with('error', 'Cannot deactivate user while their assigned crew has tickets that are assigned, in progress, awaiting report verification, or pending endorsement. Please reassign the active tickets or remove the user from the active crew first.');
             }
         }
 

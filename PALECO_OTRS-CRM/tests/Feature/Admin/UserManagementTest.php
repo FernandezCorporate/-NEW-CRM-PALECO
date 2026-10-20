@@ -159,3 +159,22 @@ test('non-admin users cannot access admin user management routes', function () {
     // Admin gate blocks with 404
     $response->assertNotFound();
 });
+
+test('a refused supervisor deactivation returns to the confirm page with the error shown', function () {
+    $admin = User::factory()->admin()->create();
+    $dept = Department::factory()->create();
+    $supervisor = User::factory()->supervisor($dept->id)->create();
+    Ticket::factory()->create(['department_id' => $dept->id, 'status' => TicketStatus::OPEN->value]);
+
+    $confirmUrl = route('admin.users.deactivateConfirm', $supervisor);
+
+    $this->actingAs($admin)
+        ->from($confirmUrl)
+        ->followingRedirects()
+        ->patch(route('admin.users.deactivate', $supervisor))
+        ->assertOk()
+        ->assertSee('Deactivate Account?')
+        ->assertSee('Cannot deactivate the last active supervisor of this department while it has 1 unfinished ticket(s).');
+
+    expect($supervisor->fresh()->is_active)->toBeTrue();
+});

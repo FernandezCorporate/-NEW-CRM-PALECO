@@ -267,3 +267,62 @@ test('cwd officer can inspect accomplishment report in web portal', function () 
     $response->assertViewIs('cwd.pages.ticketAccomplishmentDetails');
     $response->assertViewHas('accomplishment');
 });
+
+test('a stale resubmission after the worker report was rejected returns 422 instead of the old report', function () {
+    Storage::fake('public');
+    $otherWorker = User::factory()->fieldPersonnel()->create();
+    $this->team->members()->attach($otherWorker->id, ['team_role_id' => 1]);
+
+    // Crew member A's report was rejected, then crew member B redid the work and submitted
+    TicketAccomplishment::factory()->create([
+        'ticket_id' => $this->ticket->id,
+        'accomplished_by_id' => $this->personnel->id,
+        'status' => TicketAccomplishmentStatus::REJECTED,
+    ]);
+    TicketAccomplishment::factory()->create([
+        'ticket_id' => $this->ticket->id,
+        'accomplished_by_id' => $otherWorker->id,
+        'status' => TicketAccomplishmentStatus::PENDING,
+    ]);
+    $this->ticket->update(['status' => TicketStatus::RESOLVED]);
+    $countBefore = TicketAccomplishment::count();
+
+    Sanctum::actingAs($this->personnel, ['*']);
+
+    $this->withHeaders(['X-Idempotency-Key' => 'queued-offline-resubmission'])
+        ->postJson("/api/v1/tickets/{$this->ticket->id}/accomplish", [
+            'remarks' => 'Queued while offline.',
+            'consumer_name' => 'Maria Santos',
+            'photos' => [UploadedFile::fake()->image('new_proof.jpg')],
+            'signature' => UploadedFile::fake()->image('signature.png'),
+        ])
+        ->assertStatus(422)
+        ->assertJsonValidationErrors(['status' => 'This ticket already has a pending accomplishment report under supervisor review.']);
+
+    expect(TicketAccomplishment::count())->toBe($countBefore)
+        ->and(Storage::disk('public')->allFiles())->toBeEmpty();
+});
+
+test('an honest retry while the worker report is still pending returns that report', function () {
+    Storage::fake('public');
+    $pending = TicketAccomplishment::factory()->create([
+        'ticket_id' => $this->ticket->id,
+        'accomplished_by_id' => $this->personnel->id,
+        'status' => TicketAccomplishmentStatus::PENDING,
+    ]);
+    $this->ticket->update(['status' => TicketStatus::RESOLVED]);
+
+    Sanctum::actingAs($this->personnel, ['*']);
+
+    $this->withHeaders(['X-Idempotency-Key' => 'retry-with-a-new-key'])
+        ->postJson("/api/v1/tickets/{$this->ticket->id}/accomplish", [
+            'remarks' => 'Retry after a timeout.',
+            'consumer_name' => 'Maria Santos',
+            'photos' => [UploadedFile::fake()->image('proof.jpg')],
+            'signature' => UploadedFile::fake()->image('signature.png'),
+        ])
+        ->assertCreated()
+        ->assertJsonPath('data.id', $pending->id);
+
+    expect(TicketAccomplishment::where('ticket_id', $this->ticket->id)->count())->toBe(1);
+});

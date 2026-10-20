@@ -53,6 +53,9 @@
         <x-contextual-back :url="$cancelRoute" :label="$backLabel" variant="link" />
     </div>
 
+    <!-- Shows why a confirmed action was refused after redirecting back here -->
+    <x-alert />
+
     <!-- Alert Dialog Card -->
     <section role="alertdialog" aria-modal="true" aria-labelledby="confirm-dialog-title" class="card {{ $variantConfig['borderColor'] }} overflow-hidden">
         <div class="p-6 sm:p-10 text-center">

@@ -63,9 +63,14 @@ class SubmitAccomplishment
                 ->where('accomplished_by_id', $worker->id)
                 ->latest('id')
                 ->first();
-            if ($existingReport) {
+            // Only a still-pending report is a safe retry; an older rejected one would hide this new submission
+            if ($existingReport && $existingReport->status === TicketAccomplishmentStatus::PENDING) {
                 return $existingReport->load(['accomplishedBy', 'approvedBy', 'rejectedBy', 'photos']);
             }
+
+            throw ValidationException::withMessages([
+                'status' => 'This ticket already has a pending accomplishment report under supervisor review.',
+            ]);
         }
 
         if ($ticket->status === TicketStatus::PENDING_ENDORSEMENT) {
@@ -120,9 +125,13 @@ class SubmitAccomplishment
                         ->where('accomplished_by_id', $worker->id)
                         ->latest('id')
                         ->first();
-                    if ($existingReport) {
+                    if ($existingReport && $existingReport->status === TicketAccomplishmentStatus::PENDING) {
                         return $existingReport->load(['accomplishedBy', 'approvedBy', 'rejectedBy', 'photos']);
                     }
+
+                    throw ValidationException::withMessages([
+                        'status' => 'This ticket already has a pending accomplishment report under supervisor review.',
+                    ]);
                 }
 
                 if ($lockedTicket->status === TicketStatus::PENDING_ENDORSEMENT) {
