@@ -68,6 +68,8 @@ class TicketQueryService
             'assignments.team',
             'assignments.assigner',
             'endorsements.suggestedDepartment',
+            'endorsements.oldDepartment',
+            'endorsements.newDepartment',
             'endorsements.creator',
             'endorsements.reviewer',
             'accomplishments.accomplishedBy',
@@ -216,6 +218,8 @@ class TicketQueryService
             'assignments.team',
             'assignments.assigner.role',
             'endorsements.suggestedDepartment',
+            'endorsements.oldDepartment',
+            'endorsements.newDepartment',
             'endorsements.creator.role',
             'endorsements.reviewer',
         ]);

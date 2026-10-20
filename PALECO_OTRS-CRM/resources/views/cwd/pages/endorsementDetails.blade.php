@@ -49,7 +49,7 @@
 
             <!-- 2. Information Grid Section (Semantic Definition List) -->
             <div class="px-6 py-6 border-b border-slate-100">
-                <dl class="grid grid-cols-1 md:grid-cols-3 gap-y-6 gap-x-8 ml-11">
+                <dl class="grid grid-cols-1 md:grid-cols-2 gap-y-6 gap-x-8 ml-11">
                     
                     <!-- Supervisor -->
                     <div>
@@ -69,13 +69,30 @@
                         </dd>
                     </div>
 
-                    <!-- Target Department -->
+                    <!-- From Department (the ticket's department when the request was made) -->
                     <div>
-                        <dt class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Target Department</dt>
+                        <dt class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">From Department</dt>
                         <dd class="flex items-center gap-2 text-sm text-slate-900 font-medium">
                             <x-icons.department class="w-4 h-4 text-slate-400 shrink-0" />
-                            <span>{{ $endorsement->suggestedDepartment?->dept_name ?? 'Unassigned' }}</span>
+                            <span>{{ $endorsement->oldDepartment?->dept_name ?? 'Unknown' }}</span>
                         </dd>
+                    </div>
+
+                    <!-- Pending: the supervisor's suggestion. Decided: where CWD actually transferred it -->
+                    <div>
+                        @if($endorsement->status->value === 'pending')
+                            <dt class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Suggested Department</dt>
+                            <dd class="flex items-center gap-2 text-sm font-medium {{ $endorsement->suggestedDepartment ? 'text-slate-900' : 'text-slate-400 italic' }}">
+                                <x-icons.department class="w-4 h-4 text-slate-400 shrink-0" />
+                                <span>{{ $endorsement->suggestedDepartment?->dept_name ?? 'No suggestion' }}</span>
+                            </dd>
+                        @else
+                            <dt class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Transferred To</dt>
+                            <dd class="flex items-center gap-2 text-sm font-medium {{ $endorsement->newDepartment ? 'text-slate-900' : 'text-slate-400 italic' }}">
+                                <x-icons.department class="w-4 h-4 text-slate-400 shrink-0" />
+                                <span>{{ $endorsement->newDepartment?->dept_name ?? 'Not transferred' }}</span>
+                            </dd>
+                        @endif
                     </div>
 
                 </dl>

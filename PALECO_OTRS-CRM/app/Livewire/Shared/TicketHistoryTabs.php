@@ -48,6 +48,8 @@ class TicketHistoryTabs extends Component
             'assignments.team',
             'assignments.assigner',
             'endorsements.suggestedDepartment',
+            'endorsements.oldDepartment',
+            'endorsements.newDepartment',
             'endorsements.creator',
             'endorsements.reviewer',
             'accomplishments.accomplishedBy',

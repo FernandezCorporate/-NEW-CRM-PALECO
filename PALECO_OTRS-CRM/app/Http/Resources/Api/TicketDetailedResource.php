@@ -29,6 +29,7 @@ class TicketDetailedResource extends JsonResource
 
             // Hierarchy Navigation
             'is_child' => ! empty($this->parent_ticket_id),
+            'is_endorsed' => (bool) $this->is_endorsed,
             'parent_ticket_id' => $this->parent_ticket_id,
             'parent_ticket_number' => $this->parentTicket?->ticket_number,
 

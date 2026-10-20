@@ -64,7 +64,7 @@
                     <tr class="bg-slate-50 border-b border-slate-200 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
                         <th scope="col" class="px-6 py-4 w-[22%]">Ticket</th>
                         <th scope="col" class="px-6 py-4 w-[23%]">Supervisor</th>
-                        <th scope="col" class="px-6 py-4 w-[18%]">Target Dept</th>
+                        <th scope="col" class="px-6 py-4 w-[18%]">From &rarr; To</th>
                         <th scope="col" class="px-6 py-4 w-[17%]">Requested</th>
                         <th scope="col" class="px-6 py-4 w-[10%] text-center">Status</th>
                         <th scope="col" class="px-6 py-4 w-[10%] text-center">Action</th>
@@ -89,15 +89,27 @@
                                 <div class="text-sm text-slate-800 font-medium">
                                     {{ $endorsement->creator->full_name ?? 'N/A' }}
                                 </div>
-                                <div class="text-[11px] text-slate-400 mt-1">{{ $endorsement->creator->department->dept_name ?? 'Field Team' }}</div>
                             </td>
 
-                            <!-- Target Department -->
+                            <!-- From / To Departments (snapshotted on the endorsement record) -->
                             <td class="px-6 py-4 align-top">
-                                <div class="text-sm font-medium leading-snug {{ $endorsement->suggestedDepartment ? 'text-slate-800' : 'text-slate-400 italic' }}">
-                                    {{ $endorsement->suggestedDepartment->dept_name ?? 'Unassigned' }}
-                                    @if($endorsement->suggestedDepartment?->trashed())
-                                        <span class="text-[10px] text-slate-400 font-normal not-italic ml-1">(Archived)</span>
+                                <div class="text-sm text-slate-800 font-medium leading-snug">
+                                    {{ $endorsement->oldDepartment->dept_name ?? 'Unknown' }}
+                                    @if($endorsement->oldDepartment?->trashed())
+                                        <span class="text-[10px] text-slate-400 font-normal ml-1">(Archived)</span>
+                                    @endif
+                                </div>
+                                <div class="text-[11px] mt-1 {{ $endorsement->newDepartment ? 'text-slate-600' : 'text-slate-400 italic' }}">
+                                    &rarr;
+                                    @if($endorsement->newDepartment)
+                                        {{ $endorsement->newDepartment->dept_name }}
+                                        @if($endorsement->newDepartment->trashed())
+                                            <span class="text-[10px] text-slate-400 ml-1">(Archived)</span>
+                                        @endif
+                                    @elseif($endorsement->status === \App\Enums\EndorsementStatus::PENDING)
+                                        Awaiting decision
+                                    @else
+                                        Not transferred
                                     @endif
                                 </div>
                             </td>

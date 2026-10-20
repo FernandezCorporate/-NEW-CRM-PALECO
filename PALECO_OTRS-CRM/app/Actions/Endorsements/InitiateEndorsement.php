@@ -77,6 +77,8 @@ class InitiateEndorsement
             $endorsement = $lockedTicket->endorsements()->create([
                 'created_by_id' => $supervisor->id,
                 'suggested_department_id' => $data['suggested_department_id'] ?? null,
+                // Taken from the ticket, not the requester, so it stays right if the supervisor later moves
+                'old_department_id' => $lockedTicket->department_id,
                 'reason' => $data['reason'],
                 'pre_endorsement_status' => $oldStatus->value,
                 'status' => EndorsementStatus::PENDING,

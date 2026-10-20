@@ -22,7 +22,7 @@ class TicketEndorsementService
      */
     public function getEndorsementList(Request $request): array
     {
-        $endorsements = TicketEndorsement::with(['ticket', 'creator', 'suggestedDepartment'])
+        $endorsements = TicketEndorsement::with(['ticket', 'creator', 'suggestedDepartment', 'oldDepartment', 'newDepartment'])
             ->search($request->search)
             ->filterByStatus($request->status)
             ->latest('created_at')
@@ -68,7 +68,7 @@ class TicketEndorsementService
      */
     public function getEndorsementDetails(TicketEndorsement $endorsement): array
     {
-        $endorsement->load(['ticket', 'creator', 'suggestedDepartment']);
+        $endorsement->load(['ticket', 'creator', 'suggestedDepartment', 'oldDepartment', 'newDepartment']);
 
         $approveValue = EndorsementStatus::APPROVED;
         $rejectValue = EndorsementStatus::REJECTED;

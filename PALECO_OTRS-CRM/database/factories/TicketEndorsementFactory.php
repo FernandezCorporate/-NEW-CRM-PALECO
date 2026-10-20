@@ -23,9 +23,10 @@ class TicketEndorsementFactory extends Factory
             'ticket_id' => Ticket::first()?->id ?? Ticket::factory()->inProgress(),
             'created_by_id' => User::where('role_id', 4)->first()?->id ?? User::factory()->fieldPersonnel(),
             'suggested_department_id' => Department::skip(1)->first()?->id ?? Department::factory(),
+            'old_department_id' => fn (array $attributes) => Ticket::find($attributes['ticket_id'])?->department_id,
             'reason' => fake()->sentence(),
             'status' => EndorsementStatus::PENDING,
-            'pre_endorsement_status' => TicketStatus::IN_PROGRESS,
+            'pre_endorsement_status' => TicketStatus::ASSIGNED,
         ];
     }
 
@@ -33,6 +34,7 @@ class TicketEndorsementFactory extends Factory
     {
         return $this->state(fn () => [
             'status' => EndorsementStatus::APPROVED,
+            'new_department_id' => fn (array $attributes) => $attributes['suggested_department_id'],
             'reviewed_by_id' => $reviewer?->id ?? User::where('role_id', 2)->first()?->id ?? User::factory()->cwdOfficer(),
             'reviewed_at' => now(),
         ]);

@@ -17,6 +17,8 @@ class TicketEndorsementResource extends JsonResource
     {
         return [
             'suggested_dept' => $this->whenLoaded('suggestedDepartment', fn () => $this->suggestedDepartment?->dept_name),
+            'old_dept' => $this->whenLoaded('oldDepartment', fn () => $this->oldDepartment?->dept_name),
+            'new_dept' => $this->whenLoaded('newDepartment', fn () => $this->newDepartment?->dept_name),
             'created_by' => $this->whenLoaded('creator', fn () => $this->creator?->full_name),
             'creator_role' => $this->whenLoaded('creator', fn () => $this->creator?->role?->role_name),
             'endorsement_reason' => $this->reason,

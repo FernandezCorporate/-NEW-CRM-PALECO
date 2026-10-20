@@ -44,6 +44,7 @@ return new class extends Migration
             $table->string('status', 30)->default('open');
             $table->text('cancellation_reason')->nullable();
             $table->boolean('is_force_closed')->default(false);
+            $table->boolean('is_endorsed')->default(false);
             $table->text('closure_reason')->nullable();
             $table->boolean('is_offline_synced')->default(false);
             $table->timestamp('synced_at')->nullable();
@@ -86,6 +87,9 @@ return new class extends Migration
             $table->foreignUlid('created_by_id')->constrained('users')->cascadeOnDelete();
 
             $table->foreignId('suggested_department_id')->nullable()->constrained('departments')->nullOnDelete();
+            // Department the ticket belonged to when the request was made, and the one CWD transferred it to on approval
+            $table->foreignId('old_department_id')->nullable()->constrained('departments')->nullOnDelete();
+            $table->foreignId('new_department_id')->nullable()->constrained('departments')->nullOnDelete();
 
             $table->text('reason');
             $table->string('status', 30)->default('pending');

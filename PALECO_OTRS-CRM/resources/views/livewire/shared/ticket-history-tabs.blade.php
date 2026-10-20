@@ -81,18 +81,16 @@
 
     <x-ticket-history-table id="endorsement-history" title="Endorsement requests"
         description="Requests to route this ticket to another department."
-        :count="$ticket->endorsements->count()" :columns="['Requested', 'Requested by', 'Target department', 'Decision', 'Details']">
+        :count="$ticket->endorsements->count()" :columns="['Requested', 'Requested by', 'From &rarr; To', 'Decision', 'Details']">
         @forelse($ticket->endorsements as $endorsement)
             <tr>
                 <td class="history-date"><time datetime="{{ $endorsement->created_at->toIso8601String() }}">{{ $endorsement->created_at->format('M d, Y') }}<small>{{ $endorsement->created_at->format('h:i A') }}</small></time></td>
                 <td>{{ $endorsement->creator->full_name ?? 'Unknown user' }}</td>
                 <td>
-                    <span class="{{ $endorsement->suggestedDepartment ? 'text-slate-800 font-medium' : 'text-slate-400 italic' }}">
-                        {{ $endorsement->suggestedDepartment->dept_name ?? 'Not specified' }}
-                        @if($endorsement->suggestedDepartment?->trashed())
-                            <span class="text-[10px] text-slate-400 font-normal not-italic ml-1">(Archived)</span>
-                        @endif
-                    </span>
+                    <span class="text-slate-800 font-medium">{{ $endorsement->oldDepartment->dept_name ?? 'Unknown' }}</span>
+                    <small class="block {{ $endorsement->newDepartment ? 'text-slate-600' : 'text-slate-400 italic' }}">
+                        &rarr; {{ $endorsement->newDepartment->dept_name ?? ($endorsement->status === \App\Enums\EndorsementStatus::PENDING ? 'Awaiting decision' : 'Not transferred') }}
+                    </small>
                 </td>
                 <td><span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold border {{ $endorsement->status->badgeClasses() }}">{{ $endorsement->status->label() }}</span></td>
                 <td>

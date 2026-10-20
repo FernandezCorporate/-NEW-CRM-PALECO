@@ -20,6 +20,8 @@ class TicketEndorsement extends Model
     protected $fillable = [
         'ticket_id',
         'suggested_department_id',
+        'old_department_id',
+        'new_department_id',
         'reason',
         'status',
         'pre_endorsement_status',
@@ -77,10 +79,26 @@ class TicketEndorsement extends Model
         return $this->belongsTo(Department::class, 'suggested_department_id')->withTrashed();
     }
 
+    /**
+     * The department the ticket belonged to when the endorsement was requested.
+     */
+    public function oldDepartment(): BelongsTo
+    {
+        return $this->belongsTo(Department::class, 'old_department_id')->withTrashed();
+    }
+
+    /**
+     * The department CWD transferred the work to on approval.
+     */
+    public function newDepartment(): BelongsTo
+    {
+        return $this->belongsTo(Department::class, 'new_department_id')->withTrashed();
+    }
+
     // --- SCOPES ---
 
     /**
-     * Search endorsements by ticket ID, ticket number, creator name, or target department.
+     * Search endorsements by ticket ID, ticket number, creator name, or suggested, from or to department.
      * Creator names are encrypted, so matching creators are resolved in memory first.
      */
     public function scopeSearch(Builder $query, ?string $search): Builder
@@ -98,6 +116,12 @@ class TicketEndorsement extends Model
                 })
                 ->orWhereIn('created_by_id', $creatorIds)
                 ->orWhereHas('suggestedDepartment', function ($deptQuery) use ($search) {
+                    $deptQuery->where('dept_name', 'like', "%{$search}%");
+                })
+                ->orWhereHas('oldDepartment', function ($deptQuery) use ($search) {
+                    $deptQuery->where('dept_name', 'like', "%{$search}%");
+                })
+                ->orWhereHas('newDepartment', function ($deptQuery) use ($search) {
                     $deptQuery->where('dept_name', 'like', "%{$search}%");
                 });
         });

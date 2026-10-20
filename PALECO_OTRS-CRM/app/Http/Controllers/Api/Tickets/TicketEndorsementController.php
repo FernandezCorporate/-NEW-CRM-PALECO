@@ -58,7 +58,7 @@ class TicketEndorsementController extends Controller
         return response()->json([
             'success' => true,
             'message' => "An endorsement request has been submitted. Ticket {$ticket->ticket_number} is now frozen pending CWD review.",
-            'data' => new TicketEndorsementResource($endorsement->load(['suggestedDepartment', 'creator.role'])),
+            'data' => new TicketEndorsementResource($endorsement->load(['suggestedDepartment', 'oldDepartment', 'creator.role'])),
         ], Response::HTTP_CREATED);
     }
 }

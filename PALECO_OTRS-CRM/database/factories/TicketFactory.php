@@ -107,6 +107,7 @@ class TicketFactory extends Factory
     {
         return $this->state(fn () => [
             'status' => TicketStatus::ENDORSED,
+            'is_endorsed' => true,
         ]);
     }
 }

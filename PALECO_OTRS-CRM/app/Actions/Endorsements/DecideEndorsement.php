@@ -59,6 +59,7 @@ class DecideEndorsement
                         'reviewed_by_id' => Auth::id(),
                         'reviewed_at' => now(),
                         'rejection_reason' => $isApproved ? null : $validatedData['rejection_reason'],
+                        'new_department_id' => $isApproved ? $validatedData['department_id'] : null,
                     ]);
 
                     $parentTicket = $lockedEndorsement->ticket()->lockForUpdate()->first();
@@ -74,6 +75,8 @@ class DecideEndorsement
                         $parentTicket->update([
                             'status' => TicketStatus::ENDORSED,
                             'team_id' => null,
+                            // Stays true after the parent is later force-closed, unlike the Endorsed status
+                            'is_endorsed' => true,
                         ]);
 
                         $parentTicket->statusLog()->create([

@@ -368,3 +368,94 @@ test('an endorsement decision of pending is refused and changes nothing', functi
     expect($endorsement->fresh()->status)->toBe(EndorsementStatus::PENDING)
         ->and($this->ticket->fresh()->status)->toBe(TicketStatus::PENDING_ENDORSEMENT);
 });
+
+test('an endorsement records the from and to departments and marks the parent as endorsed', function () {
+    $this->ticket->update(['status' => TicketStatus::ASSIGNED]);
+    Sanctum::actingAs($this->supervisor, ['*']);
+
+    // The supervisor suggests one department; CWD transfers to another
+    $dept3 = Department::factory()->create();
+    $this->postJson("/api/v1/tickets/{$this->ticket->id}/endorse", [
+        'suggested_department_id' => $this->dept2->id,
+        'reason' => 'Needs another division.',
+    ])->assertCreated()->assertJsonPath('data.old_dept', $this->dept1->dept_name);
+
+    $endorsement = TicketEndorsement::where('ticket_id', $this->ticket->id)->first();
+    expect($endorsement->old_department_id)->toBe($this->dept1->id)
+        ->and($endorsement->new_department_id)->toBeNull();
+
+    // A later move of the requesting supervisor doesn't change the record
+    $this->supervisor->update(['department_id' => $dept3->id]);
+
+    $this->actingAs($this->cwdOfficer)
+        ->post(route('cwd.endorsements.decide', ['endorsement' => $endorsement]), [
+            'status' => 'approved',
+            'department_id' => $dept3->id,
+        ])->assertSessionHas('success');
+
+    $endorsement->refresh();
+    expect($endorsement->old_department_id)->toBe($this->dept1->id)
+        ->and($endorsement->new_department_id)->toBe($dept3->id)
+        ->and($endorsement->suggested_department_id)->toBe($this->dept2->id)
+        ->and($this->ticket->fresh()->is_endorsed)->toBeTrue();
+
+    // is_endorsed survives the parent's force-close
+    Ticket::where('parent_ticket_id', $this->ticket->id)->update(['status' => TicketStatus::CANCELLED]);
+    $this->actingAs($this->cwdOfficer)
+        ->post(route('cwd.tickets.forceClose', ['ticket' => $this->ticket]), [
+            'closure_reason' => 'Transferred work completed by the other department.',
+        ])->assertSessionHas('success');
+
+    $this->ticket->refresh();
+    expect($this->ticket->status)->toBe(TicketStatus::CLOSED)
+        ->and($this->ticket->is_endorsed)->toBeTrue();
+
+    // The CWD queue and detail pages show From and To
+    $this->actingAs($this->cwdOfficer)->get(route('cwd.endorsements'))
+        ->assertOk()->assertSee('From &rarr; To', false)->assertSee($dept3->dept_name);
+    $this->actingAs($this->cwdOfficer)->get(route('cwd.endorsements.show', $endorsement))
+        ->assertOk()->assertSee('Transferred To')->assertDontSee('Suggested Department');
+});
+
+test('a rejected endorsement keeps no new department and the ticket is not endorsed', function () {
+    $this->ticket->update(['status' => TicketStatus::PENDING_ENDORSEMENT]);
+    $endorsement = TicketEndorsement::factory()->create([
+        'ticket_id' => $this->ticket->id,
+        'created_by_id' => $this->supervisor->id,
+        'suggested_department_id' => $this->dept2->id,
+        'status' => EndorsementStatus::PENDING,
+        'pre_endorsement_status' => TicketStatus::ASSIGNED,
+    ]);
+
+    // The pending details page shows the supervisor's suggestion
+    $this->actingAs($this->cwdOfficer)->get(route('cwd.endorsements.show', $endorsement))
+        ->assertOk()->assertSee('Suggested Department')->assertSee($this->dept2->dept_name);
+
+    $this->actingAs($this->cwdOfficer)
+        ->post(route('cwd.endorsements.decide', ['endorsement' => $endorsement]), [
+            'status' => 'rejected',
+            'rejection_reason' => 'Handle within the division.',
+        ])->assertSessionHas('success');
+
+    expect($endorsement->fresh()->new_department_id)->toBeNull()
+        ->and($endorsement->fresh()->old_department_id)->toBe($this->dept1->id)
+        ->and($this->ticket->fresh()->is_endorsed)->toBeFalse();
+});
+
+test('mobile ticket and history payloads expose is_endorsed and the from and to departments', function () {
+    $this->ticket->update(['status' => TicketStatus::ENDORSED, 'team_id' => null, 'is_endorsed' => true]);
+    TicketEndorsement::factory()->approved()->create([
+        'ticket_id' => $this->ticket->id,
+        'created_by_id' => $this->supervisor->id,
+        'suggested_department_id' => $this->dept2->id,
+    ]);
+    Sanctum::actingAs($this->supervisor, ['*']);
+
+    $this->getJson("/api/v1/tickets/{$this->ticket->id}")
+        ->assertOk()->assertJsonPath('data.is_endorsed', true);
+
+    $this->getJson("/api/v1/tickets/{$this->ticket->id}/history")
+        ->assertOk()
+        ->assertJsonPath('data.endorsements.0.old_dept', $this->dept1->dept_name)
+        ->assertJsonPath('data.endorsements.0.new_dept', $this->dept2->dept_name);
+});
