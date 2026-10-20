@@ -30,10 +30,10 @@ class InitiateEndorsement
      */
     public function execute(Ticket $ticket, array $data, User $supervisor): TicketEndorsement
     {
+        // Once the crew starts work the job is accepted as within their scope, so it can no longer be handed off
         $allowedStatuses = [
             TicketStatus::OPEN,
             TicketStatus::ASSIGNED,
-            TicketStatus::IN_PROGRESS,
         ];
 
         // Ticket hierarchy is immutable after creation, so this check needs no row lock
@@ -45,7 +45,7 @@ class InitiateEndorsement
 
         if (! in_array($ticket->status, $allowedStatuses, true)) {
             throw ValidationException::withMessages([
-                'status' => 'Tickets that are resolved, closed, or locked in an endorsement workflow cannot be endorsed.',
+                'status' => 'Only Open or Assigned tickets can be endorsed. Once work has started, the ticket stays with this department.',
             ]);
         }
 
@@ -62,7 +62,7 @@ class InitiateEndorsement
 
             if (! in_array($lockedTicket->status, $allowedStatuses, true)) {
                 throw ValidationException::withMessages([
-                    'status' => 'Tickets that are resolved, closed, or locked in an endorsement workflow cannot be endorsed.',
+                    'status' => 'Only Open or Assigned tickets can be endorsed. Once work has started, the ticket stays with this department.',
                 ]);
             }
 

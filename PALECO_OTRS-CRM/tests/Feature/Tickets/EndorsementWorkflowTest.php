@@ -46,6 +46,7 @@ test('supervisor can view endorsement department options excluding current depar
 });
 
 test('supervisor can initiate endorsement request freezing ticket in pending_endorsement', function () {
+    $this->ticket->update(['status' => TicketStatus::ASSIGNED]);
     Sanctum::actingAs($this->supervisor, ['*']);
 
     $payload = [
@@ -64,7 +65,7 @@ test('supervisor can initiate endorsement request freezing ticket in pending_end
     $endorsement = TicketEndorsement::where('ticket_id', $this->ticket->id)->first();
     expect($endorsement)->not->toBeNull()
         ->and($endorsement->status)->toBe(EndorsementStatus::PENDING)
-        ->and($endorsement->pre_endorsement_status)->toBe(TicketStatus::IN_PROGRESS)
+        ->and($endorsement->pre_endorsement_status)->toBe(TicketStatus::ASSIGNED)
         ->and($endorsement->suggested_department_id)->toBe($this->dept2->id)
         ->and($endorsement->created_by_id)->toBe($this->supervisor->id);
 });
@@ -322,3 +323,48 @@ test('pending endorsement on a child ticket cannot be approved but can be reject
         ->and($child->fresh()->status)->toBe(TicketStatus::OPEN);
 });
 
+
+test('an in-progress ticket cannot be endorsed because the crew already accepted the work', function () {
+    Sanctum::actingAs($this->supervisor, ['*']);
+
+    $this->postJson("/api/v1/tickets/{$this->ticket->id}/endorse", [
+        'suggested_department_id' => $this->dept2->id,
+        'reason' => 'Needs a crane bucket.',
+    ])->assertStatus(422)
+        ->assertJsonValidationErrors(['status' => 'Only Open or Assigned tickets can be endorsed. Once work has started, the ticket stays with this department.']);
+
+    expect($this->ticket->fresh()->status)->toBe(TicketStatus::IN_PROGRESS)
+        ->and(TicketEndorsement::where('ticket_id', $this->ticket->id)->exists())->toBeFalse();
+});
+
+test('an open ticket can be endorsed', function () {
+    $open = Ticket::factory()->open()->create([
+        'department_id' => $this->dept1->id,
+        'category_id' => $this->category->id,
+    ]);
+    Sanctum::actingAs($this->supervisor, ['*']);
+
+    $this->postJson("/api/v1/tickets/{$open->id}/endorse", ['reason' => 'Belongs to metering.'])->assertCreated();
+
+    expect($open->fresh()->status)->toBe(TicketStatus::PENDING_ENDORSEMENT);
+});
+
+test('an endorsement decision of pending is refused and changes nothing', function () {
+    $this->ticket->update(['status' => TicketStatus::PENDING_ENDORSEMENT]);
+    $endorsement = TicketEndorsement::factory()->create([
+        'ticket_id' => $this->ticket->id,
+        'created_by_id' => $this->supervisor->id,
+        'status' => EndorsementStatus::PENDING,
+        'pre_endorsement_status' => TicketStatus::ASSIGNED,
+    ]);
+
+    $this->actingAs($this->cwdOfficer)
+        ->post(route('cwd.endorsements.decide', ['endorsement' => $endorsement]), [
+            'status' => 'pending',
+            'rejection_reason' => 'Crafted request.',
+        ])
+        ->assertSessionHasErrors('status');
+
+    expect($endorsement->fresh()->status)->toBe(EndorsementStatus::PENDING)
+        ->and($this->ticket->fresh()->status)->toBe(TicketStatus::PENDING_ENDORSEMENT);
+});

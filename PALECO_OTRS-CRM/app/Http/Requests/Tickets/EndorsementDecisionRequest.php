@@ -38,7 +38,8 @@ class EndorsementDecisionRequest extends FormRequest
             ],
             'status' => [
                 'required',
-                Rule::enum(EndorsementStatus::class),
+                // Pending is a state, not a decision; accepting it would unfreeze the ticket while the request stays pending
+                Rule::in([EndorsementStatus::APPROVED->value, EndorsementStatus::REJECTED->value]),
             ],
             'rejection_reason' => [
                 $isRejected ? 'required' : 'nullable',

@@ -26,7 +26,7 @@ test('InitiateEndorsement freezes ticket into pending endorsement state', functi
 
     $ticket = Ticket::factory()->create([
         'department_id' => $dept1->id,
-        'status' => TicketStatus::IN_PROGRESS->value,
+        'status' => TicketStatus::ASSIGNED->value,
     ]);
 
     $action = app(InitiateEndorsement::class);
@@ -48,7 +48,7 @@ test('InitiateEndorsement prevents duplicate pending endorsements', function () 
 
     $ticket = Ticket::factory()->create([
         'department_id' => $dept1->id,
-        'status' => TicketStatus::IN_PROGRESS->value,
+        'status' => TicketStatus::ASSIGNED->value,
     ]);
 
     $action = app(InitiateEndorsement::class);
@@ -96,7 +96,7 @@ test('DecideEndorsement approval approves endorsement and generates child ticket
 
     $ticket = Ticket::factory()->create([
         'department_id' => $dept1->id,
-        'status' => TicketStatus::IN_PROGRESS->value,
+        'status' => TicketStatus::ASSIGNED->value,
     ]);
 
     $endorsement = app(InitiateEndorsement::class)->execute($ticket, [
@@ -132,7 +132,7 @@ test('DecideEndorsement rejection restores parent ticket to previous active stat
     $ticket = Ticket::factory()->create([
         'department_id' => $dept1->id,
         'team_id' => $team->id,
-        'status' => TicketStatus::IN_PROGRESS->value,
+        'status' => TicketStatus::ASSIGNED->value,
     ]);
 
     $endorsement = app(InitiateEndorsement::class)->execute($ticket, [
@@ -149,5 +149,5 @@ test('DecideEndorsement rejection restores parent ticket to previous active stat
     expect($result['success'])->toBeTrue();
     expect($endorsement->fresh()->status)->toBe(EndorsementStatus::REJECTED);
     expect($endorsement->fresh()->rejection_reason)->toBe('Existing assigned crew possesses appropriate telescoping hot stick.');
-    expect($ticket->fresh()->status)->toBe(TicketStatus::IN_PROGRESS);
+    expect($ticket->fresh()->status)->toBe(TicketStatus::ASSIGNED);
 });
