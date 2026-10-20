@@ -51,6 +51,20 @@ class CancelTicket
                 ]);
             }
 
+            // Children may belong to other departments, so they are never cancelled automatically
+            $activeChildren = Ticket::where('parent_ticket_id', $lockedTicket->id)
+                ->where('status', '!=', TicketStatus::CANCELLED)
+                ->orderBy('ticket_number')
+                ->get();
+
+            if ($activeChildren->isNotEmpty()) {
+                $list = $activeChildren->map(fn (Ticket $child) => "{$child->ticket_number} ({$child->status->label()})")->implode(', ');
+
+                throw ValidationException::withMessages([
+                    'child_tickets' => "Cannot cancel this ticket while it has child tickets that are not cancelled: {$list}. Cancel them first.",
+                ]);
+            }
+
             $oldStatus = $lockedTicket->status;
 
             TicketStatusLog::create([

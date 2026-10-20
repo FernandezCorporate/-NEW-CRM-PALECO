@@ -1,5 +1,6 @@
 <?php
 
+use App\Actions\Tickets\CancelTicket;
 use App\Enums\TicketStatus;
 use App\Models\Department;
 use App\Models\Team;
@@ -8,6 +9,7 @@ use App\Models\TicketCategory;
 use App\Models\User;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Validation\ValidationException;
 use Laravel\Sanctum\Sanctum;
 
 uses(RefreshDatabase::class);
@@ -224,3 +226,73 @@ test('force-closing parent ticket is blocked when active child tickets exist', f
     expect($parent->fresh()->status)->toBe(TicketStatus::IN_PROGRESS);
 });
 
+
+test('cwd officer cannot cancel a parent while a child ticket is not cancelled', function (string $childState) {
+    $parent = Ticket::factory()->open()->create([
+        'department_id' => $this->dept->id,
+        'category_id' => $this->category->id,
+        'created_by_id' => $this->cwdOfficer->id,
+    ]);
+    Ticket::factory()->{$childState}()->create([
+        'parent_ticket_id' => $parent->id,
+        'department_id' => $this->dept->id,
+        'category_id' => $this->category->id,
+    ]);
+
+    $this->actingAs($this->cwdOfficer)
+        ->post(route('cwd.tickets.cancel', ['ticket' => $parent]), [
+            'cancellation_reason' => 'Duplicate of an earlier report.',
+        ])
+        ->assertForbidden();
+
+    expect($parent->fresh()->status)->toBe(TicketStatus::OPEN);
+})->with([
+    'open child' => ['open'],
+    'assigned child' => ['assigned'],
+    'in progress child' => ['inProgress'],
+    'closed child' => ['closed'],
+]);
+
+test('cwd officer can cancel a parent whose child tickets are all cancelled', function () {
+    $parent = Ticket::factory()->open()->create([
+        'department_id' => $this->dept->id,
+        'category_id' => $this->category->id,
+        'created_by_id' => $this->cwdOfficer->id,
+    ]);
+    Ticket::factory()->cancelled()->create([
+        'parent_ticket_id' => $parent->id,
+        'department_id' => $this->dept->id,
+        'category_id' => $this->category->id,
+    ]);
+
+    $this->actingAs($this->cwdOfficer)
+        ->post(route('cwd.tickets.cancel', ['ticket' => $parent]), [
+            'cancellation_reason' => 'Duplicate of an earlier report.',
+        ])
+        ->assertSessionHas('success');
+
+    expect($parent->fresh()->status)->toBe(TicketStatus::CANCELLED);
+});
+
+test('CancelTicket lists the child tickets that block cancelling the parent', function () {
+    $parent = Ticket::factory()->open()->create([
+        'department_id' => $this->dept->id,
+        'category_id' => $this->category->id,
+        'created_by_id' => $this->cwdOfficer->id,
+    ]);
+    $child = Ticket::factory()->assigned($this->team)->create([
+        'parent_ticket_id' => $parent->id,
+        'department_id' => $this->dept->id,
+        'category_id' => $this->category->id,
+    ]);
+
+    try {
+        app(CancelTicket::class)->execute($parent, ['cancellation_reason' => 'Duplicate.'], $this->cwdOfficer);
+        $this->fail('Expected the cancellation to be refused.');
+    } catch (ValidationException $e) {
+        expect($e->errors()['child_tickets'][0])->toContain("{$child->ticket_number} (".TicketStatus::ASSIGNED->label().')');
+    }
+
+    expect($parent->fresh()->status)->toBe(TicketStatus::OPEN)
+        ->and($child->fresh()->status)->toBe(TicketStatus::ASSIGNED);
+});

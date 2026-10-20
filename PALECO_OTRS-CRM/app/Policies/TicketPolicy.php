@@ -283,6 +283,11 @@ class TicketPolicy
             return Response::deny('Ticket can only be cancelled while in Open status. Once assigned to a team or dispatched, cancellation is locked.');
         }
 
+        // Follow-up work this ticket caused must be cancelled first
+        if ($ticket->childTickets()->where('status', '!=', TicketStatus::CANCELLED)->exists()) {
+            return Response::deny('This ticket has child tickets that are not cancelled. Cancel them first.');
+        }
+
         return Response::allow();
     }
 
