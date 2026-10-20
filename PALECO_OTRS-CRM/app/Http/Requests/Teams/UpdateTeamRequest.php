@@ -59,7 +59,8 @@ class UpdateTeamRequest extends FormRequest
                 'required',
                 'distinct',
                 Rule::exists('users', 'id')->where(function ($query) {
-                    $query->whereIn('role_id', function ($subQuery) {
+                    // Deactivated accounts can't log in to work tickets
+                    $query->where('is_active', true)->whereIn('role_id', function ($subQuery) {
                         $subQuery->select('id')->from('account_roles')->where('slug_identifier', 'field_personnel');
                     });
                 }),
@@ -91,7 +92,7 @@ class UpdateTeamRequest extends FormRequest
             'members.array' => 'The members list must be formatted correctly.',
             'members.*.user_id.required' => 'A user must be selected to be added as a member.',
             'members.*.user_id.distinct' => 'Duplicate team members cannot be added to the same crew.',
-            'members.*.user_id.exists' => 'One or more of the selected members are not valid Field Personnel.',
+            'members.*.user_id.exists' => 'One or more of the selected members are not active Field Personnel.',
             'members.*.team_role_id.required' => 'A team role must be assigned to each member.',
             'members.*.team_role_id.exists' => 'The selected team role is invalid.',
         ];

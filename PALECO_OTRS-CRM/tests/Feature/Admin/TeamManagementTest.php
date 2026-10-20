@@ -440,3 +440,44 @@ test('mobile team update with an empty members list on a busy team returns 422',
 
     expect($team->fresh()->members)->toHaveCount(1);
 });
+
+test('a deactivated user cannot be added to a team', function (string $channel, string $action) {
+    $department = Department::first();
+    $role = TeamRole::first();
+    $inactive = User::factory()->fieldPersonnel()->inactive()->create();
+    $team = Team::factory()->create(['department_id' => $department->id, 'shift_start' => '08:00', 'shift_end' => '17:00']);
+
+    $payload = [
+        'team_name' => 'Charlie Crew',
+        'department_id' => $department->id,
+        'shift_start' => '08:00',
+        'shift_end' => '17:00',
+        'members' => [['user_id' => $inactive->id, 'team_role_id' => $role->id]],
+    ];
+    if ($action === 'update') {
+        $payload['original_updated_at'] = $team->updated_at->toIso8601String();
+    }
+
+    if ($channel === 'web') {
+        $this->actingAs(User::factory()->admin()->create());
+        $response = $action === 'store'
+            ? $this->post(route('admin.teams.store'), $payload)
+            : $this->put(route('admin.teams.update', $team), $payload);
+
+        $response->assertSessionHasErrors(['members.0.user_id' => 'One or more of the selected members are not active Field Personnel.']);
+    } else {
+        Sanctum::actingAs(User::factory()->supervisor()->create(['department_id' => $department->id]));
+        $response = $action === 'store'
+            ? $this->postJson('/api/v1/teams', $payload)
+            : $this->putJson("/api/v1/teams/{$team->id}", $payload);
+
+        $response->assertStatus(422)->assertJsonValidationErrors(['members.0.user_id']);
+    }
+
+    expect($inactive->fresh()->teams()->count())->toBe(0);
+})->with([
+    'web create' => ['web', 'store'],
+    'web update' => ['web', 'update'],
+    'mobile create' => ['mobile', 'store'],
+    'mobile update' => ['mobile', 'update'],
+]);
