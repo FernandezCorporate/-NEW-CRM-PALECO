@@ -2,6 +2,8 @@
 
 namespace App\Actions\Users;
 
+use App\Enums\TicketStatus;
+use App\Models\Ticket;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -36,6 +38,41 @@ class UpdateUser
 
             if ($originalUpdatedAt && ! $lockedUser->updated_at->eq(Carbon::parse($originalUpdatedAt))) {
                 return ['success' => false, 'changed' => false, 'message' => 'Conflict: This user profile was modified by another admin while you were editing.'];
+            }
+
+            $leavesDepartment = $user->role?->slug_identifier === 'supervisor'
+                && $lockedUser->is_active
+                && $lockedUser->department_id
+                && array_key_exists('department_id', $data)
+                && (int) $data['department_id'] !== (int) $lockedUser->department_id;
+
+            if ($leavesDepartment) {
+                // Locks the department's active supervisors so two moves can't both pass this check
+                $supervisorIds = User::query()
+                    ->where('department_id', $lockedUser->department_id)
+                    ->where('is_active', true)
+                    ->whereHas('role', fn ($q) => $q->where('slug_identifier', 'supervisor'))
+                    ->lockForUpdate()
+                    ->pluck('id');
+
+                $isLastSupervisor = $supervisorIds->reject(fn ($id) => $id === $lockedUser->id)->isEmpty();
+
+                if ($isLastSupervisor) {
+                    $openTicketCount = Ticket::query()
+                        ->where('department_id', $lockedUser->department_id)
+                        ->whereIn('status', [
+                            TicketStatus::OPEN,
+                            TicketStatus::ASSIGNED,
+                            TicketStatus::IN_PROGRESS,
+                            TicketStatus::PENDING_ENDORSEMENT,
+                            TicketStatus::RESOLVED,
+                        ])
+                        ->count();
+
+                    if ($openTicketCount > 0) {
+                        return ['success' => false, 'changed' => false, 'message' => "Cannot move the last active supervisor out of this department while it has {$openTicketCount} unfinished ticket(s). Assign another supervisor to the department first."];
+                    }
+                }
             }
 
             $lockedUser->fill($data);

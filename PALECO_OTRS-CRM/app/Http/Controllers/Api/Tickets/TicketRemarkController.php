@@ -53,7 +53,7 @@ class TicketRemarkController extends Controller
         $remark = $addTicketRemark->execute(
             $ticket,
             $request->user(),
-            $request->validated()
+            [...$request->validated(), 'is_internal' => false]
         );
 
         $remark->load(['author.role']);

@@ -9,6 +9,7 @@ use App\Actions\Users\CreateUser;
 use App\Actions\Users\ResetUserPassword;
 use App\Actions\Users\ToggleUserActiveStatus;
 use App\Actions\Users\UnlockUser;
+use App\Actions\Users\UpdateUser;
 use App\Enums\TicketStatus;
 use App\Models\AccountRole;
 use App\Models\Department;
@@ -226,3 +227,88 @@ test('RestoreTeam restores archived team and ForceDeleteTeam purges it', functio
     $this->assertDatabaseMissing('teams', ['id' => $team->id]);
 });
 
+
+test('the last active supervisor cannot be deactivated while the department has unfinished tickets', function (TicketStatus $status) {
+    $dept = Department::factory()->create();
+    $supervisor = User::factory()->supervisor($dept->id)->create();
+    Ticket::factory()->create(['department_id' => $dept->id, 'status' => $status->value]);
+
+    expect(fn () => app(ToggleUserActiveStatus::class)->execute($supervisor, false))
+        ->toThrow(ValidationException::class, 'Cannot deactivate the last active supervisor');
+
+    expect($supervisor->fresh()->is_active)->toBeTrue();
+})->with([
+    'open' => [TicketStatus::OPEN],
+    'assigned' => [TicketStatus::ASSIGNED],
+    'in progress' => [TicketStatus::IN_PROGRESS],
+    'pending endorsement' => [TicketStatus::PENDING_ENDORSEMENT],
+    'resolved' => [TicketStatus::RESOLVED],
+]);
+
+test('the last active supervisor cannot be moved to another department while work is unfinished', function () {
+    $dept = Department::factory()->create();
+    $otherDept = Department::factory()->create();
+    $supervisor = User::factory()->supervisor($dept->id)->create();
+    Ticket::factory()->create(['department_id' => $dept->id, 'status' => TicketStatus::RESOLVED->value]);
+
+    $result = app(UpdateUser::class)->execute($supervisor, [
+        'department_id' => $otherDept->id,
+        'original_updated_at' => $supervisor->updated_at->toIso8601String(),
+    ]);
+
+    expect($result['success'])->toBeFalse()
+        ->and($result['message'])->toContain('Cannot move the last active supervisor')
+        ->and($supervisor->fresh()->department_id)->toBe($dept->id);
+});
+
+test('a supervisor can be deactivated or moved when another active supervisor remains', function () {
+    $dept = Department::factory()->create();
+    $otherDept = Department::factory()->create();
+    [$first, $second] = User::factory()->supervisor($dept->id)->count(2)->create();
+    Ticket::factory()->create(['department_id' => $dept->id, 'status' => TicketStatus::OPEN->value]);
+
+    app(ToggleUserActiveStatus::class)->execute($first, false);
+    expect($first->fresh()->is_active)->toBeFalse();
+
+    // $second is now the last one, so moving it is refused
+    $result = app(UpdateUser::class)->execute($second, [
+        'department_id' => $otherDept->id,
+        'original_updated_at' => $second->updated_at->toIso8601String(),
+    ]);
+    expect($result['success'])->toBeFalse();
+});
+
+test('the last supervisor of a department with no unfinished work can be deactivated and moved', function () {
+    $dept = Department::factory()->create();
+    $otherDept = Department::factory()->create();
+    $supervisor = User::factory()->supervisor($dept->id)->create();
+    foreach ([TicketStatus::CLOSED, TicketStatus::CANCELLED, TicketStatus::ENDORSED] as $status) {
+        Ticket::factory()->create(['department_id' => $dept->id, 'status' => $status->value]);
+    }
+
+    $result = app(UpdateUser::class)->execute($supervisor, [
+        'department_id' => $otherDept->id,
+        'original_updated_at' => $supervisor->updated_at->toIso8601String(),
+    ]);
+    expect($result['success'])->toBeTrue()
+        ->and($supervisor->fresh()->department_id)->toBe($otherDept->id);
+
+    app(ToggleUserActiveStatus::class)->execute($supervisor->fresh(), false);
+    expect($supervisor->fresh()->is_active)->toBeFalse();
+});
+
+test('field personnel cannot be deactivated while their team has a ticket awaiting verification or endorsement', function (TicketStatus $status) {
+    $team = Team::factory()->create();
+    $user = User::factory()->fieldPersonnel()->create();
+    $team->members()->attach($user->id, ['team_role_id' => TeamRole::first()->id]);
+    Ticket::factory()->create(['team_id' => $team->id, 'department_id' => $team->department_id, 'status' => $status->value]);
+
+    expect(fn () => app(ToggleUserActiveStatus::class)->execute($user, false))
+        ->toThrow(ValidationException::class);
+
+    expect($user->fresh()->is_active)->toBeTrue()
+        ->and($team->members()->count())->toBe(1);
+})->with([
+    'resolved' => [TicketStatus::RESOLVED],
+    'pending endorsement' => [TicketStatus::PENDING_ENDORSEMENT],
+]);

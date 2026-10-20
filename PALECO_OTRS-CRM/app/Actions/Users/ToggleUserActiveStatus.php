@@ -32,13 +32,49 @@ class ToggleUserActiveStatus
                 if ($user->role->slug_identifier === 'field_personnel') {
                     $hasActiveTickets = Ticket::query()
                         ->whereIn('team_id', $user->teams()->pluck('teams.id'))
-                        ->whereIn('status', [TicketStatus::ASSIGNED, TicketStatus::IN_PROGRESS])
+                        ->whereIn('status', [
+                            TicketStatus::ASSIGNED,
+                            TicketStatus::IN_PROGRESS,
+                            TicketStatus::RESOLVED,
+                            TicketStatus::PENDING_ENDORSEMENT,
+                        ])
                         ->exists();
 
                     if ($hasActiveTickets) {
                         throw ValidationException::withMessages([
-                            'user' => 'Cannot deactivate user while their assigned crew has active tickets assigned or in progress. Please reassign the active tickets or remove the user from the active crew first.',
+                            'user' => 'Cannot deactivate user while their assigned crew has tickets that are assigned, in progress, awaiting report verification, or pending endorsement. Please reassign the active tickets or remove the user from the active crew first.',
                         ]);
+                    }
+                }
+
+                if ($user->role->slug_identifier === 'supervisor' && $user->department_id) {
+                    // Locks the department's active supervisors so two deactivations can't both pass this check
+                    $supervisorIds = User::query()
+                        ->where('department_id', $user->department_id)
+                        ->where('is_active', true)
+                        ->whereHas('role', fn ($q) => $q->where('slug_identifier', 'supervisor'))
+                        ->lockForUpdate()
+                        ->pluck('id');
+
+                    $isLastSupervisor = $supervisorIds->reject(fn ($id) => $id === $user->id)->isEmpty();
+
+                    if ($isLastSupervisor) {
+                        $openTicketCount = Ticket::query()
+                            ->where('department_id', $user->department_id)
+                            ->whereIn('status', [
+                                TicketStatus::OPEN,
+                                TicketStatus::ASSIGNED,
+                                TicketStatus::IN_PROGRESS,
+                                TicketStatus::PENDING_ENDORSEMENT,
+                                TicketStatus::RESOLVED,
+                            ])
+                            ->count();
+
+                        if ($openTicketCount > 0) {
+                            throw ValidationException::withMessages([
+                                'user' => "Cannot deactivate the last active supervisor of this department while it has {$openTicketCount} unfinished ticket(s). Assign another supervisor to the department first.",
+                            ]);
+                        }
                     }
                 }
 

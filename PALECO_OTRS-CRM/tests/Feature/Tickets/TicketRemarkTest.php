@@ -176,3 +176,28 @@ test('empty remark body is rejected by validation', function () {
     $response->assertJsonValidationErrors(['body']);
 });
 
+
+test('a mobile remark sent as internal is saved public and listed for its author', function () {
+    Sanctum::actingAs($this->personnel, ['*']);
+
+    $this->postJson("/api/v1/tickets/{$this->ticket->id}/remarks", [
+        'body' => 'Transformer leaking oil, needs Engineering.',
+        'is_internal' => true,
+    ])->assertCreated();
+
+    $remark = TicketRemark::where('ticket_id', $this->ticket->id)->first();
+    expect($remark->is_internal)->toBeFalse();
+
+    $bodies = collect($this->getJson("/api/v1/tickets/{$this->ticket->id}/remarks")->assertOk()->json('data'))->pluck('body');
+    expect($bodies)->toContain('Transformer leaking oil, needs Engineering.');
+});
+
+test('cwd officer can still post an internal remark via web portal', function () {
+    $this->actingAs($this->cwdOfficer)
+        ->post(route('shared.tickets.remarks.store', ['ticket' => $this->ticket]), [
+            'body' => 'Internal note: consumer has a pending billing dispute.',
+            'is_internal' => true,
+        ])->assertSessionHas('success');
+
+    expect(TicketRemark::where('ticket_id', $this->ticket->id)->first()->is_internal)->toBeTrue();
+});
