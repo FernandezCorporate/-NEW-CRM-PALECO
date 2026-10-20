@@ -44,6 +44,8 @@ class TicketResource extends JsonResource
             // Hierarchy
             'is_child' => ! empty($this->parent_ticket_id),
             'is_endorsed' => (bool) $this->is_endorsed,
+            // null for an origin ticket, otherwise endorsement or manual
+            'created_via' => $this->when($this->resource->relationLoaded('sourceEndorsement'), fn () => $this->createdVia()),
             'parent_ticket_id' => $this->parent_ticket_id,
             'parent_ticket_number' => $this->parentTicket?->ticket_number,
             'child_tickets_count' => $this->child_tickets_count ?? 0,

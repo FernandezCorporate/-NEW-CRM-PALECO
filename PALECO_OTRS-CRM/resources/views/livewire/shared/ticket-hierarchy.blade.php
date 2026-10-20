@@ -67,6 +67,22 @@
                 </div>
             </div>
 
+            <!-- How this child ticket was created -->
+            <div>
+                <span class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Created Through</span>
+                @if($ticket->sourceEndorsement)
+                    <div class="p-3 bg-amber-50 border border-amber-200 rounded-lg text-xs text-slate-700 space-y-1">
+                        <div class="font-bold text-amber-800 text-sm">Endorsement from {{ $ticket->sourceEndorsement->oldDepartment->dept_name ?? 'another department' }}</div>
+                        <p class="leading-relaxed">{{ $ticket->sourceEndorsement->reason }}</p>
+                        <div class="text-slate-500">
+                            Approved by {{ $ticket->sourceEndorsement->reviewer->full_name ?? 'a CWD officer' }}@if($ticket->sourceEndorsement->reviewed_at), {{ $ticket->sourceEndorsement->reviewed_at->format('M d, Y h:i A') }}@endif
+                        </div>
+                    </div>
+                @else
+                    <div class="p-3 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-600">Created manually by a CWD officer as a follow-up of the origin ticket.</div>
+                @endif
+            </div>
+
             @if($ticket->childTickets->isNotEmpty())
                 <div>
                     <span class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Sub-Child Tickets ({{ $ticket->childTickets->count() }})</span>

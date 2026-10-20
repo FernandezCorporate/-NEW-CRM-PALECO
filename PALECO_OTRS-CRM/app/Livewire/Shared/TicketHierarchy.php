@@ -55,6 +55,8 @@ class TicketHierarchy extends Component
             'department',
             'parentTicket.department',
             'childTickets.department',
+            'sourceEndorsement.oldDepartment',
+            'sourceEndorsement.reviewer',
         ]);
     }
 

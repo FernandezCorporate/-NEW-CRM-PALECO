@@ -215,6 +215,26 @@ class Ticket extends Model
     }
 
     /**
+     * The approved endorsement that created this child ticket, if it was not created manually by CWD.
+     */
+    public function sourceEndorsement(): HasOne
+    {
+        return $this->hasOne(TicketEndorsement::class, 'child_ticket_id');
+    }
+
+    /**
+     * How this ticket came to exist: null for an origin ticket, otherwise endorsement or manual.
+     */
+    public function createdVia(): ?string
+    {
+        if (is_null($this->parent_ticket_id)) {
+            return null;
+        }
+
+        return $this->sourceEndorsement ? 'endorsement' : 'manual';
+    }
+
+    /**
      * Timeline communication remarks added to this ticket.
      */
     public function remarks(): HasMany

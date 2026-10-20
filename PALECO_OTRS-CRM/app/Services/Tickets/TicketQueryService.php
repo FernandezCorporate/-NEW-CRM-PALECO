@@ -62,6 +62,8 @@ class TicketQueryService
             // Hierarchy
             'parentTicket.department',
             'childTickets.department',
+            'sourceEndorsement.oldDepartment',
+            'sourceEndorsement.reviewer',
 
             // History Modules
             'statusLog.updater',
@@ -136,7 +138,7 @@ class TicketQueryService
     public function getInboxTickets(User $user, array $params): LengthAwarePaginator
     {
         $query = Ticket::query()
-            ->with(['category', 'department', 'parentTicket', 'team', 'creator'])
+            ->with(['category', 'department', 'parentTicket', 'sourceEndorsement', 'team', 'creator'])
             ->withCount('childTickets');
 
         if ($user->role->slug_identifier === 'supervisor') {
@@ -198,6 +200,8 @@ class TicketQueryService
             'category',
             'department',
             'parentTicket',
+            'sourceEndorsement.oldDepartment',
+            'sourceEndorsement.reviewer',
             'closedBy.role',
             'creator.role',
             'team.members',

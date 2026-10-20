@@ -33,6 +33,19 @@ class TicketDetailedResource extends JsonResource
             'parent_ticket_id' => $this->parent_ticket_id,
             'parent_ticket_number' => $this->parentTicket?->ticket_number,
 
+            // Where a child ticket came from: null for an origin ticket, otherwise endorsement or manual
+            'created_via' => $this->when($this->resource->relationLoaded('sourceEndorsement'), fn () => $this->createdVia()),
+            'endorsement_origin' => $this->when(
+                $this->resource->relationLoaded('sourceEndorsement'),
+                fn () => $this->sourceEndorsement ? [
+                    'endorsement_id' => $this->sourceEndorsement->id,
+                    'reason' => $this->sourceEndorsement->reason,
+                    'from_dept' => $this->sourceEndorsement->oldDepartment?->dept_name,
+                    'approved_by' => $this->sourceEndorsement->reviewer?->full_name,
+                    'approved_at' => $this->sourceEndorsement->reviewed_at?->format('M d, Y h:i A'),
+                ] : null
+            ),
+
             // Timestamps
             'reported_at' => $this->reported_at?->format('M d, Y h:i A'),
             'started_at' => $this->started_at?->format('M d, Y h:i A'),

@@ -459,3 +459,61 @@ test('mobile ticket and history payloads expose is_endorsed and the from and to 
         ->assertJsonPath('data.endorsements.0.old_dept', $this->dept1->dept_name)
         ->assertJsonPath('data.endorsements.0.new_dept', $this->dept2->dept_name);
 });
+
+test('a child created by an endorsement shows where it came from, and a manual child does not', function () {
+    $this->ticket->update(['status' => TicketStatus::PENDING_ENDORSEMENT]);
+    $endorsement = TicketEndorsement::factory()->create([
+        'ticket_id' => $this->ticket->id,
+        'created_by_id' => $this->supervisor->id,
+        'suggested_department_id' => $this->dept2->id,
+        'reason' => 'Needs a crane bucket from the other division.',
+        'status' => EndorsementStatus::PENDING,
+        'pre_endorsement_status' => TicketStatus::ASSIGNED,
+    ]);
+
+    $this->actingAs($this->cwdOfficer)
+        ->post(route('cwd.endorsements.decide', ['endorsement' => $endorsement]), [
+            'status' => 'approved',
+            'department_id' => $this->dept2->id,
+        ])->assertSessionHas('success');
+
+    $child = Ticket::where('parent_ticket_id', $this->ticket->id)->firstOrFail();
+    expect($endorsement->fresh()->child_ticket_id)->toBe($child->id)
+        ->and($child->createdVia())->toBe('endorsement')
+        ->and($this->ticket->fresh()->createdVia())->toBeNull();
+
+    // The receiving supervisor sees the origin on mobile
+    $receiver = User::factory()->supervisor($this->dept2->id)->create();
+    Sanctum::actingAs($receiver, ['*']);
+
+    $this->getJson("/api/v1/tickets/{$child->id}")
+        ->assertOk()
+        ->assertJsonPath('data.created_via', 'endorsement')
+        ->assertJsonPath('data.endorsement_origin.reason', 'Needs a crane bucket from the other division.')
+        ->assertJsonPath('data.endorsement_origin.from_dept', $this->dept1->dept_name)
+        ->assertJsonPath('data.endorsement_origin.approved_by', $this->cwdOfficer->full_name);
+
+    $inbox = collect($this->getJson('/api/v1/tickets')->assertOk()->json('data'));
+    expect($inbox->firstWhere('id', $child->id)['created_via'])->toBe('endorsement');
+
+    // CWD sees it on the web details page
+    $this->actingAs($this->cwdOfficer)->get(route('cwd.tickets.show', $child))
+        ->assertOk()
+        ->assertSee('Endorsement from '.$this->dept1->dept_name)
+        ->assertSee('Needs a crane bucket from the other division.');
+
+    // A manual child of the same origin is marked manual, with no endorsement origin
+    $manual = Ticket::factory()->open()->create([
+        'parent_ticket_id' => $this->ticket->id,
+        'department_id' => $this->dept2->id,
+        'category_id' => $this->category->id,
+    ]);
+
+    $this->getJson("/api/v1/tickets/{$manual->id}")
+        ->assertOk()
+        ->assertJsonPath('data.created_via', 'manual')
+        ->assertJsonPath('data.endorsement_origin', null);
+
+    $this->actingAs($this->cwdOfficer)->get(route('cwd.tickets.show', $manual))
+        ->assertOk()->assertSee('Created manually by a CWD officer');
+});

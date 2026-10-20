@@ -90,6 +90,8 @@ return new class extends Migration
             // Department the ticket belonged to when the request was made, and the one CWD transferred it to on approval
             $table->foreignId('old_department_id')->nullable()->constrained('departments')->nullOnDelete();
             $table->foreignId('new_department_id')->nullable()->constrained('departments')->nullOnDelete();
+            // The child ticket an approval created, so the receiving department can see where its work came from
+            $table->foreignUlid('child_ticket_id')->nullable()->constrained('tickets')->nullOnDelete();
 
             $table->text('reason');
             $table->string('status', 30)->default('pending');

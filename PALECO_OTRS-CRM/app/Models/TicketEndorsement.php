@@ -22,6 +22,7 @@ class TicketEndorsement extends Model
         'suggested_department_id',
         'old_department_id',
         'new_department_id',
+        'child_ticket_id',
         'reason',
         'status',
         'pre_endorsement_status',
@@ -93,6 +94,14 @@ class TicketEndorsement extends Model
     public function newDepartment(): BelongsTo
     {
         return $this->belongsTo(Department::class, 'new_department_id')->withTrashed();
+    }
+
+    /**
+     * The child ticket created in the new department when this endorsement was approved.
+     */
+    public function childTicket(): BelongsTo
+    {
+        return $this->belongsTo(Ticket::class, 'child_ticket_id');
     }
 
     // --- SCOPES ---

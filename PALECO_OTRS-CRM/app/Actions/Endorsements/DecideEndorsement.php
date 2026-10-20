@@ -110,6 +110,8 @@ class DecideEndorsement
                             'reported_at' => now(),
                         ]);
 
+                        $lockedEndorsement->update(['child_ticket_id' => $childTicket->id]);
+
                         $childTicket->statusLog()->create([
                             'changed_by_id' => Auth::id(),
                             'old_status' => null,
