@@ -117,14 +117,15 @@ class TeamController extends Controller
         $result = $updateTeam->execute(
             $team,
             $teamDetails,
-            $request->validated('members', [])
+            // A request without members (e.g. a rename) keeps the current roster
+            $request->has('members') ? $request->validated('members', []) : null
         );
 
         if (! $result['success']) {
             return response()->json([
                 'success' => false,
                 'message' => $result['message'],
-            ], Response::HTTP_CONFLICT);
+            ], isset($result['blocked']) ? Response::HTTP_UNPROCESSABLE_ENTITY : Response::HTTP_CONFLICT);
         }
 
         return response()->json([

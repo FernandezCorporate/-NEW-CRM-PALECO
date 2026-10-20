@@ -325,3 +325,118 @@ test('mobile supervisor cannot access teams from another department', function (
     $response = $this->getJson("/api/v1/teams/{$teamInOtherDept->id}");
     $response->assertStatus(404);
 });
+
+test('emptying the roster of a team with active tickets is rejected', function (TicketStatus $status) {
+    $admin = User::factory()->admin()->create();
+    $department = Department::first();
+    $team = Team::factory()->create(['department_id' => $department->id, 'shift_start' => '08:00', 'shift_end' => '17:00']);
+    $member = User::factory()->fieldPersonnel()->create();
+    $team->members()->attach($member->id, ['team_role_id' => TeamRole::first()->id]);
+    $ticket = Ticket::factory()->create([
+        'team_id' => $team->id,
+        'department_id' => $department->id,
+        'status' => $status->value,
+    ]);
+
+    $response = $this->actingAs($admin)->put(route('admin.teams.update', $team), [
+        'team_name' => $team->team_name,
+        'department_id' => $department->id,
+        'shift_start' => '08:00',
+        'shift_end' => '17:00',
+        'original_updated_at' => $team->updated_at->toIso8601String(),
+    ]);
+
+    $response->assertSessionHas('error', fn ($message) => str_contains($message, $ticket->ticket_number));
+    expect($team->fresh()->members)->toHaveCount(1);
+})->with([
+    'assigned' => [TicketStatus::ASSIGNED],
+    'in progress' => [TicketStatus::IN_PROGRESS],
+    'resolved' => [TicketStatus::RESOLVED],
+    'pending endorsement' => [TicketStatus::PENDING_ENDORSEMENT],
+]);
+
+test('a team whose tickets are all closed or cancelled can be emptied', function () {
+    $admin = User::factory()->admin()->create();
+    $department = Department::first();
+    $team = Team::factory()->create(['department_id' => $department->id, 'shift_start' => '08:00', 'shift_end' => '17:00']);
+    $member = User::factory()->fieldPersonnel()->create();
+    $team->members()->attach($member->id, ['team_role_id' => TeamRole::first()->id]);
+    foreach ([TicketStatus::CLOSED, TicketStatus::CANCELLED] as $status) {
+        Ticket::factory()->create(['team_id' => $team->id, 'department_id' => $department->id, 'status' => $status->value]);
+    }
+
+    $this->actingAs($admin)->put(route('admin.teams.update', $team), [
+        'team_name' => $team->team_name,
+        'department_id' => $department->id,
+        'shift_start' => '08:00',
+        'shift_end' => '17:00',
+        'original_updated_at' => $team->updated_at->toIso8601String(),
+    ])->assertSessionHas('success');
+
+    expect($team->fresh()->members)->toHaveCount(0);
+});
+
+test('removing some members of a busy team is still allowed', function () {
+    $admin = User::factory()->admin()->create();
+    $department = Department::first();
+    $role = TeamRole::first();
+    $team = Team::factory()->create(['department_id' => $department->id, 'shift_start' => '08:00', 'shift_end' => '17:00']);
+    [$keep, $remove] = User::factory()->fieldPersonnel()->count(2)->create();
+    $team->members()->attach([$keep->id => ['team_role_id' => $role->id], $remove->id => ['team_role_id' => $role->id]]);
+    Ticket::factory()->create(['team_id' => $team->id, 'department_id' => $department->id, 'status' => TicketStatus::IN_PROGRESS->value]);
+
+    $this->actingAs($admin)->put(route('admin.teams.update', $team), [
+        'team_name' => $team->team_name,
+        'department_id' => $department->id,
+        'shift_start' => '08:00',
+        'shift_end' => '17:00',
+        'original_updated_at' => $team->updated_at->toIso8601String(),
+        'members' => [['user_id' => $keep->id, 'team_role_id' => $role->id]],
+    ])->assertSessionHas('success');
+
+    expect($team->fresh()->members->pluck('id')->all())->toBe([$keep->id]);
+});
+
+test('mobile team update without members keeps the roster', function () {
+    $department = Department::first();
+    $supervisor = User::factory()->supervisor()->create(['department_id' => $department->id]);
+    $team = Team::factory()->create(['department_id' => $department->id, 'shift_start' => '08:00', 'shift_end' => '17:00']);
+    $member = User::factory()->fieldPersonnel()->create();
+    $team->members()->attach($member->id, ['team_role_id' => TeamRole::first()->id]);
+
+    Sanctum::actingAs($supervisor);
+
+    $this->putJson("/api/v1/teams/{$team->id}", [
+        'team_name' => 'Renamed Crew',
+        'shift_start' => '08:00',
+        'shift_end' => '17:00',
+        'original_updated_at' => $team->updated_at->toIso8601String(),
+    ])->assertOk();
+
+    $team->refresh();
+    expect($team->team_name)->toBe('Renamed Crew')
+        ->and($team->members->pluck('id')->all())->toBe([$member->id]);
+});
+
+test('mobile team update with an empty members list on a busy team returns 422', function () {
+    $department = Department::first();
+    $supervisor = User::factory()->supervisor()->create(['department_id' => $department->id]);
+    $team = Team::factory()->create(['department_id' => $department->id, 'shift_start' => '08:00', 'shift_end' => '17:00']);
+    $member = User::factory()->fieldPersonnel()->create();
+    $team->members()->attach($member->id, ['team_role_id' => TeamRole::first()->id]);
+    $ticket = Ticket::factory()->create(['team_id' => $team->id, 'department_id' => $department->id, 'status' => TicketStatus::ASSIGNED->value]);
+
+    Sanctum::actingAs($supervisor);
+
+    $this->putJson("/api/v1/teams/{$team->id}", [
+        'team_name' => $team->team_name,
+        'shift_start' => '08:00',
+        'shift_end' => '17:00',
+        'original_updated_at' => $team->updated_at->toIso8601String(),
+        'members' => [],
+    ])->assertStatus(422)
+        ->assertJson(['success' => false])
+        ->assertJsonFragment(['message' => "Cannot remove every member while the team still has active tickets: {$ticket->ticket_number}. Reassign or finish them first."]);
+
+    expect($team->fresh()->members)->toHaveCount(1);
+});

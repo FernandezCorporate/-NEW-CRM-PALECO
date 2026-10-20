@@ -2,6 +2,7 @@
 
 namespace App\Actions\Teams;
 
+use App\Enums\TicketStatus;
 use App\Models\Team;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -12,17 +13,19 @@ use Illuminate\Support\Facades\DB;
 class UpdateTeam
 {
     /**
-     * @return array{success: bool, changed?: bool, message?: string, team?: Team}
+     * @return array{success: bool, blocked?: bool, changed?: bool, message?: string, team?: Team}
      */
-    public function handle(Team $team, array $teamDetails, array $assignedMembers): array
+    public function handle(Team $team, array $teamDetails, ?array $assignedMembers): array
     {
         return $this->execute($team, $teamDetails, $assignedMembers);
     }
 
     /**
-     * @return array{success: bool, changed?: bool, message?: string, team?: Team}
+     * Passing null for $assignedMembers leaves the roster unchanged.
+     *
+     * @return array{success: bool, blocked?: bool, changed?: bool, message?: string, team?: Team}
      */
-    public function execute(Team $team, array $teamDetails, array $assignedMembers): array
+    public function execute(Team $team, array $teamDetails, ?array $assignedMembers): array
     {
         if ($team->trashed()) {
             return [
@@ -50,14 +53,37 @@ class UpdateTeam
                 return [$m->id => (int) $m->pivot->team_role_id];
             })->toArray();
 
-            $newRoster = collect($assignedMembers)->mapWithKeys(function ($member) {
-                return [$member['user_id'] => (int) $member['team_role_id']];
-            })->toArray();
+            $newRoster = $assignedMembers === null
+                ? $oldRoster
+                : collect($assignedMembers)->mapWithKeys(function ($member) {
+                    return [$member['user_id'] => (int) $member['team_role_id']];
+                })->toArray();
 
             ksort($oldRoster);
             ksort($newRoster);
 
             $membersChanged = ($oldRoster !== $newRoster);
+
+            // An empty crew can't work, report on or be reassigned these tickets
+            if ($membersChanged && empty($newRoster)) {
+                $blockingTickets = $lockedTeam->tickets()
+                    ->whereIn('status', [
+                        TicketStatus::ASSIGNED,
+                        TicketStatus::IN_PROGRESS,
+                        TicketStatus::RESOLVED,
+                        TicketStatus::PENDING_ENDORSEMENT,
+                    ])
+                    ->orderBy('ticket_number')
+                    ->pluck('ticket_number');
+
+                if ($blockingTickets->isNotEmpty()) {
+                    return [
+                        'success' => false,
+                        'blocked' => true,
+                        'message' => 'Cannot remove every member while the team still has active tickets: '.$blockingTickets->implode(', ').'. Reassign or finish them first.',
+                    ];
+                }
+            }
 
             $lockedTeam->fill($teamDetails);
             $isTeamDirty = $lockedTeam->isDirty();

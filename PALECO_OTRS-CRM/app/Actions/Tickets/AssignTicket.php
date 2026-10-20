@@ -50,6 +50,18 @@ class AssignTicket
                 ->lockForUpdate()
                 ->firstOrFail();
 
+            // Waits for any roster edit or archive on this team to finish before assigning to it
+            $lockedTeam = Team::withTrashed()
+                ->where('id', $team->id)
+                ->lockForUpdate()
+                ->first();
+
+            if (! $lockedTeam || $lockedTeam->trashed()) {
+                throw ValidationException::withMessages([
+                    'team_id' => 'The selected team was archived while you were assigning it.',
+                ]);
+            }
+
             if (! in_array($lockedTicket->status, $allowedStatuses, true)) {
                 throw ValidationException::withMessages([
                     'status' => 'Tickets that are in-progress, resolved, closed, or pending endorsement cannot be assigned or reassigned.',
