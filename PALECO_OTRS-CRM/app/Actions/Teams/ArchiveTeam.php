@@ -7,7 +7,7 @@ use App\Models\Team;
 use Illuminate\Support\Facades\DB;
 
 /**
- * Single-Action: Soft deletes (archives) an operational team if no active service tickets are assigned.
+ * Single-Action: Soft deletes (archives) an operational team if none of its tickets still depend on its crew.
  */
 class ArchiveTeam
 {
@@ -36,17 +36,20 @@ class ArchiveTeam
                 ];
             }
 
+            // Resolved and Pending Endorsement tickets return to this team if the report or endorsement is rejected
             $hasActiveTickets = $lockedTeam->ticket()
                 ->whereIn('status', [
                     TicketStatus::ASSIGNED,
                     TicketStatus::IN_PROGRESS,
+                    TicketStatus::RESOLVED,
+                    TicketStatus::PENDING_ENDORSEMENT,
                 ])
                 ->exists();
 
             if ($hasActiveTickets) {
                 return [
                     'success' => false,
-                    'message' => 'Cannot archive team. They currently have active assigned service tickets.',
+                    'message' => 'Cannot archive team. It still has tickets that are assigned, in progress, awaiting report verification, or pending endorsement.',
                 ];
             }
 

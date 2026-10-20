@@ -69,6 +69,36 @@ test('ArchiveDepartment blocks archival when active teams or tickets exist', fun
     expect($dept->fresh()->trashed())->toBeFalse();
 });
 
+test('ArchiveDepartment is blocked by a single open-work ticket even with no teams or supervisors', function (TicketStatus $status) {
+    $dept = Department::factory()->create();
+    Ticket::factory()->create([
+        'department_id' => $dept->id,
+        'status' => $status->value,
+    ]);
+
+    $result = app(ArchiveDepartment::class)->execute($dept);
+
+    expect($result['success'])->toBeFalse()
+        ->and($result['message'])->toContain('Cannot archive this department')
+        ->and($dept->fresh()->trashed())->toBeFalse();
+})->with([
+    'open (existing rule)' => [TicketStatus::OPEN],
+    'resolved (report awaiting verification)' => [TicketStatus::RESOLVED],
+]);
+
+test('ArchiveDepartment still archives a department whose tickets are all closed', function () {
+    $dept = Department::factory()->create();
+    Ticket::factory()->create([
+        'department_id' => $dept->id,
+        'status' => TicketStatus::CLOSED->value,
+    ]);
+
+    $result = app(ArchiveDepartment::class)->execute($dept);
+
+    expect($result['success'])->toBeTrue()
+        ->and($dept->fresh()->trashed())->toBeTrue();
+});
+
 test('Department lifecycle handles archive, restore, and force delete', function () {
     $dept = Department::factory()->create();
 

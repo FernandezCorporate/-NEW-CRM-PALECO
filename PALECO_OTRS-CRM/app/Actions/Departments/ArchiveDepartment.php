@@ -36,12 +36,14 @@ class ArchiveDepartment
                 ];
             }
 
+            // Resolved tickets still need a supervisor of this department to verify the report
             $hasActiveTickets = $lockedDept->tickets()
                 ->whereIn('status', [
                     TicketStatus::OPEN,
                     TicketStatus::ASSIGNED,
                     TicketStatus::IN_PROGRESS,
                     TicketStatus::PENDING_ENDORSEMENT,
+                    TicketStatus::RESOLVED,
                 ])
                 ->exists();
 

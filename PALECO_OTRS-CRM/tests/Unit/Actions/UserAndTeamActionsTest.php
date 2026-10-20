@@ -171,8 +171,42 @@ test('ArchiveTeam archives empty team and prevents archiving if tickets active',
 
     $blockedResult = $action->execute($team);
     expect($blockedResult['success'])->toBeFalse();
-    expect($blockedResult['message'])->toContain('Cannot archive team. They currently have active assigned service tickets.');
+    expect($blockedResult['message'])->toContain('Cannot archive team. It still has tickets that are assigned, in progress, awaiting report verification, or pending endorsement.');
     expect($team->fresh()->trashed())->toBeFalse();
+});
+
+test('ArchiveTeam is blocked while a ticket can still return to the team', function (TicketStatus $status) {
+    $team = Team::factory()->create();
+    Ticket::factory()->create([
+        'team_id' => $team->id,
+        'department_id' => $team->department_id,
+        'status' => $status->value,
+    ]);
+
+    $result = app(ArchiveTeam::class)->execute($team);
+
+    expect($result['success'])->toBeFalse()
+        ->and($result['message'])->toContain('Cannot archive team')
+        ->and($team->fresh()->trashed())->toBeFalse();
+})->with([
+    'resolved (report awaiting verification)' => [TicketStatus::RESOLVED],
+    'pending endorsement' => [TicketStatus::PENDING_ENDORSEMENT],
+]);
+
+test('ArchiveTeam still archives a team whose tickets are all closed or cancelled', function () {
+    $team = Team::factory()->create();
+    foreach ([TicketStatus::CLOSED, TicketStatus::CANCELLED] as $status) {
+        Ticket::factory()->create([
+            'team_id' => $team->id,
+            'department_id' => $team->department_id,
+            'status' => $status->value,
+        ]);
+    }
+
+    $result = app(ArchiveTeam::class)->execute($team);
+
+    expect($result['success'])->toBeTrue()
+        ->and($team->fresh()->trashed())->toBeTrue();
 });
 
 test('RestoreTeam restores archived team and ForceDeleteTeam purges it', function () {

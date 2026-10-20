@@ -269,7 +269,7 @@ test('archiving team is prevented if team has active assigned tickets', function
     $response = $this->actingAs($admin)->delete(route('admin.teams.archive', $team));
 
     $response->assertRedirect(route('admin.teams'));
-    $response->assertSessionHas('error', 'Cannot archive team. They currently have active assigned service tickets.');
+    $response->assertSessionHas('error', 'Cannot archive team. It still has tickets that are assigned, in progress, awaiting report verification, or pending endorsement.');
     expect($team->fresh()->trashed())->toBeFalse();
 });
 
