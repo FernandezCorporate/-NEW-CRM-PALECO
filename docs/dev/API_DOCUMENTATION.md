@@ -388,6 +388,8 @@ Includes real-time global status counters in the pagination `meta` block.
       "is_other_category": false,
       "other_category_name": null,
       "is_child": false,
+      "is_endorsed": false,
+      "created_via": null,
       "parent_ticket_id": null,
       "parent_ticket_number": null,
       "child_tickets_count": 0,
@@ -444,6 +446,13 @@ Includes real-time global status counters in the pagination `meta` block.
 }
 ```
 
+#### Hierarchy & Endorsement Fields
+| Field | Type | Description |
+| :--- | :--- | :--- |
+| `is_child` | `boolean` | `true` when the ticket has a parent (origin) ticket. |
+| `is_endorsed` | `boolean` | `true` once an endorsement of this ticket was approved and its work moved to another department. Stays `true` after the ticket is later force-closed, unlike the `endorsed` status. |
+| `created_via` | `string\|null` | How the ticket was created: `null` for an origin ticket, `endorsement` for a child created by an approved endorsement, `manual` for a child created by a CWD officer. |
+
 ---
 
 ### 6.2. Get Ticket Detailed Information
@@ -470,8 +479,11 @@ Returns the full ticket details including complainant particulars, assigned crew
     "department_id": 1,
     "department_name": "Technical Services Department",
     "is_child": false,
+    "is_endorsed": false,
     "parent_ticket_id": null,
     "parent_ticket_number": null,
+    "created_via": null,
+    "endorsement_origin": null,
     "reported_at": "Oct 06, 2026 09:15 AM",
     "started_at": "Oct 06, 2026 10:00 AM",
     "resolved_at": null,
@@ -552,6 +564,24 @@ Returns the full ticket details including complainant particulars, assigned crew
 }
 ```
 
+#### Endorsement Origin (Child Tickets)
+`is_endorsed` and `created_via` mean the same as in the inbox (§6.1). For a child created by an approved endorsement, `endorsement_origin` tells the receiving department where the work came from and why; for a manual child or an origin ticket it is `null`.
+
+```json
+{
+  "is_child": true,
+  "parent_ticket_number": "TKT-261020-004",
+  "created_via": "endorsement",
+  "endorsement_origin": {
+    "endorsement_id": "01JM4ENDORSE1234567890ABC",
+    "reason": "Inspection reveals defective digital meter dial. Requires meter laboratory recalibration.",
+    "from_dept": "Technical Services Department",
+    "approved_by": "Alliah Officer",
+    "approved_at": "Oct 06, 2026 01:10 PM"
+  }
+}
+```
+
 ---
 
 ### 6.3. Start Work on Ticket
@@ -614,18 +644,31 @@ Transitions an assigned ticket to `In Progress` status upon field crew arrival o
 
 #### Timestamp Resolution & Lifecycle Clamping
 When `X-Client-Timestamp` or `client_timestamp` is provided:
-1. **Creation Floor:** Timestamps strictly earlier than the ticket's creation date (`reported_at` or `created_at`) are rejected with `HTTP 422`.
-2. **Lifecycle Clamping (`started_at >= assigned_at`):** If the lineman's phone clock is behind and records a start time prior to when the supervisor dispatched the ticket (`activeAssignment->created_at`), the server automatically clamps `started_at` forward to the assignment timestamp. This ensures strict chronological order without failing the sync request.
-3. **Future Skew Ceiling:** Timestamps more than 5 minutes into the future are clamped to current server time (`now()`).
+1. **Format:** It must parse as a date-time (ISO-8601 recommended); otherwise the request is rejected with `HTTP 422`.
+2. **Future Ceiling:** A timestamp more than 5 minutes ahead of server time is rejected with `HTTP 422`; it is not clamped.
+3. **Lifecycle Clamping (`started_at >= assigned_at`):** A timestamp earlier than the moment the ticket was assigned to the crew (the active assignment's time, or `reported_at` / `created_at` when there is none) is **not rejected**: the server moves it forward to that moment. A slow phone clock therefore never fails the sync and never produces a start before the dispatch.
 
-#### Error Response: `422 Unprocessable Content` (Client Timestamp Validation)
+#### Error Response: `422 Unprocessable Content` (Future Client Timestamp)
 ```json
 {
   "success": false,
-  "message": "The client timestamp cannot be earlier than ticket creation date.",
+  "message": "The client timestamp cannot be in the future.",
   "errors": {
     "client_timestamp": [
-      "The client timestamp cannot be earlier than ticket creation date."
+      "The client timestamp cannot be in the future."
+    ]
+  }
+}
+```
+
+#### Error Response: `422 Unprocessable Content` (Unparseable Client Timestamp)
+```json
+{
+  "success": false,
+  "message": "The client timestamp format is invalid. Must be a valid ISO-8601 string.",
+  "errors": {
+    "client_timestamp": [
+      "The client timestamp format is invalid. Must be a valid ISO-8601 string."
     ]
   }
 }
@@ -636,7 +679,7 @@ When `X-Client-Timestamp` or `client_timestamp` is provided:
 ```json
 {
   "success": false,
-  "message": "The idempotency key has already been used with different request parameters."
+  "message": "Idempotency key has already been used with a different request payload."
 }
 ```
 
@@ -677,13 +720,37 @@ Fetches the full timeline of historical crew assignments and cross-department en
         "assigned_by_role": "Department Supervisor",
         "assignment_reason": "Urgent dispatched due to safety report",
         "assigned_at": "Oct 06, 2026 09:30 AM",
-        "unassigned_at": null
+        "unassigned_at": "Oct 06, 2026 01:10 PM"
       }
     ],
-    "endorsements": []
+    "endorsements": [
+      {
+        "suggested_dept": "Meter Management Department",
+        "old_dept": "Technical Services Department",
+        "new_dept": "Meter Management Department",
+        "created_by": "John Doe",
+        "creator_role": "Department Supervisor",
+        "endorsement_reason": "Inspection reveals defective digital meter dial. Requires meter laboratory recalibration.",
+        "time_requested": "Oct 06, 2026 12:00 PM",
+        "request_status": "approved",
+        "pre_endorsement_status": "assigned",
+        "reviewed_by": "Alliah Officer",
+        "rejection_reason": null,
+        "verified_at": "Oct 06, 2026 01:10 PM"
+      }
+    ]
   }
 }
 ```
+
+#### Endorsement Record Fields
+| Field | Type | Description |
+| :--- | :--- | :--- |
+| `suggested_dept` | `string\|null` | The department the supervisor suggested. Only a suggestion; CWD picks the real target. |
+| `old_dept` | `string\|null` | The ticket's department when the request was made (taken from the ticket, not the requester, so it stays correct if the supervisor later moves). |
+| `new_dept` | `string\|null` | The department CWD transferred the work to on approval. `null` while pending and after a rejection. |
+| `request_status` | `string` | `pending`, `approved` or `rejected`. |
+| `pre_endorsement_status` | `string` | The ticket's status when the request was made: `open` or `assigned`. Rejection returns the ticket to this status and its team. |
 
 ---
 
@@ -932,6 +999,13 @@ Retrieves all candidate departments available for ticket transfer, marking the s
 ### 9.2. Submit Endorsement Request
 Submits a formal endorsement request. The ticket transitions to `Pending Endorsement` status and is frozen until reviewed by CWD administration.
 
+> [!IMPORTANT]
+> **Endorsement Eligibility:**
+> - **Only `OPEN` and `ASSIGNED` tickets can be endorsed.** Once a crew starts work (`IN_PROGRESS`), the job is accepted as within the department's scope and stays there; if more work turns up for another department, CWD creates a child ticket instead. `RESOLVED`, `CLOSED`, `CANCELLED`, `PENDING_ENDORSEMENT` and `ENDORSED` tickets are refused too.
+> - **Origin tickets only:** child tickets cannot be endorsed (`HTTP 403`).
+> - **One request at a time:** a ticket with a pending request cannot be endorsed again until CWD decides it.
+> - **Approval** (by CWD on the web) marks the ticket `endorsed` with `is_endorsed: true`, records `new_dept`, and opens a child ticket in the target department whose `created_via` is `endorsement` (see §6.2). **Rejection** returns the ticket to `pre_endorsement_status` with the same team.
+
 - **Method:** `POST`
 - **URL:** `/api/v1/tickets/{ticket}/endorse`
 - **Access Level:** Supervisor (`can:access-supervisor`)
@@ -958,16 +1032,51 @@ Submits a formal endorsement request. The ticket transitions to `Pending Endorse
   "message": "An endorsement request has been submitted. Ticket 2026-0042 is now frozen pending CWD review.",
   "data": {
     "suggested_dept": "Meter Management Department",
+    "old_dept": "Technical Services Department",
     "created_by": "John Doe",
     "creator_role": "Department Supervisor",
     "endorsement_reason": "Inspection reveals defective digital meter dial. Requires meter laboratory recalibration.",
     "time_requested": "Oct 06, 2026 12:00 PM",
-    "request_status": "Pending",
-    "pre_endorsement_status": "In Progress",
+    "request_status": "pending",
+    "pre_endorsement_status": "assigned",
     "reviewed_by": null,
     "rejection_reason": null,
     "verified_at": null
   }
+}
+```
+
+#### Error Response: `422 Unprocessable Content` (Ticket Not Open or Assigned)
+```json
+{
+  "success": false,
+  "message": "Only Open or Assigned tickets can be endorsed. Once work has started, the ticket stays with this department.",
+  "errors": {
+    "status": [
+      "Only Open or Assigned tickets can be endorsed. Once work has started, the ticket stays with this department."
+    ]
+  }
+}
+```
+
+#### Error Response: `422 Unprocessable Content` (Request Already Pending)
+```json
+{
+  "success": false,
+  "message": "This ticket already has a pending endorsement request.",
+  "errors": {
+    "status": [
+      "This ticket already has a pending endorsement request."
+    ]
+  }
+}
+```
+
+#### Error Response: `403 Forbidden` (Child Ticket)
+```json
+{
+  "success": false,
+  "message": "Child tickets cannot be endorsed. Ask the CWD officer to create a new child ticket from the origin ticket instead."
 }
 ```
 
@@ -1110,29 +1219,47 @@ Submits an accomplishment report with required photo evidence (1–10 images) an
 
 #### Timestamp Resolution & Lifecycle Clamping
 When `X-Client-Timestamp` or `client_timestamp` is provided:
-1. **Creation Floor:** Timestamps strictly earlier than the ticket's creation date (`reported_at` or `created_at`) are rejected with `HTTP 422`.
-2. **Lifecycle Clamping (`resolved_at >= started_at`):** If the lineman's phone clock is slow and records an accomplishment time prior to `ticket.started_at` (or `activeAssignment->created_at`), the server automatically clamps `resolved_at` forward to `started_at`. This guarantees that accomplishment never precedes work start without failing the upload.
-3. **Future Skew Ceiling:** Timestamps more than 5 minutes into the future are clamped to current server time (`now()`).
+1. **Format:** It must parse as a date-time (ISO-8601 recommended); otherwise the request is rejected with `HTTP 422`.
+2. **Future Ceiling:** A timestamp more than 5 minutes ahead of server time is rejected with `HTTP 422` (`"The client timestamp cannot be in the future."`); it is not clamped.
+3. **Lifecycle Clamping (`resolved_at >= started_at`):** A timestamp earlier than the ticket's `started_at` (or the assignment time, then `reported_at` / `created_at`, when that is missing) is **not rejected**: the server moves it forward to that moment, so a report never precedes the work start and a slow phone clock never fails the upload.
 
-#### Error Response: `422 Unprocessable Content` (Client Timestamp Chronology)
+#### Retries & Resubmissions
+- **Same `X-Idempotency-Key`:** the first successful response is replayed (`X-Cache: HIT`); no duplicate report or files are stored.
+- **Ticket already `RESOLVED`, new or missing key:** if this worker's latest report is still **pending** review, it is treated as a retry and that report is returned with `201`. If not (the worker's report was rejected and another report is now pending, or the pending report belongs to someone else), the request is refused with `422` and the uploaded files are discarded. This stops an offline queue from silently replacing new evidence with an old rejected report.
+- **Ticket `PENDING_ENDORSEMENT`:** refused with `422` (`"Ticket is locked pending inter-departmental endorsement review."`).
+
+#### Error Response: `422 Unprocessable Content` (Stale Resubmission While Another Report Is Under Review)
 ```json
 {
   "success": false,
-  "message": "The client timestamp cannot be earlier than ticket creation date.",
+  "message": "This ticket already has a pending accomplishment report under supervisor review.",
+  "errors": {
+    "status": [
+      "This ticket already has a pending accomplishment report under supervisor review."
+    ]
+  }
+}
+```
+
+#### Error Response: `422 Unprocessable Content` (Future Client Timestamp)
+```json
+{
+  "success": false,
+  "message": "The client timestamp cannot be in the future.",
   "errors": {
     "client_timestamp": [
-      "The client timestamp cannot be earlier than ticket creation date."
+      "The client timestamp cannot be in the future."
     ]
   }
 }
 ```
 
 #### Error Response: `422 Unprocessable Content` (Idempotency Key Reuse Mismatch)
-*Returned if the same `X-Idempotency-Key` is re-sent with differing files, remarks, or request parameters.*
+*Returned if the same `X-Idempotency-Key` is re-sent to a different endpoint or with different form fields. Files are not part of the fingerprint.*
 ```json
 {
   "success": false,
-  "message": "The idempotency key has already been used with different request parameters."
+  "message": "Idempotency key has already been used with a different request payload."
 }
 ```
 
@@ -1450,10 +1577,20 @@ Creates a new operational team under the supervisor's department and syncs initi
 }
 ```
 
+> [!NOTE]
+> Every `members[].user_id` must be an **active** Field Personnel account (the same rule applies to §12.5). A deactivated account is rejected with `HTTP 422` on `members.N.user_id`: `"One or more of the selected members are not active Field Personnel."`
+
 ---
 
 ### 12.5. Update Team
 Updates team metadata and modifies member rosters with optimistic locking protection.
+
+> [!IMPORTANT]
+> **Roster Rules:**
+> - **Leaving out `members` keeps the current roster.** A rename or shift change can be sent without the `members` field and no member is removed.
+> - **`members: []` clears the roster**, but only while the team has no `ASSIGNED`, `IN_PROGRESS`, `RESOLVED` or `PENDING_ENDORSEMENT` tickets. Otherwise the update is refused with `HTTP 422` and the message lists the blocking ticket numbers. Removing some members (keeping at least one) is always allowed.
+> - **Members must be active** Field Personnel accounts (see §12.4).
+> - The team's department is always the supervisor's own; a `department_id` in the body is ignored.
 
 - **Method:** `PUT`
 - **URL:** `/api/v1/teams/{team}` *(Alias: `/api/v1/teams/{team}/update`)*
@@ -1487,10 +1624,27 @@ Updates team metadata and modifies member rosters with optimistic locking protec
 }
 ```
 
+#### Error Response: `422 Unprocessable Content` (Emptying a Busy Team)
+```json
+{
+  "success": false,
+  "message": "Cannot remove every member while the team still has active tickets: TKT-261020-002. Reassign or finish them first."
+}
+```
+
+#### Error Response: `409 Conflict` (Stale Edit or Archived Team)
+*Returned when `original_updated_at` no longer matches (someone else saved the team first) or the team was archived.*
+```json
+{
+  "success": false,
+  "message": "Conflict: This team was modified by another user while you were editing."
+}
+```
+
 ---
 
 ### 12.6. Archive Team (Soft Delete)
-Soft deletes a team if no active tickets (`Open`, `Assigned`, `In Progress`, `Resolved`) are currently assigned.
+Soft deletes a team only while it has no `ASSIGNED`, `IN_PROGRESS`, `RESOLVED` or `PENDING_ENDORSEMENT` tickets. `RESOLVED` and `PENDING_ENDORSEMENT` tickets count because a rejected report or endorsement sends the ticket back to this team. Otherwise the request is refused with `HTTP 409`: `"Cannot archive team. It still has tickets that are assigned, in progress, awaiting report verification, or pending endorsement."`
 
 - **Method:** `DELETE`
 - **URL:** `/api/v1/teams/{team}/archive`
