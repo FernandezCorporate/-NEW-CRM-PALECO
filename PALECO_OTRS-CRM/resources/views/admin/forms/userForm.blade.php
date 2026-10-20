@@ -38,7 +38,7 @@
 
     <x-alert />
 
-    <article class="card overflow-hidden">
+    <article class="card">
         <form method="POST" action="{{ isset($user) ? route('admin.users.update', ['user' => $user]) : route('admin.users.store') }}">
             @csrf
             @isset($user)

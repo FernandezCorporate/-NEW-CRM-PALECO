@@ -17,7 +17,7 @@
         @include('cwd.prompts.alert')
 
         <!-- Main Document Card -->
-        <article class="bg-white border border-slate-200 rounded-xl shadow-xs overflow-hidden mb-8" aria-labelledby="endorsement-title">
+        <article class="bg-white border border-slate-200 rounded-xl shadow-xs mb-8" aria-labelledby="endorsement-title">
             
             <!-- 1. Header Section -->
             <header class="px-6 py-6 border-b border-slate-200">
@@ -204,7 +204,7 @@
                 </section>
             @else
                 <!-- Read-Only Processed State -->
-                <section class="px-6 py-8 border-t border-slate-200 bg-slate-50" aria-labelledby="decision-record-heading">
+                <section class="px-6 py-8 border-t border-slate-200 bg-slate-50 rounded-b-xl" aria-labelledby="decision-record-heading">
                     <div class="ml-11">
                         <h2 id="decision-record-heading" class="text-sm font-bold text-slate-900 mb-3">Decision Record</h2>
                         <p class="text-sm text-slate-600">

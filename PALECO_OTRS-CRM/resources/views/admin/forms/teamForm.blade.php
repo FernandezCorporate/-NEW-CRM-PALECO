@@ -38,7 +38,7 @@
 
     <x-alert />
 
-    <article class="card overflow-hidden">
+    <article class="card">
         <form action="{{ isset($team) ? route('admin.teams.update', $team) : route('admin.teams.store') }}" method="POST">
             @csrf
             @isset($team)
