@@ -1,1 +1,0 @@
-@include('livewire.shared.ticket-table')
