@@ -38,7 +38,8 @@ class StoreChildTicketRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'department_id' => ['required', 'exists:departments,id'],
+            // Archived departments have no supervisors or teams, so a ticket there could never be worked
+            'department_id' => ['required', Rule::exists('departments', 'id')->whereNull('deleted_at')],
             'complaint_description' => ['required', 'string', 'min:5'],
 
             'other_category' => ['boolean'],
@@ -64,7 +65,7 @@ class StoreChildTicketRequest extends FormRequest
     {
         return [
             'department_id.required' => 'Please select a department to handle this child ticket.',
-            'department_id.exists' => 'The selected department does not exist.',
+            'department_id.exists' => 'The selected department does not exist or has been archived.',
 
             'complaint_description.required' => 'You must provide a clear task description for the child ticket.',
             'complaint_description.string' => 'The task description must be a valid text string.',

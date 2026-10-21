@@ -792,7 +792,7 @@ Retrieves all public remarks/comments posted on the ticket. Internal administrat
 ---
 
 ### 7.2. Create Ticket Remark
-Posts a new public remark to the ticket timeline.
+Posts a new public remark to the ticket timeline. **Closed and cancelled tickets are read-only:** posting on them returns `HTTP 403` with `"Closed and cancelled tickets are read-only. Remarks can no longer be added."`
 
 > [!IMPORTANT]
 > **Online-Only Operational Boundary:** Ticket remarks are strictly online-only interactive communications. Unlike `/start` and `/accomplish`, remarks do **not** support offline queueing, idempotency keys, or client-side timestamps. When a mobile device is in an offline dead zone, the remarks UI must disable the submit button and instruct the user: *"An active internet connection is required to post remarks."*
@@ -1666,7 +1666,7 @@ Soft deletes a team only while it has no `ASSIGNED`, `IN_PROGRESS`, `RESOLVED` o
 ---
 
 ### 12.7. Restore Archived Team
-Restores an archived team back to active status.
+Restores an archived team back to active status. Refused with `HTTP 409` while the team's department is archived (`"Cannot restore team. Its department is archived; restore the department first."`) or when an active team in the department already uses the same name.
 
 - **Method:** `PATCH`
 - **URL:** `/api/v1/teams/{team}/restore`
@@ -1688,7 +1688,7 @@ Restores an archived team back to active status.
 ---
 
 ### 12.8. Force Delete Team (Permanent Purge)
-Permanently deletes a previously archived team from the database. Blocked if the team has any historical service ticket associations.
+Permanently deletes a previously archived team from the database. Meant only for undoing a team created by mistake: it is refused with `HTTP 409` if the team was **ever** assigned to a ticket, including tickets later reassigned to another team (`"Cannot permanently delete <team> because it has been assigned to service tickets. Keep it archived instead."`). Teams that have done real work stay archived, so ticket assignment history is never lost.
 
 - **Method:** `DELETE`
 - **URL:** `/api/v1/teams/{team}/force-delete`

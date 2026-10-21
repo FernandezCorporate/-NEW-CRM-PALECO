@@ -3,6 +3,7 @@
 namespace App\Actions\Users;
 
 use App\Enums\TicketStatus;
+use App\Models\Department;
 use App\Models\Ticket;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
@@ -28,7 +29,32 @@ class ToggleUserActiveStatus
     public function execute(User $user, bool $isActive): void
     {
         DB::transaction(function () use ($user, $isActive) {
+            // A reactivated account must land in a department that still operates
+            if ($isActive && $user->department_id) {
+                $department = Department::withTrashed()->find($user->department_id);
+
+                if (! $department || $department->trashed()) {
+                    throw ValidationException::withMessages([
+                        'user' => 'Cannot reactivate this account because its department is archived. Edit the account and move it to an active department first.',
+                    ]);
+                }
+            }
+
             if (! $isActive) {
+                // Every role must keep at least one active account; locking the role's active rows stops two deactivations racing past this check
+                $otherActiveInRole = User::query()
+                    ->where('role_id', $user->role_id)
+                    ->where('is_active', true)
+                    ->lockForUpdate()
+                    ->pluck('id')
+                    ->reject(fn ($id) => $id === $user->id);
+
+                if ($otherActiveInRole->isEmpty()) {
+                    throw ValidationException::withMessages([
+                        'user' => "Cannot deactivate the last active {$user->role->role_name} account. Create or reactivate another one first.",
+                    ]);
+                }
+
                 if ($user->role->slug_identifier === 'field_personnel') {
                     $hasActiveTickets = Ticket::query()
                         ->whereIn('team_id', $user->teams()->pluck('teams.id'))

@@ -284,7 +284,12 @@ class UserController extends Controller
         }
 
         Gate::authorize('reactivate', $user);
-        $toggleUserStatus->execute($user, true);
+
+        try {
+            $toggleUserStatus->execute($user, true);
+        } catch (ValidationException $e) {
+            return redirect()->back()->with('error', $e->getMessage())->withErrors($e->errors());
+        }
 
         $redirectRoute = $this->resolveSmartRedirect($request, 'admin.users', [
             'details' => function (Request $req) use ($user) {

@@ -2,6 +2,7 @@
 
 namespace App\Policies;
 
+use App\Enums\TicketStatus;
 use App\Models\Ticket;
 use App\Models\User;
 use Illuminate\Auth\Access\Response;
@@ -14,9 +15,15 @@ class TicketRemarkPolicy
     /*
      * Determine whether the web user can post a remark on a ticket timeline.
      */
-    public function create(User $user, Ticket $ticket): bool
+    public function create(User $user, Ticket $ticket): Response
     {
-        return $user->role->slug_identifier === 'cwd_officer';
+        if ($user->role->slug_identifier !== 'cwd_officer') {
+            return Response::deny('This action is unauthorized.');
+        }
+
+        return $this->isReadOnly($ticket)
+            ? Response::deny('Closed and cancelled tickets are read-only. Remarks can no longer be added.')
+            : Response::allow();
     }
 
     /*
@@ -24,6 +31,10 @@ class TicketRemarkPolicy
      */
     public function mobileCreate(User $user, Ticket $ticket): Response
     {
+        if ($this->isReadOnly($ticket)) {
+            return Response::deny('Closed and cancelled tickets are read-only. Remarks can no longer be added.');
+        }
+
         if ($user->role->slug_identifier === 'supervisor') {
             return $user->department_id === $ticket->department_id
                 ? Response::allow()
@@ -37,5 +48,13 @@ class TicketRemarkPolicy
         }
 
         return Response::deny('This action is unauthorized.');
+    }
+
+    /*
+     * Closed and cancelled tickets are read-only.
+     */
+    private function isReadOnly(Ticket $ticket): bool
+    {
+        return in_array($ticket->status, [TicketStatus::CLOSED, TicketStatus::CANCELLED], true);
     }
 }

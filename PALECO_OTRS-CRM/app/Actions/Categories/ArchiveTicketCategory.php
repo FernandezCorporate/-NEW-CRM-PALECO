@@ -36,19 +36,18 @@ class ArchiveTicketCategory
                 ];
             }
 
-            $hasActiveTickets = $lockedCategory->ticket()
-                ->whereIn('status', [
-                    TicketStatus::OPEN,
-                    TicketStatus::ASSIGNED,
-                    TicketStatus::IN_PROGRESS,
-                    TicketStatus::PENDING_ENDORSEMENT,
+            // Only a category whose tickets are all finished can be retired
+            $hasUnfinishedTickets = $lockedCategory->ticket()
+                ->whereNotIn('status', [
+                    TicketStatus::CLOSED,
+                    TicketStatus::CANCELLED,
                 ])
                 ->exists();
 
-            if ($hasActiveTickets) {
+            if ($hasUnfinishedTickets) {
                 return [
                     'success' => false,
-                    'message' => 'Cannot archive this category because it is currently assigned to active service tickets.',
+                    'message' => 'Cannot archive this category while any of its tickets is not yet closed or cancelled.',
                 ];
             }
 

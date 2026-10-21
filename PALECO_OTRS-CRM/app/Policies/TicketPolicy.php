@@ -85,7 +85,9 @@ class TicketPolicy
      */
     public function createRemark(User $user, Ticket $ticket): bool
     {
-        return $user->role->slug_identifier === 'cwd_officer';
+        // Closed and cancelled tickets are read-only
+        return $user->role->slug_identifier === 'cwd_officer'
+            && ! in_array($ticket->status, [TicketStatus::CLOSED, TicketStatus::CANCELLED], true);
     }
 
     /*

@@ -113,6 +113,9 @@ test('admin can update user profile details', function () {
 });
 
 test('admin can deactivate and reactivate a user account', function () {
+    // Another active CWD officer, so this one is not the last of its role
+    User::factory()->cwdOfficer()->create();
+
     // 1. Deactivate
     $responseDeact = $this->actingAs($this->admin)
         ->patch(route('admin.users.deactivate', ['user' => $this->cwdOfficer]));

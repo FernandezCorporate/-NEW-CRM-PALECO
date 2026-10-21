@@ -49,7 +49,7 @@ class StoreTeamRequest extends FormRequest
             'team_desc' => ['nullable', 'string', 'max:255'],
             'shift_start' => ['required', 'date_format:H:i'],
             'shift_end' => ['required', 'date_format:H:i', 'different:shift_start'],
-            'department_id' => ['required', Rule::exists('departments', 'id')],
+            'department_id' => ['required', Rule::exists('departments', 'id')->whereNull('deleted_at')],
 
             'members' => ['nullable', 'array'],
             'members.*.user_id' => [
@@ -84,7 +84,7 @@ class StoreTeamRequest extends FormRequest
             'shift_end.date_format' => 'The shift end time must be in a valid 24-hour HH:MM format.',
             'shift_end.different' => 'The shift end time cannot be the same as the shift start time (0-minute shifts are invalid).',
             'department_id.required' => 'A department must be assigned to this team.',
-            'department_id.exists' => 'The selected department is invalid.',
+            'department_id.exists' => 'The selected department is invalid or has been archived.',
             'members.array' => 'The members list must be formatted correctly.',
             'members.*.user_id.required' => 'A user must be selected to be added as a member.',
             'members.*.user_id.distinct' => 'Duplicate team members cannot be added to the same crew.',

@@ -2,6 +2,7 @@
 
 namespace App\Actions\Categories;
 
+use App\Models\Ticket;
 use App\Models\TicketCategory;
 
 /**
@@ -32,7 +33,7 @@ class ForceDeleteTicketCategory
             return ['success' => false, 'message' => 'Cannot permanently delete an active category. Please archive it first.'];
         }
 
-        if ($category->ticket()->exists()) {
+        if (Ticket::withTrashed()->where('category_id', $category->id)->exists()) {
             return [
                 'success' => false,
                 'message' => "Cannot permanently delete category '{$category->category_name}' because it contains historical service ticket records.",

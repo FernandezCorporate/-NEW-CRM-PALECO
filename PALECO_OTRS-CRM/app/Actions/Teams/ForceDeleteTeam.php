@@ -3,6 +3,8 @@
 namespace App\Actions\Teams;
 
 use App\Models\Team;
+use App\Models\Ticket;
+use App\Models\TicketAssignment;
 
 /**
  * Single-Action: Permanently deletes a trashed team ensuring no ticket relationship integrity is compromised.
@@ -29,10 +31,14 @@ class ForceDeleteTeam
             ];
         }
 
-        if ($team->ticket()->exists()) {
+        // Force delete only undoes a team created by mistake; one that ever handled a ticket must stay for the history
+        $hasHistory = Ticket::withTrashed()->where('team_id', $team->id)->exists()
+            || TicketAssignment::where('team_id', $team->id)->exists();
+
+        if ($hasHistory) {
             return [
                 'success' => false,
-                'message' => "Cannot permanently delete {$team->team_name} because it is currently assigned to existing service tickets.",
+                'message' => "Cannot permanently delete {$team->team_name} because it has been assigned to service tickets. Keep it archived instead.",
             ];
         }
 

@@ -149,8 +149,8 @@ test('TicketRemarkPolicy governs web and mobile commenting permissions', functio
     $policy = new TicketRemarkPolicy;
 
     // Web remarks
-    expect($policy->create($cwdOfficer, $ticket))->toBeTrue();
-    expect($policy->create($supervisor, $ticket))->toBeFalse();
+    expect($policy->create($cwdOfficer, $ticket)->allowed())->toBeTrue();
+    expect($policy->create($supervisor, $ticket)->allowed())->toBeFalse();
 
     // Mobile remarks
     expect($policy->mobileCreate($supervisor, $ticket)->allowed())->toBeTrue();

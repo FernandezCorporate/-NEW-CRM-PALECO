@@ -2,6 +2,7 @@
 
 namespace App\Actions\Teams;
 
+use App\Models\Department;
 use App\Models\Team;
 
 /**
@@ -26,6 +27,16 @@ class RestoreTeam
             return [
                 'success' => false,
                 'message' => 'This team is already active and cannot be restored.',
+            ];
+        }
+
+        // A team restored into an archived department would have no active supervisor to manage it
+        $department = Department::withTrashed()->find($team->department_id);
+
+        if (! $department || $department->trashed()) {
+            return [
+                'success' => false,
+                'message' => 'Cannot restore team. Its department is archived; restore the department first.',
             ];
         }
 

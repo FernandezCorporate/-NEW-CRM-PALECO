@@ -52,7 +52,8 @@ class StoreTicketRequest extends FormRequest
             'barangay' => ['required', 'string', 'max:255'],
             'landmark' => ['nullable', 'string', 'max:255'],
 
-            'department_id' => ['required', 'exists:departments,id'],
+            // Archived departments have no supervisors or teams, so a ticket there could never be worked
+            'department_id' => ['required', Rule::exists('departments', 'id')->whereNull('deleted_at')],
 
             // Dynamic Category Requirements
             'other_category' => ['boolean'],
@@ -109,7 +110,7 @@ class StoreTicketRequest extends FormRequest
             'landmark.max' => 'The landmark cannot exceed 255 characters.',
 
             'department_id.required' => 'Please select a department to handle this ticket.',
-            'department_id.exists' => 'The selected department does not exist.',
+            'department_id.exists' => 'The selected department does not exist or has been archived.',
 
             'other_category.boolean' => 'The custom category flag must be correctly set as true or false.',
 

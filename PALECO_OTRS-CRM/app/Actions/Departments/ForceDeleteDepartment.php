@@ -3,6 +3,10 @@
 namespace App\Actions\Departments;
 
 use App\Models\Department;
+use App\Models\Team;
+use App\Models\Ticket;
+use App\Models\TicketEndorsement;
+use App\Models\User;
 
 /**
  * Single-Action: Permanently purges a department record from the database.
@@ -38,7 +42,17 @@ class ForceDeleteDepartment
             ];
         }
 
-        if ($dept->tickets()->exists() || $dept->teams()->exists() || $dept->supervisors()->exists()) {
+        // Force delete only undoes a department created by mistake; anything that ever referenced it keeps it alive,
+        // including archived teams, inactive users, archived tickets and endorsement history
+        $hasHistory = Ticket::withTrashed()->where('department_id', $dept->id)->exists()
+            || Team::withTrashed()->where('department_id', $dept->id)->exists()
+            || User::where('department_id', $dept->id)->exists()
+            || TicketEndorsement::where('suggested_department_id', $dept->id)
+                ->orWhere('old_department_id', $dept->id)
+                ->orWhere('new_department_id', $dept->id)
+                ->exists();
+
+        if ($hasHistory) {
             return [
                 'success' => false,
                 'message' => 'Cannot permanently delete this department. It contains historical data.',

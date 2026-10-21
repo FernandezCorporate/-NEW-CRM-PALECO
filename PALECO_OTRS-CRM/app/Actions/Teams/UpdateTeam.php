@@ -85,6 +85,30 @@ class UpdateTeam
                 }
             }
 
+            // Moving the team would leave its crew working tickets of a department that no longer manages it
+            $departmentChanged = array_key_exists('department_id', $teamDetails)
+                && (int) $teamDetails['department_id'] !== (int) $lockedTeam->department_id;
+
+            if ($departmentChanged) {
+                $blockingTickets = $lockedTeam->tickets()
+                    ->whereIn('status', [
+                        TicketStatus::ASSIGNED,
+                        TicketStatus::IN_PROGRESS,
+                        TicketStatus::RESOLVED,
+                        TicketStatus::PENDING_ENDORSEMENT,
+                    ])
+                    ->orderBy('ticket_number')
+                    ->pluck('ticket_number');
+
+                if ($blockingTickets->isNotEmpty()) {
+                    return [
+                        'success' => false,
+                        'blocked' => true,
+                        'message' => 'Cannot move this team to another department while it still has active tickets: '.$blockingTickets->implode(', ').'. Reassign or finish them first.',
+                    ];
+                }
+            }
+
             $lockedTeam->fill($teamDetails);
             $isTeamDirty = $lockedTeam->isDirty();
 

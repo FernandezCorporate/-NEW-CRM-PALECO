@@ -180,6 +180,6 @@ test('archiving ticket category is blocked when active tickets are linked', func
     $response = $this->actingAs($admin)->delete(route('admin.ticketCategories.archive', $category));
 
     $response->assertRedirect(route('admin.ticketCategories'));
-    $response->assertSessionHas('error', 'Cannot archive this category because it is currently assigned to active service tickets.');
+    $response->assertSessionHas('error', 'Cannot archive this category while any of its tickets is not yet closed or cancelled.');
     expect($category->fresh()->trashed())->toBeFalse();
 });

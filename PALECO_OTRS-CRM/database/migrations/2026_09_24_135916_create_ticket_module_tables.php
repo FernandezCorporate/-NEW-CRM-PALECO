@@ -73,7 +73,8 @@ return new class extends Migration
         Schema::create('ticket_assignments', function (Blueprint $table) {
             $table->id();
             $table->foreignUlid('ticket_id')->constrained('tickets')->cascadeOnDelete();
-            $table->foreignUlid('team_id')->constrained('teams')->cascadeOnDelete();
+            // Restrict, not cascade: deleting a team must never erase the assignment history of its tickets
+            $table->foreignUlid('team_id')->constrained('teams')->restrictOnDelete();
             $table->foreignUlid('assigned_by_id')->constrained('users')->cascadeOnDelete();
             $table->text('reason')->nullable();
 
