@@ -13,8 +13,11 @@ use Livewire\Component;
 class TicketHierarchy extends Component
 {
     public Ticket $ticket;
+
     public bool $isAdmin = false;
+
     public ?string $source = null;
+
     public ?string $consumer = null;
 
     public function mount(Ticket $ticket, bool $isAdmin = false, ?string $source = null, ?string $consumer = null): void
@@ -65,4 +68,3 @@ class TicketHierarchy extends Component
         return view('livewire.shared.ticket-hierarchy');
     }
 }
-

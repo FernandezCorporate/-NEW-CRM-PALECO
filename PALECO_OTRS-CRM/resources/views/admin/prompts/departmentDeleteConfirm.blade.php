@@ -23,9 +23,9 @@
         };
 
         $consequences = $isForceDelete ? [
-            '<span class=\'font-bold\'>This department will be destroyed entirely.</span>',
-            'Any users currently attached to this department may lose their association.',
-            'You CANNOT restore this department later.'
+            '<span class=\'font-bold\'>This department will be destroyed entirely and cannot be restored.</span>',
+            'Only allowed for a department created by mistake: it is refused if any ticket, team, user or endorsement has ever referenced it.',
+            'Departments that did real work should stay archived instead.'
         ] : [
             'The department record will be hidden, but not permanently deleted.',
             'Existing historical records tied to this department will remain intact.',
@@ -51,7 +51,7 @@
     >
         You are about to {{ $isForceDelete ? 'permanently delete' : 'archive' }} the <strong class="font-bold text-slate-900">"{{ $dept->dept_name }}"</strong> department. 
         @if($isForceDelete)
-            This action is irreversible and all data will be permanently wiped.
+            This action is irreversible.
         @else
             This will remove it from active selection lists across the system. 
         @endif

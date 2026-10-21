@@ -40,4 +40,3 @@ class TicketStatusBadge extends Component
         return view('livewire.shared.ticket-status-badge');
     }
 }
-

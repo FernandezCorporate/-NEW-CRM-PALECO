@@ -6,8 +6,9 @@
     
     <div class="space-y-3">
         <!-- Supervisors List -->
-        @if($ticket->department && $ticket->department->supervisors->isNotEmpty())
-            @foreach($ticket->department->supervisors as $supervisor)
+        @php($activeSupervisors = $ticket->department?->supervisors->where('is_active', true) ?? collect())
+        @if($activeSupervisors->isNotEmpty())
+            @foreach($activeSupervisors as $supervisor)
                 <div class="flex items-center gap-3 p-3 bg-slate-50 border border-slate-100 rounded-lg">
                     <div class="w-8 h-8 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center font-bold text-xs shrink-0 border border-amber-200">
                         {{ $supervisor->avatar_initials }}
@@ -51,8 +52,17 @@
         @else
             <div class="p-4 bg-slate-50 border border-dashed border-slate-200 rounded-lg text-sm text-slate-400 text-center flex flex-col items-center justify-center h-24">
                 <x-icons.team class="w-6 h-6 text-slate-300 mb-1.5" />
-                <span class="font-medium text-slate-600 text-xs">Team not yet assigned</span>
-                <span class="text-[10px] text-slate-400 mt-0.5">Awaiting supervisor dispatch</span>
+                {{-- The empty state must say why there is no team: waiting, transferred away, or never needed --}}
+                @if($ticket->status === \App\Enums\TicketStatus::ENDORSED)
+                    <span class="font-medium text-slate-600 text-xs">Work transferred through endorsement</span>
+                    <span class="text-[10px] text-slate-400 mt-0.5">The receiving department handles it in a child ticket</span>
+                @elseif($ticket->status === \App\Enums\TicketStatus::CANCELLED)
+                    <span class="font-medium text-slate-600 text-xs">No team was dispatched</span>
+                    <span class="text-[10px] text-slate-400 mt-0.5">The ticket was cancelled before assignment</span>
+                @else
+                    <span class="font-medium text-slate-600 text-xs">Team not yet assigned</span>
+                    <span class="text-[10px] text-slate-400 mt-0.5">Awaiting supervisor dispatch</span>
+                @endif
             </div>
         @endif
     </div>

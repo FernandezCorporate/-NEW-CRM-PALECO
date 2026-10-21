@@ -131,9 +131,9 @@
 
                             <!-- Action -->
                             <td class="px-6 py-4 align-top text-center">
-                                <x-btn href="{{ route('cwd.endorsements.show', $endorsement) }}" variant="secondary" size="sm" class="action-link inline-flex items-center gap-1.5 shadow-2xs" aria-label="Review endorsement request for ticket {{ $endorsement->ticket->ticket_number ?? 'N/A' }}">
+                                <x-btn href="{{ route('cwd.endorsements.show', $endorsement) }}" variant="secondary" size="sm" class="action-link inline-flex items-center gap-1.5 shadow-2xs" aria-label="{{ $endorsement->status === \App\Enums\EndorsementStatus::PENDING ? 'Review' : 'View' }} endorsement request for ticket {{ $endorsement->ticket->ticket_number ?? 'N/A' }}">
                                     <x-icons.eye class="w-3.5 h-3.5 text-slate-500" />
-                                    <span>Review</span>
+                                    <span>{{ $endorsement->status === \App\Enums\EndorsementStatus::PENDING ? 'Review' : 'View' }}</span>
                                 </x-btn>
                             </td>
                 

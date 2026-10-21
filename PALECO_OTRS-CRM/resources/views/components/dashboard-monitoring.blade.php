@@ -20,7 +20,7 @@
             ['Security alerts', $data['security_alerts'], 'Failed logins (24h)'],
             ['Staff logins today', $data['staff_logins_today'], 'Successful sessions'],
             ['Account mutations', $data['account_mutations_today'], 'User creates & edits'],
-            ['Organizational changes', $data['org_changes_today'], 'Teams & Deparment updates'],
+            ['Organizational changes', $data['org_changes_today'], 'Teams & Department updates'],
             ['Critical actions', $data['critical_actions_today'], 'Deletions & archives'],
         ] as [$label, $value, $hint])
             <div>

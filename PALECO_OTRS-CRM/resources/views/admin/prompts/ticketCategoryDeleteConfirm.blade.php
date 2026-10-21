@@ -11,9 +11,9 @@
             : session('category_list_url', route('admin.ticketCategories'));
 
         $consequences = $isForceDelete ? [
-            '<span class=\'font-bold\'>This ticket category will be permanently destroyed.</span>',
-            'Existing tickets referencing this category may lose their specific classification.',
-            'You CANNOT restore this category later.'
+            '<span class=\'font-bold\'>This ticket category will be destroyed entirely and cannot be restored.</span>',
+            'Only allowed for a category created by mistake: it is refused if any ticket has ever used it.',
+            'Categories that were used should stay archived instead.'
         ] : [
             'The category will be hidden from future ticket creation.',
             'Historical tickets already using this category will retain their category link.',

@@ -16,7 +16,6 @@ class TicketEndorsementService
 {
     // --- QUERY METHODS ---
 
-
     /**
      * Retrieve paginated endorsements with status metric tallies for CWD dashboard.
      */

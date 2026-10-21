@@ -28,4 +28,3 @@ class CreateUser
         return User::create($data);
     }
 }
-

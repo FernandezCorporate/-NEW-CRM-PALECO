@@ -5,7 +5,6 @@ use App\Models\Department;
 use App\Models\Team;
 use App\Models\TeamRole;
 use App\Models\Ticket;
-use App\Models\TicketCategory;
 use App\Models\User;
 use App\Policies\ActivityPolicy;
 use App\Policies\ConsumerPolicy;

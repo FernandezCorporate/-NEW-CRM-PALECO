@@ -15,8 +15,10 @@ use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
 abstract class TestCase extends BaseTestCase
 {
     public ?User $admin = null;
+
     public ?User $cwdOfficer = null;
+
     public ?User $supervisor = null;
+
     public ?User $personnel = null;
 }
-

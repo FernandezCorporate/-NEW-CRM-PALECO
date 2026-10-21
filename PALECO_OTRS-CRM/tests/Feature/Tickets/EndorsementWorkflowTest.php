@@ -323,7 +323,6 @@ test('pending endorsement on a child ticket cannot be approved but can be reject
         ->and($child->fresh()->status)->toBe(TicketStatus::OPEN);
 });
 
-
 test('an in-progress ticket cannot be endorsed because the crew already accepted the work', function () {
     Sanctum::actingAs($this->supervisor, ['*']);
 

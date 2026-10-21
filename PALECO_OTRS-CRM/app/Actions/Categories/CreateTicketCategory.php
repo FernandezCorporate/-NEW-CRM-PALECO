@@ -21,4 +21,3 @@ class CreateTicketCategory
         return TicketCategory::create($data);
     }
 }
-

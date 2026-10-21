@@ -15,7 +15,6 @@ class UserService
 {
     // --- QUERY METHODS ---
 
-
     /**
      * Retrieve users matching filters along with role distribution counts.
      */

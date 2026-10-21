@@ -3,7 +3,6 @@
 use App\Models\User;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Spatie\Activitylog\Models\Activity;
 
 uses(RefreshDatabase::class);
 
@@ -97,4 +96,3 @@ test('admin can view activity details when causer is null or system-generated', 
     $response->assertViewIs('admin.pages.activityLogDetails');
     $response->assertViewHas('activity');
 });
-

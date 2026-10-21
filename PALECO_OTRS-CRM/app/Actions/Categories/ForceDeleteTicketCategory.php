@@ -45,4 +45,3 @@ class ForceDeleteTicketCategory
         return ['success' => true, 'message' => 'Category permanently deleted.'];
     }
 }
-

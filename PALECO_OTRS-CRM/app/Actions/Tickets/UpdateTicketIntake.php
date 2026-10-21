@@ -5,6 +5,7 @@ namespace App\Actions\Tickets;
 use App\Enums\TicketStatus;
 use App\Models\Ticket;
 use App\Services\External\PalecoBillingApiService;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -19,7 +20,7 @@ class UpdateTicketIntake
     ) {}
 
     /**
-     * @return array{success: bool, changed: bool, ticket: Ticket}
+     * @return array{success: bool, changed: bool, ticket?: Ticket, message?: string}
      */
     public function handle(Ticket $ticket, array $validatedData): array
     {
@@ -27,7 +28,7 @@ class UpdateTicketIntake
     }
 
     /**
-     * @return array{success: bool, changed: bool, ticket: Ticket}
+     * @return array{success: bool, changed: bool, ticket?: Ticket, message?: string}
      */
     public function execute(Ticket $ticket, array $validatedData): array
     {
@@ -61,7 +62,10 @@ class UpdateTicketIntake
             $validatedData['other_category_name'] = null;
         }
 
-        return DB::transaction(function () use ($ticket, $validatedData) {
+        $originalUpdatedAt = $validatedData['original_updated_at'] ?? null;
+        unset($validatedData['original_updated_at']);
+
+        return DB::transaction(function () use ($ticket, $validatedData, $originalUpdatedAt) {
             $lockedTicket = Ticket::where('id', $ticket->id)
                 ->lockForUpdate()
                 ->firstOrFail();
@@ -70,6 +74,15 @@ class UpdateTicketIntake
                 throw ValidationException::withMessages([
                     'status' => 'This ticket is no longer in Open status (it may have been assigned to a crew or processed concurrently) and can no longer be edited.',
                 ]);
+            }
+
+            // Another officer saved this ticket after the form was opened; keep their edit instead of overwriting it
+            if ($originalUpdatedAt && ! $lockedTicket->updated_at->eq(Carbon::parse($originalUpdatedAt))) {
+                return [
+                    'success' => false,
+                    'changed' => false,
+                    'message' => 'Conflict: This ticket was modified by another officer while you were editing. Review the latest details and apply your changes again.',
+                ];
             }
 
             $lockedTicket->fill($validatedData);
@@ -100,4 +113,3 @@ class UpdateTicketIntake
         });
     }
 }
-

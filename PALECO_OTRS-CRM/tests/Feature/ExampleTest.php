@@ -19,4 +19,3 @@ test('the application redirects unauthenticated guests from root', function () {
 test('seeded users exist in test database', function () {
     expect(User::count())->toBe(4);
 });
-

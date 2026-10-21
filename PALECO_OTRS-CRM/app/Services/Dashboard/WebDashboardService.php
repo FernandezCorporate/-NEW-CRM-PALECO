@@ -381,7 +381,7 @@ class WebDashboardService
                 $actorRole = $actor?->role?->role_name ?? ($log->properties['role'] ?? ($actor ? 'User' : 'System Automation'));
                 $initials = $actor
                     ? strtoupper(substr($actor->first_name ?? '', 0, 1).substr($actor->last_name ?? '', 0, 1))
-                    : (!empty($log->properties['username']) ? strtoupper(substr($log->properties['username'], 0, 2)) : 'SY');
+                    : (! empty($log->properties['username']) ? strtoupper(substr($log->properties['username'], 0, 2)) : 'SY');
 
                 return [
                     'id' => $log->id,

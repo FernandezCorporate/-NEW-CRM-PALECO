@@ -340,6 +340,11 @@ class TicketPolicy
             return Response::deny('Ticket cannot be force-closed from its current status.');
         }
 
+        // Hides the button while follow-up work is still active; ForceCloseTicket repeats this under the lock
+        if ($ticket->childTickets()->whereNotIn('status', [TicketStatus::CLOSED, TicketStatus::CANCELLED])->exists()) {
+            return Response::deny('This ticket has child tickets that are not closed or cancelled yet. Finish or cancel them first.');
+        }
+
         return Response::allow();
     }
 }

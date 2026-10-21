@@ -22,4 +22,3 @@ class TerminateWebSession
         $request->session()->regenerateToken();
     }
 }
-

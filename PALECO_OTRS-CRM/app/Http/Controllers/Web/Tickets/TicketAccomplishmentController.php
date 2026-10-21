@@ -39,4 +39,3 @@ class TicketAccomplishmentController extends Controller
         ]);
     }
 }
-

@@ -1,9 +1,7 @@
 <?php
 
-use App\Enums\TicketStatus;
 use App\Models\Department;
 use App\Models\Team;
-use App\Models\Ticket;
 use App\Models\User;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -180,4 +178,3 @@ test('archiving department is blocked if department contains active teams or sup
     $response->assertSessionHas('error', 'Cannot archive this department. It contains active teams, personnel, or active service tickets.');
     expect($deptWithTeam->fresh()->trashed())->toBeFalse();
 });
-

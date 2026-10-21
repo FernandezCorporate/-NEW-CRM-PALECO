@@ -92,7 +92,7 @@
                         <th scope="col" class="px-6 py-4 w-60">Department Name</th>
                         <th scope="col" class="px-6 py-4 w-36 text-center">Active Supervisors</th>
                         <th scope="col" class="px-6 py-4 w-36 text-center">Active Teams</th>
-                        <th scope="col" class="px-6 py-4 w-36 text-center">Assigned Tickets</th>
+                        <th scope="col" class="px-6 py-4 w-36 text-center">Active Tickets</th>
                         <th scope="col" class="px-6 py-4 w-40">Date Created</th>
                         <th scope="col" class="px-6 py-4 w-36 text-center">Actions</th>
                     </tr>
@@ -120,7 +120,7 @@
                             </td>
                             <td class="px-6 py-4 align-top text-center">
                                 <span class="inline-flex items-center justify-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                    {{ $department->assigned_ticket_count ?? 0 }}
+                                    {{ $department->active_ticket_count ?? 0 }}
                                 </span>
                             </td>
                             <td class="px-6 py-4 align-top">

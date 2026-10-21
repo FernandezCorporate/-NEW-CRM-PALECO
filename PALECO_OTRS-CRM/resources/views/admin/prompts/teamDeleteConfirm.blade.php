@@ -23,9 +23,9 @@
         };
 
         $consequences = $isForceDelete ? [
-            '<span class=\'font-bold\'>This team will be destroyed entirely.</span>',
-            'The current member roster will be unassigned and permanently wiped from this team.',
-            'You CANNOT restore this team later.'
+            '<span class=\'font-bold\'>This team will be destroyed entirely and cannot be restored.</span>',
+            'Only allowed for a team created by mistake: it is refused if the team was ever assigned to a ticket.',
+            'Its member list is removed with it. Teams that did real work should stay archived instead.'
         ] : [
             'The team record will be hidden, but not permanently deleted.',
             'Existing membership records tied to this team will remain intact.',
@@ -51,7 +51,7 @@
     >
         You are about to {{ $isForceDelete ? 'permanently delete' : 'archive' }} the <strong class="font-bold text-slate-900">"{{ $team->team_name }}"</strong> team. 
         @if($isForceDelete)
-            This action is irreversible, and all system logs referencing this team will lose their subject association.
+            This action is irreversible.
         @else
             This will remove it from active selection lists across the system. 
         @endif

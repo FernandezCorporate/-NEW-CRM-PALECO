@@ -185,4 +185,3 @@ test('TicketCategory lifecycle handles archive, restore, and force delete', func
     expect($forceResult['success'])->toBeTrue();
     $this->assertDatabaseMissing('ticket_categories', ['id' => $category->id]);
 });
-

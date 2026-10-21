@@ -10,7 +10,6 @@ use App\Models\Ticket;
 use App\Models\TicketCategory;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
-use Illuminate\Support\Str;
 
 /**
  * @extends Factory<Ticket>
@@ -22,7 +21,8 @@ class TicketFactory extends Factory
     public function definition(): array
     {
         return [
-            'ticket_number' => 'TCK-'.date('Ymd').'-'.strtoupper(Str::random(5)),
+            // Same shape as real numbers (TKT-yymmdd-NNN); 100-999 keeps clear of the low numbers TicketSequenceService hands out in tests
+            'ticket_number' => sprintf('TKT-%s-%03d', now()->format('ymd'), fake()->unique()->numberBetween(100, 999)),
             'parent_ticket_id' => null,
             'consumer_id' => null,
             'consumer_contact' => '09'.fake()->numerify('#########'),
@@ -111,4 +111,3 @@ class TicketFactory extends Factory
         ]);
     }
 }
-

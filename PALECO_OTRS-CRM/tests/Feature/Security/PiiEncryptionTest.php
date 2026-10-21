@@ -7,10 +7,8 @@ use App\Models\Department;
 use App\Models\Ticket;
 use App\Models\TicketCategory;
 use App\Models\User;
-use App\Services\Consumers\ConsumerService;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
 
@@ -159,4 +157,3 @@ test('admin creating a new user encrypts PII at rest and decrypts in web views',
     $detailsResponse->assertSee('Maria');
     $detailsResponse->assertSee('Delacruz');
 });
-

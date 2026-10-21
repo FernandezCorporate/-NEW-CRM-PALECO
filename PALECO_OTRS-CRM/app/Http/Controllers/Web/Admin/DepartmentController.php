@@ -109,6 +109,7 @@ class DepartmentController extends Controller
             'details' => function (Request $req) use ($dept) {
                 $userId = $req->input('user', $req->query('user'));
                 $teamId = $req->input('team', $req->query('team'));
+
                 return route('admin.departments.show', array_filter([
                     'dept' => $dept,
                     'source' => $userId ? 'user' : ($teamId ? 'team' : null),
@@ -118,10 +119,12 @@ class DepartmentController extends Controller
             },
             'user' => function (Request $req) use ($dept) {
                 $userId = $req->input('user', $req->query('user'));
+
                 return $userId ? route('admin.users.show', ['user' => $userId]) : route('admin.departments.show', ['dept' => $dept]);
             },
             'team' => function (Request $req) use ($dept) {
                 $teamId = $req->input('team', $req->query('team'));
+
                 return $teamId ? route('admin.teams.show', ['team' => $teamId]) : route('admin.departments.show', ['dept' => $dept]);
             },
         ]);

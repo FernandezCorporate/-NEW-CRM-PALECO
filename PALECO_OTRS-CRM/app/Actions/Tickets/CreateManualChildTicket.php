@@ -115,6 +115,7 @@ class CreateManualChildTicket
 
                 if ($attempt < $maxAttempts && $isDuplicateKey) {
                     usleep(50000 * $attempt); // 50ms backoff
+
                     continue;
                 }
 
@@ -125,4 +126,3 @@ class CreateManualChildTicket
         throw new RuntimeException('Failed to generate a unique child ticket sequence number after multiple attempts.');
     }
 }
-

@@ -172,7 +172,6 @@ Route::middleware(['auth', CheckIfActive::class])->group(function () {
 
     });
 
-
     /*
      * CWD Officer Domain
      * Explicitly protected by a gate verifying CWD officer credentials.

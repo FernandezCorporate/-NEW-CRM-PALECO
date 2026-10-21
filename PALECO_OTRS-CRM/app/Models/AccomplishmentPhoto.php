@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\Storage;
 
 /**
  * Represents photo evidence attached to a ticket accomplishment report.
@@ -12,6 +13,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class AccomplishmentPhoto extends Model
 {
     use HasFactory;
+
     protected $fillable = [
         'accomplishment_id',
         'file_path',
@@ -41,6 +43,6 @@ class AccomplishmentPhoto extends Model
 
         $disk = config('filesystems.default', 'public');
 
-        return \Illuminate\Support\Facades\Storage::disk($disk)->url($this->file_path);
+        return Storage::disk($disk)->url($this->file_path);
     }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Services\Departments;
 
+use App\Enums\TicketStatus;
 use App\Models\Department;
 use App\Models\User;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -19,9 +20,16 @@ class DepartmentService
     public function getDashboardDepartments(array $filters): LengthAwarePaginator
     {
         $query = Department::query()->withCount([
-            'supervisors as active_supervisors_count',
+            'supervisors as active_supervisors_count' => fn ($q) => $q->where('is_active', true),
             'teams as active_team_count',
-            'tickets as assigned_ticket_count',
+            // Unfinished work only: the same statuses that block archiving a department
+            'tickets as active_ticket_count' => fn ($q) => $q->whereIn('status', [
+                TicketStatus::OPEN,
+                TicketStatus::ASSIGNED,
+                TicketStatus::IN_PROGRESS,
+                TicketStatus::PENDING_ENDORSEMENT,
+                TicketStatus::RESOLVED,
+            ]),
         ]);
 
         $query->search($filters['search'] ?? null)

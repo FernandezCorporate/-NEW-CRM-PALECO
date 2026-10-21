@@ -153,4 +153,3 @@ test('password reset requires minimum length and confirmation', function () {
     ]);
     $resMismatch->assertSessionHasErrors(['password']);
 });
-

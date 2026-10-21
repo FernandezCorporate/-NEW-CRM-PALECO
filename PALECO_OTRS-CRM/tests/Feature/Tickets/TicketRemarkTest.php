@@ -176,7 +176,6 @@ test('empty remark body is rejected by validation', function () {
     $response->assertJsonValidationErrors(['body']);
 });
 
-
 test('a mobile remark sent as internal is saved public and listed for its author', function () {
     Sanctum::actingAs($this->personnel, ['*']);
 

@@ -42,4 +42,3 @@ class TicketAssignedPersonnel extends Component
         return view('livewire.shared.ticket-assigned-personnel');
     }
 }
-

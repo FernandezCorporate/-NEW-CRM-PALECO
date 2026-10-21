@@ -28,7 +28,7 @@ class TicketResource extends JsonResource
             // Department Silo
             'department_id' => $this->department_id,
             'department_name' => $this->department?->trashed()
-                ? $this->department->dept_name . ' (Archived)'
+                ? $this->department->dept_name.' (Archived)'
                 : $this->department?->dept_name,
 
             // Category Details
@@ -36,7 +36,7 @@ class TicketResource extends JsonResource
             'category_name' => $this->other_category
                 ? $this->other_category_name
                 : ($this->category?->trashed()
-                    ? $this->category->category_name . ' (Archived)'
+                    ? $this->category->category_name.' (Archived)'
                     : $this->category?->category_name),
             'is_other_category' => (bool) $this->other_category,
             'other_category_name' => $this->other_category_name,
@@ -59,7 +59,7 @@ class TicketResource extends JsonResource
             // Team & Dispatcher
             'team_id' => $this->team_id,
             'team_name' => $this->team?->trashed()
-                ? $this->team->team_name . ' (Archived)'
+                ? $this->team->team_name.' (Archived)'
                 : $this->team?->team_name,
             'created_by' => $this->created_by_id,
             'created_by_name' => $this->creator?->full_name,

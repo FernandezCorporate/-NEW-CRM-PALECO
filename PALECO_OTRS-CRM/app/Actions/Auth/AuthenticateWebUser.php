@@ -110,4 +110,3 @@ class AuthenticateWebUser
         return $intendedUrl;
     }
 }
-

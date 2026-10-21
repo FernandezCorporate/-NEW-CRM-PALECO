@@ -139,4 +139,3 @@ class HandleIdempotency
         return $response;
     }
 }
-

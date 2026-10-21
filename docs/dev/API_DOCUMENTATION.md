@@ -839,7 +839,7 @@ Posts a new public remark to the ticket timeline. **Closed and cancelled tickets
 ## 8. Ticket Assignment Endpoints
 
 ### 8.1. Get Assign Options (Available Teams)
-Retrieves the list of operational teams in the supervisor's department, including active ticket counts and an `is_current` flag indicating the ticket's current team.
+Retrieves the list of operational teams in the supervisor's department. `tickets` is the number of the team's tickets that are currently `assigned` or `in_progress` (its live workload), and `is_current` is `true` for the team the ticket is already assigned to.
 
 - **Method:** `GET`
 - **URL:** `/api/v1/tickets/{ticket}/assign-options`
@@ -960,7 +960,7 @@ Assigns or reassigns a service ticket to a designated team within the supervisor
 ## 9. Ticket Endorsement Endpoints
 
 ### 9.1. Get Endorsement Options (Candidate Departments)
-Retrieves all candidate departments available for ticket transfer, marking the supervisor's current department with `is_current: true`.
+Retrieves the active departments a ticket can be transferred to. The supervisor's own department is **left out** of the list, so `is_current` is always `false`; it is kept only for app compatibility.
 
 - **Method:** `GET`
 - **URL:** `/api/v1/tickets/{ticket}/endorse-options`
@@ -977,12 +977,6 @@ Retrieves all candidate departments available for ticket transfer, marking the s
       "department_name": "Consumer Welfare Desk",
       "department_description": "Handles primary customer complaints and billing inquiries",
       "is_current": false
-    },
-    {
-      "id": 2,
-      "department_name": "Engineering and Technical Operations",
-      "department_description": "Field maintenance, distribution lines, and transformers",
-      "is_current": true
     },
     {
       "id": 3,
@@ -1443,6 +1437,8 @@ Retrieves available active field personnel and team roles to populate team creat
 ### 12.2. List Department Teams
 Retrieves a paginated list of teams belonging to the supervisor's department, complete with workload counts and member rosters.
 
+`ticket_stats` (here and in §12.3) splits the team's tickets by status, and the buckets always add up to `total`. `open` is always `0` for a team, because Open tickets have no team yet; it is kept for app compatibility. Endorsed tickets are not counted, because approval removes them from the team.
+
 - **Method:** `GET`
 - **URL:** `/api/v1/teams`
 - **Access Level:** Supervisor (`can:access-supervisor`)
@@ -1475,9 +1471,11 @@ Retrieves a paginated list of teams belonging to the supervisor's department, co
         "total": 5,
         "open": 0,
         "assigned": 2,
-        "in_progress": 2,
+        "in_progress": 1,
         "resolved": 1,
-        "closed": 0
+        "pending_endorsement": 1,
+        "closed": 0,
+        "cancelled": 0
       },
       "members": [
         {
@@ -1524,9 +1522,11 @@ Retrieves details, member list, and workload stats for a specific team.
       "total": 5,
       "open": 0,
       "assigned": 2,
-      "in_progress": 2,
+      "in_progress": 1,
       "resolved": 1,
-      "closed": 0
+      "pending_endorsement": 1,
+      "closed": 0,
+      "cancelled": 0
     },
     "members": [
       {

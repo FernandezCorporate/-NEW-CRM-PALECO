@@ -11,12 +11,12 @@ class SvgDonutPresenter
     /**
      * Computes SVG arc path strings and slice percentages for an array of status slice metrics.
      *
-     * @param  array  $statuses Array of slice items containing 'key', 'label', 'total', etc.
-     * @param  int  $actualTotal Sum of all slice totals.
-     * @param  int  $cx Center X coordinate (default 100).
-     * @param  int  $cy Center Y coordinate (default 100).
-     * @param  int  $outerR Outer radius (default 86).
-     * @param  int  $innerR Inner radius (default 50).
+     * @param  array  $statuses  Array of slice items containing 'key', 'label', 'total', etc.
+     * @param  int  $actualTotal  Sum of all slice totals.
+     * @param  int  $cx  Center X coordinate (default 100).
+     * @param  int  $cy  Center Y coordinate (default 100).
+     * @param  int  $outerR  Outer radius (default 86).
+     * @param  int  $innerR  Inner radius (default 50).
      * @return array Slices enriched with 'width_percent', 'start_percent', 'end_percent', and 'path_d'.
      */
     public static function computeGeometry(

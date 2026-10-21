@@ -2,35 +2,30 @@
 
 /**
  * IDE Helper for Pest PHP and Intelephense.
- * 
+ *
  * Provides static analysis type-hinting for Pest closures without runtime impact.
  */
 
 namespace Pest\PendingCalls {
+    use Tests\TestCase;
+
     if (false) {
         /**
-         * @mixin \Tests\TestCase
+         * @mixin TestCase
          * @mixin \Illuminate\Foundation\Testing\TestCase
          */
-        class TestCall
-        {
-        }
+        class TestCall {}
 
         /**
-         * @mixin \Tests\TestCase
+         * @mixin TestCase
          * @mixin \Illuminate\Foundation\Testing\TestCase
          */
-        class BeforeEachCall
-        {
-        }
+        class BeforeEachCall {}
 
         /**
-         * @mixin \Tests\TestCase
+         * @mixin TestCase
          * @mixin \Illuminate\Foundation\Testing\TestCase
          */
-        class AfterEachCall
-        {
-        }
+        class AfterEachCall {}
     }
 }
-

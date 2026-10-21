@@ -227,7 +227,6 @@ test('RestoreTeam restores archived team and ForceDeleteTeam purges it', functio
     $this->assertDatabaseMissing('teams', ['id' => $team->id]);
 });
 
-
 test('the last active supervisor cannot be deactivated while the department has unfinished tickets', function (TicketStatus $status) {
     $dept = Department::factory()->create();
     $supervisor = User::factory()->supervisor($dept->id)->create();

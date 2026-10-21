@@ -46,7 +46,9 @@ class TeamResource extends JsonResource
                 'assigned' => $this->tickets_assigned ?? 0,
                 'in_progress' => $this->tickets_in_progress ?? 0,
                 'resolved' => $this->tickets_resolved ?? 0,
+                'pending_endorsement' => $this->tickets_pending_endorsement ?? 0,
                 'closed' => $this->tickets_closed ?? 0,
+                'cancelled' => $this->tickets_cancelled ?? 0,
             ],
 
             // --- NESTED ROSTER ---

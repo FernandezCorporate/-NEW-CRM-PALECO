@@ -2,7 +2,6 @@
 
 use App\Http\Middleware\CheckIfActive;
 use App\Http\Middleware\HandleIdempotency;
-use App\Models\IdempotencyRecord;
 use App\Models\User;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -139,4 +138,3 @@ test('HandleIdempotency detects payload mutation on reused key', function () {
     $data = json_decode($mutatedResponse->getContent(), true);
     expect($data['message'])->toContain('Idempotency key has already been used with a different request payload');
 });
-

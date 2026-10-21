@@ -155,6 +155,7 @@ test('cwd officer can update ticket intake details while ticket remains open', f
     ]);
 
     $updatePayload = [
+        'original_updated_at' => $ticket->updated_at->toIso8601String(),
         'consumer_contact' => '09201234567',
         'complaint_source' => ComplaintSources::PHONE_CALL->value,
         'complaint_description' => 'Updated complaint description with more specific details.',
@@ -186,6 +187,7 @@ test('updating ticket intake details fails if ticket has progressed past open st
     ]);
 
     $updatePayload = [
+        'original_updated_at' => $ticket->updated_at->toIso8601String(),
         'consumer_contact' => '09201234567',
         'complaint_source' => ComplaintSources::PHONE_CALL->value,
         'complaint_description' => 'Trying to modify an in-progress ticket.',

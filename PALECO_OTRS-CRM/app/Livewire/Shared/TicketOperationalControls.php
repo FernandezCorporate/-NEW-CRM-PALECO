@@ -41,4 +41,3 @@ class TicketOperationalControls extends Component
         return view('livewire.shared.ticket-operational-controls');
     }
 }
-

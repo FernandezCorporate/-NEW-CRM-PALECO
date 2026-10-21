@@ -121,4 +121,3 @@ test('api and api-sync limiters operate in independent buckets', function () {
     expect($syncResponse->status())->not->toBe(429);
     expect($syncResponse->headers->get('X-RateLimit-Limit'))->toBe('120');
 });
-

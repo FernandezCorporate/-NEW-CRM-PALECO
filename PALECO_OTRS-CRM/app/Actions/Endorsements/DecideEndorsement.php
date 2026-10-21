@@ -182,6 +182,7 @@ class DecideEndorsement
 
                 if ($attempt < $maxAttempts && $isDuplicateKey) {
                     usleep(50000 * $attempt); // 50ms backoff
+
                     continue;
                 }
 
@@ -192,4 +193,3 @@ class DecideEndorsement
         throw new RuntimeException('Failed to process endorsement due to concurrent ticket sequence collision.');
     }
 }
-

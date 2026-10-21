@@ -50,4 +50,3 @@ class TicketEndorsementFactory extends Factory
         ]);
     }
 }
-

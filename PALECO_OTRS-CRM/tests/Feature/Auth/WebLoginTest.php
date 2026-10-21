@@ -144,4 +144,3 @@ test('root endpoint redirects authenticated cwd officer to cwd dashboard', funct
 
     $response->assertRedirect(route('cwd.dashboard'));
 });
-

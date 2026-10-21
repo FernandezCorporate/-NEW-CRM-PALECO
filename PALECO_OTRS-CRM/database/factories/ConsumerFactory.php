@@ -24,4 +24,3 @@ class ConsumerFactory extends Factory
         ];
     }
 }
-

@@ -221,11 +221,10 @@ test('force-closing parent ticket is blocked when active child tickets exist', f
             'closure_reason' => 'Force close while child is unresolved.',
         ]);
 
-    $response->assertRedirect(route('cwd.tickets.show', ['ticket' => $parent]));
-    $response->assertSessionHas('error');
+    // The policy now refuses before the action runs, which also hides the Force Close button
+    $response->assertForbidden();
     expect($parent->fresh()->status)->toBe(TicketStatus::IN_PROGRESS);
 });
-
 
 test('cwd officer cannot cancel a parent while a child ticket is not cancelled', function (string $childState) {
     $parent = Ticket::factory()->open()->create([

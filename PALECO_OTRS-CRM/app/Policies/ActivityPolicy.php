@@ -25,4 +25,3 @@ class ActivityPolicy
         return $user->role->slug_identifier === 'admin';
     }
 }
-

@@ -77,7 +77,7 @@ class ForceCloseTicket
 
             if (! in_array($lockedTicket->status, $allowedStatuses, true)) {
                 throw ValidationException::withMessages([
-                    'status' => 'Ticket cannot be force-closed from its current status (' . $lockedTicket->status->label() . ').',
+                    'status' => 'Ticket cannot be force-closed from its current status ('.$lockedTicket->status->label().').',
                 ]);
             }
 
@@ -140,4 +140,3 @@ class ForceCloseTicket
         });
     }
 }
-

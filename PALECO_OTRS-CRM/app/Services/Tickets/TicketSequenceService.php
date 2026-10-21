@@ -63,4 +63,3 @@ class TicketSequenceService
         return sprintf('%s-%d', $baseNumber, $maxSequence + 1);
     }
 }
-

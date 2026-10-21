@@ -58,4 +58,3 @@ class TicketEndorsementInitiated implements ShouldBroadcastNow
         return 'TicketEndorsementInitiated';
     }
 }
-

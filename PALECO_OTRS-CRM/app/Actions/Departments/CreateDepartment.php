@@ -21,4 +21,3 @@ class CreateDepartment
         return Department::create($data);
     }
 }
-

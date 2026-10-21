@@ -33,7 +33,7 @@ class TicketRemarkController extends Controller
     {
         Gate::authorize('view', $ticket);
 
-        $remarks =$this->remarkService->getTimeline($ticket, in_array($request->user()->role->slug_identifier, ['admin', 'cwd_officer']));
+        $remarks = $this->remarkService->getTimeline($ticket, in_array($request->user()->role->slug_identifier, ['admin', 'cwd_officer']));
 
         return response()->json([
             'success' => true,

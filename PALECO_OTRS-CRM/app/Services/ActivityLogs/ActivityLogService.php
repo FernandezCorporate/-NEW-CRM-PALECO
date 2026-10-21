@@ -147,7 +147,7 @@ class ActivityLogService
                 };
             }
 
-            $actorName = $log->causer ? ($log->causer->first_name . ' ' . $log->causer->last_name) : ($log->properties['full_name'] ?? $log->properties['username'] ?? 'System');
+            $actorName = $log->causer ? ($log->causer->first_name.' '.$log->causer->last_name) : ($log->properties['full_name'] ?? $log->properties['username'] ?? 'System');
             $actorRole = $log->causer ? $log->causer->role->role_name : ($log->properties['role'] ?? 'Unknown');
             $log->actor_name = $actorName;
             $log->actor_role = $actorRole;
@@ -443,4 +443,3 @@ class ActivityLogService
         return (string) $value;
     }
 }
-

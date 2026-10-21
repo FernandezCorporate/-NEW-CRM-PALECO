@@ -254,4 +254,3 @@ class TicketQueryService
         return $teams;
     }
 }
-

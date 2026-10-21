@@ -20,4 +20,3 @@ class TicketCategoryFactory extends Factory
         ];
     }
 }
-

@@ -147,6 +147,10 @@ class TicketController extends Controller
                 ->with('error', $errorMessage);
         }
 
+        if (! $result['success']) {
+            return redirect()->back()->withInput()->with('error', $result['message']);
+        }
+
         if (! $result['changed']) {
             return redirect($redirectUrl)
                 ->with('info', "No changes were detected for ticket {$ticket->ticket_number}.");

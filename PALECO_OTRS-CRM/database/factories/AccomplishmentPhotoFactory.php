@@ -24,4 +24,3 @@ class AccomplishmentPhotoFactory extends Factory
         ];
     }
 }
-

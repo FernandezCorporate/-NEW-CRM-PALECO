@@ -11,11 +11,6 @@
             <h1 class="text-2xl font-bold text-slate-800">System Monitoring & Audit Log</h1>
             <p class="text-sm text-slate-500 mt-1">Track all actions performed across every user level — Admin, CWD, Supervisor, Field Personnel.</p>
         </div>
-        
-        <div class="text-right">
-            <button type="button" disabled class="unavailable-action" aria-describedby="export-note">Export CSV</button>
-            <p id="export-note" class="mt-1 text-xs text-slate-500">Export is not available yet.</p>
-        </div>
     </header>
 
     <p class="mb-5 text-sm text-slate-600">

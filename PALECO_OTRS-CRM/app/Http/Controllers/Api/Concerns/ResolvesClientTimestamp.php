@@ -46,7 +46,7 @@ trait ResolvesClientTimestamp
         // 1. Accomplishment submission (ticket is in_progress) cannot precede work start.
         // 2. Work start (ticket is assigned) cannot precede the crew's assignment timestamp.
         // 3. Fallback to ticket creation timestamp.
-        $assignedAt = $ticket->activeAssignment?->created_at 
+        $assignedAt = $ticket->activeAssignment?->created_at
             ?? $ticket->assignments()->whereNull('unassigned_at')->latest('id')->value('created_at');
 
         $baseline = match ($ticket->status) {
@@ -63,4 +63,3 @@ trait ResolvesClientTimestamp
         return $parsed;
     }
 }
-

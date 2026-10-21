@@ -47,4 +47,3 @@ class TicketAccomplishmentFactory extends Factory
         ]);
     }
 }
-

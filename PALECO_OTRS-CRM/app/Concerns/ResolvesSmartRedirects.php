@@ -13,10 +13,7 @@ trait ResolvesSmartRedirects
     /**
      * Resolves the appropriate destination URL based on source query parameters or fallback route.
      *
-     * @param  Request  $request
-     * @param  string  $fallbackRoute
      * @param  array<string, string|callable|array>  $sourceRouteMap  Keyed by source identifier (e.g. 'dashboard', 'details', 'department')
-     * @param  array  $defaultParams
      * @return string Absolute or relative URL to redirect to
      */
     protected function resolveSmartRedirect(
@@ -44,4 +41,3 @@ trait ResolvesSmartRedirects
         return route($fallbackRoute, $defaultParams);
     }
 }
-

@@ -41,9 +41,9 @@ class PalecoBillingApiService
      * Search consumers against external PALECO billing API within Puerto Princesa scope (database=paleco_db).
      * Falls back to local database search if external service is unreachable.
      *
-     * @param  string|null  $lastName Last name or Lastname,Firstname search query
-     * @param  string|null  $meterSerial Optional meter serial query
-     * @param  int  $limit Maximum results to return (default 30)
+     * @param  string|null  $lastName  Last name or Lastname,Firstname search query
+     * @param  string|null  $meterSerial  Optional meter serial query
+     * @param  int  $limit  Maximum results to return (default 30)
      * @return array{data: array, has_more: bool, source: string}
      */
     public function searchAccounts(?string $lastName = null, ?string $meterSerial = null, int $limit = 30): array
@@ -90,7 +90,6 @@ class PalecoBillingApiService
             }
 
             throw new Exception($response->json('message') ?? 'Search request failed.');
-
         } catch (Exception $e) {
             return $this->searchLocalConsumers($lastName, $meterSerial, $limit);
         }
@@ -244,4 +243,3 @@ class PalecoBillingApiService
             ]);
     }
 }
-

@@ -231,7 +231,7 @@
 .refined-shell [data-workspace-kind="confirmation"] h1 { line-height: 1.3; }
 .refined-shell [data-workspace-kind="confirmation"] :is(.justify-end, .justify-center) { flex-wrap: wrap; }
 
-.queue-search, .queue-clear, .unavailable-action {
+.queue-search, .queue-clear {
     display: inline-flex;
     justify-content: center;
     align-items: center;
@@ -246,7 +246,6 @@
 .queue-search:hover { background: #065f3d; }
 .queue-clear { color: var(--workspace-accent); }
 .queue-clear:hover { background: #e6f0e9; }
-.unavailable-action { border: 1px solid #dce5df; color: #68756d; background: #f1f4f2; cursor: not-allowed; }
 .skip-link {
     position: fixed;
     top: .75rem;

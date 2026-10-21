@@ -15,8 +15,6 @@ use Illuminate\Pagination\LengthAwarePaginator;
  */
 class TeamService
 {
-
-
     // --- WEB QUERY METHODS ---
 
     /**
@@ -94,7 +92,9 @@ class TeamService
                 'ticket as tickets_assigned' => fn ($q) => $q->where('status', TicketStatus::ASSIGNED),
                 'ticket as tickets_in_progress' => fn ($q) => $q->where('status', TicketStatus::IN_PROGRESS),
                 'ticket as tickets_resolved' => fn ($q) => $q->where('status', TicketStatus::RESOLVED),
+                'ticket as tickets_pending_endorsement' => fn ($q) => $q->where('status', TicketStatus::PENDING_ENDORSEMENT),
                 'ticket as tickets_closed' => fn ($q) => $q->where('status', TicketStatus::CLOSED),
+                'ticket as tickets_cancelled' => fn ($q) => $q->where('status', TicketStatus::CANCELLED),
             ])
             ->with(['members' => function ($query) {
                 $query->select('users.id', 'users.first_name', 'users.middle_name', 'users.last_name', 'users.name_ext');
@@ -119,7 +119,9 @@ class TeamService
             'ticket as tickets_assigned' => fn ($q) => $q->where('status', TicketStatus::ASSIGNED),
             'ticket as tickets_in_progress' => fn ($q) => $q->where('status', TicketStatus::IN_PROGRESS),
             'ticket as tickets_resolved' => fn ($q) => $q->where('status', TicketStatus::RESOLVED),
+            'ticket as tickets_pending_endorsement' => fn ($q) => $q->where('status', TicketStatus::PENDING_ENDORSEMENT),
             'ticket as tickets_closed' => fn ($q) => $q->where('status', TicketStatus::CLOSED),
+            'ticket as tickets_cancelled' => fn ($q) => $q->where('status', TicketStatus::CANCELLED),
         ]);
 
         $team->load(['members' => function ($query) {

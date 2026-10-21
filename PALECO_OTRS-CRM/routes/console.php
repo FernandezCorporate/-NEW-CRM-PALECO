@@ -26,7 +26,7 @@ Artisan::command('storage:purge-orphaned-evidence {--force : Delete the files in
         ->reject(fn (string $path) => $referenced->has($path))
         ->values();
 
-    $this->info("Disk: ".config('filesystems.default')." · orphaned evidence files: {$orphans->count()}");
+    $this->info('Disk: '.config('filesystems.default')." · orphaned evidence files: {$orphans->count()}");
 
     if ($orphans->isEmpty()) {
         return;
@@ -44,4 +44,3 @@ Artisan::command('storage:purge-orphaned-evidence {--force : Delete the files in
 })->purpose('Delete accomplishment signatures and photos that no database row references');
 
 Schedule::command('model:prune', ['--model' => [IdempotencyRecord::class]])->daily();
-

@@ -48,6 +48,7 @@
     <form action="{{ route('cwd.tickets.update', $ticket) }}" method="POST" autocomplete="off" class="space-y-8">
         @csrf
         @method('PUT')
+        <input type="hidden" name="original_updated_at" value="{{ old('original_updated_at', $ticket->updated_at) }}">
 
         @if(request()->filled('source') || old('source'))
             <input type="hidden" name="source" value="{{ old('source', request('source')) }}">
@@ -77,7 +78,7 @@
                         <x-form.label id="category_id_label" for="category_id" :required="true">Nature of Complaint</x-form.label>
                         
                         <label class="inline-flex items-center gap-1.5 cursor-pointer text-xs font-medium text-slate-600 hover:text-emerald-700 select-none">
-                            <input type="checkbox" name="other_category" id="other_category" value="1" {{ old('other_category', $ticket->other_category) ? 'checked' : '' }} class="h-3.5 w-3.5 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500">
+                            <input type="checkbox" name="other_category" id="other_category" value="1" aria-label="Unlisted / custom category" {{ old('other_category', $ticket->other_category) ? 'checked' : '' }} class="h-3.5 w-3.5 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500">
                             <span>Unlisted / Custom</span>
                         </label>
                     </div>

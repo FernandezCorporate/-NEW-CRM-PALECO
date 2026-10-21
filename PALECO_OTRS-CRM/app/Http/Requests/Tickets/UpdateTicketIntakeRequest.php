@@ -43,6 +43,8 @@ class UpdateTicketIntakeRequest extends FormRequest
     public function rules(): array
     {
         return [
+            // Stale-edit guard: the ticket's updated_at when the form was opened
+            'original_updated_at' => ['required', 'string'],
             'consumer_contact' => ['required', 'string', 'regex:/^(09|\+639)\d{9}$/'],
             'complaint_source' => ['required', new Enum(ComplaintSources::class)],
             'complaint_description' => ['required', 'string', 'min:5'],
@@ -88,7 +90,7 @@ class UpdateTicketIntakeRequest extends FormRequest
     {
         return [
             'complaint_source.required' => 'Please indicate the source of the complaint.',
-            'complaint_source.' . Enum::class => 'The selected complaint source is invalid.',
+            'complaint_source.'.Enum::class => 'The selected complaint source is invalid.',
             'consumer_contact.regex' => 'The contact number must be a valid 11-digit mobile number (e.g., 09123456789).',
 
             'complaint_description.required' => 'You must provide a clear description of the utility complaint details.',
@@ -127,4 +129,3 @@ class UpdateTicketIntakeRequest extends FormRequest
         ];
     }
 }
-

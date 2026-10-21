@@ -41,4 +41,3 @@ class RestoreTicketCategory
         return ['success' => true, 'message' => 'Category restored successfully.'];
     }
 }
-

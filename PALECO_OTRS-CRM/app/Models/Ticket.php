@@ -417,7 +417,7 @@ class Ticket extends Model
         return match ($aging) {
             'under_24h', 'less_than_24h' => $query->where('created_at', '>', $now->copy()->subDay()),
             '1_to_7_days' => $query->where('created_at', '<=', $now->copy()->subDay())
-                                  ->where('created_at', '>', $now->copy()->subDays(7)),
+                ->where('created_at', '>', $now->copy()->subDays(7)),
             '7_days_plus', '7_days_or_more' => $query->where('created_at', '<=', $now->copy()->subDays(7)),
             default => $query,
         };
@@ -443,12 +443,12 @@ class Ticket extends Model
             $dotClass = 'bg-emerald-500';
             if ($diffHours < 1) {
                 $mins = max(1, $diffMinutes);
-                $duration = $mins . ' ' . Str::plural('minute', $mins);
+                $duration = $mins.' '.Str::plural('minute', $mins);
             } else {
                 $remMins = $diffMinutes % 60;
-                $duration = $diffHours . ' ' . Str::plural('hour', $diffHours);
+                $duration = $diffHours.' '.Str::plural('hour', $diffHours);
                 if ($remMins > 0) {
-                    $duration .= ' ' . $remMins . ' ' . Str::plural('minute', $remMins);
+                    $duration .= ' '.$remMins.' '.Str::plural('minute', $remMins);
                 }
             }
         } elseif ($this->created_at > $now->copy()->subDays(7)) {
@@ -456,18 +456,18 @@ class Ticket extends Model
             $badgeClasses = 'bg-amber-50 text-amber-700 border-amber-200';
             $dotClass = 'bg-amber-500';
             $remHours = $diffHours % 24;
-            $duration = $diffDays . ' ' . Str::plural('day', $diffDays);
+            $duration = $diffDays.' '.Str::plural('day', $diffDays);
             if ($remHours > 0) {
-                $duration .= ' ' . $remHours . ' ' . Str::plural('hour', $remHours);
+                $duration .= ' '.$remHours.' '.Str::plural('hour', $remHours);
             }
         } else {
             $tone = 'red';
             $badgeClasses = 'bg-rose-50 text-rose-700 border-rose-200';
             $dotClass = 'bg-rose-500';
             $remHours = $diffHours % 24;
-            $duration = $diffDays . ' ' . Str::plural('day', $diffDays);
+            $duration = $diffDays.' '.Str::plural('day', $diffDays);
             if ($remHours > 0) {
-                $duration .= ' ' . $remHours . ' ' . Str::plural('hour', $remHours);
+                $duration .= ' '.$remHours.' '.Str::plural('hour', $remHours);
             }
         }
 

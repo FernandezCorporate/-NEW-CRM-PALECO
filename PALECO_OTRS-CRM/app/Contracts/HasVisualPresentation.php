@@ -33,4 +33,3 @@ interface HasVisualPresentation
      */
     public function dotClass(): string;
 }
-

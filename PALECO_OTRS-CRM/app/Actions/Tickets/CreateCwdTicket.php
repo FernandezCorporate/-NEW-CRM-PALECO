@@ -91,6 +91,7 @@ class CreateCwdTicket
 
                 if ($attempt < $maxAttempts && $isDuplicateKey) {
                     usleep(50000 * $attempt); // 50ms backoff
+
                     continue;
                 }
 
@@ -101,4 +102,3 @@ class CreateCwdTicket
         throw new RuntimeException('Failed to generate a unique ticket sequence number after multiple attempts.');
     }
 }
-

@@ -29,4 +29,3 @@ class TicketRemarkFactory extends Factory
         return $this->state(fn () => ['is_internal' => true]);
     }
 }
-
