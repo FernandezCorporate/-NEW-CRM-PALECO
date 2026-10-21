@@ -2,6 +2,7 @@
 
 namespace App\Actions\Users;
 
+use App\Events\AccountUpdated;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\RateLimiter;
@@ -26,6 +27,10 @@ class ResetUserPassword
 
             // Revoke active mobile API tokens
             $user->tokens()->delete();
+
+            DB::afterCommit(function () use ($user) {
+                rescue(fn () => AccountUpdated::dispatch($user, 'password_reset'), report: true);
+            });
 
             // Revoke active web database sessions for this user
             if (Schema::hasTable('sessions')) {

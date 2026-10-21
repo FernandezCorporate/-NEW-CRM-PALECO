@@ -2,6 +2,7 @@
 
 namespace App\Actions\Teams;
 
+use App\Events\TeamUpdated;
 use App\Models\Team;
 use Illuminate\Support\Facades\DB;
 
@@ -27,6 +28,11 @@ class CreateTeam
 
                 $team->members()->sync($formattedMembers);
             }
+
+            $memberIds = collect($assignedMembers)->pluck('user_id')->all();
+            DB::afterCommit(function () use ($team, $memberIds) {
+                rescue(fn () => TeamUpdated::dispatch($team, 'created', $memberIds), report: true);
+            });
 
             return $team->fresh(['members' => function ($query) {
                 $query->select('users.id', 'users.first_name', 'users.middle_name', 'users.last_name', 'users.name_ext');

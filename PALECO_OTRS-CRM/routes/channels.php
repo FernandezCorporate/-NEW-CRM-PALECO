@@ -42,3 +42,9 @@ Broadcast::channel('department.{deptId}', function (User $user, $deptId) {
 
     return in_array($role, ['cwd_officer', 'admin'], true);
 }, ['guards' => ['web', 'sanctum']]);
+
+// Personal channel: account notices (deactivation, department moves) and team membership changes,
+// so an app learns it was added to or removed from a team even before it joins that team's channel
+Broadcast::channel('user.{userId}', function (User $user, string $userId) {
+    return $user->id === $userId;
+}, ['guards' => ['web', 'sanctum']]);

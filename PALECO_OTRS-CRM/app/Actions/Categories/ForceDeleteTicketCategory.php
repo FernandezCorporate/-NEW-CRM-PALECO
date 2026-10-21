@@ -2,6 +2,7 @@
 
 namespace App\Actions\Categories;
 
+use App\Events\ReferenceDataUpdated;
 use App\Models\Ticket;
 use App\Models\TicketCategory;
 
@@ -41,6 +42,8 @@ class ForceDeleteTicketCategory
         }
 
         $category->forceDelete();
+
+        rescue(fn () => ReferenceDataUpdated::dispatch('category', 'deleted', $category->id, $category->category_name), report: true);
 
         return ['success' => true, 'message' => 'Category permanently deleted.'];
     }

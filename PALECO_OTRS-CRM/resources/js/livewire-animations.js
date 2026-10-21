@@ -21,15 +21,18 @@ const initLivewireAnimations = () => {
 
     applyAnimations();
 
-    document.addEventListener('livewire:initialized', () => {
-        if (typeof Livewire !== 'undefined' && Livewire.hook) {
-            Livewire.hook('commit', ({ succeed }) => {
-                succeed(() => {
-                    requestAnimationFrame(() => applyAnimations());
-                });
-            });
-        }
-    });
+    // Livewire may already be running when this bundle loads, so register immediately when possible
+    let registered = false;
+    const registerHook = () => {
+        if (registered || typeof window.Livewire === 'undefined' || !window.Livewire.hook) return;
+        registered = true;
+        // 'morphed' runs after Livewire has patched the DOM; the commit hook's succeed() never fires in this Livewire version
+        window.Livewire.hook('morphed', () => applyAnimations());
+    };
+
+    registerHook();
+    document.addEventListener('livewire:init', registerHook);
+    document.addEventListener('livewire:initialized', registerHook);
 };
 
 if (document.readyState === 'loading') {

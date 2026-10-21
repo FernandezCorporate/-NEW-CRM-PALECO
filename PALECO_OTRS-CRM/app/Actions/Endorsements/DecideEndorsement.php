@@ -67,6 +67,8 @@ class DecideEndorsement
                     if ($isApproved) {
                         $oldParentStatus = $parentTicket->status;
 
+                        $previousTeamId = $parentTicket->team_id;
+
                         // Close active assignment on the parent ticket since responsibility is transferred
                         $parentTicket->assignments()
                             ->whereNull('unassigned_at')
@@ -118,10 +120,10 @@ class DecideEndorsement
                             'new_status' => TicketStatus::OPEN,
                         ]);
 
-                        DB::afterCommit(function () use ($lockedEndorsement, $childTicket) {
+                        DB::afterCommit(function () use ($lockedEndorsement, $childTicket, $previousTeamId) {
                             $lockedEndorsement->load(['ticket', 'reviewer', 'suggestedDepartment']);
                             rescue(fn () => event(new TicketCreated($childTicket)), report: true);
-                            rescue(fn () => event(new TicketEndorsementDecided($lockedEndorsement, $childTicket->id, $childTicket->ticket_number)), report: true);
+                            rescue(fn () => event(new TicketEndorsementDecided($lockedEndorsement, $childTicket->id, $childTicket->ticket_number, $previousTeamId)), report: true);
                         });
                     } else {
                         $oldStatus = $parentTicket->status;

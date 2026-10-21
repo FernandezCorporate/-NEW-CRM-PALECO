@@ -7,6 +7,19 @@
       "runtimeArgs": ["PALECO_OTRS-CRM/artisan", "serve", "--host=127.0.0.1", "--port=8000"],
       "port": 8000,
       "url": "http://127.0.0.1:8000"
+    },
+    {
+      "name": "otrs-reverb",
+      "runtimeExecutable": "php",
+      "runtimeArgs": ["PALECO_OTRS-CRM/artisan", "reverb:start", "--host=127.0.0.1", "--port=8080"],
+      "port": 8080
+    },
+    {
+      "name": "otrs-simulator",
+      "runtimeExecutable": "php",
+      "runtimeArgs": ["-S", "localhost:5500", "-t", "mobile-simulator"],
+      "port": 5500,
+      "url": "http://localhost:5500"
     }
   ]
 }

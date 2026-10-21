@@ -24,6 +24,8 @@ class DashboardOverview extends Component
     #[On('echo-private:cwd.operations,.TicketForceClosed')]
     #[On('echo-private:cwd.operations,.TicketEndorsementInitiated')]
     #[On('echo-private:cwd.operations,.TicketEndorsementDecided')]
+    #[On('echo-private:cwd.operations,.TicketIntakeUpdated')]
+    #[On('echo-private:cwd.operations,.TicketReportRejected')]
     public function refreshMetrics(WebDashboardService $service)
     {
         $this->overview = $service->ticketOverview();

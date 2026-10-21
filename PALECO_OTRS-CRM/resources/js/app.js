@@ -1,5 +1,6 @@
 // Third-party packages
 import './echo';
+import './live-refresh';
 
 // Form & Interactive Scripts (Your existing ones)
 import './togglePassword';

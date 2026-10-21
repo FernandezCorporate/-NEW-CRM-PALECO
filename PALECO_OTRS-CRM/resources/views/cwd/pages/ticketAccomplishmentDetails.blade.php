@@ -31,7 +31,9 @@
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
         
         <!-- Top Left: General Report Summary (Semantic Definition List) -->
-        <section class="bg-white border border-slate-200 rounded-xl shadow-xs p-6" aria-labelledby="summary-heading">
+        {{-- Status, approver and rejection reason re-render when the supervisor decides this report (live-refresh.js) --}}
+        <section class="bg-white border border-slate-200 rounded-xl shadow-xs p-6" aria-labelledby="summary-heading"
+            data-live-region="report-summary" data-live-events="TicketReportRejected,TicketVerifiedAndClosed,TicketForceClosed" data-live-match="ticket_id:{{ $ticket->id }}">
             <h2 id="summary-heading" class="text-base font-bold text-slate-900 mb-5">General Report Summary</h2>
             
             <dl class="space-y-4">

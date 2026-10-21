@@ -3,6 +3,7 @@
 namespace App\Actions\Teams;
 
 use App\Enums\TicketStatus;
+use App\Events\TeamUpdated;
 use App\Models\Team;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -109,6 +110,8 @@ class UpdateTeam
                 }
             }
 
+            $previousDepartmentId = (int) $lockedTeam->department_id;
+
             $lockedTeam->fill($teamDetails);
             $isTeamDirty = $lockedTeam->isDirty();
 
@@ -134,6 +137,16 @@ class UpdateTeam
                         'attributes' => ['member_ids' => array_keys($newRoster)],
                     ])
                     ->log("{$lockedTeam->team_name} roster has been modified");
+            }
+
+            if ($isTeamDirty || $membersChanged) {
+                $addedIds = array_values(array_diff(array_keys($newRoster), array_keys($oldRoster)));
+                $removedIds = array_values(array_diff(array_keys($oldRoster), array_keys($newRoster)));
+                $movedFrom = $departmentChanged ? $previousDepartmentId : null;
+
+                DB::afterCommit(function () use ($lockedTeam, $addedIds, $removedIds, $movedFrom) {
+                    rescue(fn () => TeamUpdated::dispatch($lockedTeam, 'updated', $addedIds, $removedIds, previousDepartmentId: $movedFrom), report: true);
+                });
             }
 
             $freshTeam = $lockedTeam->fresh(['members' => function ($query) {

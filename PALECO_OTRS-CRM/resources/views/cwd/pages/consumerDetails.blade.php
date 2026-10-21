@@ -102,7 +102,7 @@
     </article>
 
     <!-- Intake Source Metrics -->
-    <section class="mb-8" aria-labelledby="intake-sources-heading">
+    <section class="mb-8" aria-labelledby="intake-sources-heading" data-live-region="consumer-sources" data-live-events="TicketCreated,TicketIntakeUpdated,TicketAssigned,TicketWorkStarted,TicketAccomplished,TicketReportRejected,TicketVerifiedAndClosed,TicketCancelled,TicketForceClosed,TicketEndorsementInitiated,TicketEndorsementDecided">
         <h2 id="intake-sources-heading" class="text-lg font-bold text-slate-900 mb-4">Complaint Sources</h2>
         <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
             
@@ -134,8 +134,8 @@
         </div>
     </section>
 
-    <!-- Historical Tickets Table -->
-    <section aria-labelledby="ticket-history-heading">
+    <!-- Historical Tickets Table: refreshes when any ticket changes (live-refresh.js) -->
+    <section aria-labelledby="ticket-history-heading" data-live-region="consumer-tickets" data-live-events="TicketCreated,TicketIntakeUpdated,TicketAssigned,TicketWorkStarted,TicketAccomplished,TicketReportRejected,TicketVerifiedAndClosed,TicketCancelled,TicketForceClosed,TicketEndorsementInitiated,TicketEndorsementDecided">
         <div class="flex justify-between items-end mb-4">
             <h2 id="ticket-history-heading" class="text-lg font-bold text-slate-900">Ticket History</h2>
         </div>

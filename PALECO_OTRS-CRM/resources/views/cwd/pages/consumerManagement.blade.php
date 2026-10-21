@@ -33,8 +33,8 @@
         </form>
     </search>
 
-    <!-- Consumer Cards Grid -->
-    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 mb-6">
+    <!-- Consumer Cards Grid: refreshes when any ticket changes, since cards summarise each consumer's tickets (live-refresh.js) -->
+    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 mb-6" data-live-region="consumer-cards" data-live-events="TicketCreated,TicketIntakeUpdated,TicketAssigned,TicketWorkStarted,TicketAccomplished,TicketReportRejected,TicketVerifiedAndClosed,TicketCancelled,TicketForceClosed,TicketEndorsementInitiated,TicketEndorsementDecided">
         @forelse($consumers as $consumer)
             <a href="{{ route('cwd.consumers.show', $consumer->id) }}" class="block group">
                 <article class="bg-white border border-slate-200 rounded-xl shadow-xs p-6 group-hover:shadow-sm transition-shadow flex flex-col h-full">
@@ -87,10 +87,12 @@
     </div>
 
     <!-- Pagination -->
-    @if($consumers->hasPages())
-        <div class="mt-4">
-            {{ $consumers->links() }}
-        </div>
-    @endif
+    <div data-live-region="consumer-pagination" data-live-events="TicketCreated,TicketIntakeUpdated,TicketAssigned,TicketWorkStarted,TicketAccomplished,TicketReportRejected,TicketVerifiedAndClosed,TicketCancelled,TicketForceClosed,TicketEndorsementInitiated,TicketEndorsementDecided">
+        @if($consumers->hasPages())
+            <div class="mt-4">
+                {{ $consumers->links() }}
+            </div>
+        @endif
+    </div>
 
 @endsection

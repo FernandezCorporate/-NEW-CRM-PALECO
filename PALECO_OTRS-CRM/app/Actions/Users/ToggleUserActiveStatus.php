@@ -3,6 +3,8 @@
 namespace App\Actions\Users;
 
 use App\Enums\TicketStatus;
+use App\Events\AccountUpdated;
+use App\Events\TeamUpdated;
 use App\Models\Department;
 use App\Models\Ticket;
 use App\Models\User;
@@ -111,12 +113,24 @@ class ToggleUserActiveStatus
                 }
 
                 if ($user->role->slug_identifier === 'field_personnel') {
+                    $formerTeams = $user->teams()->get();
                     $user->teams()->detach();
+
+                    DB::afterCommit(function () use ($formerTeams, $user) {
+                        foreach ($formerTeams as $team) {
+                            rescue(fn () => TeamUpdated::dispatch($team, 'updated', removedMemberIds: [$user->id]), report: true);
+                        }
+                    });
                 }
             }
 
             $user->is_active = $isActive;
             $user->save();
+
+            // Tell the account's open app right away; on deactivation its token is already revoked
+            DB::afterCommit(function () use ($user, $isActive) {
+                rescue(fn () => AccountUpdated::dispatch($user, $isActive ? 'reactivated' : 'deactivated'), report: true);
+            });
         });
     }
 }

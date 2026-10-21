@@ -2,6 +2,7 @@
 
 namespace App\Actions\Categories;
 
+use App\Events\ReferenceDataUpdated;
 use App\Models\TicketCategory;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -41,6 +42,10 @@ class UpdateTicketCategory
             }
 
             $lockedCategory->save();
+
+            DB::afterCommit(function () use ($lockedCategory) {
+                rescue(fn () => ReferenceDataUpdated::dispatch('category', 'updated', $lockedCategory->id, $lockedCategory->category_name), report: true);
+            });
 
             return ['success' => true, 'changed' => true];
         });

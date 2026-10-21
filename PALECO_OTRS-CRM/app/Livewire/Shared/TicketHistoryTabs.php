@@ -40,6 +40,9 @@ class TicketHistoryTabs extends Component
     #[On('echo-private:cwd.operations,.TicketForceClosed')]
     #[On('echo-private:cwd.operations,.TicketEndorsementInitiated')]
     #[On('echo-private:cwd.operations,.TicketEndorsementDecided')]
+    #[On('echo-private:cwd.operations,.TicketIntakeUpdated')]
+    #[On('echo-private:cwd.operations,.TicketReportRejected')]
+    #[On('echo-private:cwd.operations,.TicketRemarkAdded')]
     public function handleStatusChange($event = null): void
     {
         if ($event && isset($event['ticket_id']) && $event['ticket_id'] !== $this->ticket->id) {

@@ -2,6 +2,7 @@
 
 namespace App\Actions\Departments;
 
+use App\Events\ReferenceDataUpdated;
 use App\Models\Department;
 
 /**
@@ -46,6 +47,8 @@ class RestoreDepartment
         }
 
         $dept->restore();
+
+        rescue(fn () => ReferenceDataUpdated::dispatch('department', 'restored', $dept->id, $dept->dept_name), report: true);
 
         return [
             'success' => true,

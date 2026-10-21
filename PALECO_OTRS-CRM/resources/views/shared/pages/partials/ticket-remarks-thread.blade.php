@@ -1,6 +1,7 @@
 @props(['ticket', 'isAdmin'])
 
-<div id="remark-history" wire:ignore data-tab-panel="remark-history" role="tabpanel" aria-labelledby="tab-remark-history" class="ticket-history-section border border-slate-200 rounded-xl bg-white shadow-xs overflow-hidden mb-6 hidden">
+{{-- Re-rendered by the TicketHistoryTabs Livewire component, so new remarks appear live; history-tabs.js restores the open tab after each update --}}
+<div id="remark-history" data-tab-panel="remark-history" role="tabpanel" aria-labelledby="tab-remark-history" class="ticket-history-section border border-slate-200 rounded-xl bg-white shadow-xs overflow-hidden mb-6 hidden">
     <header class="ticket-history-heading border-b border-slate-100 bg-slate-50/50">
         <div>
             <h3 id="remark-history-heading">Activity remarks & notes <span class="ticket-history-count">{{ number_format($ticket->remarks->count()) }}</span></h3>
@@ -25,7 +26,8 @@
                     @endif
                 </div>
 
-                <form action="{{ route('shared.tickets.remarks.store', $ticket) }}#remark-history" method="POST">
+                {{-- wire:ignore keeps a remark being typed when a live update re-renders the thread --}}
+                <form action="{{ route('shared.tickets.remarks.store', $ticket) }}#remark-history" method="POST" wire:ignore>
                     @csrf
                     <div class="mb-3">
                         <textarea 

@@ -5,6 +5,12 @@
 @section('title', 'Cancel Ticket - ' . $ticket->ticket_number)
 
 @section('content')
+    {{-- Shown if the ticket changes while this page is open; CancelTicket still re-checks on submit --}}
+    <div class="max-w-2xl mx-auto mt-6 -mb-4">
+        <x-live-notice events="TicketAssigned,TicketCancelled,TicketEndorsementInitiated,TicketCreated" match="ticket_id:{{ $ticket->id }}|parent_ticket_id:{{ $ticket->id }}"
+            message="This ticket just changed (assigned, cancelled, endorsed or given a child ticket), so it may no longer be cancellable." />
+    </div>
+
     <x-confirm-card
         title="Cancel Service Ticket?"
         :action="route('cwd.tickets.cancel', $ticket)"

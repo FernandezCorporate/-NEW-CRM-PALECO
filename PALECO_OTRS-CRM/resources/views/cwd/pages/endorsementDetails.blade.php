@@ -16,8 +16,9 @@
         <!-- Validation & Session Prompts Component -->
         @include('cwd.prompts.alert')
 
-        <!-- Main Document Card -->
-        <article class="bg-white border border-slate-200 rounded-xl shadow-xs mb-8" aria-labelledby="endorsement-title">
+        <!-- Main Document Card: swaps to the decision record when another officer decides this request (live-refresh.js) -->
+        <article class="bg-white border border-slate-200 rounded-xl shadow-xs mb-8" aria-labelledby="endorsement-title"
+            data-live-region="endorsement-record" data-live-events="TicketEndorsementDecided" data-live-match="endorsement_id:{{ $endorsement->id }}">
             
             <!-- 1. Header Section -->
             <header class="px-6 py-6 border-b border-slate-200">

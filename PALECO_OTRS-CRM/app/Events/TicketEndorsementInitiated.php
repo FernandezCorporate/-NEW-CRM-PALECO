@@ -24,10 +24,24 @@ class TicketEndorsementInitiated implements ShouldBroadcastNow
 
     /**
      * Get the channels the event should broadcast on.
+     * The ticket's department and crew are told it is frozen, not only CWD.
+     *
+     * @return array<int, Channel>
      */
-    public function broadcastOn(): Channel
+    public function broadcastOn(): array
     {
-        return new PrivateChannel('cwd.operations');
+        $ticket = $this->endorsement->ticket;
+        $channels = [new PrivateChannel('cwd.operations')];
+
+        if ($ticket?->team_id) {
+            $channels[] = new PrivateChannel('team.'.$ticket->team_id);
+        }
+
+        if ($ticket?->department_id) {
+            $channels[] = new PrivateChannel('department.'.$ticket->department_id);
+        }
+
+        return $channels;
     }
 
     /**
@@ -40,6 +54,8 @@ class TicketEndorsementInitiated implements ShouldBroadcastNow
             'ticket_number' => $this->endorsement->ticket?->ticket_number,
             'parent_ticket_id' => $this->endorsement->ticket?->parent_ticket_id,
             'endorsement_id' => $this->endorsement->id,
+            'team_id' => $this->endorsement->ticket?->team_id,
+            'department_id' => $this->endorsement->ticket?->department_id,
             'status' => 'pending_endorsement',
             'status_label' => 'Pending Endorsement',
             'suggested_department_id' => $this->endorsement->suggested_department_id,

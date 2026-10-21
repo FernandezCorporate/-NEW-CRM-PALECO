@@ -2,6 +2,7 @@
 
 namespace App\Actions\Teams;
 
+use App\Events\TeamUpdated;
 use App\Models\Department;
 use App\Models\Team;
 
@@ -50,6 +51,8 @@ class RestoreTeam
         }
 
         $team->restore();
+
+        rescue(fn () => TeamUpdated::dispatch($team, 'restored', notifiedMemberIds: $team->members()->pluck('users.id')->all()), report: true);
 
         return [
             'success' => true,

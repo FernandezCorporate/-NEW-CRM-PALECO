@@ -23,15 +23,31 @@ class TicketEndorsementDecided implements ShouldBroadcastNow
     public function __construct(
         public TicketEndorsement $endorsement,
         public ?string $childTicketId = null,
-        public ?string $childTicketNumber = null
+        public ?string $childTicketNumber = null,
+        public ?string $previousTeamId = null
     ) {}
 
     /**
      * Get the channels the event should broadcast on.
+     * Approval clears the crew from the parent, so the crew that had it is passed in as $previousTeamId.
+     *
+     * @return array<int, Channel>
      */
-    public function broadcastOn(): Channel
+    public function broadcastOn(): array
     {
-        return new PrivateChannel('cwd.operations');
+        $ticket = $this->endorsement->ticket;
+        $channels = [new PrivateChannel('cwd.operations')];
+
+        $teamId = $ticket?->team_id ?? $this->previousTeamId;
+        if ($teamId) {
+            $channels[] = new PrivateChannel('team.'.$teamId);
+        }
+
+        if ($ticket?->department_id) {
+            $channels[] = new PrivateChannel('department.'.$ticket->department_id);
+        }
+
+        return $channels;
     }
 
     /**
@@ -51,6 +67,10 @@ class TicketEndorsementDecided implements ShouldBroadcastNow
             'parent_status_label' => $this->endorsement->ticket?->status->label(),
             'child_ticket_id' => $this->childTicketId,
             'child_ticket_number' => $this->childTicketNumber,
+            'team_id' => $this->endorsement->ticket?->team_id,
+            'previous_team_id' => $this->previousTeamId,
+            'department_id' => $this->endorsement->ticket?->department_id,
+            'new_department_id' => $this->endorsement->new_department_id,
             'reviewed_by' => $this->endorsement->reviewer ? "{$this->endorsement->reviewer->first_name} {$this->endorsement->reviewer->last_name}" : 'CWD Officer',
             'reviewed_at' => $this->endorsement->reviewed_at?->format('M d, Y h:i A') ?? now()->format('M d, Y h:i A'),
         ];

@@ -3,6 +3,7 @@
 namespace App\Actions\Tickets;
 
 use App\Enums\TicketStatus;
+use App\Events\TicketIntakeUpdated;
 use App\Models\Ticket;
 use App\Services\External\PalecoBillingApiService;
 use Carbon\Carbon;
@@ -85,6 +86,8 @@ class UpdateTicketIntake
                 ];
             }
 
+            $previousDepartmentId = $lockedTicket->department_id;
+
             $lockedTicket->fill($validatedData);
 
             if ($lockedTicket->isClean()) {
@@ -104,6 +107,10 @@ class UpdateTicketIntake
                     'is_internal' => true,
                 ]);
             }
+
+            DB::afterCommit(function () use ($lockedTicket, $previousDepartmentId) {
+                rescue(fn () => TicketIntakeUpdated::dispatch($lockedTicket->fresh(['department']), $previousDepartmentId), report: true);
+            });
 
             return [
                 'success' => true,

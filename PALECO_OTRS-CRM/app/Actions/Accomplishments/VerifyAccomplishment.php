@@ -4,8 +4,8 @@ namespace App\Actions\Accomplishments;
 
 use App\Enums\TicketAccomplishmentStatus;
 use App\Enums\TicketStatus;
+use App\Events\TicketReportRejected;
 use App\Events\TicketVerifiedAndClosed;
-use App\Events\TicketWorkStarted;
 use App\Models\Ticket;
 use App\Models\TicketAccomplishment;
 use App\Models\TicketStatusLog;
@@ -118,8 +118,11 @@ class VerifyAccomplishment
 
                 $freshTicket = $lockedTicket->fresh(['category', 'team', 'department']);
 
-                DB::afterCommit(function () use ($freshTicket) {
-                    rescue(fn () => TicketWorkStarted::dispatch($freshTicket), report: true);
+                $rejectedReport = $lockedAccomplishment->fresh(['rejectedBy']);
+
+                // Its own event, so the crew is told the report was rejected and why, not that work started
+                DB::afterCommit(function () use ($freshTicket, $rejectedReport) {
+                    rescue(fn () => TicketReportRejected::dispatch($freshTicket, $rejectedReport), report: true);
                 });
             }
 

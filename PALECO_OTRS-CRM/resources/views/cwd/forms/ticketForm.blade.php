@@ -33,6 +33,7 @@
         </header>
 
         <x-alert />
+        <x-live-notice events="ReferenceDataUpdated" message="An administrator just changed the departments or categories. Reload to see the current options; anything you typed here is not saved yet." />
 
         <form action="{{ route('cwd.tickets.store') }}" method="POST" autocomplete="off" class="space-y-8">
             @csrf

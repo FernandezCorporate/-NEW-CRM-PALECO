@@ -1,5 +1,9 @@
 # PALECO OTRS-CRM: Flutter Real-Time WebSocket & Push Notification Specification
 
+> [!IMPORTANT]
+> **Superseded event list (October 21, 2026):** the connection and authorization steps below still apply, but the event list, channels and per-role subscriptions changed. Six events were added, the endorsement events now reach team and department channels, report rejection moved from `TicketWorkStarted` to `TicketReportRejected`, and every account now subscribes to `private-user.{userId}`. Use [docs/realtime/MOBILE_INTEGRATION_GUIDE.md](../realtime/MOBILE_INTEGRATION_GUIDE.md) and [docs/realtime/EVENT_CATALOG.md](../realtime/EVENT_CATALOG.md) as the source of truth.
+
+
 **Target Audience:** Flutter Mobile Engineers & Autonomous AI Coding Agents (Cursor, Claude Code, Antigravity, Copilot)  
 **Document Version:** 1.0  
 **Target Path:** `docs/dev/FLUTTER_REALTIME_WEBSOCKET_SPECIFICATION.md`  

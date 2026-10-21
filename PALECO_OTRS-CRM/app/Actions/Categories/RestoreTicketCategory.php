@@ -2,6 +2,7 @@
 
 namespace App\Actions\Categories;
 
+use App\Events\ReferenceDataUpdated;
 use App\Models\TicketCategory;
 
 /**
@@ -37,6 +38,8 @@ class RestoreTicketCategory
         }
 
         $category->restore();
+
+        rescue(fn () => ReferenceDataUpdated::dispatch('category', 'restored', $category->id, $category->category_name), report: true);
 
         return ['success' => true, 'message' => 'Category restored successfully.'];
     }

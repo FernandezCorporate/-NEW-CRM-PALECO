@@ -31,7 +31,8 @@
                     <p class="text-[11px] font-bold uppercase tracking-[.14em] text-emerald-200">Your next step</p>
                     <h2 id="cwd-queue-title" class="mt-2 text-xl font-bold">Keep an eye on the queue</h2>
                 </div>
-                <ul class="flex flex-1 flex-col divide-y divide-slate-100">
+                {{-- Queue counts sit outside the Livewire island, so live-refresh.js re-renders them on ticket events --}}
+                <ul class="flex flex-1 flex-col divide-y divide-slate-100" data-live-region="cwd-queue" data-live-events="TicketCreated,TicketIntakeUpdated,TicketAssigned,TicketWorkStarted,TicketAccomplished,TicketReportRejected,TicketVerifiedAndClosed,TicketCancelled,TicketForceClosed,TicketEndorsementInitiated,TicketEndorsementDecided">
                     @foreach ($overview['queue_items'] ?? [] as [$queueLabel, $queueCount, $queueHint, $queueUrl])
                         <li class="flex flex-1">
                             <a href="{{ $queueUrl }}" class="group flex w-full items-center gap-4 px-6 py-3 md:px-7 transition-colors hover:bg-emerald-50 focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-emerald-600">

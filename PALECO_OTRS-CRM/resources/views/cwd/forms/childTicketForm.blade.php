@@ -64,6 +64,8 @@
     </section>
 
     <x-alert />
+    <x-live-notice events="ReferenceDataUpdated" message="An administrator just changed the departments or categories. Reload to see the current options; anything you typed here is not saved yet." />
+    <x-live-notice events="TicketCancelled,TicketForceClosed,TicketVerifiedAndClosed,TicketEndorsementInitiated" match="ticket_id:{{ $parentTicket->id }}" message="The origin ticket's status just changed, so it may no longer accept a child ticket." />
 
     <form action="{{ route('cwd.tickets.children.store', $parentTicket) }}" method="POST" autocomplete="off" class="space-y-8">
         @csrf

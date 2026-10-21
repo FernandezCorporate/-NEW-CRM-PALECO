@@ -2,6 +2,7 @@
 
 namespace App\Actions\Departments;
 
+use App\Events\ReferenceDataUpdated;
 use App\Models\Department;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -44,6 +45,10 @@ class UpdateDepartment
             }
 
             $lockedDept->save();
+
+            DB::afterCommit(function () use ($lockedDept) {
+                rescue(fn () => ReferenceDataUpdated::dispatch('department', 'updated', $lockedDept->id, $lockedDept->dept_name), report: true);
+            });
 
             return ['success' => true, 'changed' => true];
         });

@@ -13,15 +13,18 @@
             <p class="text-sm text-slate-500 mt-1">Review and act on endorsements submitted by supervisors on active tickets</p>
         </div>
         
-        @if($statusMetrics['pending'] > 0)
-            <div class="inline-flex items-center gap-2 bg-amber-50 border border-amber-200 text-amber-700 px-4 py-2 rounded-lg text-sm font-bold shadow-xs">
-                <x-icons.exclamation-triangle class="w-5 h-5" />
-                {{ $statusMetrics['pending'] }} awaiting review
-            </div>
-        @endif
+        {{-- Live regions refresh when supervisors request or CWD decides an endorsement (resources/js/live-refresh.js) --}}
+        <div data-live-region="endorsement-pending-count" data-live-events="TicketEndorsementInitiated,TicketEndorsementDecided">
+            @if($statusMetrics['pending'] > 0)
+                <div class="inline-flex items-center gap-2 bg-amber-50 border border-amber-200 text-amber-700 px-4 py-2 rounded-lg text-sm font-bold shadow-xs">
+                    <x-icons.exclamation-triangle class="w-5 h-5" />
+                    {{ $statusMetrics['pending'] }} awaiting review
+                </div>
+            @endif
+        </div>
     </header>
 
-    <nav class="record-tabs" aria-label="Filter endorsement requests">
+    <nav class="record-tabs" aria-label="Filter endorsement requests" data-live-region="endorsement-tabs" data-live-events="TicketEndorsementInitiated,TicketEndorsementDecided">
         <a href="{{ request()->fullUrlWithQuery(['status' => 'all', 'page' => null]) }}" @if(request('status', 'all') === 'all') aria-current="page" @endif>
             All requests
             <span>{{ number_format($statusMetrics['total'] ?? 0) }}</span>
@@ -70,7 +73,7 @@
                         <th scope="col" class="px-6 py-4 w-[10%] text-center">Action</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-slate-100">
+                <tbody class="divide-y divide-slate-100" data-live-region="endorsement-rows" data-live-events="TicketEndorsementInitiated,TicketEndorsementDecided">
                     @forelse ($endorsements as $endorsement)
                         <tr class="hover:bg-slate-50/75 transition-colors">
                             
@@ -155,10 +158,12 @@
     </div>
 
     <!-- Pagination -->
-    @if($endorsements->hasPages())
-        <div class="mt-4">
-            {{ $endorsements->onEachSide(1)->links() }}
-        </div>
-    @endif
+    <div data-live-region="endorsement-pagination" data-live-events="TicketEndorsementInitiated,TicketEndorsementDecided">
+        @if($endorsements->hasPages())
+            <div class="mt-4">
+                {{ $endorsements->onEachSide(1)->links() }}
+            </div>
+        @endif
+    </div>
 
 @endsection

@@ -3,6 +3,7 @@
 namespace App\Actions\Categories;
 
 use App\Enums\TicketStatus;
+use App\Events\ReferenceDataUpdated;
 use App\Models\TicketCategory;
 use Illuminate\Support\Facades\DB;
 
@@ -52,6 +53,10 @@ class ArchiveTicketCategory
             }
 
             $lockedCategory->delete();
+
+            DB::afterCommit(function () use ($lockedCategory) {
+                rescue(fn () => ReferenceDataUpdated::dispatch('category', 'archived', $lockedCategory->id, $lockedCategory->category_name), report: true);
+            });
 
             return ['success' => true, 'message' => 'Category archived successfully.'];
         });

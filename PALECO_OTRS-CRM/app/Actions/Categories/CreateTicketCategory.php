@@ -2,6 +2,7 @@
 
 namespace App\Actions\Categories;
 
+use App\Events\ReferenceDataUpdated;
 use App\Models\TicketCategory;
 
 /**
@@ -18,6 +19,10 @@ class CreateTicketCategory
     {
         unset($data['original_updated_at']);
 
-        return TicketCategory::create($data);
+        $category = TicketCategory::create($data);
+
+        rescue(fn () => ReferenceDataUpdated::dispatch('category', 'created', $category->id, $category->category_name), report: true);
+
+        return $category;
     }
 }

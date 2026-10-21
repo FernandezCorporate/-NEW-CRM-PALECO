@@ -3,6 +3,7 @@
 namespace App\Actions\Teams;
 
 use App\Enums\TicketStatus;
+use App\Events\TeamUpdated;
 use App\Models\Team;
 use Illuminate\Support\Facades\DB;
 
@@ -54,6 +55,12 @@ class ArchiveTeam
             }
 
             $lockedTeam->delete();
+
+            // Members stay attached to an archived team, so they are told on their own channel
+            $memberIds = $lockedTeam->members()->pluck('users.id')->all();
+            DB::afterCommit(function () use ($lockedTeam, $memberIds) {
+                rescue(fn () => TeamUpdated::dispatch($lockedTeam, 'archived', notifiedMemberIds: $memberIds), report: true);
+            });
 
             return [
                 'success' => true,

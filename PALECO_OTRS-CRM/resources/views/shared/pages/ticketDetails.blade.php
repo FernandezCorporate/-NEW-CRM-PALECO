@@ -49,7 +49,8 @@
                         </span>
                     @endif
                 </div>
-                <div class="flex items-center gap-3 mt-1.5 flex-wrap">
+                {{-- Subject and age chip are plain Blade; live-refresh.js re-renders them when this ticket changes --}}
+                <div class="flex items-center gap-3 mt-1.5 flex-wrap" data-live-region="ticket-subject" data-live-events="TicketIntakeUpdated,TicketAssigned,TicketWorkStarted,TicketAccomplished,TicketReportRejected,TicketVerifiedAndClosed,TicketCancelled,TicketForceClosed,TicketEndorsementInitiated,TicketEndorsementDecided" data-live-match="ticket_id:{{ $ticket->id }}">
                     <p class="text-sm text-slate-600 font-medium leading-relaxed">{{ $ticket->subject }}</p>
                     @if($agingTelemetry = $ticket->getAgingTelemetry())
                         <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold border {{ $agingTelemetry['badgeClasses'] }} shadow-2xs" title="Time unresolved since creation: {{ $agingTelemetry['duration'] }}">
@@ -120,8 +121,8 @@
     <!-- Top Block: Info & Routing -->
     <div class="grid grid-cols-1 xl:grid-cols-3 gap-6 mb-6 items-start">
         
-        <!-- Left Column Wrapper -->
-        <div class="xl:col-span-2 flex flex-col gap-6">
+        <!-- Left Column Wrapper: consumer and intake details re-render when another officer edits this ticket (live-refresh.js) -->
+        <div class="xl:col-span-2 flex flex-col gap-6" data-live-region="ticket-intake" data-live-events="TicketIntakeUpdated" data-live-match="ticket_id:{{ $ticket->id }}">
             
             <!-- CRM Linked Consumer Profile (Modular Partial) -->
             @include('shared.pages.partials.ticket-consumer-card', ['ticket' => $ticket, 'isAdmin' => $isAdmin])

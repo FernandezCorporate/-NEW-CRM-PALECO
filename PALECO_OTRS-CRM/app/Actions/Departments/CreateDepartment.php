@@ -2,6 +2,7 @@
 
 namespace App\Actions\Departments;
 
+use App\Events\ReferenceDataUpdated;
 use App\Models\Department;
 
 /**
@@ -18,6 +19,10 @@ class CreateDepartment
     {
         unset($data['original_updated_at']);
 
-        return Department::create($data);
+        $department = Department::create($data);
+
+        rescue(fn () => ReferenceDataUpdated::dispatch('department', 'created', $department->id, $department->dept_name), report: true);
+
+        return $department;
     }
 }

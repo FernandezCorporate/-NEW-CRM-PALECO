@@ -11,6 +11,12 @@
 @section('title', 'Force Close Ticket - ' . $ticket->ticket_number)
 
 @section('content')
+    {{-- Shown if the ticket changes while this page is open; ForceCloseTicket still re-checks on submit --}}
+    <div class="max-w-2xl mx-auto mt-6 -mb-4">
+        <x-live-notice events="TicketForceClosed,TicketAccomplished,TicketVerifiedAndClosed,TicketEndorsementInitiated,TicketCreated,TicketCancelled" match="ticket_id:{{ $ticket->id }}|parent_ticket_id:{{ $ticket->id }}"
+            message="This ticket or one of its child tickets just changed, so it may no longer be force-closable." />
+    </div>
+
     <x-confirm-card
         title="Force Close Service Ticket?"
         :action="$actionRoute"

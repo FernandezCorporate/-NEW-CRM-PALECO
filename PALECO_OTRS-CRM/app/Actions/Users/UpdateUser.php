@@ -3,6 +3,7 @@
 namespace App\Actions\Users;
 
 use App\Enums\TicketStatus;
+use App\Events\AccountUpdated;
 use App\Models\Ticket;
 use App\Models\User;
 use Carbon\Carbon;
@@ -81,7 +82,17 @@ class UpdateUser
                 return ['success' => true, 'changed' => false];
             }
 
+            $departmentChanged = $lockedUser->isDirty('department_id');
+            $previousDepartmentId = $lockedUser->getOriginal('department_id');
+
             $lockedUser->save();
+
+            // A moved supervisor must leave the old department channel and join the new one
+            if ($departmentChanged) {
+                DB::afterCommit(function () use ($lockedUser, $previousDepartmentId) {
+                    rescue(fn () => AccountUpdated::dispatch($lockedUser, 'department_changed', $previousDepartmentId), report: true);
+                });
+            }
 
             return ['success' => true, 'changed' => true];
         });

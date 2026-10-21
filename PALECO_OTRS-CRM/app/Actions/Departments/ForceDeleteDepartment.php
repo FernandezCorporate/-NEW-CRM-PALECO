@@ -2,6 +2,7 @@
 
 namespace App\Actions\Departments;
 
+use App\Events\ReferenceDataUpdated;
 use App\Models\Department;
 use App\Models\Team;
 use App\Models\Ticket;
@@ -60,6 +61,8 @@ class ForceDeleteDepartment
         }
 
         $dept->forceDelete();
+
+        rescue(fn () => ReferenceDataUpdated::dispatch('department', 'deleted', $dept->id, $dept->dept_name), report: true);
 
         return [
             'success' => true,

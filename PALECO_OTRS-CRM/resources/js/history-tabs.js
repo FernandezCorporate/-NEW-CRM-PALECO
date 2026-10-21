@@ -101,14 +101,20 @@ if (document.readyState === 'loading') {
     initHistoryTabs();
 }
 
-document.addEventListener('livewire:initialized', () => {
-    if (typeof Livewire !== 'undefined' && Livewire.hook) {
-        Livewire.hook('commit', ({ succeed }) => {
-            succeed(() => {
-                requestAnimationFrame(() => {
-                    initHistoryTabs();
-                });
-            });
-        });
-    }
-});
+// Re-apply the open tab after every Livewire update (a live event re-renders the panels with their default classes).
+// Livewire may already be running when this bundle loads, so register straight away when possible instead of
+// relying only on livewire:initialized, which can fire before this script runs.
+let historyTabsHookRegistered = false;
+const registerHistoryTabsHook = () => {
+    if (historyTabsHookRegistered || typeof window.Livewire === 'undefined' || !window.Livewire.hook) return;
+    historyTabsHookRegistered = true;
+
+    // 'morphed' runs after Livewire has patched the DOM; the commit hook's succeed() never fires in this Livewire version
+    window.Livewire.hook('morphed', () => {
+        initHistoryTabs();
+    });
+};
+
+registerHistoryTabsHook();
+document.addEventListener('livewire:init', registerHistoryTabsHook);
+document.addEventListener('livewire:initialized', registerHistoryTabsHook);

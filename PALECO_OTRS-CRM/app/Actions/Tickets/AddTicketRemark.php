@@ -3,6 +3,7 @@
 namespace App\Actions\Tickets;
 
 use App\Enums\TicketStatus;
+use App\Events\TicketRemarkAdded;
 use App\Models\Ticket;
 use App\Models\TicketRemark;
 use App\Models\User;
@@ -31,11 +32,17 @@ class AddTicketRemark
                 ]);
             }
 
-            return $lockedTicket->remarks()->create([
+            $remark = $lockedTicket->remarks()->create([
                 'user_id' => $user->id,
                 'body' => $data['body'],
                 'is_internal' => (bool) ($data['is_internal'] ?? false),
             ]);
+
+            DB::afterCommit(function () use ($remark) {
+                rescue(fn () => TicketRemarkAdded::dispatch($remark->load(['ticket', 'author.role'])), report: true);
+            });
+
+            return $remark;
         });
     }
 }

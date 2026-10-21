@@ -139,17 +139,24 @@ if (document.readyState === 'loading') {
     initDashboardPieChart();
 }
 
-document.addEventListener('livewire:initialized', () => {
-    if (typeof Livewire !== 'undefined' && Livewire.hook) {
-        Livewire.hook('commit', ({ succeed }) => {
-            succeed(() => {
-                const container = document.getElementById('status-pie-container');
-                if (container) {
-                    delete container.dataset.pieInitialized;
-                }
-                requestAnimationFrame(initDashboardPieChart);
-            });
-        });
-    }
-});
+// Re-draw after each Livewire update. Livewire may already be running when this bundle loads,
+// so register immediately when possible instead of relying only on livewire:initialized.
+let pieChartHookRegistered = false;
+const registerPieChartHook = () => {
+    if (pieChartHookRegistered || typeof window.Livewire === 'undefined' || !window.Livewire.hook) return;
+    pieChartHookRegistered = true;
+
+    // 'morphed' runs after Livewire has patched the DOM; the commit hook's succeed() never fires in this Livewire version
+    window.Livewire.hook('morphed', () => {
+        const container = document.getElementById('status-pie-container');
+        if (container) {
+            delete container.dataset.pieInitialized;
+        }
+        initDashboardPieChart();
+    });
+};
+
+registerPieChartHook();
+document.addEventListener('livewire:init', registerPieChartHook);
+document.addEventListener('livewire:initialized', registerPieChartHook);
 

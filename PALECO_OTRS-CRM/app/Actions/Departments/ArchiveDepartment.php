@@ -3,6 +3,7 @@
 namespace App\Actions\Departments;
 
 use App\Enums\TicketStatus;
+use App\Events\ReferenceDataUpdated;
 use App\Models\Department;
 use Illuminate\Support\Facades\DB;
 
@@ -58,6 +59,10 @@ class ArchiveDepartment
             }
 
             $lockedDept->delete();
+
+            DB::afterCommit(function () use ($lockedDept) {
+                rescue(fn () => ReferenceDataUpdated::dispatch('department', 'archived', $lockedDept->id, $lockedDept->dept_name), report: true);
+            });
 
             return [
                 'success' => true,

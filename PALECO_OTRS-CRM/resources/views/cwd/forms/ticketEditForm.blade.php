@@ -44,6 +44,9 @@
         </header>
 
         <x-alert />
+        <x-live-notice events="ReferenceDataUpdated" message="An administrator just changed the departments or categories. Reload to see the current options; anything you typed here is not saved yet." />
+        <x-live-notice events="TicketIntakeUpdated" match="ticket_id:{{ $ticket->id }}" message="Another officer just edited this ticket. Reload to see their changes before saving yours." />
+        <x-live-notice events="TicketAssigned,TicketCancelled,TicketEndorsementInitiated" match="ticket_id:{{ $ticket->id }}" message="This ticket is no longer Open, so its intake details can no longer be edited." />
 
     <form action="{{ route('cwd.tickets.update', $ticket) }}" method="POST" autocomplete="off" class="space-y-8">
         @csrf

@@ -2,6 +2,7 @@
 
 namespace App\Actions\Teams;
 
+use App\Events\TeamUpdated;
 use App\Models\Team;
 use App\Models\Ticket;
 use App\Models\TicketAssignment;
@@ -42,7 +43,11 @@ class ForceDeleteTeam
             ];
         }
 
+        $memberIds = $team->members()->pluck('users.id')->all();
+
         $team->forceDelete();
+
+        rescue(fn () => TeamUpdated::dispatch($team, 'deleted', removedMemberIds: $memberIds), report: true);
 
         return [
             'success' => true,
