@@ -120,6 +120,8 @@ class DecideEndorsement
                             'new_status' => TicketStatus::OPEN,
                         ]);
 
+                        $this->logDecision($lockedEndorsement, $parentTicket, true, $childTicket);
+
                         DB::afterCommit(function () use ($lockedEndorsement, $childTicket, $previousTeamId) {
                             $lockedEndorsement->load(['ticket', 'reviewer', 'suggestedDepartment']);
                             rescue(fn () => event(new TicketCreated($childTicket)), report: true);
@@ -168,6 +170,8 @@ class DecideEndorsement
                             'new_status' => $targetStatus,
                         ]);
 
+                        $this->logDecision($lockedEndorsement, $parentTicket, false);
+
                         DB::afterCommit(function () use ($lockedEndorsement) {
                             $lockedEndorsement->load(['ticket', 'reviewer', 'suggestedDepartment']);
                             rescue(fn () => event(new TicketEndorsementDecided($lockedEndorsement)), report: true);
@@ -193,5 +197,30 @@ class DecideEndorsement
         }
 
         throw new RuntimeException('Failed to process endorsement due to concurrent ticket sequence collision.');
+    }
+
+    /**
+     * Records the decision itself in the audit trail; the ticket's own log entry only shows the resulting status change.
+     * Written inside the decision's transaction, so a rolled-back decision leaves no log entry.
+     */
+    private function logDecision(TicketEndorsement $endorsement, Ticket $ticket, bool $isApproved, ?Ticket $childTicket = null): void
+    {
+        $decision = $isApproved ? 'approved' : 'rejected';
+
+        activity('Tickets')
+            ->performedOn($ticket)
+            ->causedBy(Auth::user())
+            ->event('endorsement_decided')
+            ->withProperties([
+                'ip_address' => request()->ip() ?? 'unknown',
+                'user_agent' => request()->userAgent() ?? 'unknown',
+                'endorsement_id' => $endorsement->id,
+                'decision' => $decision,
+                'from_department' => $endorsement->oldDepartment?->dept_name,
+                'to_department' => $isApproved ? $endorsement->newDepartment?->dept_name : null,
+                'child_ticket_number' => $childTicket?->ticket_number,
+                'rejection_reason' => $isApproved ? null : $endorsement->rejection_reason,
+            ])
+            ->log("Endorsement request for {$ticket->ticket_number} was {$decision}.");
     }
 }

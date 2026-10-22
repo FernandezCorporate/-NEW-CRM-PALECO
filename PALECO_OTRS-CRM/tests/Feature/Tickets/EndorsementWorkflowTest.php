@@ -11,6 +11,7 @@ use App\Models\User;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Sanctum\Sanctum;
+use Spatie\Activitylog\Models\Activity;
 
 uses(RefreshDatabase::class);
 
@@ -515,4 +516,86 @@ test('a child created by an endorsement shows where it came from, and a manual c
 
     $this->actingAs($this->cwdOfficer)->get(route('cwd.tickets.show', $manual))
         ->assertOk()->assertSee('Created manually by a CWD officer');
+});
+
+test('an approved endorsement decision is recorded in the activity log', function () {
+    $this->ticket->update(['status' => TicketStatus::PENDING_ENDORSEMENT]);
+    $endorsement = TicketEndorsement::factory()->create([
+        'ticket_id' => $this->ticket->id,
+        'created_by_id' => $this->supervisor->id,
+        'suggested_department_id' => $this->dept2->id,
+        'status' => EndorsementStatus::PENDING,
+        'pre_endorsement_status' => TicketStatus::ASSIGNED,
+    ]);
+
+    $this->actingAs($this->cwdOfficer)
+        ->post(route('cwd.endorsements.decide', ['endorsement' => $endorsement]), [
+            'status' => 'approved',
+            'department_id' => $this->dept2->id,
+        ])->assertSessionHas('success');
+
+    $child = Ticket::where('parent_ticket_id', $this->ticket->id)->first();
+    $log = Activity::where('event', 'endorsement_decided')->sole();
+
+    expect($log->log_name)->toBe('Tickets')
+        ->and($log->subject_id)->toBe($this->ticket->id)
+        ->and($log->causer_id)->toBe($this->cwdOfficer->id)
+        ->and($log->description)->toBe("Endorsement request for {$this->ticket->ticket_number} was approved.")
+        ->and($log->getProperty('decision'))->toBe('approved')
+        ->and($log->getProperty('endorsement_id'))->toBe($endorsement->id)
+        ->and($log->getProperty('from_department'))->toBe($this->dept1->dept_name)
+        ->and($log->getProperty('to_department'))->toBe($this->dept2->dept_name)
+        ->and($log->getProperty('child_ticket_number'))->toBe($child->ticket_number)
+        ->and($log->getProperty('rejection_reason'))->toBeNull();
+
+    // System Monitoring lists it under the Tickets category and the Update filter, and its detail page opens
+    $admin = User::where('username', 'allenglenn')->first();
+    $this->actingAs($admin)->get(route('admin.monitoring.index', ['category' => 'Tickets', 'event_type' => 'update']))
+        ->assertOk()->assertSee("Endorsement request for {$this->ticket->ticket_number} was approved.");
+    $this->actingAs($admin)->get(route('admin.monitoring.show', $log))
+        ->assertOk()->assertSee($child->ticket_number);
+});
+
+test('a rejected endorsement decision is recorded with its reason', function () {
+    $this->ticket->update(['status' => TicketStatus::PENDING_ENDORSEMENT]);
+    $endorsement = TicketEndorsement::factory()->create([
+        'ticket_id' => $this->ticket->id,
+        'created_by_id' => $this->supervisor->id,
+        'suggested_department_id' => $this->dept2->id,
+        'status' => EndorsementStatus::PENDING,
+        'pre_endorsement_status' => TicketStatus::ASSIGNED,
+    ]);
+
+    $this->actingAs($this->cwdOfficer)
+        ->post(route('cwd.endorsements.decide', ['endorsement' => $endorsement]), [
+            'status' => 'rejected',
+            'rejection_reason' => 'Handle within the division.',
+        ])->assertSessionHas('success');
+
+    $log = Activity::where('event', 'endorsement_decided')->sole();
+
+    expect($log->getProperty('decision'))->toBe('rejected')
+        ->and($log->getProperty('rejection_reason'))->toBe('Handle within the division.')
+        ->and($log->getProperty('to_department'))->toBeNull()
+        ->and($log->getProperty('child_ticket_number'))->toBeNull();
+});
+
+test('a refused endorsement decision writes no decision log entry', function () {
+    $this->ticket->update(['status' => TicketStatus::PENDING_ENDORSEMENT]);
+    $endorsement = TicketEndorsement::factory()->create([
+        'ticket_id' => $this->ticket->id,
+        'created_by_id' => $this->supervisor->id,
+        'suggested_department_id' => $this->dept2->id,
+        'status' => EndorsementStatus::REJECTED,
+        'pre_endorsement_status' => TicketStatus::ASSIGNED,
+    ]);
+
+    // Already decided by another officer: nothing is changed or logged
+    $this->actingAs($this->cwdOfficer)
+        ->post(route('cwd.endorsements.decide', ['endorsement' => $endorsement]), [
+            'status' => 'approved',
+            'department_id' => $this->dept2->id,
+        ])->assertSessionHas('error');
+
+    expect(Activity::where('event', 'endorsement_decided')->exists())->toBeFalse();
 });

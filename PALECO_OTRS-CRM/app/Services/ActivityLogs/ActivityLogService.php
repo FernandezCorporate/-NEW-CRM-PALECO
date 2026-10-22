@@ -97,7 +97,7 @@ class ActivityLogService
                 $query->whereIn('event', ['created', 'create'])
                     ->whereNotIn('log_name', $nonModelLogNames);
             } elseif ($eventType === 'update' || $eventType === 'updated') {
-                $query->whereIn('event', ['updated', 'update', 'password_reset', 'roster_updated', 'account_unlocked'])
+                $query->whereIn('event', ['updated', 'update', 'password_reset', 'roster_updated', 'account_unlocked', 'endorsement_decided'])
                     ->whereNotIn('log_name', $nonModelLogNames);
             } elseif ($eventType === 'delete' || $eventType === 'deleted') {
                 $query->whereIn('event', ['deleted', 'delete'])
