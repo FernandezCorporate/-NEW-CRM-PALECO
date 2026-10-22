@@ -58,6 +58,12 @@
                             <span>{{ $agingTelemetry['label'] }}</span>
                         </span>
                     @endif
+                    @if($resolutionDuration = $ticket->getResolutionDuration())
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold border bg-slate-50 text-slate-700 border-slate-200 shadow-2xs" title="Time from when the complaint was reported until the report was verified and the ticket closed">
+                            <x-icons.clock class="w-3.5 h-3.5 text-slate-400" />
+                            <span>Resolved in {{ $resolutionDuration }}</span>
+                        </span>
+                    @endif
                 </div>
         </div>
 

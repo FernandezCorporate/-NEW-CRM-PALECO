@@ -481,6 +481,56 @@ class Ticket extends Model
     }
 
     /**
+     * Minutes from when the complaint was reported until the ticket was closed through a verified report.
+     * Null while the ticket is unfinished, cancelled or force-closed, since no completed work exists to measure.
+     */
+    public function getResolutionMinutes(): ?int
+    {
+        if ($this->status !== TicketStatus::CLOSED || $this->is_force_closed || ! $this->closed_at) {
+            return null;
+        }
+
+        $reportedAt = $this->reported_at ?? $this->created_at;
+
+        return $reportedAt ? (int) $reportedAt->diffInMinutes($this->closed_at) : null;
+    }
+
+    /**
+     * Resolution time as readable text (e.g. "2 days 3 hours"), or null when it cannot be measured.
+     */
+    public function getResolutionDuration(): ?string
+    {
+        $minutes = $this->getResolutionMinutes();
+
+        return $minutes === null ? null : self::formatDuration($minutes);
+    }
+
+    /**
+     * Formats a duration in minutes as minutes, hours and minutes, or days and hours.
+     */
+    public static function formatDuration(int $minutes): string
+    {
+        if ($minutes < 60) {
+            $minutes = max(1, $minutes);
+
+            return $minutes.' '.Str::plural('minute', $minutes);
+        }
+
+        $hours = intdiv($minutes, 60);
+
+        if ($hours < 24) {
+            $remMinutes = $minutes % 60;
+
+            return $hours.' '.Str::plural('hour', $hours).($remMinutes > 0 ? ' '.$remMinutes.' '.Str::plural('minute', $remMinutes) : '');
+        }
+
+        $days = intdiv($hours, 24);
+        $remHours = $hours % 24;
+
+        return $days.' '.Str::plural('day', $days).($remHours > 0 ? ' '.$remHours.' '.Str::plural('hour', $remHours) : '');
+    }
+
+    /**
      * Unified scope: Sort tickets by created_at date, ticket number, or status.
      */
     public function scopeSort(Builder $query, ?string $sort): Builder

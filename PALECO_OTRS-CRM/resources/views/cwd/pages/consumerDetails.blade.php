@@ -97,6 +97,15 @@
                         <data value="{{ $consumer->open_tickets_count }}">{{ $consumer->open_tickets_count }}</data>
                     </dd>
                 </div>
+
+                <!-- Average Resolution Metric Card (re-renders when one of this consumer's tickets is closed) -->
+                <div class="bg-slate-50 rounded-xl p-5 border border-slate-200 flex flex-col justify-center" data-live-region="consumer-resolution" data-live-events="TicketVerifiedAndClosed,TicketForceClosed,TicketIntakeUpdated">
+                    <dt class="text-xs text-slate-600 font-bold tracking-wide uppercase mb-1">Average Resolution Time</dt>
+                    <dd class="text-2xl font-bold text-slate-900">{{ $averageResolution ?? 'No resolved tickets yet' }}</dd>
+                    @if($averageResolution)
+                        <dd class="text-xs text-slate-500 mt-1">Across {{ $resolvedTicketCount }} {{ Str::plural('ticket', $resolvedTicketCount) }} closed through a verified report</dd>
+                    @endif
+                </div>
             </div>
         </dl>
     </article>
@@ -151,6 +160,7 @@
                             <th scope="col" class="px-6 py-4 font-bold tracking-wider">Department</th>
                             <th scope="col" class="px-6 py-4 font-bold tracking-wider">Reported Date</th>
                             <th scope="col" class="px-6 py-4 font-bold tracking-wider">Status</th>
+                            <th scope="col" class="px-6 py-4 font-bold tracking-wider">Resolution Time</th>
                             <th scope="col" class="px-6 py-4 text-right font-bold tracking-wider">Action</th>
                         </tr>
                     </thead>
@@ -174,13 +184,16 @@
                                         {{ $ticket->status->label() }}
                                     </span>
                                 </td>
+                                <td class="px-6 py-4 text-slate-600 whitespace-nowrap">
+                                    {{ $ticket->getResolutionDuration() ?? '—' }}
+                                </td>
                                 <td class="px-6 py-4 text-right whitespace-nowrap">
                                     <a href="{{ route('cwd.tickets.show', ['ticket' => $ticket->id, 'source' => 'consumer', 'consumer' => $consumer->id]) }}" class="text-emerald-700 hover:text-emerald-800 font-semibold text-sm">View details</a>
                                 </td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="6" class="px-6 py-12 text-center">
+                                <td colspan="7" class="px-6 py-12 text-center">
                                     <div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-slate-50 border border-slate-200 mb-3 text-slate-400">
                                         <x-icons.ticket class="w-6 h-6" />
                                     </div>
