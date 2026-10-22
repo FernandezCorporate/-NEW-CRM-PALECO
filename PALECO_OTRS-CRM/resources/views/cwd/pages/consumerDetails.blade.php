@@ -183,9 +183,16 @@
                                     <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold border {{ $ticket->status->badgeClasses() }}">
                                         {{ $ticket->status->label() }}
                                     </span>
+                                    @if($ticket->status->value === 'closed' && $ticket->is_force_closed)
+                                        <span class="ml-1 inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-amber-100 text-amber-800 border border-amber-300">Force Closed</span>
+                                    @endif
                                 </td>
                                 <td class="px-6 py-4 text-slate-600 whitespace-nowrap">
-                                    {{ $ticket->getResolutionDuration() ?? '—' }}
+                                    @if($ticket->status->value === 'closed' && $ticket->is_force_closed)
+                                        <span class="text-slate-400" title="Force-closed tickets have no completed work to measure and are left out of the average">Not measured</span>
+                                    @else
+                                        {{ $ticket->getResolutionDuration() ?? '—' }}
+                                    @endif
                                 </td>
                                 <td class="px-6 py-4 text-right whitespace-nowrap">
                                     <a href="{{ route('cwd.tickets.show', ['ticket' => $ticket->id, 'source' => 'consumer', 'consumer' => $consumer->id]) }}" class="text-emerald-700 hover:text-emerald-800 font-semibold text-sm">View details</a>

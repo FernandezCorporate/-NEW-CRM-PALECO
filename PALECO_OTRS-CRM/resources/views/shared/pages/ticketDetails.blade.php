@@ -21,7 +21,8 @@
     </div>
 
     <!-- Header Section: Clean Identity & Informational Metadata -->
-    <header class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-6">
+    {{-- relative z-20 keeps the resolution info tooltips above the cards below the header --}}
+    <header class="relative z-20 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-6">
         <div class="min-w-0">
             <div class="flex items-center gap-3 flex-wrap">
                 <h1 class="text-2xl font-bold text-slate-900 font-mono tracking-tight whitespace-nowrap">
@@ -59,9 +60,31 @@
                         </span>
                     @endif
                     @if($resolutionDuration = $ticket->getResolutionDuration())
-                        <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold border bg-slate-50 text-slate-700 border-slate-200 shadow-2xs" title="Time from when the complaint was reported until the report was verified and the ticket closed">
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold border bg-slate-50 text-slate-700 border-slate-200 shadow-2xs">
                             <x-icons.clock class="w-3.5 h-3.5 text-slate-400" />
                             <span>Resolved in {{ $resolutionDuration }}</span>
+                            <x-info-tooltip id="resolution-time-info" label="How resolution time is calculated">
+                                <span class="block font-bold text-white mb-1">Resolution time = Closed − Reported</span>
+                                <span class="block text-slate-300">Counted from when the complaint was logged until the supervisor approved the crew's accomplishment report and the ticket was closed. It includes the wait for the supervisor's verification. Force-closed and cancelled tickets are not measured.</span>
+                                <span class="block mt-2 pt-2 border-t border-slate-700 text-slate-300 tabular-nums">
+                                    Reported: <span class="text-white">{{ ($ticket->reported_at ?? $ticket->created_at)->format('M d, Y h:i A') }}</span><br>
+                                    Closed: <span class="text-white">{{ $ticket->closed_at->format('M d, Y h:i A') }}</span>
+                                </span>
+                            </x-info-tooltip>
+                        </span>
+                    @endif
+                    @if($workCompletionDuration = $ticket->getWorkCompletionDuration())
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold border bg-slate-50 text-slate-700 border-slate-200 shadow-2xs">
+                            <x-icons.clock class="w-3.5 h-3.5 text-slate-400" />
+                            <span>Work completed in {{ $workCompletionDuration }}</span>
+                            <x-info-tooltip id="work-completion-info" label="How work completion time is calculated">
+                                <span class="block font-bold text-white mb-1">Work completion time = Report submitted − Reported</span>
+                                <span class="block text-slate-300">Counted from when the complaint was logged until the crew submitted the accomplishment report that the supervisor approved. Rejected reports are skipped, and reports sent offline use the time recorded on the phone. It leaves out the wait for the supervisor's verification.</span>
+                                <span class="block mt-2 pt-2 border-t border-slate-700 text-slate-300 tabular-nums">
+                                    Reported: <span class="text-white">{{ ($ticket->reported_at ?? $ticket->created_at)->format('M d, Y h:i A') }}</span><br>
+                                    Report submitted: <span class="text-white">{{ $ticket->getApprovedAccomplishment()->accomplished_at->format('M d, Y h:i A') }}</span>
+                                </span>
+                            </x-info-tooltip>
                         </span>
                     @endif
                 </div>

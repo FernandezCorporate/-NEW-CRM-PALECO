@@ -1,7 +1,9 @@
 <?php
 
+use App\Enums\TicketAccomplishmentStatus;
 use App\Models\Consumer;
 use App\Models\Ticket;
+use App\Models\TicketAccomplishment;
 use App\Models\User;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -98,7 +100,10 @@ test('the consumer profile shows the average resolution time of its normally clo
         ->assertSee('Average Resolution Time')
         ->assertSee('Across 2 tickets closed through a verified report')
         ->assertSee('2 hours')
-        ->assertSee('4 hours');
+        ->assertSee('4 hours')
+        // The force-closed ticket is marked so a plain "Closed" with no time isn't mistaken for a missing value
+        ->assertSee('Force Closed')
+        ->assertSee('Not measured');
 });
 
 test('a consumer without normally closed tickets shows no average yet', function () {
@@ -109,4 +114,77 @@ test('a consumer without normally closed tickets shows no average yet', function
         ->assertOk()
         ->assertViewHas('averageResolution', null)
         ->assertSee('No resolved tickets yet');
+});
+
+test('work completion time runs from reported_at to the approved report, skipping rejected ones', function () {
+    $ticket = Ticket::factory()->closed()->create([
+        'reported_at' => $this->closedAt->copy()->subHours(6),
+        'closed_at' => $this->closedAt,
+        'is_force_closed' => false,
+    ]);
+
+    // A rejected first report, then the approved redo 1 hour before the supervisor closed the ticket
+    TicketAccomplishment::factory()->create([
+        'ticket_id' => $ticket->id,
+        'accomplished_at' => $this->closedAt->copy()->subHours(4),
+        'status' => TicketAccomplishmentStatus::REJECTED,
+    ]);
+    TicketAccomplishment::factory()->create([
+        'ticket_id' => $ticket->id,
+        'accomplished_at' => $this->closedAt->copy()->subHour(),
+        'status' => TicketAccomplishmentStatus::APPROVED,
+    ]);
+
+    expect($ticket->getWorkCompletionMinutes())->toBe(300)
+        ->and($ticket->getWorkCompletionDuration())->toBe('5 hours')
+        ->and($ticket->getResolutionDuration())->toBe('6 hours');
+
+    $this->actingAs($this->cwdOfficer)->get(route('cwd.tickets.show', $ticket))
+        ->assertOk()
+        ->assertSee('Resolved in 6 hours')
+        ->assertSee('Work completed in 5 hours');
+});
+
+test('work completion time is not shown for force-closed tickets or without an approved report', function () {
+    $forceClosed = Ticket::factory()->closed()->create([
+        'reported_at' => $this->closedAt->copy()->subHours(6),
+        'closed_at' => $this->closedAt,
+        'is_force_closed' => true,
+        'closure_reason' => 'Emergency halt.',
+    ]);
+    TicketAccomplishment::factory()->create([
+        'ticket_id' => $forceClosed->id,
+        'accomplished_at' => $this->closedAt->copy()->subHour(),
+        'status' => TicketAccomplishmentStatus::APPROVED,
+    ]);
+
+    $noApprovedReport = Ticket::factory()->closed()->create([
+        'reported_at' => $this->closedAt->copy()->subHours(6),
+        'closed_at' => $this->closedAt,
+        'is_force_closed' => false,
+    ]);
+
+    expect($forceClosed->getWorkCompletionDuration())->toBeNull()
+        ->and($noApprovedReport->getWorkCompletionDuration())->toBeNull();
+
+    $this->actingAs($this->cwdOfficer)->get(route('cwd.tickets.show', $noApprovedReport))
+        ->assertOk()
+        ->assertSee('Resolved in 6 hours')
+        ->assertDontSee('Work completed in');
+});
+
+test('an offline report timestamped before the complaint by a slow phone clock counts as zero, not negative', function () {
+    $ticket = Ticket::factory()->closed()->create([
+        'reported_at' => $this->closedAt->copy()->subHours(2),
+        'closed_at' => $this->closedAt,
+        'is_force_closed' => false,
+    ]);
+    TicketAccomplishment::factory()->create([
+        'ticket_id' => $ticket->id,
+        'accomplished_at' => $this->closedAt->copy()->subHours(3),
+        'status' => TicketAccomplishmentStatus::APPROVED,
+    ]);
+
+    expect($ticket->getWorkCompletionMinutes())->toBe(0)
+        ->and($ticket->getWorkCompletionDuration())->toBe('1 minute');
 });

@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Concerns\Auditable;
 use App\Enums\ComplaintSources;
+use App\Enums\TicketAccomplishmentStatus;
 use App\Enums\TicketStatus;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
@@ -52,6 +53,11 @@ class Ticket extends Model
     protected array $activityLogRedactedAttributes = [
         'consumer_contact',
     ];
+
+    /**
+     * Per-instance cache for getApprovedAccomplishment(); false means none exists.
+     */
+    protected TicketAccomplishment|false|null $approvedAccomplishmentCache = null;
 
     protected $fillable = [
         'ticket_number',
@@ -492,7 +498,8 @@ class Ticket extends Model
 
         $reportedAt = $this->reported_at ?? $this->created_at;
 
-        return $reportedAt ? (int) $reportedAt->diffInMinutes($this->closed_at) : null;
+        // Rounded to the nearest minute so it agrees with the minute-level times shown in the info tooltip
+        return $reportedAt ? (int) round($reportedAt->diffInSeconds($this->closed_at) / 60) : null;
     }
 
     /**
@@ -501,6 +508,55 @@ class Ticket extends Model
     public function getResolutionDuration(): ?string
     {
         $minutes = $this->getResolutionMinutes();
+
+        return $minutes === null ? null : self::formatDuration($minutes);
+    }
+
+    /**
+     * Minutes from when the complaint was reported until the crew submitted the report that was approved.
+     * Unlike resolution time it leaves out the wait for the supervisor's verification; offline reports use the phone's completion time.
+     */
+    public function getWorkCompletionMinutes(): ?int
+    {
+        // Only measured for the same tickets as resolution time: closed through a verified report
+        if ($this->getResolutionMinutes() === null) {
+            return null;
+        }
+
+        $approvedReport = $this->getApprovedAccomplishment();
+
+        $reportedAt = $this->reported_at ?? $this->created_at;
+
+        if (! $approvedReport?->accomplished_at || ! $reportedAt) {
+            return null;
+        }
+
+        // A phone clock running behind could place an offline completion before the report time
+        return max(0, (int) round($reportedAt->diffInSeconds($approvedReport->accomplished_at, false) / 60));
+    }
+
+    /**
+     * The crew's accomplishment report that the supervisor approved (the latest one if ever more than one), cached per instance.
+     */
+    public function getApprovedAccomplishment(): ?TicketAccomplishment
+    {
+        // false marks "looked up, none found" so a ticket without an approved report isn't queried twice
+        if ($this->approvedAccomplishmentCache === null) {
+            $this->approvedAccomplishmentCache = $this->accomplishments()
+                ->where('status', TicketAccomplishmentStatus::APPROVED)
+                ->latest('accomplished_at')
+                ->first() ?? false;
+        }
+
+        return $this->approvedAccomplishmentCache ?: null;
+    }
+
+    /**
+     * Work completion time as readable text (e.g. "1 day 4 hours"), or null when it cannot be measured.
+     */
+    public function getWorkCompletionDuration(): ?string
+    {
+        $minutes = $this->getWorkCompletionMinutes();
 
         return $minutes === null ? null : self::formatDuration($minutes);
     }
