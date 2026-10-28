@@ -6,8 +6,8 @@ use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 /*
- * Master seeder class that orchestrates the execution of all other seeders.
- * Ensures required reference tables (roles, departments, categories) are populated before users and teams.
+ * Master seeder class that prepares a fresh system for first use.
+ * Seeds only the fixed reference roles and exactly one administrator account; all other records are created in the admin portal.
  */
 class DatabaseSeeder extends Seeder
 {
@@ -18,10 +18,7 @@ class DatabaseSeeder extends Seeder
         $this->call([
             RoleSeeder::class,
             TeamRoleSeeder::class,
-            DepartmentSeeder::class,
-            TeamSeeder::class,
-            TicketCategorySeeder::class,
-            UserSeeder::class,
+            AdminAccountSeeder::class,
         ]);
     }
 }

@@ -8,16 +8,16 @@ use App\Models\Ticket;
 use App\Models\TicketAccomplishment;
 use App\Models\TicketCategory;
 use App\Models\User;
-use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Laravel\Sanctum\Sanctum;
+use Tests\Seeders\SampleDataSeeder;
 
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
-    $this->seed(DatabaseSeeder::class);
+    $this->seed(SampleDataSeeder::class);
     $this->personnel = User::where('username', 'ralph')->first();
     $this->supervisor = User::where('username', 'mycka')->first();
     $this->cwdOfficer = User::where('username', 'alliah')->first();

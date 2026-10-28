@@ -8,15 +8,15 @@ use App\Models\Ticket;
 use App\Models\TicketCategory;
 use App\Models\TicketEndorsement;
 use App\Models\User;
-use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Sanctum\Sanctum;
 use Spatie\Activitylog\Models\Activity;
+use Tests\Seeders\SampleDataSeeder;
 
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
-    $this->seed(DatabaseSeeder::class);
+    $this->seed(SampleDataSeeder::class);
     $this->supervisor = User::where('username', 'mycka')->first();
     $this->cwdOfficer = User::where('username', 'alliah')->first();
 

@@ -1,13 +1,13 @@
 <?php
 
 use App\Models\User;
-use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\Seeders\SampleDataSeeder;
 
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
-    $this->seed(DatabaseSeeder::class);
+    $this->seed(SampleDataSeeder::class);
 });
 
 test('admin can view system monitoring dashboard', function () {

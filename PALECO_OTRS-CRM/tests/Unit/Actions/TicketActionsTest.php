@@ -17,14 +17,14 @@ use App\Models\Ticket;
 use App\Models\TicketCategory;
 use App\Models\User;
 use App\Services\Tickets\TicketSequenceService;
-use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Validation\ValidationException;
+use Tests\Seeders\SampleDataSeeder;
 
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
-    $this->seed(DatabaseSeeder::class);
+    $this->seed(SampleDataSeeder::class);
 });
 
 test('CreateCwdTicket registers ticket with generated sequence and open status', function () {

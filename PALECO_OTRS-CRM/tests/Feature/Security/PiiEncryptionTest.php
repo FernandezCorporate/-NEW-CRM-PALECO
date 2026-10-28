@@ -7,15 +7,15 @@ use App\Models\Department;
 use App\Models\Ticket;
 use App\Models\TicketCategory;
 use App\Models\User;
-use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
+use Tests\Seeders\SampleDataSeeder;
 
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
-    $this->seed(DatabaseSeeder::class);
+    $this->seed(SampleDataSeeder::class);
 });
 
 test('user PII attributes are encrypted at rest in the database and decryptable', function () {

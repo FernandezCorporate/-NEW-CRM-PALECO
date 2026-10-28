@@ -3,15 +3,15 @@
 use App\Models\Consumer;
 use App\Models\User;
 use App\Services\External\PalecoBillingApiService;
-use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Tests\Seeders\SampleDataSeeder;
 
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
-    $this->seed(DatabaseSeeder::class);
+    $this->seed(SampleDataSeeder::class);
 });
 
 test('cwd officer can view consumers directory', function () {

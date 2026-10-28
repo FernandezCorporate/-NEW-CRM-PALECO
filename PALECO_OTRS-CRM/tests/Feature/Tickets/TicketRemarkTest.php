@@ -6,14 +6,14 @@ use App\Models\Ticket;
 use App\Models\TicketCategory;
 use App\Models\TicketRemark;
 use App\Models\User;
-use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Sanctum\Sanctum;
+use Tests\Seeders\SampleDataSeeder;
 
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
-    $this->seed(DatabaseSeeder::class);
+    $this->seed(SampleDataSeeder::class);
     $this->cwdOfficer = User::where('username', 'alliah')->first();
     $this->admin = User::where('username', 'allenglenn')->first();
     $this->supervisor = User::where('username', 'mycka')->first();

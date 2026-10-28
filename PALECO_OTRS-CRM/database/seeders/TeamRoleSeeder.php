@@ -21,8 +21,9 @@ class TeamRoleSeeder extends Seeder
             ['role_name' => 'Backup', 'slug_identifier' => 'backup'],
         ];
 
+        // firstOrCreate lets seeding run again without failing on the unique slug
         foreach ($roles as $role) {
-            TeamRole::create($role);
+            TeamRole::firstOrCreate(['slug_identifier' => $role['slug_identifier']], $role);
         }
     }
 }

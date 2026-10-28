@@ -11,15 +11,15 @@ use App\Models\TicketAssignment;
 use App\Models\TicketCategory;
 use App\Models\TicketRemark;
 use App\Models\User;
-use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Storage;
 use Laravel\Sanctum\Sanctum;
+use Tests\Seeders\SampleDataSeeder;
 
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
-    $this->seed(DatabaseSeeder::class);
+    $this->seed(SampleDataSeeder::class);
     $this->cwd = User::where('username', 'alliah')->first();
     $this->admin = User::where('username', 'allenglenn')->first();
     $this->dept = Department::first();

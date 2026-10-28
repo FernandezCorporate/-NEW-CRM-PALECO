@@ -4,15 +4,15 @@ use App\Actions\Users\ResetUserPassword;
 use App\Models\Ticket;
 use App\Models\User;
 use App\Services\ActivityLogs\ActivityLogService;
-use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Spatie\Activitylog\Models\Activity;
+use Tests\Seeders\SampleDataSeeder;
 
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
-    $this->seed(DatabaseSeeder::class);
+    $this->seed(SampleDataSeeder::class);
 });
 
 test('creating a user does not store personal information in the audit log', function () {

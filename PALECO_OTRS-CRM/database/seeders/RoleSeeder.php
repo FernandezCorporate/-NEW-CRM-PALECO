@@ -23,8 +23,9 @@ class RoleSeeder extends Seeder
             ['role_name' => 'Field Personnel', 'slug_identifier' => 'field_personnel'],
         ];
 
+        // firstOrCreate lets seeding run again without failing on the unique slug
         foreach ($roles as $role) {
-            AccountRole::create($role);
+            AccountRole::firstOrCreate(['slug_identifier' => $role['slug_identifier']], $role);
         }
     }
 }

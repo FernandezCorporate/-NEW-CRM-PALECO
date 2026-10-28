@@ -16,14 +16,14 @@ use App\Policies\TicketEndorsementPolicy;
 use App\Policies\TicketPolicy;
 use App\Policies\TicketRemarkPolicy;
 use App\Policies\UserPolicy;
-use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Spatie\Activitylog\Models\Activity;
+use Tests\Seeders\SampleDataSeeder;
 
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
-    $this->seed(DatabaseSeeder::class);
+    $this->seed(SampleDataSeeder::class);
 });
 
 test('UserPolicy allows only administrators full lifecycle access', function () {

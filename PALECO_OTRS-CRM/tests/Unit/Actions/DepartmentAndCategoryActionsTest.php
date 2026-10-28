@@ -15,13 +15,13 @@ use App\Models\Department;
 use App\Models\Team;
 use App\Models\Ticket;
 use App\Models\TicketCategory;
-use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\Seeders\SampleDataSeeder;
 
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
-    $this->seed(DatabaseSeeder::class);
+    $this->seed(SampleDataSeeder::class);
 });
 
 test('CreateDepartment stores new department and UpdateDepartment respects concurrency', function () {

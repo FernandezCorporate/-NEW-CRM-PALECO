@@ -9,14 +9,14 @@ use App\Models\Team;
 use App\Models\Ticket;
 use App\Models\TicketEndorsement;
 use App\Models\User;
-use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Validation\ValidationException;
+use Tests\Seeders\SampleDataSeeder;
 
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
-    $this->seed(DatabaseSeeder::class);
+    $this->seed(SampleDataSeeder::class);
 });
 
 test('InitiateEndorsement freezes ticket into pending endorsement state', function () {
