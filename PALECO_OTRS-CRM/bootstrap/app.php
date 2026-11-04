@@ -28,8 +28,9 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
+        // Web forms ask for JSON only during live validation (Laravel Precognition)
         $exceptions->shouldRenderJsonWhen(
-            fn (Request $request) => $request->is('api/*'),
+            fn (Request $request) => $request->is('api/*') || $request->isPrecognitive(),
         );
 
         $exceptions->render(function (ValidationException $e, Request $request) {

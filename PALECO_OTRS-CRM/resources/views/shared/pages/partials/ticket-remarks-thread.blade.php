@@ -27,7 +27,7 @@
                 </div>
 
                 {{-- wire:ignore keeps a remark being typed when a live update re-renders the thread --}}
-                <form action="{{ route('shared.tickets.remarks.store', $ticket) }}#remark-history" method="POST" wire:ignore>
+                <form action="{{ route('shared.tickets.remarks.store', $ticket) }}#remark-history" method="POST" wire:ignore data-live-validation>
                     @csrf
                     <div class="mb-3">
                         <textarea 

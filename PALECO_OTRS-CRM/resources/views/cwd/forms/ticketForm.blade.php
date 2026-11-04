@@ -35,7 +35,7 @@
         <x-alert />
         <x-live-notice events="ReferenceDataUpdated" message="An administrator just changed the departments or categories. Reload to see the current options; anything you typed here is not saved yet." />
 
-        <form action="{{ route('cwd.tickets.store') }}" method="POST" autocomplete="off" class="space-y-8">
+        <form action="{{ route('cwd.tickets.store') }}" method="POST" autocomplete="off" data-live-validation class="space-y-8">
             @csrf
             @if(request()->filled('source') || old('source'))
                 <input type="hidden" name="source" value="{{ old('source', request('source')) }}">

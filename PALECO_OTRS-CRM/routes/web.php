@@ -14,6 +14,7 @@ use App\Http\Controllers\Web\Tickets\TicketController;
 use App\Http\Controllers\Web\Tickets\TicketEndorsementController;
 use App\Http\Controllers\Web\Tickets\TicketRemarkController;
 use App\Http\Middleware\CheckIfActive;
+use Illuminate\Foundation\Http\Middleware\HandlePrecognitiveRequests;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
@@ -74,7 +75,8 @@ Route::middleware(['auth', CheckIfActive::class])->group(function () {
      */
     Route::post('/tickets/{ticket}/remarks', [TicketRemarkController::class, 'store'])
         ->name('shared.tickets.remarks.store')
-        ->whereUlid('ticket');
+        ->whereUlid('ticket')
+        ->middleware(HandlePrecognitiveRequests::class);
 
     /*
      * Administrator Domain
@@ -89,11 +91,11 @@ Route::middleware(['auth', CheckIfActive::class])->group(function () {
             Route::get('/{user}', [UserController::class, 'show'])->name('admin.users.show')->whereUlid('user')->withTrashed();
 
             Route::get('/create', [UserController::class, 'userForm'])->name('admin.users.createForm');
-            Route::post('/', [UserController::class, 'store'])->name('admin.users.store');
+            Route::post('/', [UserController::class, 'store'])->name('admin.users.store')->middleware(HandlePrecognitiveRequests::class);
 
             Route::get('/{user}/edit', [UserController::class, 'userForm'])->name('admin.users.editForm')->whereUlid('user');
-            Route::put('/{user}', [UserController::class, 'update'])->name('admin.users.update')->whereUlid('user');
-            Route::patch('/{user}/password', [UserController::class, 'updatePassword'])->name('admin.users.updatePassword')->whereUlid('user');
+            Route::put('/{user}', [UserController::class, 'update'])->name('admin.users.update')->whereUlid('user')->middleware(HandlePrecognitiveRequests::class);
+            Route::patch('/{user}/password', [UserController::class, 'updatePassword'])->name('admin.users.updatePassword')->whereUlid('user')->middleware(HandlePrecognitiveRequests::class);
             Route::patch('/{user}/unlock', [UserController::class, 'unlockAccount'])->name('admin.users.unlock')->whereUlid('user');
 
             Route::get('/{user}/deactivate', [UserController::class, 'deactivateConfirm'])->name('admin.users.deactivateConfirm')->whereUlid('user');
@@ -108,10 +110,10 @@ Route::middleware(['auth', CheckIfActive::class])->group(function () {
             Route::get('/{dept}', [DepartmentController::class, 'show'])->name('admin.departments.show')->whereNumber('dept')->withTrashed();
 
             Route::get('/create', [DepartmentController::class, 'departmentForm'])->name('admin.departments.createForm');
-            Route::post('/', [DepartmentController::class, 'store'])->name('admin.departments.store');
+            Route::post('/', [DepartmentController::class, 'store'])->name('admin.departments.store')->middleware(HandlePrecognitiveRequests::class);
 
             Route::get('/{dept}/edit', [DepartmentController::class, 'departmentForm'])->name('admin.departments.editForm')->whereNumber('dept')->withTrashed();
-            Route::put('/{dept}', [DepartmentController::class, 'update'])->name('admin.departments.update')->whereNumber('dept')->withTrashed();
+            Route::put('/{dept}', [DepartmentController::class, 'update'])->name('admin.departments.update')->whereNumber('dept')->withTrashed()->middleware(HandlePrecognitiveRequests::class);
 
             Route::get('/{dept}/archive', [DepartmentController::class, 'deleteConfirm'])->name('admin.departments.deleteConfirm')->whereNumber('dept')->withTrashed();
             Route::delete('/{dept}', [DepartmentController::class, 'archive'])->name('admin.departments.archive')->whereNumber('dept')->withTrashed();
@@ -127,10 +129,10 @@ Route::middleware(['auth', CheckIfActive::class])->group(function () {
             Route::get('/{team}', [TeamController::class, 'show'])->name('admin.teams.show')->whereUlid('team')->withTrashed();
 
             Route::get('/create', [TeamController::class, 'teamForm'])->name('admin.teams.createForm');
-            Route::post('/', [TeamController::class, 'store'])->name('admin.teams.store');
+            Route::post('/', [TeamController::class, 'store'])->name('admin.teams.store')->middleware(HandlePrecognitiveRequests::class);
 
             Route::get('/{team}/edit', [TeamController::class, 'teamForm'])->name('admin.teams.editForm')->whereUlid('team')->withTrashed();
-            Route::put('/{team}', [TeamController::class, 'update'])->name('admin.teams.update')->whereUlid('team')->withTrashed();
+            Route::put('/{team}', [TeamController::class, 'update'])->name('admin.teams.update')->whereUlid('team')->withTrashed()->middleware(HandlePrecognitiveRequests::class);
 
             Route::get('/{team}/archive', [TeamController::class, 'deleteConfirm'])->name('admin.teams.deleteConfirm')->whereUlid('team')->withTrashed();
             Route::delete('/{team}', [TeamController::class, 'archive'])->name('admin.teams.archive')->whereUlid('team')->withTrashed();
@@ -146,10 +148,10 @@ Route::middleware(['auth', CheckIfActive::class])->group(function () {
             Route::get('/{category}', [TicketCategoryController::class, 'show'])->name('admin.ticketCategories.show')->whereNumber('category')->withTrashed();
 
             Route::get('/create', [TicketCategoryController::class, 'ticketCategoryForm'])->name('admin.ticketCategories.createForm');
-            Route::post('/', [TicketCategoryController::class, 'store'])->name('admin.ticketCategories.store');
+            Route::post('/', [TicketCategoryController::class, 'store'])->name('admin.ticketCategories.store')->middleware(HandlePrecognitiveRequests::class);
 
             Route::get('/{category}/edit', [TicketCategoryController::class, 'ticketCategoryForm'])->name('admin.ticketCategories.editForm')->whereNumber('category')->withTrashed();
-            Route::put('/{category}', [TicketCategoryController::class, 'update'])->name('admin.ticketCategories.update')->whereNumber('category')->withTrashed();
+            Route::put('/{category}', [TicketCategoryController::class, 'update'])->name('admin.ticketCategories.update')->whereNumber('category')->withTrashed()->middleware(HandlePrecognitiveRequests::class);
 
             Route::get('/{category}/archive', [TicketCategoryController::class, 'deleteConfirm'])->name('admin.ticketCategories.deleteConfirm')->whereNumber('category')->withTrashed();
             Route::delete('/{category}', [TicketCategoryController::class, 'archive'])->name('admin.ticketCategories.archive')->whereNumber('category')->withTrashed();
@@ -191,22 +193,22 @@ Route::middleware(['auth', CheckIfActive::class])->group(function () {
             Route::get('/', [TicketController::class, 'index'])->name('cwd.tickets');
             Route::get('/{ticket}', [TicketController::class, 'show'])->name('cwd.tickets.show')->whereUlid('ticket');
             Route::get('/create', [TicketController::class, 'ticketForm'])->name('cwd.tickets.createForm');
-            Route::post('/', [TicketController::class, 'store'])->name('cwd.tickets.store');
+            Route::post('/', [TicketController::class, 'store'])->name('cwd.tickets.store')->middleware(HandlePrecognitiveRequests::class);
             Route::get('/{ticket}/edit', [TicketController::class, 'editForm'])->name('cwd.tickets.editForm')->whereUlid('ticket');
-            Route::put('/{ticket}', [TicketController::class, 'update'])->name('cwd.tickets.update')->whereUlid('ticket');
+            Route::put('/{ticket}', [TicketController::class, 'update'])->name('cwd.tickets.update')->whereUlid('ticket')->middleware(HandlePrecognitiveRequests::class);
             Route::get('/{ticket}/children/create', [TicketController::class, 'childTicketForm'])->name('cwd.tickets.children.createForm')->whereUlid('ticket');
-            Route::post('/{ticket}/children', [TicketController::class, 'storeChild'])->name('cwd.tickets.children.store')->whereUlid('ticket');
+            Route::post('/{ticket}/children', [TicketController::class, 'storeChild'])->name('cwd.tickets.children.store')->whereUlid('ticket')->middleware(HandlePrecognitiveRequests::class);
             Route::get('/{ticket}/cancel', [TicketController::class, 'cancelConfirm'])->name('cwd.tickets.cancelConfirm')->whereUlid('ticket');
-            Route::post('/{ticket}/cancel', [TicketController::class, 'cancel'])->name('cwd.tickets.cancel')->whereUlid('ticket');
+            Route::post('/{ticket}/cancel', [TicketController::class, 'cancel'])->name('cwd.tickets.cancel')->whereUlid('ticket')->middleware(HandlePrecognitiveRequests::class);
             Route::get('/{ticket}/force-close', [TicketController::class, 'forceCloseConfirm'])->name('cwd.tickets.forceCloseConfirm')->whereUlid('ticket');
-            Route::post('/{ticket}/force-close', [TicketController::class, 'forceClose'])->name('cwd.tickets.forceClose')->whereUlid('ticket');
+            Route::post('/{ticket}/force-close', [TicketController::class, 'forceClose'])->name('cwd.tickets.forceClose')->whereUlid('ticket')->middleware(HandlePrecognitiveRequests::class);
             Route::get('/{ticket}/accomplishments/{accomplishment}', [TicketAccomplishmentController::class, 'show'])->name('cwd.tickets.accomplishments.show')->whereUlid('ticket')->whereNumber('accomplishment');
         });
 
         Route::prefix('endorsements')->group(function () {
             Route::get('/', [TicketEndorsementController::class, 'index'])->name('cwd.endorsements');
             Route::get('/{endorsement}', [TicketEndorsementController::class, 'show'])->name('cwd.endorsements.show')->whereUlid('endorsement');
-            Route::post('/{endorsement}/decide', [TicketEndorsementController::class, 'decide'])->name('cwd.endorsements.decide');
+            Route::post('/{endorsement}/decide', [TicketEndorsementController::class, 'decide'])->name('cwd.endorsements.decide')->middleware(HandlePrecognitiveRequests::class);
         });
     });
 

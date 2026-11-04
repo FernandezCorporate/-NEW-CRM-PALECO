@@ -210,6 +210,8 @@ const initFormSubmitLock = () => {
         if (form.hasAttribute('data-preferences-form')) return;
         // Exclude explicit opt-out
         if (form.hasAttribute('data-no-lock')) return;
+        // Forms with live validation keep their submit enabled; it runs the full check instead
+        if (form.hasAttribute('data-live-validation')) return;
         // Exclude authentication forms
         if (form.action.includes('/login') || form.action.includes('attemptLogin')) return;
 

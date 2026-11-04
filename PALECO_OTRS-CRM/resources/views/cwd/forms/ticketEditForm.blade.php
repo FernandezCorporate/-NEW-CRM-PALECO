@@ -48,7 +48,7 @@
         <x-live-notice events="TicketIntakeUpdated" match="ticket_id:{{ $ticket->id }}" message="Another officer just edited this ticket. Reload to see their changes before saving yours." />
         <x-live-notice events="TicketAssigned,TicketCancelled,TicketEndorsementInitiated" match="ticket_id:{{ $ticket->id }}" message="This ticket is no longer Open, so its intake details can no longer be edited." />
 
-    <form action="{{ route('cwd.tickets.update', $ticket) }}" method="POST" autocomplete="off" class="space-y-8">
+    <form action="{{ route('cwd.tickets.update', $ticket) }}" method="POST" autocomplete="off" data-live-validation class="space-y-8">
         @csrf
         @method('PUT')
         <input type="hidden" name="original_updated_at" value="{{ old('original_updated_at', $ticket->updated_at) }}">

@@ -29,7 +29,7 @@
     <x-alert />
 
     <article class="card overflow-hidden">
-        <form action="{{ isset($category) ? route('admin.ticketCategories.update', ['category' => $category, 'source' => request('source')]) : route('admin.ticketCategories.store') }}" method="POST">
+        <form action="{{ isset($category) ? route('admin.ticketCategories.update', ['category' => $category, 'source' => request('source')]) : route('admin.ticketCategories.store') }}" method="POST" data-live-validation>
             @csrf
 
             @isset($category)

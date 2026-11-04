@@ -39,7 +39,7 @@
     <x-alert />
 
     <article class="card">
-        <form action="{{ isset($team) ? route('admin.teams.update', $team) : route('admin.teams.store') }}" method="POST">
+        <form action="{{ isset($team) ? route('admin.teams.update', $team) : route('admin.teams.store') }}" method="POST" data-live-validation>
             @csrf
             @isset($team)
                 @method('PUT')

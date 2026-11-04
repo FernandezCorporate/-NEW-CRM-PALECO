@@ -129,7 +129,7 @@
                     <div class="ml-11">
                         <h2 id="decision-heading" class="text-sm font-bold text-slate-900 mb-4">Dispatcher Decision</h2>
 
-                        <form method="POST" action="{{ route('cwd.endorsements.decide', $endorsement) }}" data-endorsement-form id="endorsement-decision-form">
+                        <form method="POST" action="{{ route('cwd.endorsements.decide', $endorsement) }}" data-endorsement-form id="endorsement-decision-form" data-live-validation>
                             @csrf
 
                             <!-- Hidden Status Input -->
@@ -184,9 +184,7 @@
                                             </option>
                                         @endforeach
                                     </select>
-                                    @error('department_id')
-                                        <p class="mt-1 text-xs text-rose-600 font-medium">{{ $message }}</p>
-                                    @enderror
+                                    <x-form.error name="department_id" />
                                 </div>
 
                                 <!-- CWD Note / Reason (Shown when Rejected) -->
@@ -195,9 +193,7 @@
                                         Reason for Rejection <span class="text-xs text-rose-600 font-normal ml-1">(Required for Rejection)</span>
                                     </label>
                                     <textarea name="rejection_reason" id="rejection_reason" rows="3" class="form-input w-full min-h-[96px] border border-slate-300 rounded-lg p-3 text-sm text-slate-800 placeholder:text-slate-400 bg-white hover:border-slate-400 focus:border-rose-600 focus:ring-2 focus:ring-rose-500/20 shadow-xs transition-all outline-none @error('rejection_reason') !border-rose-500 !ring-2 !ring-rose-500/20 @enderror" placeholder="Provide resolution notes, coordination instructions, or reason for denial..." {{ ! $isApprovedSelected ? 'required' : 'disabled' }}>{{ old('rejection_reason') }}</textarea>
-                                    @error('rejection_reason')
-                                        <p class="mt-1 text-xs text-rose-600 font-medium">{{ $message }}</p>
-                                    @enderror
+                                    <x-form.error name="rejection_reason" />
                                 </div>
 
                                 <!-- Submit Button (Below the Dynamic Lower Section) -->

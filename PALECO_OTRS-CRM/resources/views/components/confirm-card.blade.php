@@ -95,7 +95,7 @@
             @endif
 
             <!-- Confirmation Form -->
-            <form action="{{ $action }}" method="POST">
+            <form action="{{ $action }}" method="POST" @isset($formInputs) data-live-validation @endisset>
                 @csrf
                 @if(strtoupper($method) !== 'POST')
                     @method($method)

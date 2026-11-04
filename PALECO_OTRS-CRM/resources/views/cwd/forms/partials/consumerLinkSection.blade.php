@@ -35,7 +35,7 @@
     </div>
     
     <!-- Consumer Linking Mode Dropdown Selector (Replaces checkbox and tabs) -->
-    <div class="max-w-md mb-4">
+    <div class="max-w-md mb-4" data-error-for="account_code">
         <label for="consumer_search_filter" class="block text-xs font-semibold text-slate-700 mb-1">
             Consumer Linking Filter
         </label>

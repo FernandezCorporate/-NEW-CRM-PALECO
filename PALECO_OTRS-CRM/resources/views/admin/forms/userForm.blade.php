@@ -39,7 +39,7 @@
     <x-alert />
 
     <article class="card">
-        <form method="POST" action="{{ isset($user) ? route('admin.users.update', ['user' => $user]) : route('admin.users.store') }}">
+        <form method="POST" action="{{ isset($user) ? route('admin.users.update', ['user' => $user]) : route('admin.users.store') }}" data-live-validation>
             @csrf
             @isset($user)
                 @method('PUT')
@@ -234,7 +234,7 @@
 
     @isset($user)
         <article class="card overflow-hidden">
-            <form method="POST" action="{{ route('admin.users.updatePassword', ['user' => $user]) }}">
+            <form method="POST" action="{{ route('admin.users.updatePassword', ['user' => $user]) }}" data-live-validation>
                 @csrf
                 @method('PATCH')
                 @if(request()->filled('source') || old('source'))
