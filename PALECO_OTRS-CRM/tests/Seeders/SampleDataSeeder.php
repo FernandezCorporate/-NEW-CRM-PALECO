@@ -6,6 +6,7 @@ use App\Models\Department;
 use App\Models\Team;
 use App\Models\TicketCategory;
 use App\Models\User;
+use App\Support\Permissions\PermissionCatalog;
 use Database\Seeders\RoleSeeder;
 use Database\Seeders\TeamRoleSeeder;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
@@ -191,5 +192,8 @@ class SampleDataSeeder extends Seeder
         if ($firstTeam) {
             $personnel->teams()->attach($firstTeam->id, ['team_role_id' => 1]);
         }
+
+        // Model events are muted while seeding, so each account's default permissions are granted here
+        User::all()->each(fn (User $user) => PermissionCatalog::grantDefaults($user));
     }
 }

@@ -13,10 +13,12 @@
             <p class="text-sm text-slate-500 mt-1">Create, update, and deactivate accounts across all roles.</p>
         </div>
         
+        @can('create', \App\Models\User::class)
         <x-btn href="{{ route('admin.users.createForm') }}" variant="primary" class="action-link" data-loading-text="Loading...">
             <x-icons.plus class="w-4 h-4 mr-1.5" />
             New User
         </x-btn>
+        @endcan
     </header>
 
     <nav class="record-tabs" aria-label="Filter users by role">
@@ -108,6 +110,9 @@
                                 <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200">
                                     {{ Str::headline($user->role->role_name) }}
                                 </span>
+                                @if(\App\Support\Permissions\PermissionCatalog::isCustomized($user))
+                                    <span class="mt-1 inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-50 text-amber-700 border border-amber-200" title="This account's permissions differ from its role's defaults">Custom permissions</span>
+                                @endif
                             </td>
                             
                             <td class="px-6 py-4 align-top text-slate-700 text-sm font-medium">

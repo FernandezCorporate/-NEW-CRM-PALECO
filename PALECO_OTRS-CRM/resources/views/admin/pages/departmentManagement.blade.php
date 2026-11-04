@@ -12,10 +12,12 @@
             <p class="text-sm text-slate-500 mt-1">Monitor and manage department information</p>
         </div>
         
+        @can('create', \App\Models\Department::class)
         <x-btn href="{{ route('admin.departments.createForm') }}" variant="primary" class="action-link" data-loading-text="Loading...">
             <x-icons.plus class="w-4 h-4 mr-1.5" />
             New Department
         </x-btn>
+        @endcan
     </header>
 
     <!-- Controls Row (Search, Filter, Sort, View Toggle) -->
@@ -136,6 +138,7 @@
                                     </a>
                                     
                                     @if($department->trashed())
+                                        @can('restore', \App\Models\Department::class)
                                         <form action="{{ route('admin.departments.restore', $department->id) }}" method="POST" class="inline-block">
                                             @csrf
                                             @method('PATCH')
@@ -145,23 +148,30 @@
                                                 <x-icons.arrow-path class="w-4 h-4" />
                                             </button>
                                         </form>
+                                        @endcan
 
+                                        @can('forceDelete', \App\Models\Department::class)
                                         <a href="{{ route('admin.departments.forceDeleteConfirm', $department) }}"
                                             class="action-link p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors" data-loading-text=""
                                             title="Permanently Delete Department" aria-label="Permanently delete {{ $department->dept_name }}">
                                             <x-icons.trash class="w-4 h-4" />
                                         </a>
+                                        @endcan
                                     @else
+                                        @can('update', \App\Models\Department::class)
                                         <a href="{{ route('admin.departments.editForm', ['dept' => $department, 'source' => 'list']) }}" 
                                         class="action-link p-1.5 text-slate-400 hover:text-emerald-700 hover:bg-slate-100 rounded-lg transition-colors" data-loading-text="" 
                                         title="Edit Department" aria-label="Edit {{ $department->dept_name }}">
                                             <x-icons.pencil class="w-4 h-4" />
                                         </a>
+                                        @endcan
+                                        @can('archive', \App\Models\Department::class)
                                         <a href="{{ route('admin.departments.deleteConfirm', ['dept' => $department, 'source' => 'list']) }}"
                                             class="action-link p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors" data-loading-text="" 
                                             title="Archive Department" aria-label="Archive {{ $department->dept_name }}">
                                             <x-icons.trash class="w-4 h-4" />
                                         </a>
+                                        @endcan
                                     @endif
                                 </div>
                             </td>
@@ -201,6 +211,7 @@
                         </a> 
                         
                         @if($department->trashed())
+                            @can('restore', \App\Models\Department::class)
                             <form action="{{ route('admin.departments.restore', $department->id) }}" method="POST" class="inline-block">
                                 @csrf
                                 @method('PATCH')
@@ -210,23 +221,30 @@
                                     <x-icons.arrow-path class="w-4 h-4" />
                                 </button>
                             </form>
+                            @endcan
 
+                            @can('forceDelete', \App\Models\Department::class)
                             <a href="{{ route('admin.departments.forceDeleteConfirm', $department) }}"
                                 class="action-link p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-100 rounded-md transition-colors" data-loading-text="" 
                                 title="Permanently Delete Department" aria-label="Permanently delete {{ $department->dept_name }}">
                                 <x-icons.trash class="w-4 h-4" />
                             </a>
+                            @endcan
                         @else
+                            @can('update', \App\Models\Department::class)
                             <a href="{{ route('admin.departments.editForm', ['dept' => $department, 'source' => 'list']) }}" 
                             class="action-link p-1.5 text-slate-400 hover:text-emerald-600 hover:bg-emerald-100 rounded-md transition-colors" data-loading-text="" 
                             title="Edit Department" aria-label="Edit {{ $department->dept_name }}">
                                 <x-icons.pencil class="w-4 h-4" />
                             </a>
+                            @endcan
+                            @can('archive', \App\Models\Department::class)
                             <a href="{{ route('admin.departments.deleteConfirm', ['dept' => $department, 'source' => 'list']) }}"
                                 class="action-link p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-100 rounded-md transition-colors" data-loading-text="" 
                                 title="Archive Department" aria-label="Archive {{ $department->dept_name }}">
                                 <x-icons.trash class="w-4 h-4" />
                             </a>
+                            @endcan
                         @endif
                     </div>
                 </div>

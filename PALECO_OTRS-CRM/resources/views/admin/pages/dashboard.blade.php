@@ -74,7 +74,9 @@
         </section>
 
         <!-- System Monitoring & Security Telemetry Island -->
-        <x-dashboard-monitoring :data="$monitoring" />
+        @can('viewAny', \Spatie\Activitylog\Models\Activity::class)
+            <x-dashboard-monitoring :data="$monitoring" />
+        @endcan
 
         <!-- Quick Action Panels & Workspace Summary -->
         <section class="admin-action-panels grid gap-6 xl:grid-cols-2">
@@ -88,10 +90,13 @@
                 </div>
                 <ul class="flex flex-1 flex-col divide-y divide-slate-100">
                     @foreach ([
-                        ['Active accounts', $summary['users_active'], number_format($summary['users_total']) . ' total accounts · Manage access', route('admin.users')],
-                        ['Active departments', $summary['departments_active'], number_format($summary['departments_archived']) . ' archived · Manage divisions', route('admin.departments')],
-                        ['Active field teams', $summary['teams_active'], 'Review crews and their members', route('admin.teams')],
-                    ] as [$label, $count, $hint, $url])
+                        ['Active accounts', $summary['users_active'], number_format($summary['users_total']) . ' total accounts · Manage access', route('admin.users'), \App\Models\User::class],
+                        ['Active departments', $summary['departments_active'], number_format($summary['departments_archived']) . ' archived · Manage divisions', route('admin.departments'), \App\Models\Department::class],
+                        ['Active field teams', $summary['teams_active'], 'Review crews and their members', route('admin.teams'), \App\Models\Team::class],
+                    ] as [$label, $count, $hint, $url, $model])
+                        @cannot('viewAny', $model)
+                            @continue
+                        @endcannot
                         <li class="flex flex-1">
                             <a href="{{ $url }}" class="group flex w-full items-center gap-4 px-6 py-3 md:px-7 transition-colors hover:bg-emerald-50 focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-emerald-600">
                                 <span class="min-w-0 flex-1">

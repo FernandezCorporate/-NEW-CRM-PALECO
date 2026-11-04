@@ -70,7 +70,8 @@ class TicketAccomplishmentController extends Controller
         Ticket $ticket,
         SubmitAccomplishment $submitAccomplishment
     ): JsonResponse {
-        Gate::authorize('accomplish', $ticket);
+        // A client timestamp marks an action queued on the phone while offline
+        Gate::authorize('accomplish', [$ticket, $this->isOfflineSync($request)]);
 
         $clientTimestamp = $this->resolveClientTimestamp($request, $ticket);
         $idempotencyKey = $request->header('X-Idempotency-Key') ?? $request->input('idempotency_key');

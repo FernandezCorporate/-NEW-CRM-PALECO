@@ -20,6 +20,14 @@ trait ResolvesClientTimestamp
      *
      * @throws ValidationException
      */
+    /**
+     * Whether the request replays an action the field crew performed while offline.
+     */
+    protected function isOfflineSync(Request $request): bool
+    {
+        return $request->hasHeader('X-Client-Timestamp') || $request->filled('client_timestamp');
+    }
+
     protected function resolveClientTimestamp(Request $request, Ticket $ticket): ?Carbon
     {
         $raw = $request->header('X-Client-Timestamp') ?? $request->input('client_timestamp');

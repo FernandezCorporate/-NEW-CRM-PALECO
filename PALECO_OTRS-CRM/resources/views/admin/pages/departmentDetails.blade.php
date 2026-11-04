@@ -23,6 +23,7 @@
         <div class="flex items-center gap-3 flex-wrap">
             
             @if($dept->trashed())
+                @can('restore', \App\Models\Department::class)
                 <form action="{{ route('admin.departments.restore', $dept) }}" method="POST" class="inline-block">
                     @csrf
                     @method('PATCH')
@@ -31,20 +32,27 @@
                         <span>Restore</span>
                     </button>
                 </form>
+                @endcan
+                @can('forceDelete', \App\Models\Department::class)
                 <a href="{{ route('admin.departments.forceDeleteConfirm', $dept) }}" class="btn btn-danger px-4 py-2 text-sm shadow-xs" data-loading-text="Loading...">
                     <x-icons.trash class="w-4 h-4" />
                     <span>Force Delete</span>
                 </a>
+                @endcan
             @else
+                @can('update', \App\Models\Department::class)
                 <a href="{{ route('admin.departments.editForm', array_filter(['dept' => $dept, 'source' => request('source') ?: 'details', 'user' => request('user'), 'team' => request('team')])) }}" class="btn btn-primary px-4 py-2 text-sm shadow-xs" data-loading-text="Loading...">
                     <x-icons.pencil class="w-4 h-4" />
                     <span>Edit</span>
                 </a>
+                @endcan
 
+                @can('archive', \App\Models\Department::class)
                 <a href="{{ route('admin.departments.deleteConfirm', array_filter(['dept' => $dept, 'source' => request('source') ?: 'details', 'user' => request('user'), 'team' => request('team')])) }}" class="btn btn-secondary text-rose-700 hover:bg-rose-50 hover:border-rose-300 border-rose-200 px-4 py-2 text-sm shadow-xs" data-loading-text="Loading...">
                     <x-icons.trash class="w-4 h-4 text-rose-600" />
                     <span>Archive</span>
                 </a>
+                @endcan
             @endif
         </div>
     </header>

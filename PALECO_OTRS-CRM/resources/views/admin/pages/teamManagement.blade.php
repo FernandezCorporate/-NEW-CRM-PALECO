@@ -12,10 +12,12 @@
             <p class="text-sm text-slate-500 mt-1">Manage field teams and their members.</p>
         </div>
         
+        @can('create', \App\Models\Team::class)
         <x-btn href="{{ route('admin.teams.createForm') }}" variant="primary" class="action-link" data-loading-text="Loading...">
             <x-icons.plus class="w-4 h-4 mr-1.5" />
             New Team
         </x-btn>
+        @endcan
     </header>
 
     <!-- Controls Row -->
@@ -161,6 +163,7 @@
 
                                         @if($team->trashed())
                                             <!-- Restore -->
+                                            @can('restore', \App\Models\Team::class)
                                             <form action="{{ route('admin.teams.restore', ['team' => $team]) }}" method="POST" class="inline-block">
                                                 @csrf
                                                 @method('PATCH')
@@ -168,19 +171,26 @@
                                                     <x-icons.arrow-path class="w-4 h-4" />
                                                 </button>
                                             </form>
+                                            @endcan
                                             <!-- Force Delete -->
+                                            @can('forceDelete', \App\Models\Team::class)
                                             <a href="{{ route('admin.teams.forceDeleteConfirm', ['team' => $team]) }}" class="action-link p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors" title="Permanently Delete Team" aria-label="Permanently delete {{ $team->team_name }}">
                                                 <x-icons.trash class="w-4 h-4" />
                                             </a>
+                                            @endcan
                                         @else
                                             <!-- Edit -->
+                                            @can('update', \App\Models\Team::class)
                                             <a href="{{ route('admin.teams.editForm', ['team' => $team, 'source' => 'list']) }}" class="action-link p-1.5 text-slate-400 hover:text-emerald-700 hover:bg-slate-100 rounded-lg transition-colors" title="Edit Team" aria-label="Edit {{ $team->team_name }}">
                                                 <x-icons.pencil class="w-4 h-4" />
                                             </a>
+                                            @endcan
                                             <!-- Archive -->
+                                            @can('archive', \App\Models\Team::class)
                                             <a href="{{ route('admin.teams.deleteConfirm', ['team' => $team, 'source' => 'list']) }}" class="action-link p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors" title="Archive Team" aria-label="Archive {{ $team->team_name }}">
                                                 <x-icons.trash class="w-4 h-4" />
                                             </a>
+                                            @endcan
                                         @endif
                                     </div>
                                 </td>
@@ -210,6 +220,7 @@
                             
                             @if($team->trashed())
                                 <!-- Restore -->
+                                @can('restore', \App\Models\Team::class)
                                 <form action="{{ route('admin.teams.restore', ['team' => $team]) }}" method="POST" class="inline-block">
                                     @csrf
                                     @method('PATCH')
@@ -217,19 +228,26 @@
                                         <x-icons.arrow-path class="w-4 h-4" />
                                     </button>
                                 </form>
+                                @endcan
                                 <!-- Force Delete -->
+                                @can('forceDelete', \App\Models\Team::class)
                                 <a href="{{ route('admin.teams.forceDeleteConfirm', ['team' => $team]) }}" class="action-link p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-100 rounded-md transition-colors" title="Permanently Delete Team" aria-label="Permanently delete {{ $team->team_name }}">
                                     <x-icons.trash class="w-4 h-4" />
                                 </a>
+                                @endcan
                             @else
                                 <!-- Edit -->
+                                @can('update', \App\Models\Team::class)
                                 <a href="{{ route('admin.teams.editForm', ['team' => $team, 'source' => 'card']) }}" class="action-link p-1.5 text-slate-400 hover:text-emerald-700 hover:bg-emerald-50 rounded-md transition-colors" title="Edit Team" aria-label="Edit {{ $team->team_name }}">
                                     <x-icons.pencil class="w-4 h-4" />
                                 </a>
+                                @endcan
                                 <!-- Archive -->
+                                @can('archive', \App\Models\Team::class)
                                 <a href="{{ route('admin.teams.deleteConfirm', ['team' => $team, 'source' => 'card']) }}" class="action-link p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-md transition-colors" title="Archive Team" aria-label="Archive {{ $team->team_name }}">
                                     <x-icons.trash class="w-4 h-4" />
                                 </a>
+                                @endcan
                             @endif
                         </div>
                     </div>

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Concerns\Auditable;
+use App\Support\Permissions\PermissionCatalog;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Builder;
@@ -41,6 +42,14 @@ class User extends Authenticatable
         'first_name', 'middle_name', 'last_name', 'name_ext', 'email', 'contact',
     ];
 
+    /**
+     * A new account starts with the default permissions of its role.
+     */
+    protected static function booted(): void
+    {
+        static::created(fn (User $user) => PermissionCatalog::grantDefaults($user));
+    }
+
     // --- CASTS ---
 
     /**
@@ -59,6 +68,7 @@ class User extends Authenticatable
             'is_active' => 'boolean',
             'last_login' => 'datetime',
             'locked_until' => 'datetime',
+            'permissions_updated_at' => 'datetime',
         ];
     }
 
@@ -70,6 +80,14 @@ class User extends Authenticatable
     public function role(): BelongsTo
     {
         return $this->belongsTo(AccountRole::class, 'role_id');
+    }
+
+    /**
+     * Retrieves the individual permissions granted to this user account.
+     */
+    public function permissions(): BelongsToMany
+    {
+        return $this->belongsToMany(Permission::class, 'permission_user');
     }
 
     /**
@@ -183,6 +201,22 @@ class User extends Authenticatable
     public function isLocked(): bool
     {
         return (bool) ($this->locked_until && $this->locked_until->isFuture());
+    }
+
+    /**
+     * Whether this account holds a permission; the permissions are loaded once per request.
+     */
+    public function hasPermission(string $permission): bool
+    {
+        return $this->permissions->contains('name', $permission);
+    }
+
+    /**
+     * Whether this account has one of the given roles (e.g. 'supervisor'). The role decides the portal and the workflow.
+     */
+    public function hasRole(string ...$slugs): bool
+    {
+        return in_array($this->role?->slug_identifier, $slugs, true);
     }
 
     /**

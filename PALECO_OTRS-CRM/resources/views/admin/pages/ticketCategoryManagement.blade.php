@@ -12,10 +12,12 @@
             <p class="text-sm text-slate-500 mt-1">Manage complaint categories used during ticket creation</p>
         </div>
         
+        @can('create', \App\Models\TicketCategory::class)
         <x-btn href="{{ route('admin.ticketCategories.createForm') }}" variant="primary" class="action-link" data-loading-text="Loading...">
             <x-icons.plus class="w-4 h-4 mr-1.5" />
             New Category
         </x-btn>
+        @endcan
     </header>
 
     <!-- Controls Row -->
@@ -122,22 +124,30 @@
                                         <x-icons.eye class="w-4 h-4" />
                                     </a>
                                     @if($category->trashed())
+                                        @can('restore', \App\Models\TicketCategory::class)
                                         <form action="{{ route('admin.ticketCategories.restore', $category->id) }}" method="POST" class="inline-block">
                                             @csrf @method('PATCH')
                                             <button type="submit" class="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors" title="Restore" aria-label="Restore {{ $category->category_name }}">
                                                 <x-icons.arrow-path class="w-4 h-4" />
                                             </button>
                                         </form>
+                                        @endcan
+                                        @can('forceDelete', \App\Models\TicketCategory::class)
                                         <a href="{{ route('admin.ticketCategories.forceDeleteConfirm', $category) }}" class="action-link p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors" title="Permanently Delete" aria-label="Permanently delete {{ $category->category_name }}">
                                             <x-icons.trash class="w-4 h-4" />
                                         </a>
+                                        @endcan
                                     @else
+                                        @can('update', \App\Models\TicketCategory::class)
                                         <a href="{{ route('admin.ticketCategories.editForm', ['category' => $category, 'source' => 'list']) }}" class="action-link p-1.5 text-slate-400 hover:text-emerald-700 hover:bg-slate-100 rounded-lg transition-colors" title="Edit" aria-label="Edit {{ $category->category_name }}">
                                             <x-icons.pencil class="w-4 h-4" />
                                         </a>
+                                        @endcan
+                                        @can('archive', \App\Models\TicketCategory::class)
                                         <a href="{{ route('admin.ticketCategories.deleteConfirm', ['category' => $category, 'source' => 'list']) }}" class="action-link p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors" title="Archive" aria-label="Archive {{ $category->category_name }}">
                                             <x-icons.trash class="w-4 h-4" />
                                         </a>
+                                        @endcan
                                     @endif
                                 </div>
                             </td>
@@ -171,22 +181,30 @@
                             <x-icons.eye class="w-4 h-4" />
                         </a>
                         @if($category->trashed())
+                            @can('restore', \App\Models\TicketCategory::class)
                             <form action="{{ route('admin.ticketCategories.restore', $category->id) }}" method="POST" class="inline-block">
                                 @csrf @method('PATCH')
                                 <button type="submit" class="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-100 rounded-md transition-colors" aria-label="Restore {{ $category->category_name }}">
                                     <x-icons.arrow-path class="w-4 h-4" />
                                 </button>
                             </form>
+                            @endcan
+                            @can('forceDelete', \App\Models\TicketCategory::class)
                             <a href="{{ route('admin.ticketCategories.forceDeleteConfirm', $category) }}" class="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-100 rounded-md transition-colors" aria-label="Permanently delete {{ $category->category_name }}">
                                 <x-icons.trash class="w-4 h-4" />
                             </a>
+                            @endcan
                         @else
+                            @can('update', \App\Models\TicketCategory::class)
                             <a href="{{ route('admin.ticketCategories.editForm', ['category' => $category, 'source' => 'list']) }}" class="p-1.5 text-slate-400 hover:text-emerald-600 hover:bg-emerald-100 rounded-md transition-colors" aria-label="Edit {{ $category->category_name }}">
                                 <x-icons.pencil class="w-4 h-4" />
                             </a>
+                            @endcan
+                            @can('archive', \App\Models\TicketCategory::class)
                             <a href="{{ route('admin.ticketCategories.deleteConfirm', ['category' => $category, 'source' => 'list']) }}" class="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-100 rounded-md transition-colors" aria-label="Archive {{ $category->category_name }}">
                                 <x-icons.trash class="w-4 h-4" />
                             </a>
+                            @endcan
                         @endif
                     </div>
                 </div>

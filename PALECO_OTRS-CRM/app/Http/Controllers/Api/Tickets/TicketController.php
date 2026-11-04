@@ -91,7 +91,8 @@ class TicketController extends Controller
      */
     public function start(Request $request, Ticket $ticket, StartTicket $startTicket): JsonResponse
     {
-        Gate::authorize('start', $ticket);
+        // A client timestamp marks an action queued on the phone while offline
+        Gate::authorize('start', [$ticket, $this->isOfflineSync($request)]);
 
         $clientTimestamp = $this->resolveClientTimestamp($request, $ticket);
 

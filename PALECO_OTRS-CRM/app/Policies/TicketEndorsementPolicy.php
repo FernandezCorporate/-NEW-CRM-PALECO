@@ -14,7 +14,7 @@ class TicketEndorsementPolicy
      */
     public function viewAny(User $user): bool
     {
-        return $user->role->slug_identifier === 'cwd_officer';
+        return $user->hasRole('cwd_officer') && $user->hasPermission('endorsements.view');
     }
 
     /*
@@ -22,7 +22,7 @@ class TicketEndorsementPolicy
      */
     public function view(User $user): bool
     {
-        return $user->role->slug_identifier === 'cwd_officer';
+        return $user->hasRole('cwd_officer') && $user->hasPermission('endorsements.view');
     }
 
     /*
@@ -30,6 +30,6 @@ class TicketEndorsementPolicy
      */
     public function decide(User $user): bool
     {
-        return $user->role->slug_identifier === 'cwd_officer';
+        return $user->hasRole('cwd_officer') && $user->hasPermission('endorsements.decide');
     }
 }

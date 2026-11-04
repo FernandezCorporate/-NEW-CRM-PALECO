@@ -14,7 +14,7 @@ class TicketCategoryPolicy
      */
     public function viewAny(User $user): bool
     {
-        return $user->role->slug_identifier === 'admin';
+        return $user->hasRole('admin') && $user->hasPermission('categories.view');
     }
 
     /*
@@ -22,7 +22,7 @@ class TicketCategoryPolicy
      */
     public function ticketCategoryForm(User $user): bool
     {
-        return $user->role->slug_identifier === 'admin';
+        return $user->hasRole('admin') && ($user->hasPermission('categories.create') || $user->hasPermission('categories.update'));
     }
 
     /*
@@ -30,7 +30,7 @@ class TicketCategoryPolicy
      */
     public function create(User $user): bool
     {
-        return $user->role->slug_identifier === 'admin';
+        return $user->hasRole('admin') && $user->hasPermission('categories.create');
     }
 
     /*
@@ -38,7 +38,7 @@ class TicketCategoryPolicy
      */
     public function view(User $user): bool
     {
-        return $user->role->slug_identifier === 'admin';
+        return $user->hasRole('admin') && $user->hasPermission('categories.view');
     }
 
     /*
@@ -46,7 +46,7 @@ class TicketCategoryPolicy
      */
     public function update(User $user): bool
     {
-        return $user->role->slug_identifier === 'admin';
+        return $user->hasRole('admin') && $user->hasPermission('categories.update');
     }
 
     /*
@@ -54,7 +54,8 @@ class TicketCategoryPolicy
      */
     public function deleteConfirm(User $user): bool
     {
-        return $user->role->slug_identifier === 'admin';
+        // The same page confirms archiving and permanent deletion
+        return $user->hasRole('admin') && ($user->hasPermission('categories.archive') || $user->hasPermission('categories.delete'));
     }
 
     /*
@@ -62,7 +63,7 @@ class TicketCategoryPolicy
      */
     public function archive(User $user): bool
     {
-        return $user->role->slug_identifier === 'admin';
+        return $user->hasRole('admin') && $user->hasPermission('categories.archive');
     }
 
     /*
@@ -70,7 +71,7 @@ class TicketCategoryPolicy
      */
     public function restore(User $user): bool
     {
-        return $user->role->slug_identifier === 'admin';
+        return $user->hasRole('admin') && $user->hasPermission('categories.archive');
     }
 
     /*
@@ -78,6 +79,6 @@ class TicketCategoryPolicy
      */
     public function forceDelete(User $user): bool
     {
-        return $user->role->slug_identifier === 'admin';
+        return $user->hasRole('admin') && $user->hasPermission('categories.delete');
     }
 }

@@ -50,6 +50,7 @@
                                 <span>Dashboard</span>
                             </a>
                         </li>
+                        @can('viewAny', \App\Models\Ticket::class)
                         <li>
                             <a href="{{ route('admin.tickets') }}" 
                                 class="flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-xl transition-all {{ request()->routeIs('admin.tickets*') ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-950/20' : 'text-slate-300 hover:bg-white/10 hover:text-white' }}">
@@ -57,6 +58,7 @@
                                 <span>Tickets</span>
                             </a>
                         </li>
+                        @endcan
                     </ul>
                 </div>
 
@@ -64,6 +66,7 @@
                     <div>
                         <h3 class="px-2 text-[10px] font-bold text-white/40 uppercase tracking-widest mb-2">Administration</h3>
                         <ul class="list-none p-0 m-0 space-y-1">
+                            @can('viewAny', \App\Models\User::class)
                             <li>
                                 <a href="{{ route('admin.users') }}" 
                                 class="flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-xl transition-all {{ request()->routeIs('admin.users*') ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-950/20' : 'text-slate-300 hover:bg-white/10 hover:text-white' }}">
@@ -71,6 +74,8 @@
                                     <span>Users</span>
                                 </a>
                             </li>
+                            @endcan
+                            @can('viewAny', \App\Models\Department::class)
                             <li>
                                 <a href="{{ route('admin.departments') }}" 
                                 class="flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-xl transition-all {{ request()->routeIs('admin.departments*') ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-950/20' : 'text-slate-300 hover:bg-white/10 hover:text-white' }}">
@@ -78,6 +83,8 @@
                                     <span>Departments</span>
                                 </a>
                             </li>
+                            @endcan
+                            @can('viewAny', \App\Models\Team::class)
                             <li> 
                                 <a href="{{ route('admin.teams') }}" 
                                 class="flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-xl transition-all {{ request()->routeIs('admin.teams*') ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-950/20' : 'text-slate-300 hover:bg-white/10 hover:text-white' }}">
@@ -85,6 +92,8 @@
                                     <span>Teams</span>
                                 </a> 
                             </li> 
+                            @endcan
+                            @can('viewAny', \App\Models\TicketCategory::class)
                             <li>
                                 <a href="{{ route('admin.ticketCategories') }}" 
                                 class="flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-xl transition-all {{ request()->routeIs('admin.ticketCategories*') ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-950/20' : 'text-slate-300 hover:bg-white/10 hover:text-white' }}">
@@ -92,6 +101,8 @@
                                     <span>Ticket Categories</span>
                                 </a>
                             </li>
+                            @endcan
+                            @can('viewAny', \Spatie\Activitylog\Models\Activity::class)
                             <li>
                                 <a href="{{ route('admin.monitoring.index') }}" 
                                 class="flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-xl transition-all {{ request()->routeIs('admin.monitoring.*') ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-950/20' : 'text-slate-300 hover:bg-white/10 hover:text-white' }}">
@@ -99,6 +110,7 @@
                                     <span>System Monitoring</span>
                                 </a>
                             </li>
+                            @endcan
                         </ul>
                     </div>
                 @endif

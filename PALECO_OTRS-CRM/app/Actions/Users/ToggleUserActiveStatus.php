@@ -81,6 +81,9 @@ class ToggleUserActiveStatus
                         ->where('department_id', $user->department_id)
                         ->where('is_active', true)
                         ->whereHas('role', fn ($q) => $q->where('slug_identifier', 'supervisor'))
+                        // Only a supervisor who can still assign and verify keeps the department's tickets moving
+                        ->whereHas('permissions', fn ($q) => $q->where('name', 'tickets.assign'))
+                        ->whereHas('permissions', fn ($q) => $q->where('name', 'reports.verify'))
                         ->lockForUpdate()
                         ->pluck('id');
 

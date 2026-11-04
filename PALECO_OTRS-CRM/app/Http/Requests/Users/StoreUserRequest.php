@@ -78,6 +78,11 @@ class StoreUserRequest extends FormRequest
                 Rule::exists('departments', 'id')->whereNull('deleted_at'),
             ],
             'password' => ['required', 'string', 'confirmed', Password::min(8)->mixedCase()],
+
+            // Permission checklist; only sent when the admin may set permissions
+            'permissions_submitted' => ['nullable', 'boolean'],
+            'permissions' => ['nullable', 'array'],
+            'permissions.*' => ['string', Rule::exists('permissions', 'name')],
         ];
     }
 
@@ -87,6 +92,8 @@ class StoreUserRequest extends FormRequest
     public function messages(): array
     {
         return [
+            'permissions.array' => 'The permission list is invalid.',
+            'permissions.*.exists' => 'One of the selected permissions does not exist.',
             'username.required' => 'Please provide a unique username for the account.',
             'username.string' => 'The username must be a valid text string.',
             'username.max' => 'The username cannot exceed 100 characters.',

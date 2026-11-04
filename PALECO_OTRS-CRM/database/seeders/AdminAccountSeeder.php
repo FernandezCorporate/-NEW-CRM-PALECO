@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\AccountRole;
 use App\Models\User;
+use App\Support\Permissions\PermissionCatalog;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
@@ -20,7 +21,7 @@ class AdminAccountSeeder extends Seeder
         $adminRole = AccountRole::where('slug_identifier', 'admin')->firstOrFail();
 
         // firstOrCreate keeps the account untouched when seeding runs again, including a password changed since setup
-        User::firstOrCreate(
+        $admin = User::firstOrCreate(
             ['username' => 'PALECO_ADMIN_1'],
             [
                 // Placeholder profile details; the admin updates them from the portal after the first sign-in
@@ -31,5 +32,10 @@ class AdminAccountSeeder extends Seeder
                 'password' => 'OTRS-Testing',
             ]
         );
+
+        // Model events are muted while seeding, so the new account's default permissions are granted here
+        if ($admin->wasRecentlyCreated) {
+            PermissionCatalog::grantDefaults($admin);
+        }
     }
 }

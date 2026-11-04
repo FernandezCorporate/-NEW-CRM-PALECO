@@ -35,6 +35,8 @@ class UserResource extends JsonResource
             'contact' => $this->contact,
             'role_slug' => $this->role?->slug_identifier,
             'role_name' => $this->role?->role_name,
+            // Lets the app hide actions this account may not perform; older app versions ignore it
+            'permissions' => $this->permissions->pluck('name')->values(),
             'department_id' => $this->department_id ?? $primaryDept?->id,
             'department' => $this->department?->dept_name ?? $primaryDept?->dept_name,
             'teams' => $this->whenLoaded('teams', function () {

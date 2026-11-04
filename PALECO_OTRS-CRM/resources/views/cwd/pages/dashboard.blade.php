@@ -13,10 +13,12 @@
                 <h1 class="page-title mt-2">PALECO Service Desk</h1>
                 <p class="mt-2 text-sm text-slate-500">Receive, organize, and follow through on consumer service requests.</p>
             </div>
+            @can('ticketForm', \App\Models\Ticket::class)
             <a href="{{ route('cwd.tickets.createForm', ['source' => 'dashboard']) }}" class="btn btn-primary text-sm py-3 px-4 shadow-sm gap-2">
                 <x-icons.plus class="h-4 w-4" />
                 <span>Create ticket</span>
             </a>
+            @endcan
         </header>
 
         <!-- Livewire Real-Time Overview Island -->

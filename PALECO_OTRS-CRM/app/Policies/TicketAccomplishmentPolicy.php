@@ -14,6 +14,6 @@ class TicketAccomplishmentPolicy
      */
     public function view(User $user): bool
     {
-        return $user->role->slug_identifier === 'cwd_officer';
+        return $user->hasRole('cwd_officer') && $user->hasPermission('reports.view');
     }
 }

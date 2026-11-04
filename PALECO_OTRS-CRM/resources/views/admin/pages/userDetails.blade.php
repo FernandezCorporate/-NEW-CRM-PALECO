@@ -208,6 +208,40 @@
         </section>
     </div>
 
+    <!-- Permissions held by this account (read-only; edited from the user form) -->
+    @php
+        $held = $user->permissions->pluck('name')->all();
+        $roleGroups = \App\Support\Permissions\PermissionCatalog::grouped($user->role?->slug_identifier);
+    @endphp
+    @if($roleGroups->isNotEmpty())
+        <section class="bg-white border border-slate-200 rounded-xl shadow-xs overflow-hidden mb-6" aria-labelledby="permissions-heading">
+            <div class="px-6 py-5 border-b border-slate-200 bg-slate-50 flex justify-between items-center gap-3">
+                <h2 id="permissions-heading" class="text-base font-bold text-slate-800">Permissions</h2>
+                @if(\App\Support\Permissions\PermissionCatalog::isCustomized($user))
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200">Custom permissions</span>
+                @else
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-600 border border-slate-200">Role defaults</span>
+                @endif
+            </div>
+            <div class="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                @foreach($roleGroups as $module => $permissions)
+                    <div>
+                        <p class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">{{ $module }}</p>
+                        <ul class="space-y-1">
+                            @foreach($permissions as $name => $label)
+                                @php $has = in_array($name, $held, true); @endphp
+                                <li class="flex items-start gap-2 text-sm {{ $has ? 'text-slate-700' : 'text-slate-400 line-through' }}">
+                                    <span aria-hidden="true" class="{{ $has ? 'text-emerald-600' : 'text-slate-300' }}">{{ $has ? '✓' : '✕' }}</span>
+                                    <span>{{ $label }}<span class="sr-only">{{ $has ? ' (allowed)' : ' (not allowed)' }}</span></span>
+                                </li>
+                            @endforeach
+                        </ul>
+                    </div>
+                @endforeach
+            </div>
+        </section>
+    @endif
+
     <!-- Conditional Lower Section: Assigned Teams (Only shown if user has teams) -->
     @if($assignedTeams->total() > 0)
         <section class="bg-white border border-slate-200 rounded-xl shadow-xs overflow-hidden mb-4" aria-labelledby="assigned-teams-heading">

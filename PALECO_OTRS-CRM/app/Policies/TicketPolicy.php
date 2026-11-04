@@ -19,7 +19,7 @@ class TicketPolicy
      */
     public function viewAny(User $user): bool
     {
-        return in_array($user->role->slug_identifier, ['cwd_officer', 'admin'], true);
+        return $user->hasRole('cwd_officer', 'admin') && $user->hasPermission('tickets.view');
     }
 
     /*
@@ -27,7 +27,7 @@ class TicketPolicy
      */
     public function webView(User $user, Ticket $ticket): Response
     {
-        return in_array($user->role->slug_identifier, ['cwd_officer', 'admin'], true)
+        return $user->hasRole('cwd_officer', 'admin') && $user->hasPermission('tickets.view')
             ? Response::allow()
             : Response::denyAsNotFound('The requested ticket was not found.');
     }
@@ -37,7 +37,7 @@ class TicketPolicy
      */
     public function ticketForm(User $user): bool
     {
-        return $user->role->slug_identifier === 'cwd_officer';
+        return $user->hasRole('cwd_officer') && $user->hasPermission('tickets.create');
     }
 
     /*
@@ -45,7 +45,7 @@ class TicketPolicy
      */
     public function create(User $user): bool
     {
-        return $user->role->slug_identifier === 'cwd_officer';
+        return $user->hasRole('cwd_officer') && $user->hasPermission('tickets.create');
     }
 
     /*
@@ -53,7 +53,7 @@ class TicketPolicy
      */
     public function createChild(User $user, Ticket $ticket): Response
     {
-        if ($user->role->slug_identifier !== 'cwd_officer') {
+        if (! $user->hasRole('cwd_officer') || ! $user->hasPermission('tickets.create')) {
             return Response::deny('This action is unauthorized.');
         }
 
@@ -86,7 +86,8 @@ class TicketPolicy
     public function createRemark(User $user, Ticket $ticket): bool
     {
         // Closed and cancelled tickets are read-only
-        return $user->role->slug_identifier === 'cwd_officer'
+        return $user->hasRole('cwd_officer')
+            && $user->hasPermission('tickets.remark')
             && ! in_array($ticket->status, [TicketStatus::CLOSED, TicketStatus::CANCELLED], true);
     }
 
@@ -96,8 +97,12 @@ class TicketPolicy
      */
     public function update(User $user, Ticket $ticket): Response
     {
-        if ($user->role->slug_identifier !== 'cwd_officer') {
+        if (! $user->hasRole('cwd_officer')) {
             return Response::deny('Only CWD officers can edit ticket intake details.');
+        }
+
+        if (! $user->hasPermission('tickets.update')) {
+            return Response::deny('You do not have permission to edit ticket intake details.');
         }
 
         if ($ticket->trashed()) {
@@ -118,7 +123,7 @@ class TicketPolicy
      */
     public function viewInbox(User $user): bool
     {
-        return in_array($user->role->slug_identifier, ['supervisor', 'field_personnel'], true);
+        return $user->hasRole('supervisor', 'field_personnel');
     }
 
     /*
@@ -126,8 +131,12 @@ class TicketPolicy
      */
     public function assign(User $user, Ticket $ticket): Response
     {
-        if ($user->role->slug_identifier !== 'supervisor') {
+        if (! $user->hasRole('supervisor')) {
             return Response::deny('Only supervisors can assign tickets.');
+        }
+
+        if (! $user->hasPermission('tickets.assign')) {
+            return Response::deny('You do not have permission to assign tickets.');
         }
 
         if ($ticket->status === TicketStatus::PENDING_ENDORSEMENT) {
@@ -152,19 +161,19 @@ class TicketPolicy
      */
     public function view(User $user, Ticket $ticket): Response
     {
-        if ($user->role->slug_identifier === 'supervisor') {
+        if ($user->hasRole('supervisor')) {
             return $user->department_id === $ticket->department_id
                 ? Response::allow()
                 : Response::denyAsNotFound('The requested ticket was not found.');
         }
 
-        if ($user->role->slug_identifier === 'field_personnel') {
+        if ($user->hasRole('field_personnel')) {
             return $user->teams()->where('teams.id', $ticket->team_id)->exists()
                 ? Response::allow()
                 : Response::denyAsNotFound('The requested ticket was not found.');
         }
 
-        return in_array($user->role->slug_identifier, ['cwd_officer', 'admin'], true)
+        return $user->hasRole('cwd_officer', 'admin') && $user->hasPermission('tickets.view')
             ? Response::allow()
             : Response::denyAsNotFound('The requested ticket was not found.');
     }
@@ -172,10 +181,14 @@ class TicketPolicy
     /*
      * Determine whether field personnel can start work on an assigned ticket.
      */
-    public function start(User $user, Ticket $ticket): Response
+    public function start(User $user, Ticket $ticket, bool $offlineSync = false): Response
     {
-        if ($user->role->slug_identifier !== 'field_personnel') {
+        if (! $user->hasRole('field_personnel')) {
             return Response::deny('Only field personnel can start tickets.');
+        }
+
+        if (! $this->holdsForTicket($user, 'tickets.start', $ticket, $offlineSync)) {
+            return Response::deny('You do not have permission to start tickets.');
         }
 
         if ($ticket->status === TicketStatus::PENDING_ENDORSEMENT) {
@@ -194,10 +207,14 @@ class TicketPolicy
     /*
      * Determine whether field personnel can submit an accomplishment report for a ticket.
      */
-    public function accomplish(User $user, Ticket $ticket): Response
+    public function accomplish(User $user, Ticket $ticket, bool $offlineSync = false): Response
     {
-        if ($user->role->slug_identifier !== 'field_personnel') {
+        if (! $user->hasRole('field_personnel')) {
             return Response::deny('Only field personnel can submit accomplishments for tickets.');
+        }
+
+        if (! $this->holdsForTicket($user, 'tickets.accomplish', $ticket, $offlineSync)) {
+            return Response::deny('You do not have permission to submit accomplishment reports.');
         }
 
         if ($ticket->status === TicketStatus::PENDING_ENDORSEMENT) {
@@ -218,8 +235,12 @@ class TicketPolicy
      */
     public function verify(User $user, Ticket $ticket): Response
     {
-        if ($user->role->slug_identifier !== 'supervisor') {
+        if (! $user->hasRole('supervisor')) {
             return Response::deny('Only supervisors can verify accomplishments.');
+        }
+
+        if (! $user->hasPermission('reports.verify')) {
+            return Response::deny('You do not have permission to verify accomplishment reports.');
         }
 
         return $user->department_id === $ticket->department_id
@@ -232,8 +253,12 @@ class TicketPolicy
      */
     public function endorse(User $user, Ticket $ticket): Response
     {
-        if ($user->role->slug_identifier !== 'supervisor') {
+        if (! $user->hasRole('supervisor')) {
             return Response::deny('Only supervisors can endorse tickets.');
+        }
+
+        if (! $user->hasPermission('tickets.endorse')) {
+            return Response::deny('You do not have permission to endorse tickets.');
         }
 
         if ($ticket->status === TicketStatus::CANCELLED) {
@@ -254,8 +279,12 @@ class TicketPolicy
      */
     public function viewHistory(User $user, Ticket $ticket): Response
     {
-        if ($user->role->slug_identifier !== 'supervisor') {
+        if (! $user->hasRole('supervisor')) {
             return Response::deny('Only supervisors can view ticket history.');
+        }
+
+        if (! $user->hasPermission('tickets.history')) {
+            return Response::deny('You do not have permission to view ticket history.');
         }
 
         return $user->department_id === $ticket->department_id
@@ -269,8 +298,12 @@ class TicketPolicy
      */
     public function cancel(User $user, Ticket $ticket): Response
     {
-        if ($user->role->slug_identifier !== 'cwd_officer') {
+        if (! $user->hasRole('cwd_officer')) {
             return Response::deny('Only CWD officers can cancel tickets.');
+        }
+
+        if (! $user->hasPermission('tickets.cancel')) {
+            return Response::deny('You do not have permission to cancel tickets.');
         }
 
         if ($ticket->trashed()) {
@@ -306,8 +339,12 @@ class TicketPolicy
             return Response::denyAsNotFound('The requested ticket was not found.');
         }
 
-        if ($user->role->slug_identifier !== 'cwd_officer') {
+        if (! $user->hasRole('cwd_officer')) {
             return Response::deny('Only CWD officers are authorized to force-close tickets.');
+        }
+
+        if (! $user->hasPermission('tickets.force_close')) {
+            return Response::deny('You do not have permission to force-close tickets.');
         }
 
         if ($ticket->status === TicketStatus::CLOSED) {
@@ -346,5 +383,23 @@ class TicketPolicy
         }
 
         return Response::allow();
+    }
+
+    /**
+     * Whether a field crew member may perform a ticket step. Work queued on the phone while offline is still
+     * accepted for a ticket their team was assigned before the permission was removed, so finished field work is never lost.
+     */
+    private function holdsForTicket(User $user, string $permission, Ticket $ticket, bool $offlineSync): bool
+    {
+        if ($user->hasPermission($permission)) {
+            return true;
+        }
+
+        $assignedAt = $ticket->activeAssignment?->created_at;
+
+        return $offlineSync
+            && $assignedAt !== null
+            && $user->permissions_updated_at !== null
+            && $assignedAt->lessThan($user->permissions_updated_at);
     }
 }

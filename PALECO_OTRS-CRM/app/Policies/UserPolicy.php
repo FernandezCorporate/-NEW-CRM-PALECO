@@ -17,7 +17,7 @@ class UserPolicy
      */
     public function viewAny(User $user): bool
     {
-        return $user->role->slug_identifier === 'admin';
+        return $user->hasRole('admin') && $user->hasPermission('users.view');
     }
 
     /*
@@ -25,15 +25,16 @@ class UserPolicy
      */
     public function userForm(User $user, ?User $targetUser = null): bool
     {
-        if ($user->role->slug_identifier !== 'admin') {
+        if (! $user->hasRole('admin')) {
             return false;
         }
 
         if ($targetUser && $targetUser->exists) {
-            return $targetUser->role->slug_identifier !== 'admin' || $user->is($targetUser);
+            return $user->hasPermission('users.update')
+                && (! $targetUser->hasRole('admin') || $user->is($targetUser));
         }
 
-        return true;
+        return $user->hasPermission('users.create');
     }
 
     /*
@@ -41,7 +42,7 @@ class UserPolicy
      */
     public function view(User $user): bool
     {
-        return $user->role->slug_identifier === 'admin';
+        return $user->hasRole('admin') && $user->hasPermission('users.view');
     }
 
     /*
@@ -49,7 +50,7 @@ class UserPolicy
      */
     public function create(User $user): bool
     {
-        return $user->role->slug_identifier === 'admin';
+        return $user->hasRole('admin') && $user->hasPermission('users.create');
     }
 
     /*
@@ -57,8 +58,9 @@ class UserPolicy
      */
     public function update(User $user, User $targetUser): bool
     {
-        return $user->role->slug_identifier === 'admin'
-            && ($targetUser->role->slug_identifier !== 'admin' || $user->is($targetUser));
+        return $user->hasRole('admin')
+            && $user->hasPermission('users.update')
+            && (! $targetUser->hasRole('admin') || $user->is($targetUser));
     }
 
     /*
@@ -82,8 +84,9 @@ class UserPolicy
      */
     public function deactivateConfirm(User $user, User $targetUser): bool
     {
-        return $user->role->slug_identifier === 'admin'
-            && $targetUser->role->slug_identifier !== 'admin';
+        return $user->hasRole('admin')
+            && $user->hasPermission('users.deactivate')
+            && ! $targetUser->hasRole('admin');
     }
 
     /*
@@ -91,8 +94,9 @@ class UserPolicy
      */
     public function deactivate(User $user, User $targetUser): bool
     {
-        return $user->role->slug_identifier === 'admin'
-            && $targetUser->role->slug_identifier !== 'admin';
+        return $user->hasRole('admin')
+            && $user->hasPermission('users.deactivate')
+            && ! $targetUser->hasRole('admin');
     }
 
     /*
@@ -100,8 +104,9 @@ class UserPolicy
      */
     public function reactivateConfirm(User $user, User $targetUser): bool
     {
-        return $user->role->slug_identifier === 'admin'
-            && $targetUser->role->slug_identifier !== 'admin';
+        return $user->hasRole('admin')
+            && $user->hasPermission('users.deactivate')
+            && ! $targetUser->hasRole('admin');
     }
 
     /*
@@ -109,8 +114,22 @@ class UserPolicy
      */
     public function reactivate(User $user, User $targetUser): bool
     {
-        return $user->role->slug_identifier === 'admin'
-            && $targetUser->role->slug_identifier !== 'admin';
+        return $user->hasRole('admin')
+            && $user->hasPermission('users.deactivate')
+            && ! $targetUser->hasRole('admin');
+    }
+
+    /**
+     * Determine whether the user can set the permissions of an account (null while creating one).
+     * An admin cannot change their own permissions or another admin's: an admin's checklist is set once, at creation.
+     */
+    public function managePermissions(User $user, ?User $targetUser = null): bool
+    {
+        if (! $user->hasRole('admin') || ! $user->hasPermission('users.permissions')) {
+            return false;
+        }
+
+        return ! $targetUser || ! $targetUser->exists || ! $targetUser->hasRole('admin');
     }
 
     // --- MOBILE APP PERMISSIONS ---
@@ -120,7 +139,7 @@ class UserPolicy
      */
     public function viewProfile(User $user, User $targetUser): Response
     {
-        return $user->is($targetUser) && in_array($user->role->slug_identifier, ['admin', 'cwd_officer', 'supervisor', 'field_personnel'], true)
+        return $user->is($targetUser) && $user->hasRole('admin', 'cwd_officer', 'supervisor', 'field_personnel')
             ? Response::allow()
             : Response::denyAsNotFound('The requested user profile was not found.');
     }
@@ -130,6 +149,6 @@ class UserPolicy
      */
     public function viewSupervisorDashboard(User $user): bool
     {
-        return $user->role->slug_identifier === 'supervisor';
+        return $user->hasRole('supervisor');
     }
 }

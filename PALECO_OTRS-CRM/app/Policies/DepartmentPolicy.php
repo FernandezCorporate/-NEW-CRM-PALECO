@@ -14,7 +14,7 @@ class DepartmentPolicy
      */
     public function viewAny(User $user): bool
     {
-        return $user->role->slug_identifier === 'admin';
+        return $user->hasRole('admin') && $user->hasPermission('departments.view');
     }
 
     /*
@@ -22,7 +22,7 @@ class DepartmentPolicy
      */
     public function view(User $user): bool
     {
-        return $user->role->slug_identifier === 'admin';
+        return $user->hasRole('admin') && $user->hasPermission('departments.view');
     }
 
     /*
@@ -30,7 +30,7 @@ class DepartmentPolicy
      */
     public function departmentForm(User $user): bool
     {
-        return $user->role->slug_identifier === 'admin';
+        return $user->hasRole('admin') && ($user->hasPermission('departments.create') || $user->hasPermission('departments.update'));
     }
 
     /*
@@ -38,7 +38,7 @@ class DepartmentPolicy
      */
     public function create(User $user): bool
     {
-        return $user->role->slug_identifier === 'admin';
+        return $user->hasRole('admin') && $user->hasPermission('departments.create');
     }
 
     /*
@@ -46,7 +46,7 @@ class DepartmentPolicy
      */
     public function update(User $user): bool
     {
-        return $user->role->slug_identifier === 'admin';
+        return $user->hasRole('admin') && $user->hasPermission('departments.update');
     }
 
     /*
@@ -54,7 +54,8 @@ class DepartmentPolicy
      */
     public function deleteConfirm(User $user): bool
     {
-        return $user->role->slug_identifier === 'admin';
+        // The same page confirms archiving and permanent deletion
+        return $user->hasRole('admin') && ($user->hasPermission('departments.archive') || $user->hasPermission('departments.delete'));
     }
 
     /*
@@ -62,7 +63,7 @@ class DepartmentPolicy
      */
     public function archive(User $user): bool
     {
-        return $user->role->slug_identifier === 'admin';
+        return $user->hasRole('admin') && $user->hasPermission('departments.archive');
     }
 
     /*
@@ -70,7 +71,7 @@ class DepartmentPolicy
      */
     public function restore(User $user): bool
     {
-        return $user->role->slug_identifier === 'admin';
+        return $user->hasRole('admin') && $user->hasPermission('departments.archive');
     }
 
     /*
@@ -78,6 +79,6 @@ class DepartmentPolicy
      */
     public function forceDelete(User $user): bool
     {
-        return $user->role->slug_identifier === 'admin';
+        return $user->hasRole('admin') && $user->hasPermission('departments.delete');
     }
 }

@@ -18,7 +18,7 @@ class TeamPolicy
      */
     public function viewAny(User $user): bool
     {
-        return $user->role->slug_identifier === 'admin';
+        return $user->hasRole('admin') && $user->hasPermission('teams.view');
     }
 
     /*
@@ -26,7 +26,7 @@ class TeamPolicy
      */
     public function view(User $user): bool
     {
-        return $user->role->slug_identifier === 'admin';
+        return $user->hasRole('admin') && $user->hasPermission('teams.view');
     }
 
     /*
@@ -34,7 +34,7 @@ class TeamPolicy
      */
     public function teamForm(User $user): bool
     {
-        return $user->role->slug_identifier === 'admin';
+        return $user->hasRole('admin') && ($user->hasPermission('teams.create') || $user->hasPermission('teams.update'));
     }
 
     /*
@@ -42,7 +42,7 @@ class TeamPolicy
      */
     public function create(User $user): bool
     {
-        return in_array($user->role->slug_identifier, ['admin', 'supervisor'], true);
+        return $user->hasRole('admin', 'supervisor') && $user->hasPermission('teams.create');
     }
 
     /*
@@ -50,7 +50,7 @@ class TeamPolicy
      */
     public function update(User $user): bool
     {
-        return $user->role->slug_identifier === 'admin';
+        return $user->hasRole('admin') && $user->hasPermission('teams.update');
     }
 
     /*
@@ -58,7 +58,8 @@ class TeamPolicy
      */
     public function deleteConfirm(User $user): bool
     {
-        return $user->role->slug_identifier === 'admin';
+        // The same page confirms archiving and permanent deletion
+        return $user->hasRole('admin') && ($user->hasPermission('teams.archive') || $user->hasPermission('teams.delete'));
     }
 
     /*
@@ -66,7 +67,7 @@ class TeamPolicy
      */
     public function archive(User $user): bool
     {
-        return $user->role->slug_identifier === 'admin';
+        return $user->hasRole('admin') && $user->hasPermission('teams.archive');
     }
 
     /*
@@ -74,7 +75,7 @@ class TeamPolicy
      */
     public function restore(User $user): bool
     {
-        return $user->role->slug_identifier === 'admin';
+        return $user->hasRole('admin') && $user->hasPermission('teams.archive');
     }
 
     /*
@@ -82,7 +83,7 @@ class TeamPolicy
      */
     public function forceDelete(User $user): bool
     {
-        return $user->role->slug_identifier === 'admin';
+        return $user->hasRole('admin') && $user->hasPermission('teams.delete');
     }
 
     // --- MOBILE SUPERVISOR PERMISSIONS ---
@@ -92,7 +93,7 @@ class TeamPolicy
      */
     public function viewAnyDepartmentTeams(User $user): bool
     {
-        return $user->role->slug_identifier === 'supervisor';
+        return $user->hasRole('supervisor') && $user->hasPermission('teams.view');
     }
 
     /*
@@ -100,8 +101,12 @@ class TeamPolicy
      */
     public function viewDepartmentTeams(User $user, Team $team): Response
     {
-        if ($user->role->slug_identifier !== 'supervisor') {
+        if (! $user->hasRole('supervisor')) {
             return Response::deny('Only supervisors can access department teams.');
+        }
+
+        if (! $user->hasPermission('teams.view')) {
+            return Response::deny('You do not have permission to access department teams.');
         }
 
         return $user->department_id === $team->department_id
@@ -114,8 +119,12 @@ class TeamPolicy
      */
     public function mobileUpdateTeam(User $user, Team $team): Response
     {
-        if ($user->role->slug_identifier !== 'supervisor') {
+        if (! $user->hasRole('supervisor')) {
             return Response::deny('Only supervisors can update department teams.');
+        }
+
+        if (! $user->hasPermission('teams.update')) {
+            return Response::deny('You do not have permission to update department teams.');
         }
 
         return $user->department_id === $team->department_id
@@ -128,8 +137,12 @@ class TeamPolicy
      */
     public function mobileArchiveTeam(User $user, Team $team): Response
     {
-        if ($user->role->slug_identifier !== 'supervisor') {
+        if (! $user->hasRole('supervisor')) {
             return Response::deny('Only supervisors can archive department teams.');
+        }
+
+        if (! $user->hasPermission('teams.archive')) {
+            return Response::deny('You do not have permission to archive department teams.');
         }
 
         return $user->department_id === $team->department_id
@@ -142,8 +155,12 @@ class TeamPolicy
      */
     public function mobileRestoreTeam(User $user, Team $team): Response
     {
-        if ($user->role->slug_identifier !== 'supervisor') {
+        if (! $user->hasRole('supervisor')) {
             return Response::deny('Only supervisors can restore department teams.');
+        }
+
+        if (! $user->hasPermission('teams.archive')) {
+            return Response::deny('You do not have permission to restore department teams.');
         }
 
         return $user->department_id === $team->department_id
@@ -156,8 +173,12 @@ class TeamPolicy
      */
     public function mobileDestroyTeam(User $user, Team $team): Response
     {
-        if ($user->role->slug_identifier !== 'supervisor') {
+        if (! $user->hasRole('supervisor')) {
             return Response::deny('Only supervisors can delete department teams.');
+        }
+
+        if (! $user->hasPermission('teams.delete')) {
+            return Response::deny('You do not have permission to delete department teams.');
         }
 
         return $user->department_id === $team->department_id
@@ -170,6 +191,6 @@ class TeamPolicy
      */
     public function mobileTeamOptions(User $user): bool
     {
-        return $user->role->slug_identifier === 'supervisor';
+        return $user->hasRole('supervisor') && ($user->hasPermission('teams.create') || $user->hasPermission('teams.update'));
     }
 }

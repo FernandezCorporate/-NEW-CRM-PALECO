@@ -25,6 +25,7 @@
             
             <!-- CONTEXT: Check if Team is Soft Deleted -->
             @if($team->trashed())
+                @can('restore', \App\Models\Team::class)
                 <form action="{{ route('admin.teams.restore', $team) }}" method="POST" class="inline-block">
                     @csrf
                     @method('PATCH')
@@ -33,20 +34,27 @@
                         <span>Restore</span>
                     </button>
                 </form>
+                @endcan
+                @can('forceDelete', \App\Models\Team::class)
                 <a href="{{ route('admin.teams.forceDeleteConfirm', $team) }}" class="btn btn-danger px-4 py-2 text-sm shadow-xs" data-loading-text="Loading...">
                     <x-icons.trash class="w-4 h-4" />
                     <span>Force Delete</span>
                 </a>
+                @endcan
             @else
+                @can('update', \App\Models\Team::class)
                 <a href="{{ route('admin.teams.editForm', array_filter(['team' => $team, 'source' => request('source') ?: 'details', 'dept' => request('dept'), 'user' => request('user')])) }}" class="btn btn-primary px-4 py-2 text-sm shadow-xs" data-loading-text="Loading...">
                     <x-icons.pencil class="w-4 h-4" />
                     <span>Edit</span>
                 </a>
+                @endcan
 
+                @can('archive', \App\Models\Team::class)
                 <a href="{{ route('admin.teams.deleteConfirm', array_filter(['team' => $team, 'source' => request('source') ?: 'details', 'dept' => request('dept'), 'user' => request('user')])) }}" class="btn btn-secondary text-rose-700 hover:bg-rose-50 hover:border-rose-300 border-rose-200 px-4 py-2 text-sm shadow-xs" data-loading-text="Loading...">
                     <x-icons.trash class="w-4 h-4 text-rose-600" />
                     <span>Archive</span>
                 </a>
+                @endcan
             @endif
         </div>
     </header>

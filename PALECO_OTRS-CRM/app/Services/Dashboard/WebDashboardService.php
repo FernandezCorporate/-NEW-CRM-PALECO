@@ -13,6 +13,7 @@ use App\Models\User;
 use App\Presenters\SvgDonutPresenter;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use Spatie\Activitylog\Models\Activity;
 
 /**
@@ -231,7 +232,21 @@ class WebDashboardService
             ['Online users', $onlineUsersCount, 'Active sessions & tokens', route('admin.monitoring.index', ['category' => 'auth']), 'bg-teal-50 text-teal-600', 'bg-teal-500', 'user'],
         ];
 
-        $metricMax = max(1, ...array_column($metrics, 1));
+        // Each card links to its module, so it is only shown to an admin who may open that page
+        $metricAbilities = [
+            'Users' => User::class,
+            'Departments' => Department::class,
+            'Field teams' => Team::class,
+            'Categories' => TicketCategory::class,
+            'All tickets' => Activity::class,
+            'Online users' => Activity::class,
+        ];
+        $metrics = array_values(array_filter(
+            $metrics,
+            fn (array $metric) => Gate::allows('viewAny', $metricAbilities[$metric[0]])
+        ));
+
+        $metricMax = max(1, ...array_column($metrics, 1) ?: [0]);
         $metricsWithWidth = collect($metrics)->map(function ($item) use ($metricMax) {
             $item[7] = round(($item[1] / $metricMax) * 100, 2); // width_percent
 
@@ -246,6 +261,20 @@ class WebDashboardService
             ['categories', 'Ticket categories', 'Organize complaint types', route('admin.ticketCategories'), 'bg-amber-50 text-amber-600', 'category'],
             ['monitoring', 'System monitoring', 'Review system activity', route('admin.monitoring.index'), 'bg-blue-50 text-blue-600', 'monitoring'],
         ];
+
+        // Each shortcut is only offered to an admin who may open its page
+        $controlAbilities = [
+            'add-user' => ['create', User::class],
+            'users' => ['viewAny', User::class],
+            'departments' => ['viewAny', Department::class],
+            'teams' => ['viewAny', Team::class],
+            'categories' => ['viewAny', TicketCategory::class],
+            'monitoring' => ['viewAny', Activity::class],
+        ];
+        $adminControls = array_values(array_filter(
+            $adminControls,
+            fn (array $control) => Gate::allows(...$controlAbilities[$control[0]])
+        ));
 
         return [
             'users_total' => $usersTotal,

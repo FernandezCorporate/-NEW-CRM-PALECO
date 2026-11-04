@@ -17,7 +17,7 @@ class TicketRemarkPolicy
      */
     public function create(User $user, Ticket $ticket): Response
     {
-        if ($user->role->slug_identifier !== 'cwd_officer') {
+        if (! $user->hasRole('cwd_officer') || ! $user->hasPermission('tickets.remark')) {
             return Response::deny('This action is unauthorized.');
         }
 
@@ -35,13 +35,17 @@ class TicketRemarkPolicy
             return Response::deny('Closed and cancelled tickets are read-only. Remarks can no longer be added.');
         }
 
-        if ($user->role->slug_identifier === 'supervisor') {
+        if ($user->hasRole('supervisor', 'field_personnel') && ! $user->hasPermission('tickets.remark')) {
+            return Response::deny('You do not have permission to add remarks to tickets.');
+        }
+
+        if ($user->hasRole('supervisor')) {
             return $user->department_id === $ticket->department_id
                 ? Response::allow()
                 : Response::denyAsNotFound('The requested ticket was not found.');
         }
 
-        if ($user->role->slug_identifier === 'field_personnel') {
+        if ($user->hasRole('field_personnel')) {
             return $user->teams()->where('teams.id', $ticket->team_id)->exists()
                 ? Response::allow()
                 : Response::denyAsNotFound('The requested ticket was not found.');

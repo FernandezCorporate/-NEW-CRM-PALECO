@@ -14,7 +14,7 @@ class ConsumerPolicy
      */
     public function viewAny(User $user): bool
     {
-        return in_array($user->role->slug_identifier, ['admin', 'cwd_officer'], true);
+        return $user->hasRole('admin', 'cwd_officer') && $user->hasPermission('consumers.view');
     }
 
     /*
@@ -22,6 +22,6 @@ class ConsumerPolicy
      */
     public function view(User $user): bool
     {
-        return in_array($user->role->slug_identifier, ['admin', 'cwd_officer'], true);
+        return $user->hasRole('admin', 'cwd_officer') && $user->hasPermission('consumers.view');
     }
 }

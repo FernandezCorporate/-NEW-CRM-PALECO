@@ -180,6 +180,9 @@
                     </div>
                 </fieldset>
 
+                <!-- Section 3b: Per-user Permissions -->
+                @include('admin.forms.partials.permissionChecklist', ['user' => $user ?? null])
+
                 <!-- Section 4: Security Section (Creation Only) -->
                 @if(!isset($user))
                     <fieldset class="space-y-5">

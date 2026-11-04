@@ -13,7 +13,7 @@ class ActivityPolicy
      */
     public function viewAny(User $user): bool
     {
-        return $user->role->slug_identifier === 'admin';
+        return $user->hasRole('admin') && $user->hasPermission('audit.view');
     }
 
     /**
@@ -22,6 +22,6 @@ class ActivityPolicy
      */
     public function view(User $user, Activity $activity): bool
     {
-        return $user->role->slug_identifier === 'admin';
+        return $user->hasRole('admin') && $user->hasPermission('audit.view');
     }
 }

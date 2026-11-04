@@ -7,6 +7,7 @@ use App\Actions\Users\ResetUserPassword;
 use App\Actions\Users\ToggleUserActiveStatus;
 use App\Actions\Users\UnlockUser;
 use App\Actions\Users\UpdateUser;
+use App\Actions\Users\UpdateUserPermissions;
 use App\Concerns\ResolvesSmartRedirects;
 use App\Enums\TicketStatus;
 use App\Http\Controllers\Controller;
@@ -18,7 +19,9 @@ use App\Models\Department;
 use App\Models\Ticket;
 use App\Models\User;
 use App\Services\Users\UserService;
+use App\Support\Permissions\PermissionCatalog;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\ValidationException;
 
@@ -75,7 +78,12 @@ class UserController extends Controller
         $depts = Department::orderBy('dept_name')->pluck('dept_name', 'id');
         $roles = AccountRole::orderBy('role_name')->get();
 
-        return view('admin.forms.userForm', compact('user', 'depts', 'roles'));
+        // The checklist of every role, so the form can switch it when a role is picked
+        $permissionCatalog = PermissionCatalog::all();
+        $canManagePermissions = Gate::allows('managePermissions', [User::class, $user]);
+        $heldPermissions = $user ? $user->permissions->pluck('name')->all() : null;
+
+        return view('admin.forms.userForm', compact('user', 'depts', 'roles', 'permissionCatalog', 'canManagePermissions', 'heldPermissions'));
     }
 
     // --- MUTATING METHODS ---
@@ -83,11 +91,22 @@ class UserController extends Controller
     /*
      * Processes validated request data to configure and store a new user account using CreateUser action.
      */
-    public function store(StoreUserRequest $request, CreateUser $createUser)
+    public function store(StoreUserRequest $request, CreateUser $createUser, UpdateUserPermissions $updatePermissions)
     {
         Gate::authorize('create', User::class);
 
-        $createUser->execute($request->validated());
+        $data = $request->validated();
+        $setsPermissions = $request->boolean('permissions_submitted') && Gate::allows('managePermissions', [User::class, null]);
+        unset($data['permissions'], $data['permissions_submitted']);
+
+        // The account receives its role's defaults when created; a checked list then replaces them
+        DB::transaction(function () use ($createUser, $updatePermissions, $data, $setsPermissions, $request) {
+            $user = $createUser->execute($data);
+
+            if ($setsPermissions) {
+                $updatePermissions->execute($user, $request->input('permissions', []), $request->user(), isNewAccount: true);
+            }
+        });
 
         return redirect()->route('admin.users')->with('success', 'User created successfully.');
     }
@@ -95,11 +114,25 @@ class UserController extends Controller
     /*
      * Processes validated request data to commit updates to an existing user account profile using UpdateUser action.
      */
-    public function update(UpdateUserRequest $request, User $user, UpdateUser $updateUser)
+    public function update(UpdateUserRequest $request, User $user, UpdateUser $updateUser, UpdateUserPermissions $updatePermissions)
     {
         Gate::authorize('update', $user);
 
-        $result = $updateUser->execute($user, $request->validated());
+        $data = $request->validated();
+        $setsPermissions = $request->boolean('permissions_submitted') && Gate::allows('managePermissions', [User::class, $user]);
+        unset($data['permissions'], $data['permissions_submitted']);
+
+        // The profile and the permissions are saved together: a refused permission change keeps the profile unchanged too
+        $result = DB::transaction(function () use ($updateUser, $updatePermissions, $user, $data, $setsPermissions, $request) {
+            $result = $updateUser->execute($user, $data);
+
+            if ($result['success'] && $setsPermissions) {
+                $permissionsChanged = $updatePermissions->execute($user, $request->input('permissions', []), $request->user());
+                $result['changed'] = $result['changed'] || $permissionsChanged;
+            }
+
+            return $result;
+        });
 
         if (! $result['success']) {
             return redirect()->back()->with('error', $result['message'])->withInput();

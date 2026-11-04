@@ -38,7 +38,7 @@ class UserService
             'field_personnel' => $rawCounts->get($roles->where('slug_identifier', 'field_personnel')->first()?->id) ?? 0,
         ];
 
-        $query = User::with('role')
+        $query = User::with(['role', 'permissions'])
             ->filter($filters['filter'] ?? null);
 
         $searchTerm = trim($filters['search'] ?? '');

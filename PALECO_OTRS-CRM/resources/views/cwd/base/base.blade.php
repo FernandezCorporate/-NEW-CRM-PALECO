@@ -57,6 +57,7 @@
                     <div>
                         <h3 class="px-2 text-[10px] font-bold text-white/40 uppercase tracking-widest mb-2">Service Desk</h3>
                         <ul class="list-none p-0 m-0 space-y-1">
+                            @can('viewAny', \App\Models\Ticket::class)
                             <li>
                                 <a href="{{ route('cwd.tickets') }}" 
                                    class="flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-xl transition-all {{ request()->routeIs('cwd.tickets*') ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-950/20' : 'text-slate-300 hover:bg-white/10 hover:text-white' }}">
@@ -64,7 +65,9 @@
                                     <span>Tickets</span>
                                 </a>
                             </li>
+                            @endcan
 
+                            @can('viewAny', \App\Models\TicketEndorsement::class)
                             <li>
                                 <a href="{{ route('cwd.endorsements') }}" 
                                    class="flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-xl transition-all {{ request()->routeIs('cwd.endorsements*') ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-950/20' : 'text-slate-300 hover:bg-white/10 hover:text-white' }}">
@@ -72,7 +75,9 @@
                                     <span>Endorsements</span>
                                 </a>
                             </li>
+                            @endcan
 
+                            @can('viewAny', \App\Models\Consumer::class)
                             <li>
                                 <a href="{{ route('cwd.consumers') }}" 
                                    class="flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-xl transition-all {{ request()->routeIs('cwd.consumers*') ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-950/20' : 'text-slate-300 hover:bg-white/10 hover:text-white' }}">
@@ -80,6 +85,7 @@
                                     <span>Consumer Profiles</span>
                                 </a>
                             </li>
+                            @endcan
                         </ul>
                     </div>
                 @endif
