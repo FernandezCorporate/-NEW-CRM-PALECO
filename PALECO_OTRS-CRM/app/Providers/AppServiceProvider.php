@@ -4,6 +4,8 @@ namespace App\Providers;
 
 use App\Models\User;
 use App\Policies\ActivityPolicy;
+use App\Services\Push\FcmClient;
+use App\Services\Push\PushGateway;
 use Illuminate\Auth\Access\Response;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
@@ -28,7 +30,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        // Push notifications go through Firebase; tests replace this binding with a fake that records them
+        $this->app->singleton(PushGateway::class, FcmClient::class);
     }
 
     /**

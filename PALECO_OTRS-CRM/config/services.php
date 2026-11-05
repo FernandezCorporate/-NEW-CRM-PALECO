@@ -41,4 +41,11 @@ return [
         'verify_ssl' => env('PALECO_API_VERIFY_SSL') !== false,
     ],
 
+    // Push notifications to the mobile app through Firebase Cloud Messaging (HTTP v1 API)
+    'fcm' => [
+        'project_id' => env('FCM_PROJECT_ID'),
+        // The service-account key file, base64-encoded so it fits on one line
+        'credentials' => env('FCM_CREDENTIALS'),
+    ],
+
 ];

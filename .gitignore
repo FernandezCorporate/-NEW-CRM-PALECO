@@ -13,6 +13,11 @@ mobile-simulator/
 # Private Deployment Credentials & Secrets
 docs/private/
 
+# Firebase service-account keys (push notifications) must never be committed
+*firebase-adminsdk*.json
+*-push.json
+service-account*.json
+
 # Thesis Documentation (Ignored from repository)
 for thesis/
 for\ thesis/

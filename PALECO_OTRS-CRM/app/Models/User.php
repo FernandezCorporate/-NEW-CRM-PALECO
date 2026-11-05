@@ -91,6 +91,14 @@ class User extends Authenticatable
     }
 
     /**
+     * Retrieves the phones registered to receive push notifications for this account.
+     */
+    public function pushDevices(): HasMany
+    {
+        return $this->hasMany(PushDevice::class);
+    }
+
+    /**
      * Retrieves the primary department this user operates under.
      */
     public function department(): BelongsTo

@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\Auth\AuthController;
 use App\Http\Controllers\Api\Dashboard\DashboardController;
+use App\Http\Controllers\Api\Devices\PushTokenController;
 use App\Http\Controllers\Api\Profiles\ProfileController;
 use App\Http\Controllers\Api\Teams\TeamController;
 use App\Http\Controllers\Api\Tickets\TicketAccomplishmentController;
@@ -40,6 +41,10 @@ Route::middleware('auth:sanctum')->group(function () {
         // --- SHARED MOBILE ENDPOINTS (Supervisor & Field Personnel) ---
         Route::post('/logout', [AuthController::class, 'logout']);
         Route::get('/user/profile', [ProfileController::class, 'show']);
+
+        // Push notifications: the phone registers its Firebase token after login
+        Route::post('/devices/push-token', [PushTokenController::class, 'store']);
+        Route::delete('/devices/push-token', [PushTokenController::class, 'destroy']);
 
         Route::prefix('tickets')->group(function () {
             Route::get('/', [TicketController::class, 'index']);
