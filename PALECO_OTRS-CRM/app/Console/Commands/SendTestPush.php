@@ -18,7 +18,10 @@ class SendTestPush extends Command
 
     public function handle(PushGateway $gateway): int
     {
-        $user = User::where('username', $this->argument('username'))->with('pushDevices')->first();
+        // Same rule as real notifications: phones whose login expired are skipped
+        $user = User::where('username', $this->argument('username'))
+            ->with(['pushDevices' => fn ($q) => $q->withLiveLogin()])
+            ->first();
 
         if (! $user) {
             $this->error('No account with that username.');
@@ -27,7 +30,7 @@ class SendTestPush extends Command
         }
 
         if ($user->pushDevices->isEmpty()) {
-            $this->warn("{$user->username} has no registered phone. Sign in on the app first.");
+            $this->warn("{$user->username} has no registered phone with a valid login. Sign in on the app first.");
 
             return self::FAILURE;
         }

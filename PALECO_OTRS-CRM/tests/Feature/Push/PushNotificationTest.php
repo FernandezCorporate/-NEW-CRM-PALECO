@@ -1,5 +1,6 @@
 <?php
 
+use App\Actions\Endorsements\InitiateEndorsement;
 use App\Actions\Users\UpdateUserPermissions;
 use App\Enums\EndorsementStatus;
 use App\Enums\TicketAccomplishmentStatus;
@@ -13,6 +14,7 @@ use App\Events\TicketForceClosed;
 use App\Events\TicketRemarkAdded;
 use App\Events\TicketReportRejected;
 use App\Events\TicketVerifiedAndClosed;
+use App\Events\TicketWorkStarted;
 use App\Models\Consumer;
 use App\Models\Department;
 use App\Models\PushDevice;
@@ -217,6 +219,171 @@ test('a rejected endorsement tells the supervisors of the original department', 
     expect($decided)->toHaveCount(1)->and($decided[0]->title)->toBe('Endorsement rejected');
 });
 
+// --- ENDORSEMENTS AND WORK STARTED (review gaps A and B) ---
+
+test('an endorsement request puts the ticket on hold with an urgent alert to the crew only', function () {
+    givePhone($this->personnel);
+    givePhone($this->supervisor);
+    $ticket = deptTicket($this, ['team_id' => $this->team->id, 'status' => TicketStatus::ASSIGNED]);
+    Sanctum::actingAs($this->supervisor, ['*']);
+
+    app(InitiateEndorsement::class)->execute($ticket, ['reason' => 'Belongs to the metering department.'], $this->supervisor);
+
+    $hold = $this->push->ofType('ticket_on_hold');
+    expect($hold)->toHaveCount(1)
+        ->and($hold[0]->userId)->toBe($this->personnel->id)
+        ->and($hold[0]->title)->toBe('Ticket on hold')
+        ->and($hold[0]->urgent)->toBeTrue()
+        ->and($hold[0]->channel)->toBe(PushMessage::CHANNEL_DISPATCH)
+        ->and($this->push->messages()->where('userId', $this->supervisor->id))->toBeEmpty();
+});
+
+test('an endorsement request on an unassigned ticket alerts no crew', function () {
+    givePhone($this->personnel);
+    $ticket = deptTicket($this, ['status' => TicketStatus::OPEN]);
+    Sanctum::actingAs($this->supervisor, ['*']);
+
+    app(InitiateEndorsement::class)->execute($ticket, ['reason' => 'Belongs to the metering department.'], $this->supervisor);
+
+    expect($this->push->ofType('ticket_on_hold'))->toBeEmpty();
+});
+
+test('an approved transfer tells the previous crew the ticket is no longer theirs', function () {
+    givePhone($this->personnel);
+    $newDept = Department::factory()->create(['dept_name' => 'Metering']);
+    $ticket = deptTicket($this, ['status' => TicketStatus::ENDORSED, 'team_id' => null]);
+    $endorsement = TicketEndorsement::factory()->create([
+        'ticket_id' => $ticket->id,
+        'old_department_id' => $this->dept->id,
+        'suggested_department_id' => $newDept->id,
+        'new_department_id' => $newDept->id,
+        'status' => EndorsementStatus::APPROVED,
+    ]);
+
+    $this->actingAs($this->cwdOfficer);
+    event(new TicketEndorsementDecided($endorsement, previousTeamId: $this->team->id));
+
+    $away = $this->push->ofType('ticket_reassigned_away');
+    expect($away)->toHaveCount(1)
+        ->and($away[0]->userId)->toBe($this->personnel->id)
+        ->and($away[0]->title)->toBe('Ticket transferred')
+        ->and($away[0]->body)->toContain('Metering');
+});
+
+test('a rejected transfer tells the crew they can start work again', function () {
+    givePhone($this->personnel);
+    $ticket = deptTicket($this, ['team_id' => $this->team->id, 'status' => TicketStatus::ASSIGNED]);
+    $endorsement = TicketEndorsement::factory()->create([
+        'ticket_id' => $ticket->id,
+        'old_department_id' => $this->dept->id,
+        'status' => EndorsementStatus::REJECTED,
+    ]);
+
+    $this->actingAs($this->cwdOfficer);
+    event(new TicketEndorsementDecided($endorsement));
+
+    $resumed = $this->push->ofType('ticket_resumed');
+    expect($resumed)->toHaveCount(1)
+        ->and($resumed[0]->userId)->toBe($this->personnel->id)
+        ->and($resumed[0]->urgent)->toBeTrue()
+        ->and($resumed[0]->channel)->toBe(PushMessage::CHANNEL_DISPATCH);
+});
+
+test('a rejected transfer of an unassigned ticket alerts no crew', function () {
+    givePhone($this->personnel);
+    $ticket = deptTicket($this, ['team_id' => null, 'status' => TicketStatus::OPEN]);
+    $endorsement = TicketEndorsement::factory()->create([
+        'ticket_id' => $ticket->id,
+        'old_department_id' => $this->dept->id,
+        'status' => EndorsementStatus::REJECTED,
+    ]);
+
+    event(new TicketEndorsementDecided($endorsement));
+
+    expect($this->push->ofType('ticket_resumed'))->toBeEmpty();
+});
+
+test('starting work tells the department supervisor but not the crew member who started', function () {
+    givePhone($this->supervisor);
+    givePhone($this->personnel);
+    $ticket = deptTicket($this, ['team_id' => $this->team->id, 'status' => TicketStatus::IN_PROGRESS]);
+
+    $this->actingAs($this->personnel);
+    event(new TicketWorkStarted($ticket->fresh(['team'])));
+
+    $started = $this->push->ofType('work_started');
+    expect($started)->toHaveCount(1)
+        ->and($started[0]->userId)->toBe($this->supervisor->id)
+        ->and($started[0]->body)->toBe("{$this->team->team_name} started work on {$ticket->ticket_number}.")
+        ->and($started[0]->urgent)->toBeFalse();
+});
+
+test('a supervisor without assign or verify permission is not told work started', function () {
+    givePhone($this->supervisor);
+    $keep = array_values(array_diff(PermissionCatalog::forRole('supervisor'), ['tickets.assign', 'reports.verify']));
+    app(UpdateUserPermissions::class)->execute($this->supervisor, $keep, $this->admin);
+
+    event(new TicketWorkStarted(deptTicket($this, ['team_id' => $this->team->id, 'status' => TicketStatus::IN_PROGRESS])));
+
+    expect($this->push->ofType('work_started'))->toBeEmpty();
+});
+
+// --- EXPIRED LOGINS (review issue 4) ---
+
+function ageLogin(PushDevice $device, int $days): void
+{
+    $device->accessToken->forceFill(['created_at' => now()->subDays($days)])->save();
+}
+
+test('a phone whose login expired after 30 days gets no notifications', function () {
+    ageLogin(givePhone($this->supervisor), 31);
+
+    event(new TicketCreated(deptTicket($this)));
+
+    expect($this->push->messages())->toBeEmpty();
+});
+
+test('a phone whose login is still within 30 days keeps getting notifications', function () {
+    ageLogin(givePhone($this->supervisor), 29);
+
+    event(new TicketCreated(deptTicket($this)));
+
+    expect($this->push->messages())->toHaveCount(1);
+});
+
+test('a phone whose login has its own past expiry date gets no notifications', function () {
+    givePhone($this->supervisor)->accessToken->forceFill(['expires_at' => now()->subMinute()])->save();
+
+    event(new TicketCreated(deptTicket($this)));
+
+    expect($this->push->messages())->toBeEmpty();
+});
+
+test('only the phone with a valid login is notified when an account has an expired one too', function () {
+    $old = givePhone($this->supervisor);
+    ageLogin($old, 31);
+    $login = $this->supervisor->createToken('New phone');
+    PushDevice::create([
+        'user_id' => $this->supervisor->id,
+        'personal_access_token_id' => $login->accessToken->id,
+        'fcm_token' => 'fcm-token-new-phone-0123456789',
+    ]);
+
+    event(new TicketCreated(deptTicket($this)));
+
+    expect($this->push->messages()->pluck('token')->all())->toBe(['fcm-token-new-phone-0123456789']);
+});
+
+test('push:test skips a phone whose login expired', function () {
+    ageLogin(givePhone($this->personnel), 31);
+
+    $this->artisan('push:test', ['username' => 'ralph'])
+        ->expectsOutputToContain('no registered phone with a valid login')
+        ->assertFailed();
+
+    expect($this->push->messages())->toBeEmpty();
+});
+
 test('the person who caused an event is never notified about it', function () {
     givePhone($this->supervisor);
 
@@ -278,7 +445,7 @@ test('the firebase client posts the v1 message format with the access token', fu
 
     $result = $client->send([new PushMessage(
         token: 'phone-token-abcdefghijklmnop', type: 'ticket_assigned', title: 'New dispatch', body: 'TKT-1 · Power',
-        data: ['ticket_id' => 'abc', 'ticket_number' => 'TKT-1'], channel: PushMessage::CHANNEL_DISPATCH, urgent: true, collapseKey: 'ticket-abc',
+        data: ['ticket_id' => 'abc', 'ticket_number' => 'TKT-1'], channel: PushMessage::CHANNEL_DISPATCH, urgent: true, tag: 'ticket-abc',
     )]);
 
     expect($result['sent'])->toBe(1);
@@ -290,7 +457,8 @@ test('the firebase client posts the v1 message format with the access token', fu
             && $message['token'] === 'phone-token-abcdefghijklmnop'
             && $message['android']['priority'] === 'HIGH'
             && $message['android']['notification']['channel_id'] === 'dispatch'
-            && $message['android']['collapse_key'] === 'ticket-abc'
+            && $message['android']['notification']['tag'] === 'ticket-abc'
+            && ! array_key_exists('collapse_key', $message['android'])
             && $message['data']['type'] === 'ticket_assigned'
             && $message['data']['ticket_number'] === 'TKT-1'
             && is_string($message['data']['sent_at']);

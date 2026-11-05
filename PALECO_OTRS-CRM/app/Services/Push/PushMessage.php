@@ -22,7 +22,7 @@ class PushMessage
         public readonly array $data = [],
         public readonly string $channel = self::CHANNEL_UPDATES,
         public readonly bool $urgent = false,
-        public readonly ?string $collapseKey = null,
+        public readonly ?string $tag = null,
         public readonly ?string $userId = null,
     ) {}
 
@@ -45,13 +45,12 @@ class PushMessage
             'notification' => array_filter([
                 'channel_id' => $this->channel,
                 // Notifications about the same ticket replace each other in the phone's tray
-                'tag' => $this->collapseKey,
+                'tag' => $this->tag,
             ]),
         ];
 
-        if ($this->collapseKey) {
-            $android['collapse_key'] = $this->collapseKey;
-        }
+        // No collapse_key: Firebase ignores it for messages that carry a notification,
+        // and it must never imply that an older alert (e.g. a new dispatch) may be dropped
 
         return [
             'token' => $this->token,

@@ -3,16 +3,19 @@
 namespace App\Services\Push;
 
 use App\Enums\EndorsementStatus;
+use App\Enums\TicketStatus;
 use App\Events\TeamUpdated;
 use App\Events\TicketAccomplished;
 use App\Events\TicketAssigned;
 use App\Events\TicketCancelled;
 use App\Events\TicketCreated;
 use App\Events\TicketEndorsementDecided;
+use App\Events\TicketEndorsementInitiated;
 use App\Events\TicketForceClosed;
 use App\Events\TicketRemarkAdded;
 use App\Events\TicketReportRejected;
 use App\Events\TicketVerifiedAndClosed;
+use App\Events\TicketWorkStarted;
 use App\Models\Ticket;
 use App\Models\User;
 use Illuminate\Support\Collection;
@@ -32,7 +35,9 @@ class PushMessageFactory
         $messages = match (true) {
             $event instanceof TicketCreated => $this->ticketCreated($event),
             $event instanceof TicketAccomplished => $this->reportSubmitted($event),
+            $event instanceof TicketEndorsementInitiated => $this->ticketOnHold($event),
             $event instanceof TicketEndorsementDecided => $this->endorsementDecided($event),
+            $event instanceof TicketWorkStarted => $this->workStarted($event),
             $event instanceof TicketAssigned => $this->ticketAssigned($event),
             $event instanceof TicketCancelled => $this->ticketStopped($event->ticket, $event->ticket->team_id, 'cancelled'),
             $event instanceof TicketForceClosed => $this->ticketStopped($event->ticket, $event->targetTeamId, 'force-closed'),
@@ -82,9 +87,72 @@ class PushMessageFactory
             ? "{$ticket->ticket_number} was moved to ".($endorsement->newDepartment?->dept_name ?? 'another department').'.'
             : "{$ticket->ticket_number} was returned to your department.";
 
-        return $this->toUsers(
+        $supervisors = $this->toUsers(
             $this->supervisorsOf($endorsement->old_department_id ?? $ticket->department_id, ['tickets.assign']),
             'endorsement_decided', $approved ? 'Endorsement approved' : 'Endorsement rejected', $body, $ticket
+        );
+
+        return [...$supervisors, ...($approved ? $this->crewTransferred($event, $ticket) : $this->crewResumes($ticket))];
+    }
+
+    /**
+     * A supervisor asked to move the ticket to another department: it is frozen, so the crew must not start.
+     */
+    private function ticketOnHold(TicketEndorsementInitiated $event): array
+    {
+        $ticket = $event->endorsement->ticket;
+
+        if (! $ticket) {
+            return [];
+        }
+
+        return $this->toUsers(
+            $this->crewOf($ticket->team_id, ['tickets.start']),
+            'ticket_on_hold', 'Ticket on hold', "{$ticket->ticket_number} is waiting for a transfer decision. Don't start work yet.", $ticket,
+            PushMessage::CHANNEL_DISPATCH, urgent: true
+        );
+    }
+
+    /**
+     * Approved transfer: the crew that had the ticket loses it, which the app already handles as "reassigned away".
+     */
+    private function crewTransferred(TicketEndorsementDecided $event, Ticket $ticket): array
+    {
+        $department = $event->endorsement->newDepartment?->dept_name ?? 'another department';
+
+        return $this->toUsers(
+            $this->crewOf($event->previousTeamId, ['tickets.start']),
+            'ticket_reassigned_away', 'Ticket transferred', "{$ticket->ticket_number} was moved to {$department}. It is no longer assigned to your crew.", $ticket
+        );
+    }
+
+    /**
+     * Rejected transfer: the ticket goes back to its crew, who may now start work again.
+     */
+    private function crewResumes(Ticket $ticket): array
+    {
+        if ($ticket->status !== TicketStatus::ASSIGNED) {
+            return [];
+        }
+
+        return $this->toUsers(
+            $this->crewOf($ticket->team_id, ['tickets.start']),
+            'ticket_resumed', 'Ticket back with your crew', "{$ticket->ticket_number} was not transferred. You can start work.", $ticket,
+            PushMessage::CHANNEL_DISPATCH, urgent: true
+        );
+    }
+
+    /**
+     * A crew started work: the department's supervisors can follow it up.
+     */
+    private function workStarted(TicketWorkStarted $event): array
+    {
+        $ticket = $event->ticket;
+        $crew = $ticket->team?->team_name ?? 'The crew';
+
+        return $this->toUsers(
+            $this->supervisorsOf($ticket->department_id, ['tickets.assign', 'reports.verify']),
+            'work_started', 'Work started', "{$crew} started work on {$ticket->ticket_number}.", $ticket
         );
     }
 
@@ -221,12 +289,15 @@ class PushMessageFactory
             ->get();
     }
 
+    /**
+     * Active accounts with at least one phone whose login hasn't expired; only those phones are loaded.
+     */
     private function activeMobileUsers()
     {
         return User::query()
             ->where('is_active', true)
-            ->whereHas('pushDevices')
-            ->with('pushDevices');
+            ->whereHas('pushDevices', fn ($q) => $q->withLiveLogin())
+            ->with(['pushDevices' => fn ($q) => $q->withLiveLogin()]);
     }
 
     // --- MESSAGES ---
@@ -246,7 +317,7 @@ class PushMessageFactory
             data: $data,
             channel: $channel,
             urgent: $urgent,
-            collapseKey: $ticket ? 'ticket-'.$ticket->id : null,
+            tag: $ticket ? 'ticket-'.$ticket->id : null,
             userId: $user->id,
         )))->values()->all();
     }

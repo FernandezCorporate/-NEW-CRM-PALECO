@@ -8,10 +8,12 @@ use App\Events\TicketAssigned;
 use App\Events\TicketCancelled;
 use App\Events\TicketCreated;
 use App\Events\TicketEndorsementDecided;
+use App\Events\TicketEndorsementInitiated;
 use App\Events\TicketForceClosed;
 use App\Events\TicketRemarkAdded;
 use App\Events\TicketReportRejected;
 use App\Events\TicketVerifiedAndClosed;
+use App\Events\TicketWorkStarted;
 use App\Services\Push\PushGateway;
 use App\Services\Push\PushMessageFactory;
 
@@ -29,7 +31,7 @@ class SendPushNotifications
     ) {}
 
     public function handle(
-        TicketCreated|TicketAccomplished|TicketEndorsementDecided|TicketAssigned|TicketCancelled|TicketForceClosed|TicketReportRejected|TicketVerifiedAndClosed|TicketRemarkAdded|TeamUpdated $event
+        TicketCreated|TicketAccomplished|TicketEndorsementInitiated|TicketEndorsementDecided|TicketWorkStarted|TicketAssigned|TicketCancelled|TicketForceClosed|TicketReportRejected|TicketVerifiedAndClosed|TicketRemarkAdded|TeamUpdated $event
     ): void {
         // Recipients are worked out now, while the request still knows who acted
         $messages = rescue(fn () => $this->factory->forEvent($event, auth()->id()), [], report: true);
