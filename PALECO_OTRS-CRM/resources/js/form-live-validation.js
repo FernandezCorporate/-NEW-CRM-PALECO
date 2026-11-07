@@ -238,6 +238,7 @@ const initForm = (form) => {
     form.addEventListener('submit', async (event) => {
         if (state.passed) {
             state.passed = false;
+            delete form.dataset.liveValidationPassed;
             return; // Already checked: let the browser send it
         }
 
@@ -261,6 +262,7 @@ const initForm = (form) => {
         setSubmitterBusy(submitter, false);
 
         if (result.ok === false) {
+            delete form.dataset.liveValidationPassed;
             Object.keys(result.errors).forEach((key) => state.touched.add(key));
             renderErrors(form, [...state.touched], result.errors);
 
@@ -269,14 +271,39 @@ const initForm = (form) => {
             const target = firstField?.type === 'hidden'
                 ? form.querySelector(`[data-error-for="${CSS.escape(firstKey)}"]`)
                 : placementAnchor(firstField);
-            (target ?? getSummaryBox(form)).scrollIntoView({ behavior: 'smooth', block: 'center' });
-            (firstField?.tomselect ?? (firstField?.type === 'hidden' ? null : firstField))?.focus?.();
+
+            const scrollTarget = target ?? getSummaryBox(form);
+            if (scrollTarget) {
+                if (!scrollTarget.style.scrollMarginTop) {
+                    scrollTarget.style.scrollMarginTop = '4rem';
+                }
+                const scrollContainer = form.closest('#main-content') ?? document.documentElement;
+                const targetRect = scrollTarget.getBoundingClientRect();
+                const containerRect = scrollContainer === document.documentElement
+                    ? { top: 0, bottom: window.innerHeight }
+                    : scrollContainer.getBoundingClientRect();
+
+                const isVisible = targetRect.top >= (containerRect.top + 20) && targetRect.bottom <= (containerRect.bottom - 20);
+                if (!isVisible) {
+                    scrollTarget.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                }
+            }
+
+            const controlToFocus = firstField?.tomselect?.control_input
+                ?? (firstField?.type === 'hidden' ? null : firstField);
+
+            if (controlToFocus && typeof controlToFocus.focus === 'function') {
+                controlToFocus.focus({ preventScroll: true });
+            } else if (firstField?.tomselect && typeof firstField.tomselect.focus === 'function') {
+                firstField.tomselect.focus();
+            }
             return;
         }
 
         // Valid, or the check could not run: submit normally and let the server respond
         if (result.ok) renderErrors(form, [...state.touched], {});
         state.passed = true;
+        form.dataset.liveValidationPassed = 'true';
         if (submitter && submitter.form === form) {
             form.requestSubmit(submitter);
         } else {

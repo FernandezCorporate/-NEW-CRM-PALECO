@@ -34,6 +34,12 @@ const initPreventDoubleSubmit = () => {
         if (form.dataset.submitBound) return;
         form.dataset.submitBound = 'true';
         form.addEventListener('submit', function (e) {
+            // Forms with live validation manage their own submission lifecycle;
+            // only apply double-submit protection when live validation has verified and passed.
+            if (form.hasAttribute('data-live-validation') && !form.dataset.liveValidationPassed) {
+                return;
+            }
+
             if (e.defaultPrevented) return;
             if (!this.checkValidity()) return;
             const submitBtn = this.querySelector('button[type="submit"], input[type="submit"]');
@@ -70,6 +76,7 @@ const initPreventDoubleSubmit = () => {
         } else {
             document.querySelectorAll('form.is-submitting').forEach(form => {
                 form.classList.remove('is-submitting');
+                delete form.dataset.liveValidationPassed;
                 form.querySelectorAll('input:not([type="hidden"]), select, textarea').forEach(el => {
                     if (el.hasAttribute('data-original-readonly')) {
                         // preserve if originally readonly
