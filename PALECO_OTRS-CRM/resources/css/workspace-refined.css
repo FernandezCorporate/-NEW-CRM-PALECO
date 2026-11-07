@@ -100,6 +100,12 @@ button.pagination-step:disabled, button.pagination-page:disabled { cursor:wait; 
 }
 
 .refined-shell .app-main { min-width: 0; }
+.refined-shell .refined-workspace {
+    background-color: var(--workspace-base, #f5f7f6);
+    transform: translateZ(0);
+    will-change: scroll-position;
+    -webkit-overflow-scrolling: touch;
+}
 .refined-shell .app-sidebar { flex-shrink: 0; }
 .refined-shell .sidebar-surface { box-shadow: none; }
 .refined-shell .refined-workspace h1:not(.page-title) {
@@ -150,8 +156,15 @@ button.pagination-step:disabled, button.pagination-page:disabled { cursor:wait; 
     padding-block: .85rem;
     font-variant-numeric: tabular-nums;
 }
+.refined-shell .refined-workspace .system-table tbody tr {
+    transition: none !important;
+}
 .refined-shell .refined-workspace .system-table tbody tr:hover {
     box-shadow: none;
+}
+.refined-shell .refined-workspace :is(.overflow-x-auto, .system-table-scroll) {
+    transform: translateZ(0);
+    scrollbar-gutter: stable;
 }
 .refined-shell .refined-workspace .ticket-queue { min-width: 60rem; }
 .refined-shell .refined-workspace .ticket-queue :is(th, td) { padding-inline: 1rem !important; }
