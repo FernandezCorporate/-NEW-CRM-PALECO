@@ -10,8 +10,10 @@
 :is(.pagination-step, .pagination-page):focus-visible { outline:2px solid #08794e; outline-offset:2px; }
 .pagination-page.is-current { border-color:#08794e; background:#08794e; color:white; box-shadow:0 4px 10px rgb(8 121 78 / 18%); }
 .pagination-step.is-disabled { opacity:.45; cursor:not-allowed; }
+button.pagination-step, button.pagination-page { cursor:pointer; font-family:inherit; }
+button.pagination-step:disabled, button.pagination-page:disabled { cursor:wait; }
 .pagination-ellipsis { min-width:2rem; border-color:transparent; background:transparent; }
-@media (max-width: 639px) { .system-pagination { align-items:stretch; flex-direction:column; } .pagination-summary { text-align:center; } .pagination-controls { justify-content:space-between; } .pagination-step span { display:none; } .pagination-pages { justify-content:center; } }
+@media (max-width: 639px) { .system-pagination { align-items:stretch; flex-direction:column; } .pagination-summary { text-align:center; } .pagination-controls { justify-content:center; gap:.3rem; } .pagination-step span { display:none; } .pagination-pages { justify-content:center; gap:.3rem; } .pagination-page[data-distance="2"], .pagination-page[data-distance="3"] { display:none; } }
 :is(.cwd-action-panels, .admin-action-panels) > [data-dashboard-controls] { display: flex; flex-direction: column; min-width: 0; }
 :is(.cwd-action-panels, .admin-action-panels) [data-controls-grid] { flex: 1; grid-auto-rows: 1fr; }
 :is(.cwd-action-panels, .admin-action-panels) .quick-link { min-width: 0; }

@@ -15,6 +15,13 @@
       "port": 8080
     },
     {
+      "name": "pagination-preview",
+      "runtimeExecutable": "php",
+      "runtimeArgs": ["-S", "127.0.0.1:8766", "-t", "C:/Users/allen/AppData/Local/Temp/claude/de03bcb1828507d2/414c7bbe-d766-4f53-9060-68920853a10f/scratchpad/final"],
+      "port": 8766,
+      "url": "http://127.0.0.1:8766"
+    },
+    {
       "name": "otrs-simulator",
       "runtimeExecutable": "php",
       "runtimeArgs": ["-S", "localhost:5500", "-t", "mobile-simulator"],

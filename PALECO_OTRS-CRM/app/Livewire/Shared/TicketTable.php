@@ -37,6 +37,14 @@ class TicketTable extends Component
     #[Url]
     public string $sort = 'newest';
 
+    /*
+     * Same pagination design as the rest of the system, instead of Livewire's built-in template.
+     */
+    public function paginationView(): string
+    {
+        return 'pagination.livewire';
+    }
+
     public function updatedSearch(): void
     {
         $this->resetPage();
