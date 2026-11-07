@@ -1,63 +1,34 @@
 @props(['ticket', 'isAdmin'])
 
 {{-- Re-rendered by the TicketHistoryTabs Livewire component, so new remarks appear live; history-tabs.js restores the open tab after each update --}}
-<div id="remark-history" data-tab-panel="remark-history" role="tabpanel" aria-labelledby="tab-remark-history" class="ticket-history-section border border-slate-200 rounded-xl bg-white shadow-xs overflow-hidden mb-6 hidden">
-    <header class="ticket-history-heading border-b border-slate-100 bg-slate-50/50">
-        <div>
-            <h3 id="remark-history-heading">Activity remarks & notes <span class="ticket-history-count">{{ number_format($ticket->remarks->count()) }}</span></h3>
-            <p>Chronological operational communication, supervisor instructions, and internal memos.</p>
+<div id="remark-history" data-tab-panel="remark-history" role="tabpanel" aria-labelledby="tab-remark-history" class="ticket-history-section border border-slate-200 rounded-2xl bg-white shadow-xs overflow-hidden mb-6 hidden">
+    <!-- Stream Header -->
+    <header class="ticket-history-heading border-b border-slate-100 bg-slate-50/70 px-6 py-4 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+            <div class="w-9 h-9 rounded-xl bg-emerald-50 border border-emerald-100 text-emerald-600 flex items-center justify-center shrink-0 shadow-2xs">
+                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M8.625 12a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H8.25m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H12m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 0 1-2.555-.337A5.972 5.972 0 0 1 5.41 20.97a.75.75 0 0 1-.974-.94 4.05 4.05 0 0 0 .524-1.923C3.376 16.713 2.25 14.49 2.25 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25Z" />
+                </svg>
+            </div>
+            <div>
+                <div class="flex items-center gap-2">
+                    <h3 id="remark-history-heading" class="text-sm font-bold text-slate-800">Operational Remarks & Notes</h3>
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-100/80 text-emerald-800 border border-emerald-200">
+                        {{ number_format($ticket->remarks->count()) }} {{ Str::plural('message', $ticket->remarks->count()) }}
+                    </span>
+                </div>
+                <p class="text-xs text-slate-500 mt-0.5 flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                    <span>Live communication thread between dispatch, supervisors, and mobile field crews</span>
+                </p>
+            </div>
         </div>
-        <a class="ticket-history-back" href="#ticket-history">Back to history ↑</a>
+        <a class="ticket-history-back text-xs font-semibold text-slate-500 hover:text-slate-800 transition-colors" href="#ticket-history">Back to history ↑</a>
     </header>
 
-    <div class="p-6">
-        <!-- Post Remark Form: Restricted to authorized roles (CWD only via clean TicketPolicy check) -->
-        @can('createRemark', $ticket)
-            <div class="bg-slate-50/70 border border-slate-200/80 rounded-xl p-5 mb-8">
-                <div class="flex items-center justify-between mb-3 border-b border-slate-200/60 pb-2.5">
-                    <span class="text-xs font-bold text-slate-700 flex items-center gap-2">
-                        <x-icons.pencil class="w-4 h-4 text-emerald-600" />
-                        Add Operational Remark
-                    </span>
-                    @if(auth()->check())
-                        <span class="text-[11px] text-slate-500 font-medium">
-                            Posting as <strong class="text-slate-800">{{ auth()->user()->full_name }}</strong>
-                        </span>
-                    @endif
-                </div>
-
-                {{-- wire:ignore keeps a remark being typed when a live update re-renders the thread --}}
-                <form action="{{ route('shared.tickets.remarks.store', $ticket) }}#remark-history" method="POST" wire:ignore data-live-validation>
-                    @csrf
-                    <div class="mb-3">
-                        <textarea 
-                            name="body" 
-                            rows="3" 
-                            required 
-                            placeholder="Add an operational update, dispatch instructions, or customer communication note..." 
-                            class="form-input w-full min-h-[96px] text-sm rounded-lg border border-slate-300 bg-white hover:border-slate-400 focus:border-emerald-600 focus:ring-2 focus:ring-emerald-500/20 p-3.5 shadow-xs transition-all placeholder:text-slate-400 text-slate-800 outline-none @error('body') !border-rose-500 !ring-2 !ring-rose-500/20 @enderror"></textarea>
-                        @error('body')
-                            <p class="text-xs text-rose-500 mt-1 font-medium">{{ $message }}</p>
-                        @enderror
-                    </div>
-
-                    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pt-1">
-                        <label class="flex items-center gap-2.5 cursor-pointer select-none py-1">
-                            <input type="checkbox" name="is_internal" value="1" class="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 h-4 w-4">
-                            <span class="text-xs font-medium text-slate-700">Internal memo only <span class="text-slate-400 font-normal">(hide from mobile field crews)</span></span>
-                        </label>
-
-                        <button type="submit" class="btn btn-primary text-xs py-2 px-4 shadow-xs">
-                            <x-icons.arrow-path class="w-3.5 h-3.5" />
-                            <span>Post Remark</span>
-                        </button>
-                    </div>
-                </form>
-            </div>
-        @endcan
-
-        <!-- Remarks Feed -->
-        <div class="space-y-4">
+    <!-- Remarks History Feed (Scrollable Container) -->
+    <div class="p-5 sm:p-6 bg-white">
+        <div class="space-y-3.5 max-h-[380px] overflow-y-auto pr-1">
             @forelse($ticket->remarks as $remark)
                 <div class="p-4 rounded-xl border transition-colors {{ $remark->is_internal ? 'bg-amber-50/60 border-amber-200' : 'bg-slate-50/80 border-slate-200/70 hover:border-slate-300' }}">
                     <div class="flex items-center justify-between mb-2">
@@ -80,18 +51,70 @@
                         </div>
                         <span class="text-[11px] text-slate-400 font-medium">{{ $remark->created_at->format('M d, Y h:i A') }}</span>
                     </div>
-                    <p class="text-sm text-slate-800 whitespace-pre-wrap leading-relaxed pl-9">{{ $remark->body }}</p>
+                    <p class="text-sm text-slate-800 whitespace-pre-wrap leading-relaxed pl-9 select-text">{{ $remark->body }}</p>
                 </div>
             @empty
-                <div class="text-center py-10 border-2 border-dashed border-slate-200 rounded-xl">
-                    <div class="inline-flex items-center justify-center w-10 h-10 rounded-full bg-slate-100 text-slate-400 mb-2">
+                <div class="text-center py-10 border-2 border-dashed border-slate-200 rounded-xl bg-slate-50/40">
+                    <div class="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-slate-100 text-slate-400 mb-2 shadow-2xs">
                         <x-icons.pencil class="w-5 h-5 text-slate-400" />
                     </div>
-                    <h4 class="text-xs font-bold text-slate-700">No remarks recorded</h4>
-                    <p class="text-xs text-slate-400 mt-0.5">{{ $isAdmin ? 'No operational communication notes recorded for this ticket.' : 'Use the form above to add an operational update or internal note.' }}</p>
+                    <h4 class="text-xs font-bold text-slate-700">No communication remarks yet</h4>
+                    <p class="text-xs text-slate-400 mt-1 max-w-sm mx-auto">
+                        {{ $isAdmin ? 'No operational communication notes recorded for this ticket.' : 'Post an operational update, crew instruction, or customer note using the composer below.' }}
+                    </p>
                 </div>
             @endforelse
         </div>
     </div>
-</div>
 
+    <!-- Message Composer Docked at Bottom -->
+    @can('createRemark', $ticket)
+        <div class="border-t border-slate-100 bg-slate-50/70 p-4 sm:p-5">
+            <form action="{{ route('shared.tickets.remarks.store', $ticket) }}#remark-history" method="POST" wire:ignore>
+                @csrf
+
+                <!-- Composer Controls Header -->
+                <div class="flex items-center justify-between gap-3 mb-2 px-1">
+                    <span class="text-xs text-slate-500 font-medium flex items-center gap-1.5">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                        <span>Posting as <strong class="text-slate-800">{{ auth()->user()->full_name }}</strong></span>
+                    </span>
+
+                    <!-- Internal Memo Toggle -->
+                    <label class="inline-flex items-center gap-1.5 cursor-pointer text-xs font-medium text-slate-600 hover:text-slate-900 select-none transition-colors">
+                        <input type="checkbox" name="is_internal" value="1" class="rounded border-slate-300 text-amber-600 focus:ring-amber-500 h-3.5 w-3.5">
+                        <span class="flex items-center gap-1 text-[11px] text-amber-800 font-semibold bg-amber-50 border border-amber-200/80 px-2 py-0.5 rounded-full">
+                            <svg class="w-3 h-3 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                            Internal memo only
+                        </span>
+                    </label>
+                </div>
+
+                <!-- Input Box -->
+                <div class="relative flex items-end gap-2 p-2 rounded-xl border border-slate-200 bg-white focus-within:border-emerald-600 focus-within:ring-2 focus-within:ring-emerald-500/20 transition-all shadow-2xs">
+                    <textarea 
+                        name="body" 
+                        rows="2" 
+                        required 
+                        placeholder="Type an operational update, crew instruction, or note..." 
+                        class="w-full text-sm border-0 bg-transparent p-2 text-slate-800 placeholder:text-slate-400 focus:ring-0 focus:outline-none resize-none leading-relaxed @error('body') !text-rose-600 @enderror"></textarea>
+
+                    <button type="submit" class="btn btn-primary text-xs py-2 px-3.5 rounded-lg shadow-xs flex items-center gap-1.5 shrink-0 self-end" data-loading-text="Posting...">
+                        <svg class="w-3.5 h-3.5 rotate-90" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 12 3.269 3.125A59.769 59.769 0 0 1 21.485 12 59.768 59.768 0 0 1 3.27 20.875L5.999 12Zm0 0h7.5" />
+                        </svg>
+                        <span>Post Remark</span>
+                    </button>
+                </div>
+
+                @error('body')
+                    <p class="text-xs text-rose-500 mt-1.5 font-medium px-1">{{ $message }}</p>
+                @enderror
+            </form>
+        </div>
+    @else
+        <div class="border-t border-slate-100 bg-slate-50/60 p-3.5 text-center text-xs text-slate-400">
+            {{ $isAdmin ? 'Operational communication thread is managed by CWD operations.' : 'Ticket is read-only. Further remarks can no longer be added.' }}
+        </div>
+    @endcan
+</div>
