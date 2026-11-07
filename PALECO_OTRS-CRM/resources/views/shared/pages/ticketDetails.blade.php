@@ -234,7 +234,7 @@
         </div>
 
         <!-- Right Column Wrapper: Assigned Personnel & Hierarchy Tree -->
-        <div class="flex flex-col gap-6 h-full">
+        <div class="flex flex-col gap-6">
             <!-- Assigned Personnel Card (Real-time Livewire Island) -->
             <livewire:shared.ticket-assigned-personnel :ticket="$ticket" />
 

@@ -107,7 +107,7 @@
                         <th scope="col" class="px-6 py-4 w-40">Source / Caller</th>
                         <th scope="col" class="px-6 py-4 w-56">Address & Landmark</th>
                         <th scope="col" class="px-6 py-4 w-48">Nature of Complaint</th>
-                        <th scope="col" class="px-6 py-4 w-56">Assigned Dept</th>
+                        <th scope="col" class="px-6 py-4 w-56">Assigned Department</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100">
