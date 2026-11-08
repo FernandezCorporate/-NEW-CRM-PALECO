@@ -81,7 +81,7 @@
 
     <x-ticket-history-table id="endorsement-history" title="Endorsement requests"
         description="Requests to route this ticket to another department."
-        :count="$ticket->endorsements->count()" :columns="['Requested', 'Requested by', 'From &rarr; To', 'Decision', 'Details']">
+        :count="$ticket->endorsements->count()" :columns="['Requested', 'Requested by', 'From → To', 'Decision', 'Details']">
         @forelse($ticket->endorsements as $endorsement)
             <tr>
                 <td class="history-date"><time datetime="{{ $endorsement->created_at->toIso8601String() }}">{{ $endorsement->created_at->format('M d, Y') }}<small>{{ $endorsement->created_at->format('h:i A') }}</small></time></td>
