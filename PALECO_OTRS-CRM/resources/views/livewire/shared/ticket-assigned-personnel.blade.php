@@ -1,9 +1,4 @@
-<div class="bg-white border border-slate-200 rounded-xl shadow-xs p-6">
-    <h2 class="text-base font-bold text-slate-900 mb-4 flex items-center gap-2">
-        <x-icons.users class="w-5 h-5 text-emerald-600" />
-        Assigned Personnel
-    </h2>
-    
+<div>
     <div class="space-y-3">
         <!-- Supervisors List -->
         @php($activeSupervisors = $ticket->department?->supervisors->where('is_active', true) ?? collect())
@@ -67,4 +62,3 @@
         @endif
     </div>
 </div>
-

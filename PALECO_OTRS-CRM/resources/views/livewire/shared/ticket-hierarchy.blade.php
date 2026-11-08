@@ -1,17 +1,4 @@
-<div class="bg-white border border-slate-200 rounded-xl shadow-xs p-6 shrink-0">
-    <div class="flex items-center justify-between mb-4">
-        <h2 class="text-base font-bold text-slate-900 flex items-center gap-2">
-            <x-icons.ticket class="w-5 h-5 text-indigo-600" />
-            Ticket Hierarchy
-        </h2>
-        @can('createChild', $ticket)
-            <a href="{{ route('cwd.tickets.children.createForm', array_filter(['ticket' => $ticket, 'source' => $source, 'consumer' => $consumer])) }}" class="text-xs font-semibold text-indigo-600 hover:text-indigo-800 flex items-center gap-1 transition-colors">
-                <x-icons.plus class="w-3.5 h-3.5" />
-                New Child
-            </a>
-        @endcan
-    </div>
-
+<div>
     <div class="space-y-4">
         @if(is_null($ticket->parent_ticket_id))
             <!-- Origin / Parent Ticket -->
@@ -29,7 +16,7 @@
             @if($ticket->childTickets->isNotEmpty())
                 <div>
                     <span class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Child Tickets ({{ $ticket->childTickets->count() }})</span>
-                    <div class="space-y-2 pl-4 border-l-2 border-slate-200 ml-2">
+                    <div class="space-y-2 pl-3 border-l-2 border-indigo-200 ml-1.5 ticket-child-scroll">
                         @foreach($ticket->childTickets as $child)
                             <a href="{{ route($isAdmin ? 'admin.tickets.show' : 'cwd.tickets.show', ['ticket' => $child, 'source' => 'parent', 'parent' => $ticket->id]) }}" class="block p-3 bg-slate-50 border border-slate-200 rounded-lg hover:border-indigo-300 hover:shadow-xs transition-all group">
                                 <div class="flex items-center justify-between">
@@ -86,7 +73,7 @@
             @if($ticket->childTickets->isNotEmpty())
                 <div>
                     <span class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Sub-Child Tickets ({{ $ticket->childTickets->count() }})</span>
-                    <div class="space-y-2 pl-4 border-l-2 border-slate-200 ml-2">
+                    <div class="space-y-2 pl-3 border-l-2 border-indigo-200 ml-1.5 ticket-child-scroll">
                         @foreach($ticket->childTickets as $subChild)
                             <a href="{{ route($isAdmin ? 'admin.tickets.show' : 'cwd.tickets.show', ['ticket' => $subChild, 'source' => 'parent', 'parent' => $ticket->id]) }}" class="block p-3 bg-slate-50 border border-slate-200 rounded-lg hover:border-indigo-300 hover:shadow-xs transition-all group">
                                 <div class="flex items-center justify-between">
@@ -102,4 +89,3 @@
         @endif
     </div>
 </div>
-

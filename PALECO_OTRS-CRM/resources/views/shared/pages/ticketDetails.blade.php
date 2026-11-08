@@ -233,14 +233,64 @@
             </section>
         </div>
 
-        <!-- Right Column Wrapper: Assigned Personnel & Hierarchy Tree -->
-        <div class="flex flex-col gap-6">
-            <!-- Assigned Personnel Card (Real-time Livewire Island) -->
-            <livewire:shared.ticket-assigned-personnel :ticket="$ticket" />
+        <!-- Right Column Wrapper: Unified Operations & Escalation Sidebar -->
+        <section class="bg-white border border-slate-200 rounded-xl shadow-xs overflow-hidden" 
+                 data-ticket-sidebar-card 
+                 aria-label="Operations and Escalation Roster">
+            
+            <!-- Card Header: Title on Top, Toggle Controls Below -->
+            <div class="px-5 pt-5 pb-4 border-b border-slate-100 space-y-3.5">
+                <!-- Row 1: Icon and Title (Full width, zero truncation) -->
+                <div class="flex items-center gap-2.5">
+                    <span data-sidebar-icon="personnel" class="text-emerald-600 inline-flex items-center">
+                        <x-icons.users class="w-5 h-5" />
+                    </span>
+                    <span data-sidebar-icon="hierarchy" class="text-indigo-600 hidden items-center">
+                        <x-icons.ticket class="w-5 h-5" />
+                    </span>
+                    <h2 class="text-base font-bold text-slate-900" data-sidebar-title>
+                        Assigned Personnel
+                    </h2>
+                </div>
 
-            <!-- Ticket Hierarchy Tree (Real-time Livewire Island) -->
-            <livewire:shared.ticket-hierarchy :ticket="$ticket" :is-admin="$isAdmin" />
-        </div>
+                <!-- Row 2: Full-Width Segmented Control below the title -->
+                <div class="grid grid-cols-2 p-1 bg-slate-100 rounded-lg border border-slate-200/80 text-xs font-semibold" role="tablist" aria-label="Operations view toggle">
+                    <button type="button"
+                            data-sidebar-tab="personnel"
+                            role="tab"
+                            aria-selected="true"
+                            aria-controls="sidebar-panel-personnel"
+                            class="w-full py-1.5 px-3 rounded-md transition-all flex items-center justify-center gap-1.5 bg-white text-slate-800 shadow-2xs font-bold cursor-pointer">
+                        <x-icons.users class="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                        <span>Personnel</span>
+                    </button>
+                    <button type="button"
+                            data-sidebar-tab="hierarchy"
+                            role="tab"
+                            aria-selected="false"
+                            aria-controls="sidebar-panel-hierarchy"
+                            class="w-full py-1.5 px-3 rounded-md transition-all flex items-center justify-center gap-1.5 text-slate-500 hover:text-slate-800 font-medium cursor-pointer">
+                        <x-icons.ticket class="w-3.5 h-3.5 text-indigo-600 shrink-0" />
+                        <span>Hierarchy</span>
+                        @if($ticket->childTickets->count() > 0)
+                            <span class="ml-1 px-1.5 py-0.2 bg-indigo-100 text-indigo-700 text-[10px] rounded-full font-bold">
+                                {{ $ticket->childTickets->count() }}
+                            </span>
+                        @endif
+                    </button>
+                </div>
+            </div>
+
+            <!-- Panel 1: Assigned Personnel (Real-time Livewire Island) -->
+            <div id="sidebar-panel-personnel" data-sidebar-panel="personnel" role="tabpanel" class="p-5">
+                <livewire:shared.ticket-assigned-personnel :ticket="$ticket" />
+            </div>
+
+            <!-- Panel 2: Escalation Hierarchy (Real-time Livewire Island) -->
+            <div id="sidebar-panel-hierarchy" data-sidebar-panel="hierarchy" role="tabpanel" class="p-5 hidden">
+                <livewire:shared.ticket-hierarchy :ticket="$ticket" :is-admin="$isAdmin" />
+            </div>
+        </section>
     </div>
 
     <!-- Bottom Section: Record History Tabs (Real-time Livewire Island) -->

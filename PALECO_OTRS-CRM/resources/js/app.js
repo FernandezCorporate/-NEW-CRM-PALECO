@@ -30,3 +30,4 @@ import './form-submit-lock';
 import './form-live-validation';
 import './user-permissions';
 import './dashboard-pie-chart';
+import './ticket-sidebar-toggle';
