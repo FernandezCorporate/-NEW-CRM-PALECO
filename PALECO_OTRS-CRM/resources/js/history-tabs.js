@@ -42,6 +42,19 @@ const initHistoryTabs = () => {
                 if (isMatch) {
                     panel.classList.remove('hidden');
                     panel.setAttribute('aria-hidden', 'false');
+
+                    // Auto-scroll remarks to the newest entry at the bottom when remarks tab is opened
+                    if (targetId === 'remark-history' || panel.id === 'remark-history') {
+                        const scrollContainer = panel.querySelector('.ticket-remarks-scroll');
+                        if (scrollContainer) {
+                            requestAnimationFrame(() => {
+                                scrollContainer.scrollTop = scrollContainer.scrollHeight;
+                                requestAnimationFrame(() => {
+                                    scrollContainer.scrollTop = scrollContainer.scrollHeight;
+                                });
+                            });
+                        }
+                    }
                 } else {
                     panel.classList.add('hidden');
                     panel.setAttribute('aria-hidden', 'true');

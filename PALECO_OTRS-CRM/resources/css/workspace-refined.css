@@ -63,11 +63,42 @@ button.pagination-step:disabled, button.pagination-page:disabled { cursor:wait; 
 .ticket-history-heading p { margin-top: .3rem; font-size: .8rem; color: #627268; }
 .ticket-history-back { flex-shrink: 0; padding-block: .5rem; color: #08794e; font-size: .75rem; }
 .ticket-history-scroll-hint { display: none; padding: 0 1.5rem .75rem; font-size: .75rem; color: #627268; }
-.ticket-history-scroll { position: relative; max-height: 26rem; border-radius: 0 0 .85rem .85rem; overscroll-behavior: auto; }
+
+/* GPU-Accelerated Scrolling & Virtualized Rendering for Sub-Tables & Remarks */
+.ticket-history-scroll,
+.ticket-remarks-scroll {
+    position: relative;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    transform: translateZ(0);
+    will-change: scroll-position;
+}
+
+.ticket-history-scroll {
+    max-height: 26rem;
+    border-radius: 0 0 .85rem .85rem;
+}
+
+.ticket-remarks-scroll {
+    max-height: 24rem;
+}
+
+/* Off-screen rendering containment: skips layout/paint for off-screen rows and cards */
+.refined-shell .refined-workspace .ticket-history-table tbody tr {
+    content-visibility: auto;
+    contain-intrinsic-size: 0 52px;
+}
+
+.ticket-remark-card {
+    content-visibility: auto;
+    contain-intrinsic-size: 0 74px;
+}
+
 .refined-shell .refined-workspace .ticket-history-table { width: 100%; min-width: 40rem; table-layout: auto; }
 .refined-shell .refined-workspace .ticket-history-table th {
     position: sticky; top: 0; z-index: 1; background: #f2f6f4;
     padding: .8rem 1.5rem !important; text-align: left; border-bottom: 1px solid #dce5df;
+    transform: translateZ(0);
 }
 .refined-shell .refined-workspace .ticket-history-table td {
     padding: 1rem 1.5rem !important; vertical-align: top; font-size: .875rem;

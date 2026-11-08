@@ -9,7 +9,6 @@ use Livewire\Component;
 /**
  * Reactive Livewire island managing real-time activity and service history tables
  * (Status changes, Team assignments, Endorsements, Field reports) and their tab counters.
- * Note: Activity remarks thread is intentionally excluded from real-time WebSockets.
  */
 class TicketHistoryTabs extends Component
 {

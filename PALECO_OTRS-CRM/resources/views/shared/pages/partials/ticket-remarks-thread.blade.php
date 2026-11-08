@@ -26,11 +26,36 @@
         <a class="ticket-history-back text-xs font-semibold text-slate-500 hover:text-slate-800 transition-colors" href="#ticket-history">Back to history ↑</a>
     </header>
 
-    <!-- Remarks History Feed (Scrollable Container) -->
+    <!-- Remarks History Feed (Scrollable Container with GPU Compositing) -->
     <div class="p-5 sm:p-6 bg-white">
-        <div class="space-y-3.5 max-h-[380px] overflow-y-auto pr-1">
+        <div 
+            x-data="{
+                scrollToBottom(smooth = false) {
+                    this.$nextTick(() => {
+                        if (smooth) {
+                            $el.scrollTo({ top: $el.scrollHeight, behavior: 'smooth' });
+                        } else {
+                            $el.scrollTop = $el.scrollHeight;
+                        }
+                    });
+                }
+            }" 
+            x-init="
+                scrollToBottom(false);
+                const observer = new MutationObserver(() => {
+                    const isNearBottom = ($el.scrollHeight - $el.scrollTop - $el.clientHeight) < 220;
+                    if (isNearBottom) {
+                        scrollToBottom(true);
+                    }
+                });
+                observer.observe($el, { childList: true, subtree: true });
+                $cleanup(() => observer.disconnect());
+            "
+            x-on:remark-posted.window="scrollToBottom(true)"
+            x-on:scroll-remarks-to-bottom.window="scrollToBottom(false)"
+            class="space-y-3.5 max-h-[380px] overflow-y-auto pr-1 ticket-remarks-scroll">
             @forelse($ticket->remarks as $remark)
-                <div class="p-4 rounded-xl border transition-colors {{ $remark->is_internal ? 'bg-amber-50/60 border-amber-200' : 'bg-slate-50/80 border-slate-200/70 hover:border-slate-300' }}">
+                <div class="ticket-remark-card p-4 rounded-xl border transition-colors {{ $remark->is_internal ? 'bg-amber-50/60 border-amber-200' : 'bg-slate-50/80 border-slate-200/70 hover:border-slate-300' }}">
                     <div class="flex items-center justify-between mb-2">
                         <div class="flex items-center gap-2.5">
                             <div class="w-7 h-7 rounded-full bg-slate-200 text-slate-700 font-bold text-[11px] flex items-center justify-center shrink-0 border border-slate-300">
@@ -67,10 +92,67 @@
         </div>
     </div>
 
-    <!-- Message Composer Docked at Bottom -->
+    <!-- Message Composer Docked at Bottom (AJAX/Fetch Driven, DRY Compliant) -->
     @can('createRemark', $ticket)
         <div class="border-t border-slate-100 bg-slate-50/70 p-4 sm:p-5">
-            <form action="{{ route('shared.tickets.remarks.store', $ticket) }}#remark-history" method="POST" wire:ignore>
+            <form 
+                action="{{ route('shared.tickets.remarks.store', $ticket) }}" 
+                method="POST" 
+                wire:ignore
+                data-no-modal
+                data-no-lock
+                data-ajax
+                data-prevent-double-submit="false"
+                x-data="{
+                    isSubmitting: false,
+                    body: '',
+                    isInternal: false,
+                    errorMessage: '',
+                    async submitRemark() {
+                        const trimmed = this.body.trim();
+                        if (trimmed.length < 2 || this.isSubmitting) return;
+
+                        this.isSubmitting = true;
+                        this.errorMessage = '';
+
+                        try {
+                            const actionUrl = new URL($el.action, window.location.origin).pathname;
+                            const csrfToken = $el.querySelector('input[name=_token]')?.value || document.querySelector('meta[name=csrf-token]')?.content;
+
+                            const response = await fetch(actionUrl, {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'Accept': 'application/json',
+                                    'X-Requested-With': 'XMLHttpRequest',
+                                    'X-CSRF-TOKEN': csrfToken,
+                                },
+                                body: JSON.stringify({
+                                    _token: csrfToken,
+                                    body: trimmed,
+                                    is_internal: this.isInternal ? 1 : 0
+                                })
+                            });
+
+                            if (response.ok) {
+                                this.body = '';
+                                this.isInternal = false;
+                                const textarea = $el.querySelector('textarea[name=body]');
+                                if (textarea) textarea.style.height = '';
+                                
+                                window.dispatchEvent(new CustomEvent('remark-posted'));
+                            } else {
+                                const data = await response.json().catch(() => ({}));
+                                this.errorMessage = data.errors?.body?.[0] || data.message || 'Failed to post remark. Please try again.';
+                            }
+                        } catch (err) {
+                            this.errorMessage = 'Network connection error. Please try again.';
+                        } finally {
+                            this.isSubmitting = false;
+                        }
+                    }
+                }"
+                x-on:submit.prevent="submitRemark()">
                 @csrf
 
                 <!-- Composer Controls Header -->
@@ -82,7 +164,7 @@
 
                     <!-- Internal Memo Toggle -->
                     <label class="inline-flex items-center gap-1.5 cursor-pointer text-xs font-medium text-slate-600 hover:text-slate-900 select-none transition-colors">
-                        <input type="checkbox" name="is_internal" value="1" class="rounded border-slate-300 text-amber-600 focus:ring-amber-500 h-3.5 w-3.5">
+                        <input type="checkbox" x-model="isInternal" name="is_internal" value="1" class="rounded border-slate-300 text-amber-600 focus:ring-amber-500 h-3.5 w-3.5">
                         <span class="flex items-center gap-1 text-[11px] text-amber-800 font-semibold bg-amber-50 border border-amber-200/80 px-2 py-0.5 rounded-full">
                             <svg class="w-3 h-3 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
                             Internal memo only
@@ -93,23 +175,42 @@
                 <!-- Input Box -->
                 <div class="relative flex items-end gap-2 p-2 rounded-xl border border-slate-200 bg-white focus-within:border-emerald-600 focus-within:ring-2 focus-within:ring-emerald-500/20 transition-all shadow-2xs">
                     <textarea 
+                        x-model="body"
+                        x-on:keydown.enter.exact.prevent="submitRemark()"
                         name="body" 
                         rows="2" 
                         required 
-                        placeholder="Type an operational update, crew instruction, or note..." 
-                        class="w-full text-sm border-0 bg-transparent p-2 text-slate-800 placeholder:text-slate-400 focus:ring-0 focus:outline-none resize-none leading-relaxed @error('body') !text-rose-600 @enderror"></textarea>
+                        placeholder="Type an operational update, crew instruction, or note... (Press Enter to send)" 
+                        class="w-full text-sm border-0 bg-transparent p-2 text-slate-800 placeholder:text-slate-400 focus:ring-0 focus:outline-none resize-none leading-relaxed"></textarea>
 
-                    <button type="submit" class="btn btn-primary text-xs py-2 px-3.5 rounded-lg shadow-xs flex items-center gap-1.5 shrink-0 self-end" data-loading-text="Posting...">
-                        <svg class="w-3.5 h-3.5 rotate-90" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 12 3.269 3.125A59.769 59.769 0 0 1 21.485 12 59.768 59.768 0 0 1 3.27 20.875L5.999 12Zm0 0h7.5" />
-                        </svg>
-                        <span>Post Remark</span>
+                    <button 
+                        type="submit" 
+                        class="btn btn-primary text-xs py-2 px-3.5 rounded-lg shadow-xs flex items-center gap-1.5 shrink-0 self-end transition-all" 
+                        :disabled="isSubmitting || body.trim().length < 2"
+                        :class="{ 'opacity-60 cursor-not-allowed': isSubmitting || body.trim().length < 2 }">
+                        <template x-if="!isSubmitting">
+                            <span class="flex items-center gap-1.5">
+                                <svg class="w-3.5 h-3.5 rotate-90" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 12 3.269 3.125A59.769 59.769 0 0 1 21.485 12 59.768 59.768 0 0 1 3.27 20.875L5.999 12Zm0 0h7.5" />
+                                </svg>
+                                <span>Post Remark</span>
+                            </span>
+                        </template>
+                        <template x-if="isSubmitting">
+                            <span class="flex items-center gap-1.5">
+                                <svg class="animate-spin w-3.5 h-3.5" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                                <span>Posting...</span>
+                            </span>
+                        </template>
                     </button>
                 </div>
 
-                @error('body')
-                    <p class="text-xs text-rose-500 mt-1.5 font-medium px-1">{{ $message }}</p>
-                @enderror
+                <template x-if="errorMessage">
+                    <p class="text-xs text-rose-500 mt-1.5 font-medium px-1" x-text="errorMessage"></p>
+                </template>
             </form>
         </div>
     @else
